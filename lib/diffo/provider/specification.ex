@@ -26,17 +26,20 @@ defmodule Diffo.Provider.Specification do
     read :find do
       description "finds specifications by name"
       get? false
-      argument :name, :string, allow_nil?: false
-      filter expr(contains(name, ^arg(:name)))
+      argument :query, :ci_string do
+        description "Return only specifications with names including the given value."
+      end
+      filter expr(contains(name, ^arg(:query)))
     end
 
     read :get_latest do
       description "gets the serviceSpecification or resourceSpecification by name with highest major version"
       get? true
-      argument :name, :string, allow_nil?: false
-      filter expr(name, ^arg(:name))
-      sort major_version: :desc
-      limit 1
+      argument :query, :ci_string do
+        description "Return only specifications with names including the given value."
+      end
+      prepare build(limit: 1, sort: [major_version: :desc])
+      filter expr(contains(name, ^arg(:query)))
     end
 
     update :describe do
@@ -146,7 +149,7 @@ defmodule Diffo.Provider.Specification do
     end
 
     preparations do
-      prepare build(sort: [major_version: :asc])
+      prepare build(sort: [major_version: :desc])
     end
 
     identities do

@@ -97,7 +97,7 @@ defmodule Diffo.Provider.Specification_Test do
     {:ok, _v1} = Diffo.Provider.create_specification(%{name: "transport"})
     {:ok, _v2} = Diffo.Provider.create_specification(%{name: "transport", major_version: 2})
     {:ok, _v3} = Diffo.Provider.create_specification(%{name: "transport", major_version: 3})
-    {:ok, specifications} = Diffo.Provider.find_specifications_by_name(%{name: "transport"})
+    {:ok, specifications} = Diffo.Provider.find_specifications_by_name("transport")
     assert length(specifications) == 3
   end
 
@@ -105,7 +105,7 @@ defmodule Diffo.Provider.Specification_Test do
     {:ok, _v1} = Diffo.Provider.create_specification(%{name: "edge"})
     {:ok, _v2} = Diffo.Provider.create_specification(%{name: "edge", major_version: 2})
     {:ok, _v3} = Diffo.Provider.create_specification(%{name: "edge", major_version: 3})
-    {:ok, latest} = Diffo.Provider.get_latest_specification_by_name(%{name: "edge"}, load: :version)
+    {:ok, latest} = Diffo.Provider.get_latest_specification_by_name("edge", load: :version)
     assert latest.major_version == 3
     assert latest.version == "v3.0.0"
   end
