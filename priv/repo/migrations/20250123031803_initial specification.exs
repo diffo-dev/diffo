@@ -1,4 +1,4 @@
-defmodule Diffo.Repo.Migrations.Initial do
+defmodule :"Elixir.Diffo.Repo.Migrations.Initial specification" do
   @moduledoc """
   Updates resources based on their most recent snapshots.
 
@@ -12,16 +12,11 @@ defmodule Diffo.Repo.Migrations.Initial do
       add(:type, :text, null: false, default: "serviceSpecification")
       add(:name, :text, null: false)
       add(:major_version, :bigint, null: false, default: 1)
-
-      add(:id, :uuid,
-        null: false,
-        default: "fe624d58-f1e0-4bce-864c-14a176fbae94",
-        primary_key: true
-      )
-
+      add(:minor_version, :bigint, null: false, default: 0)
+      add(:patch_version, :bigint, null: false, default: 0)
+      add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
       add(:description, :text)
-      add(:version, :text)
-      add(:href, :text)
+      add(:tmf_version, :bigint, null: false, default: 4)
 
       add(:inserted_at, :utc_datetime_usec,
         null: false,

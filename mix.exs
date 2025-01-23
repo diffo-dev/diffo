@@ -30,7 +30,8 @@ defmodule Diffo.MixProject do
       {:ash, "~> 3.0"},
       {:igniter, "~> 0.3"},
       {:phoenix, "~> 1.7.14"},
-      {:uuid, "~> 1.1"}
+      {:uuid, "~> 1.1"},
+      {:ex_doc, "~> 0.12"}
     ]
   end
 

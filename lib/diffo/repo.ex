@@ -1,4 +1,10 @@
 defmodule Diffo.Repo do
+  @moduledoc """
+  Diffo - TMF Service and Resource Management with a difference
+  Copyright Matt Beanland beanland@live.com.au
+
+  Repo - persistance
+  """
   use AshPostgres.Repo, otp_app: :diffo
 
   def min_pg_version do

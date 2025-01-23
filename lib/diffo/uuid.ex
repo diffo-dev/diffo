@@ -1,6 +1,7 @@
 defmodule Diffo.Uuid do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
+  Copyright Matt Beanland beanland@live.com.au
 
   Uuid - validate and/or create uuids
   """
@@ -8,13 +9,15 @@ defmodule Diffo.Uuid do
     @doc """
     Ensures the supplied uuid is valid uuid4, if not creates one.
     ## Examples
-      iex> uuid4 = Diffo.Uuid.uuid4("4cc5b107-0ff3-4bda-80e1-e4264cbaf868")
-      iex> uuid4
+      iex> validated = Diffo.Uuid.uuid4("4cc5b107-0ff3-4bda-80e1-e4264cbaf868")
+      iex> validated
       "4cc5b107-0ff3-4bda-80e1-e4264cbaf868"
 
-      iex> uuid4 = Diffo.Uuid.uuid4(nil)
-      iex> Diffo.Uuid.uuid4?(uuid4)
+      iex> generated = Diffo.Uuid.uuid4(nil)
+      iex> valid = Diffo.Uuid.uuid4?(generated)
+      iex> valid
       true
+
     """
     def uuid4(id) do
       info = UUID.info(id)
@@ -61,6 +64,19 @@ defmodule Diffo.Uuid do
       false
     end
 
+    @doc """
+    Tests whether the uuid is uuid4 or nil.
+    ## Examples
+      iex> Diffo.Uuid.uuid4_or_nil?("746e465b-3969-460a-980f-af69c9ab248a")
+      true
+
+      iex> Diffo.Uuid.uuid4_or_nil?("9a4cdc44-ca5a-11ef-9cd2-0242ac120002")
+      false
+
+      iex> Diffo.Uuid.uuid4_or_nil?(nil)
+      true
+
+    """
     def uuid4_or_nil?(id) when not is_nil(id) do
       uuid4?(id)
     end
