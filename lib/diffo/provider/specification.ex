@@ -23,6 +23,22 @@ defmodule Diffo.Provider.Specification do
       primary? true
     end
 
+    read :find do
+      description "finds specifications by name"
+      get? false
+      argument :name, :string, allow_nil?: false
+      filter expr(contains(name, ^arg(:name)))
+    end
+
+    read :get_latest do
+      description "gets the serviceSpecification or resourceSpecification by name with highest major version"
+      get? true
+      argument :name, :string, allow_nil?: false
+      filter expr(name, ^arg(:name))
+      sort major_version: :desc
+      limit 1
+    end
+
     update :describe do
       require_atomic? false
       description "updates the description"
@@ -127,7 +143,14 @@ defmodule Diffo.Provider.Specification do
           type == :resourceSpecification -> "resourceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
         end
        ))
+    end
 
+    preparations do
+      prepare build(sort: [major_version: :asc])
+    end
+
+    identities do
+      identity :unique_major_version_per_name, [:name, :major_version]
     end
 
     create_timestamp(:inserted_at)
