@@ -1,4 +1,10 @@
 defmodule Diffo.Provider.Specification do
+  @moduledoc """
+  Diffo - TMF Service and Resource Management with a difference
+  Copyright Matt Beanland beanland@live.com.au
+
+  Specification - Ash Resource for a TMF Service or Resource Specification
+  """
   use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer
 
   postgres do
@@ -9,7 +15,31 @@ defmodule Diffo.Provider.Specification do
   actions do
     create :create do
       description "creates a major version of a named serviceSpecification or resourceSpecification"
-      accept([:type, :name, :major_version, :id, :href, :description, :version])
+      accept([:type, :name, :major_version, :id, :description])
+    end
+
+    read :read do
+      description "reads a serviceSpecification or resourceSpecification by id"
+      primary? true
+    end
+
+    update :describe do
+      require_atomic? false
+      description "updates the description"
+      accept ([:description])
+    end
+
+    update :next_minor do
+      require_atomic? false
+      description "increments the minor version and resets the patch version"
+      change atomic_update(:minor_version, expr(minor_version + 1))
+      change set_attribute(:patch_version, 0)
+    end
+
+    update :next_patch do
+      require_atomic? false
+      description "increments the patch version"
+      change atomic_update(:patch_version, expr(patch_version + 1))
     end
   end
 
@@ -28,14 +58,30 @@ defmodule Diffo.Provider.Specification do
       )
       allow_nil?(false)
       public?(true)
-      constraints(match: ~r/^[a-z]+((\d)|([A-Z0-9][a-z0-9]+))*([A-Z])?/)
+      constraints(match: ~r/^[a-z][a-zA-Z0-9]*$/)
     end
 
     attribute :major_version, :integer do
-      description("the major version, must match the major version of the version string, defaults 1")
+      description("the major version, defaults 1")
       allow_nil?(false)
       public?(false)
       default(1)
+      constraints(min: 0)
+    end
+
+    attribute :minor_version, :integer do
+      description("the minor version, defaults 0")
+      allow_nil?(false)
+      public?(false)
+      default(0)
+      constraints(min: 0)
+    end
+
+    attribute :patch_version, :integer do
+      description("the patch version, defaults 0")
+      allow_nil?(false)
+      public?(false)
+      default(0)
       constraints(min: 0)
     end
 
@@ -58,29 +104,51 @@ defmodule Diffo.Provider.Specification do
       public?(true)
     end
 
-    attribute :version, :string do
+    attribute :tmf_version, :integer do
       description(
-        "a version string, where the minor and trivial version are runtime, defaults v1.0.0"
+        "the TMF version of the specified service or resource, e.g. v4"
       )
-      allow_nil?(true)
-      public?(true)
-      default ("v1.0.0")
-    end
-
-    attribute :href, :string do
-      description(
-        "the URL for this instance of the specification, e.g. /serviceCatalogManagement/v4/serviceSpecification/{uuid}"
-      )
-
-      allow_nil?(true)
-      public?(true)
+      allow_nil?(false)
+      public?(false)
+      default(4)
+      constraints(min: 1)
     end
 
     validations do
       validate({Diffo.Validations.IsUuid4OrNil, attribute: :id})
     end
 
+    calculations do
+      calculate :version, :string, expr("v" <> major_version <> "." <> minor_version <> "." <> patch_version)
+
+      calculate(:href, :string, expr(
+        cond do
+          type == :serviceSpecification -> "serviceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
+          type == :resourceSpecification -> "resourceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
+        end
+       ))
+
+    end
+
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
+  end
+
+
+  @doc """
+  Derives the catalog prefix from the type
+  ## Examples
+    iex> Diffo.Provider.Specification.catalog(:serviceSpecification)
+    :serviceCatalogManagement
+
+    iex> Diffo.Provider.Specification.catalog(:resourceSpecification)
+    :resourceCatalogManagement
+
+  """
+  def catalog(type) do
+    case type do
+      :serviceSpecification -> :serviceCatalogManagement
+      :resourceSpecification -> :resourceCatalogManagement
+    end
   end
 end

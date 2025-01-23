@@ -1,4 +1,10 @@
 defmodule Diffo.Validations.IsUuid4OrNil do
+  @moduledoc """
+  Diffo - TMF Service and Resource Management with a difference
+  Copyright Matt Beanland beanland@live.com.au
+
+  IsUuid4OrNil - Ash Resource Validation checking uuid is v4 if supplied
+  """
   use Ash.Resource.Validation
 
   @impl true

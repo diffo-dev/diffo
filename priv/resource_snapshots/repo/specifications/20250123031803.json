@@ -32,7 +32,27 @@
     },
     {
       "allow_nil?": false,
-      "default": "\"fe624d58-f1e0-4bce-864c-14a176fbae94\"",
+      "default": "0",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "minor_version",
+      "type": "bigint"
+    },
+    {
+      "allow_nil?": false,
+      "default": "0",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "patch_version",
+      "type": "bigint"
+    },
+    {
+      "allow_nil?": false,
+      "default": "fragment(\"gen_random_uuid()\")",
       "generated?": false,
       "primary_key?": true,
       "references": null,
@@ -51,24 +71,14 @@
       "type": "text"
     },
     {
-      "allow_nil?": true,
-      "default": "nil",
+      "allow_nil?": false,
+      "default": "4",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "version",
-      "type": "text"
-    },
-    {
-      "allow_nil?": true,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "href",
-      "type": "text"
+      "source": "tmf_version",
+      "type": "bigint"
     },
     {
       "allow_nil?": false,
@@ -96,7 +106,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "9916CACCB9D80AA90EC85CAAE78F7D6D6AE26B872DD5489CC351427F2450C969",
+  "hash": "84F1ECD63FBCE81167304035B807CEC59C4481CE70A5178B0218800CB96DC4E9",
   "identities": [],
   "multitenancy": {
     "attribute": null,
