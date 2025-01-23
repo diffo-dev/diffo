@@ -93,6 +93,14 @@ defmodule Diffo.Provider.Specification_Test do
     assert patched_specification.version == "v1.1.1"
   end
 
+  test "list specifications by category" do
+    {:ok, _v1} = Diffo.Provider.create_specification(%{name: "compute", category: "cloud"})
+    {:ok, _v2} = Diffo.Provider.create_specification(%{name: "storage", category: "cloud"})
+    {:ok, _v3} = Diffo.Provider.create_specification(%{name: "intelligence", category: "cloud"})
+    {:ok, specifications} = Diffo.Provider.list_specifications_by_category("cloud")
+    assert length(specifications) == 3
+  end
+
   test "find specifications by name" do
     {:ok, _v1} = Diffo.Provider.create_specification(%{name: "transport"})
     {:ok, _v2} = Diffo.Provider.create_specification(%{name: "transport", major_version: 2})
