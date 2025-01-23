@@ -15,7 +15,7 @@ defmodule Diffo.Provider.Specification do
   actions do
     create :create do
       description "creates a major version of a named serviceSpecification or resourceSpecification"
-      accept([:type, :name, :major_version, :id, :description])
+      accept([:type, :name, :major_version, :id, :description, :category])
     end
 
     read :read do
@@ -32,6 +32,16 @@ defmodule Diffo.Provider.Specification do
       filter expr(contains(name, ^arg(:query)))
     end
 
+    read :list do
+      description "list specifications by category"
+      get? false
+      argument :query, :ci_string do
+        description "Return only specifications with category including the given value."
+      end
+      prepare build(sort: [name: :asc])
+      filter expr(contains(category, ^arg(:query)))
+    end
+
     read :get_latest do
       description "gets the serviceSpecification or resourceSpecification by name with highest major version"
       get? true
@@ -46,6 +56,12 @@ defmodule Diffo.Provider.Specification do
       require_atomic? false
       description "updates the description"
       accept ([:description])
+    end
+
+    update :categorise do
+      require_atomic? false
+      description "updates the category"
+      accept ([:category])
     end
 
     update :next_minor do
@@ -116,9 +132,16 @@ defmodule Diffo.Provider.Specification do
 
     attribute :description, :string do
       description(
-        "a description of the service or resoruce specified by a major version of this specification"
+        "a description of the service or resource specified by a major version of this specification"
       )
+      allow_nil?(true)
+      public?(true)
+    end
 
+    attribute :category, :string do
+      description(
+        "the category of the service or resource specified by a major version of this specification"
+      )
       allow_nil?(true)
       public?(true)
     end
