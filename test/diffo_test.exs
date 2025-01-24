@@ -4,6 +4,7 @@ defmodule DiffoTest do
   doctest Diffo
   doctest Diffo.Uuid
   doctest Diffo.Provider.Specification
+  doctest Diffo.Provider.Instance
 
   test "greets the world" do
     assert Diffo.hello() == :world

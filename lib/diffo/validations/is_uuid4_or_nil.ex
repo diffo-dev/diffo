@@ -27,6 +27,11 @@ defmodule Diffo.Validations.IsUuid4OrNil do
     end
   end
 
+  @impl true
+  def atomic(changeset, opts, context) do
+    validate(changeset, opts, context)
+  end
+
   # this can be used as follows, where it will validate the :id value of an Ash Resource
   # validate {Diffo.Validations.IsUuid4OrNil, attribute: :id}
 end
