@@ -9,9 +9,10 @@ defmodule Diffo.Provider.Specification_Test do
     assert Diffo.Uuid.uuid4?(specification.id) == true
     assert specification.major_version == 1
     assert specification.type == :serviceSpecification
-    {:ok, loaded_specification} = Diffo.Provider.get_specification_by_id(specification.id, load: [:version, :href])
+    {:ok, loaded_specification} = Diffo.Provider.get_specification_by_id(specification.id, load: [:version, :href, :instance_type])
     assert loaded_specification.version == "v1.0.0"
     assert loaded_specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{specification.id}"
+    assert loaded_specification.instance_type == :service
   end
 
   test "create a service specification - success - name and type supplied" do
@@ -24,9 +25,10 @@ defmodule Diffo.Provider.Specification_Test do
     {:ok, specification} = Diffo.Provider.create_specification(%{name: "can", type: :resourceSpecification})
     assert specification.name == "can"
     assert specification.type == :resourceSpecification
-    {:ok, loaded_specification} = Diffo.Provider.get_specification_by_id(specification.id, load: [:version, :href])
+    {:ok, loaded_specification} = Diffo.Provider.get_specification_by_id(specification.id, load: [:version, :href, :instance_type])
     assert loaded_specification.version == "v1.0.0"
     assert loaded_specification.href == "resourceCatalogManagement/v4/resourceSpecification/#{specification.id}"
+    assert loaded_specification.instance_type == :resource
   end
 
   test "create a service specification - success - name and id supplied" do

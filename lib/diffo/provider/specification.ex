@@ -53,26 +53,22 @@ defmodule Diffo.Provider.Specification do
     end
 
     update :describe do
-      require_atomic? false
       description "updates the description"
       accept ([:description])
     end
 
     update :categorise do
-      require_atomic? false
       description "updates the category"
       accept ([:category])
     end
 
     update :next_minor do
-      require_atomic? false
       description "increments the minor version and resets the patch version"
       change atomic_update(:minor_version, expr(minor_version + 1))
       change set_attribute(:patch_version, 0)
     end
 
     update :next_patch do
-      require_atomic? false
       description "increments the patch version"
       change atomic_update(:patch_version, expr(patch_version + 1))
     end
@@ -156,31 +152,45 @@ defmodule Diffo.Provider.Specification do
       constraints(min: 1)
     end
 
-    validations do
-      validate({Diffo.Validations.IsUuid4OrNil, attribute: :id})
-    end
-
-    calculations do
-      calculate :version, :string, expr("v" <> major_version <> "." <> minor_version <> "." <> patch_version)
-
-      calculate(:href, :string, expr(
-        cond do
-          type == :serviceSpecification -> "serviceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
-          type == :resourceSpecification -> "resourceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
-        end
-       ))
-    end
-
-    preparations do
-      prepare build(sort: [major_version: :desc])
-    end
-
-    identities do
-      identity :unique_major_version_per_name, [:name, :major_version]
-    end
-
     create_timestamp(:inserted_at)
+
     update_timestamp(:updated_at)
+  end
+
+  validations do
+    validate({Diffo.Validations.IsUuid4OrNil, attribute: :id}, on: :create)
+  end
+
+  calculations do
+    calculate :version, :string, expr("v" <> major_version <> "." <> minor_version <> "." <> patch_version) do
+      description "the full version string, e.g. v1.0.0"
+    end
+
+    calculate(:href, :string, expr(
+      cond do
+        type == :serviceSpecification -> "serviceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
+        type == :resourceSpecification -> "resourceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
+      end
+      )) do
+        description "the href for the service or resource specification"
+      end
+
+    calculate(:instance_type, :atom, expr(
+      cond do
+        type == :serviceSpecification -> :service
+        type == :resourceSpecification -> :resource
+      end
+      )) do
+        description "the type of the instance specified specification, either service or resource"
+      end
+  end
+
+  preparations do
+    prepare build(sort: [major_version: :desc])
+  end
+
+  identities do
+    identity :unique_major_version_per_name, [:name, :major_version]
   end
 
 
