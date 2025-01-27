@@ -18,12 +18,16 @@ defmodule Diffo.Provider.Specification do
       accept([:type, :name, :major_version, :id, :description, :category])
     end
 
-    read :read do
-      description "reads a serviceSpecification or resourceSpecification by id"
+    read :list do
+      description "reads all serviceSpecification and resourceSpecification"
       primary? true
     end
 
-    read :find do
+    read :get_by_id do
+      description "reads a serviceSpecification or resourceSpecification by id"
+    end
+
+    read :find_by_name do
       description "finds specifications by name"
       get? false
       argument :query, :ci_string do
@@ -32,8 +36,8 @@ defmodule Diffo.Provider.Specification do
       filter expr(contains(name, ^arg(:query)))
     end
 
-    read :list do
-      description "list specifications by category"
+    read :find_by_category do
+      description "finds specifications by category"
       get? false
       argument :query, :ci_string do
         description "Return only specifications with category including the given value."
@@ -193,6 +197,9 @@ defmodule Diffo.Provider.Specification do
     identity :unique_major_version_per_name, [:name, :major_version]
   end
 
+  relationships do
+
+  end
 
   @doc """
   Derives the catalog prefix from the type
