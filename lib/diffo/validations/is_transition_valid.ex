@@ -18,18 +18,18 @@ defmodule Diffo.Validations.IsTransitionValid do
 
   @impl true
   def validate(changeset, opts, _context) do
-    new = Ash.Changeset.get_attribute(changeset, opts[:attribute])
+    next = Ash.Changeset.get_attribute(changeset, opts[:attribute])
     current = Ash.Changeset.get_data(changeset, opts[:attribute])
-    transition_graph = opts[:transition_graph]
+    transition_map = Diffo.Provider.Service.service_state_transition_map
     # todo, determine if the transition is valid
-    if (new == current) do
+    if (next == current) do
       :ok
     else
-      if (new in transition_graph[current]) do
+      if (Diffo.Provider.Service.is_transition_valid(transition_map, {current, next})) do
         :ok
       else
         # The returned error will be passed into `Ash.Error.to_ash_error/3`
-        {:error, field: opts[:attribute], message: "transition is not valid"}
+        {:error, field: opts[:attribute], message: "state transition is not valid"}
       end
     end
   end
@@ -40,5 +40,5 @@ defmodule Diffo.Validations.IsTransitionValid do
   end
 
   # this can be used as follows, where it will validate the transition of an Ash Resource
-  # validate {Diffo.Validations.IsTransitionValid, attribute: :service_state, transition_graph: transition_graph}
+  # validate {Diffo.Validations.IsTransitionValid, attribute: :state, transition_map: transition_map}
 end

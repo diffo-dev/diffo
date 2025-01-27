@@ -88,6 +88,13 @@ defmodule Diffo.Provider.Instance_Test do
     assert updated_instance.service_operating_status == :limited
   end
 
+  test "transition an initial service terminated - failure" do
+    {:ok, specification} = Diffo.Provider.create_specification(%{name: "initialTerminated"})
+    {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})
+    assert instance.service_state == :initial
+    {:error, _error} = instance |> Diffo.Provider.transition_instance(%{service_state: :terminated})
+  end
+
   test "update a service instance name - success" do
     {:ok, specification} = Diffo.Provider.create_specification(%{name: "wifiAccess"})
     {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})

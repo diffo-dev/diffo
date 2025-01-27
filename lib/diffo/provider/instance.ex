@@ -102,14 +102,16 @@ defmodule Diffo.Provider.Instance do
       description("the service state, if this instance is a service")
       allow_nil?(true)
       public?(true)
-      constraints(one_of: [:initial, :cancelled, :reserved, :designed, :feasibilityChecked, :inactive, :active, :suspended, :terminated])
+      default Diffo.Provider.Service.default_service_state
+      constraints(one_of: Diffo.Provider.Service.service_states)
     end
 
     attribute :service_operating_status, :atom do
       description("the service operating status, if this instance is a service")
       allow_nil?(true)
       public?(true)
-      constraints(one_of: [:pending, :configured, :starting, :running, :degraded, :failed, :limited, :stopping, :stopped, :unknown])
+      default Diffo.Provider.Service.default_service_operating_status
+      constraints(one_of: Diffo.Provider.Service.service_operating_statuses)
     end
 
     create_timestamp(:inserted_at)
@@ -125,7 +127,7 @@ defmodule Diffo.Provider.Instance do
 
   validations do
     validate({Diffo.Validations.IsUuid4OrNil, attribute: :specification_id}, on: :create)
-    #validate({Diffo.Validations.IsTransitionValid, attribute: :service_state, transition_graph: nil}, on: :update)
+    validate({Diffo.Validations.IsTransitionValid, attribute: :service_state}, on: :update)
     # TODO this isn't working as specified_instance_type is not loaded
     #validate(confirm(:type, :specified_instance_type), on: [:create, :update])
   end
