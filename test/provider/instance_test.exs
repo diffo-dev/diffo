@@ -1,21 +1,19 @@
 defmodule Diffo.Provider.Instance_Test do
   @moduledoc false
   use ExUnit.Case
-  require Ash.Query
 
   test "create a service instance - success" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "fibreAccess", description: "Fibre Access Service", category: "connectivity"})
-    {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})
+    specification = Diffo.Provider.create_specification!(%{name: "fibreAccess", description: "Fibre Access Service", category: "connectivity"})
+    instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
     assert Diffo.Uuid.uuid4?(instance.id) == true
     assert instance.type == :service
-    #assert instance.service_state == :initial
-    #assert instance.service_operating_status == :pending
-    {:ok, loaded_instance} = Diffo.Provider.get_instance_by_id(instance.id, load: [:href, :category, :description, :specified_instance_type])
+    assert instance.service_state == :initial
+    assert instance.service_operating_status == :unknown
+    loaded_instance = Diffo.Provider.get_instance_by_id!(instance.id, load: [:href, :category, :description, :specification])
     assert loaded_instance.category == "connectivity"
     assert loaded_instance.description == "Fibre Access Service"
     assert loaded_instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
-    #assert loaded_instance.specified_instance.type == :service
-
+    assert loaded_instance.specification == specification
   end
 
   #TODO fix this test, it is failing as specified_instance_type calculation is not loaded when create validation occurs
@@ -36,7 +34,7 @@ defmodule Diffo.Provider.Instance_Test do
   end
 
   test "create a service instance - failure - type not correct" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "hfcAccess", description: "HFC Access Service", category: "connectivity"})
+    specification = Diffo.Provider.create_specification!(%{name: "hfcAccess", description: "HFC Access Service", category: "connectivity"})
     {:error, _specification} = Diffo.Provider.create_instance(%{specification_id: specification.id, type: :serviceSpecification})
   end
 
@@ -47,76 +45,76 @@ defmodule Diffo.Provider.Instance_Test do
  # end
 
   test "cancel an initial service instance - success" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "initialCancel"})
-    {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})
-    {:ok, updated_instance} = instance |> Diffo.Provider.cancel_instance()
+    specification = Diffo.Provider.create_specification!(%{name: "initialCancel"})
+    instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+    updated_instance = instance |> Diffo.Provider.cancel_instance!()
     assert updated_instance.service_state == :cancelled
     assert updated_instance.service_operating_status == :pending
   end
 
   test "activate an initial service instance - success" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "initialActive"})
-    {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})
-    {:ok, updated_instance} = instance |> Diffo.Provider.activate_instance()
+    specification = Diffo.Provider.create_specification!(%{name: "initialActive"})
+    updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      |> Diffo.Provider.activate_instance!()
     assert updated_instance.service_state == :active
     assert updated_instance.service_operating_status == :starting
   end
 
   test "terminate an active service instance - success" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "activeTerminate"})
-    {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})
-    {:ok, updated_instance} = instance |> Diffo.Provider.activate_instance!() |> Diffo.Provider.terminate_instance()
+    specification = Diffo.Provider.create_specification!(%{name: "activeTerminate"})
+    updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      |> Diffo.Provider.activate_instance!() |> Diffo.Provider.terminate_instance!()
     assert updated_instance.service_state == :terminated
     assert updated_instance.service_operating_status == :stopping
   end
 
   test "transition an active service instance running - success" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "activeRunning"})
-    {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})
-    {:ok, updated_instance} = instance |> Diffo.Provider.activate_instance!()
-      |> Diffo.Provider.transition_instance(%{service_operating_status: :running})
+    specification = Diffo.Provider.create_specification!(%{name: "activeRunning"})
+    updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      |> Diffo.Provider.activate_instance!()
+      |> Diffo.Provider.transition_instance!(%{service_operating_status: :running})
     assert updated_instance.service_state == :active
     assert updated_instance.service_operating_status == :running
   end
 
   test "transition an active service instance suspended - success" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "activeSuspended"})
-    {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})
-    {:ok, updated_instance} = instance |> Diffo.Provider.activate_instance!()
-      |> Diffo.Provider.transition_instance(%{service_state: :suspended, service_operating_status: :limited})
+    specification = Diffo.Provider.create_specification!(%{name: "activeSuspended"})
+    updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      |> Diffo.Provider.activate_instance!()
+      |> Diffo.Provider.transition_instance!(%{service_state: :suspended, service_operating_status: :limited})
     assert updated_instance.service_state == :suspended
     assert updated_instance.service_operating_status == :limited
   end
 
   test "transition an initial service terminated - failure" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "initialTerminated"})
-    {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})
+    specification = Diffo.Provider.create_specification!(%{name: "initialTerminated"})
+    instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
     assert instance.service_state == :initial
     {:error, _error} = instance |> Diffo.Provider.transition_instance(%{service_state: :terminated})
   end
 
   test "update a service instance name - success" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "wifiAccess"})
-    {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id})
-    {:ok, updated_instance} = instance |> Diffo.Provider.name_instance(%{name: "Westfield Doncaster L2.E16"})
+    specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+    updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      |> Diffo.Provider.name_instance!(%{name: "Westfield Doncaster L2.E16"})
     assert updated_instance.name == "Westfield Doncaster L2.E16"
   end
 
   test "list instances by specification id" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "firewall"})
-    {:ok, _i1} = Diffo.Provider.create_instance(%{specification_id: specification.id})
-    {:ok, _i2} = Diffo.Provider.create_instance(%{specification_id: specification.id})
-    {:ok, _i3} = Diffo.Provider.create_instance(%{specification_id: specification.id})
-    {:ok, instances} = Diffo.Provider.list_instances_by_specification_id(specification.id)
+    specification = Diffo.Provider.create_specification!(%{name: "firewall"})
+    Diffo.Provider.create_instance!(%{specification_id: specification.id})
+    Diffo.Provider.create_instance!(%{specification_id: specification.id})
+    Diffo.Provider.create_instance!(%{specification_id: specification.id})
+    instances = Diffo.Provider.list_instances_by_specification_id!(specification.id)
     assert length(instances) == 3
   end
 
   test "find instances by name" do
-    {:ok, specification} = Diffo.Provider.create_specification(%{name: "intrusionMonitor"})
-    {:ok, _i1} = Diffo.Provider.create_instance(%{specification_id: specification.id, name: "Westfield Doncaster L1.M1"})
-    {:ok, _i2} = Diffo.Provider.create_instance(%{specification_id: specification.id, name: "Westfield Doncaster L2.M3"})
-    {:ok, _i3} = Diffo.Provider.create_instance(%{specification_id: specification.id, name: "Westfield Doncaster L2.M4"})
-    {:ok, instances} = Diffo.Provider.find_instances_by_name("Westfield Doncaster L2.M")
+    specification = Diffo.Provider.create_specification!(%{name: "intrusionMonitor"})
+    Diffo.Provider.create_instance!(%{specification_id: specification.id, name: "Westfield Doncaster L1.M1"})
+    Diffo.Provider.create_instance!(%{specification_id: specification.id, name: "Westfield Doncaster L2.M3"})
+    Diffo.Provider.create_instance!(%{specification_id: specification.id, name: "Westfield Doncaster L2.M4"})
+    instances = Diffo.Provider.find_instances_by_name!("Westfield Doncaster L2.M")
     assert length(instances) == 2
   end
 end
