@@ -95,12 +95,16 @@ defmodule Diffo.Provider.Relationship do
       description "the TMF version of the source instance"
     end
 
-    calculate :source_type, :string, expr(source.type) do
+    calculate :source_type, :atom, expr(source.type) do
       description "the type of the source instance"
     end
 
-    calculate :target_type, :string, expr(target.type) do
+    calculate :target_type, :atom, expr(target.type) do
       description "the type of the target instance"
+    end
+
+    calculate :source_href, :string, expr(source.href) do
+      description "the href of the source instance"
     end
 
     calculate :target_href, :string, expr(target.href) do
