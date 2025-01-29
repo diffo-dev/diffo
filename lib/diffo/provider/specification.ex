@@ -13,18 +13,15 @@ defmodule Diffo.Provider.Specification do
   end
 
   actions do
+    defaults [:read, :destroy]
+
     create :create do
       description "creates a major version of a named serviceSpecification or resourceSpecification"
       accept [:type, :name, :major_version, :id, :description, :category]
     end
 
     read :list do
-      description "reads all serviceSpecification and resourceSpecification"
-      primary? true
-    end
-
-    read :get_by_id do
-      description "reads a serviceSpecification or resourceSpecification by id"
+      description "lists all serviceSpecification and resourceSpecification"
     end
 
     read :find_by_name do

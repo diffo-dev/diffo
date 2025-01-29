@@ -2,14 +2,15 @@ defmodule Diffo.Provider.Specification_Test do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true
+  describe "Diffo.Provider prepare Specifications!" do
+     test "check there are no specifications" do
+      assert Diffo.Provider.list_specifications!() == []
+    end
+  end
 
   describe "Diffo.Provider read Specifications!" do
 
-    test "check there are no specifications" do
-      assert Diffo.Provider.list_specifications!() == []
-    end
-
-    test "find specifications by category" do
+   test "find specifications by category" do
       Diffo.Provider.create_specification!(%{name: "compute", category: "cloud"})
       Diffo.Provider.create_specification!(%{name: "storage", category: "cloud"})
       Diffo.Provider.create_specification!(%{name: "intelligence", category: "cloud"})
@@ -42,7 +43,7 @@ defmodule Diffo.Provider.Specification_Test do
       assert Diffo.Uuid.uuid4?(specification.id) == true
       assert specification.major_version == 1
       assert specification.type == :serviceSpecification
-      assert [loaded_specification] = Diffo.Provider.list_specifications!(load: [:version, :href, :instance_type])
+      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:version, :href, :instance_type])
       assert loaded_specification.version == "v1.0.0"
       assert loaded_specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{specification.id}"
       assert loaded_specification.instance_type == :service
@@ -58,7 +59,7 @@ defmodule Diffo.Provider.Specification_Test do
       specification = Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
       assert specification.name == "can"
       assert specification.type == :resourceSpecification
-      assert [loaded_specification] = Diffo.Provider.list_specifications!(load: [:version, :href, :instance_type])
+      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:version, :href, :instance_type])
       assert loaded_specification.version == "v1.0.0"
       assert loaded_specification.href == "resourceCatalogManagement/v4/resourceSpecification/#{specification.id}"
       assert loaded_specification.instance_type == :resource
@@ -68,14 +69,14 @@ defmodule Diffo.Provider.Specification_Test do
       uuid = UUID.uuid4()
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection", id: uuid})
       assert specification.id == uuid
-      assert [loaded_specification] = Diffo.Provider.list_specifications!(load: [:href])
+      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:href])
       assert loaded_specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{uuid}"
     end
 
     test "create a service specification - success - name and major_version supplied" do
       specification = Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
       assert specification.major_version == 2
-      assert [loaded_specification] = Diffo.Provider.list_specifications!(load: [:version])
+      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:version])
       assert loaded_specification.version == "v2.0.0"
     end
 
@@ -135,6 +136,15 @@ defmodule Diffo.Provider.Specification_Test do
       updated_specification = Diffo.Provider.create_specification!(%{name: "management"})
         |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
       assert updated_specification.service_state_transition_map["active"] == ["terminated"]
+    end
+  end
+
+  describe "Diffo.Provider cleanup Specifications" do
+    test "ensure there are no specifications" do
+      for specification <- Diffo.Provider.list_specifications!() do
+        Diffo.Provider.delete_specification!(%{id: specification.id})
+      end
+      assert Diffo.Provider.list_specifications!() == []
     end
   end
 end

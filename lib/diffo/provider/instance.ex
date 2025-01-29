@@ -13,18 +13,19 @@ defmodule Diffo.Provider.Instance do
   end
 
   actions do
+    defaults [:read, :destroy]
+
     create :create do
       description "creates a new instance of a service or resource according by specification id"
       accept [:specification_id, :name, :type]
     end
 
-    read :read do
-      description "reads a service or resource instance by id"
-      primary? true
+    read :list do
+      description "lists all service and resource instances"
     end
 
-    read :find do
-      description "finds service or resource instances by name"
+    read :find_by_name do
+      description "finds service and resource instances by name"
       get? false
       argument :query, :ci_string do
         description "Return only instances with names including the given value."
@@ -32,7 +33,7 @@ defmodule Diffo.Provider.Instance do
       filter expr(contains(name, ^arg(:query)))
     end
 
-    read :list do
+    read :find_by_specification_id do
       description "list service or resource instances by specification id"
       get? false
       argument :query, :string do
@@ -129,6 +130,14 @@ defmodule Diffo.Provider.Instance do
     belongs_to :specification, Diffo.Provider.Specification do
       allow_nil? false
     end
+
+    has_many :forward_relationships, Diffo.Provider.Relationship do
+      destination_attribute :source_id
+    end
+
+    has_many :reverse_relationships, Diffo.Provider.Relationship do
+      destination_attribute :target_id
+    end
   end
 
   validations do
@@ -156,14 +165,6 @@ defmodule Diffo.Provider.Instance do
 
     calculate :specification_name, :string, expr(specification.name) do
       description "names the service or resource specification"
-    end
-
-    calculate :specified_instance_type, :string, expr(specification.instance_type) do
-      description "the instance type specified by the specification"
-    end
-
-    calculate :specification_strategy, :string, expr(specification.strategy) do
-      description "the strategy of this specification"
     end
 
     calculate :href, :string, expr(type <> "InventoryManagement/v" <> tmf_version <> "/" <> type <> "/" <> specification_name <> "/" <> id) do
