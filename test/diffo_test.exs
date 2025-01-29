@@ -3,7 +3,8 @@ defmodule DiffoTest do
   use ExUnit.Case
   doctest Diffo
   doctest Diffo.Uuid
+  doctest Diffo.Provider.Service
   doctest Diffo.Provider.Specification
   doctest Diffo.Provider.Instance
-  doctest Diffo.Provider.Service
+  doctest Diffo.Provider.Relationship
 end
