@@ -128,5 +128,13 @@ defmodule Diffo.Provider.Specification_Test do
         |> Diffo.Provider.next_patch_specification!(load: :version)
       assert patched_specification.version == "v1.1.1"
     end
+
+    test "replace the service state transition map - success" do
+      transition_map = Diffo.Provider.Service.default_service_state_transition_map
+        |> Diffo.Provider.Service.remove_states([:reserved, :suspended, :inactive]) |> Map.new()
+      updated_specification = Diffo.Provider.create_specification!(%{name: "management"})
+        |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
+      assert updated_specification.service_state_transition_map["active"] == ["terminated"]
+    end
   end
 end

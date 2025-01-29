@@ -6,17 +6,17 @@ defmodule Diffo do
   Diffo - hello
   """
 
-  @spec hello() :: :world
+  @spec hello() :: String.t()
   @doc """
-  Hello world.
+  Hello Diffo
 
   ## Examples
 
       iex> Diffo.hello()
-      :world
+      "Diffo - TMF Service and Resource Management with a difference"
 
   """
   def hello do
-    :world
+    "Diffo - TMF Service and Resource Management with a difference"
   end
 end

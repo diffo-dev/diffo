@@ -20,6 +20,7 @@ defmodule Diffo.Provider do
       define :categorise_specification, action: :categorise
       define :next_minor_specification, action: :next_minor
       define :next_patch_specification, action: :next_patch
+      define :set_specification_service_state_transition_map, action: :set_service_state_transition_map
     end
 
     resource Diffo.Provider.Instance do
