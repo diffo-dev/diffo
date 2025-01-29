@@ -45,7 +45,9 @@ defmodule Diffo.Provider.Instance_Test do
  # end
 
   test "cancel an initial service instance - success" do
+    transition_map = Diffo.Provider.Service.default_service_state_transition_map
     specification = Diffo.Provider.create_specification!(%{name: "initialCancel"})
+      |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
     instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
     updated_instance = instance |> Diffo.Provider.cancel_instance!()
     assert updated_instance.service_state == :cancelled
@@ -53,7 +55,9 @@ defmodule Diffo.Provider.Instance_Test do
   end
 
   test "activate an initial service instance - success" do
+    transition_map = Diffo.Provider.Service.default_service_state_transition_map
     specification = Diffo.Provider.create_specification!(%{name: "initialActive"})
+      |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
     updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       |> Diffo.Provider.activate_instance!()
     assert updated_instance.service_state == :active
@@ -61,7 +65,9 @@ defmodule Diffo.Provider.Instance_Test do
   end
 
   test "terminate an active service instance - success" do
+    transition_map = Diffo.Provider.Service.default_service_state_transition_map
     specification = Diffo.Provider.create_specification!(%{name: "activeTerminate"})
+      |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
     updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       |> Diffo.Provider.activate_instance!() |> Diffo.Provider.terminate_instance!()
     assert updated_instance.service_state == :terminated
@@ -69,7 +75,9 @@ defmodule Diffo.Provider.Instance_Test do
   end
 
   test "transition an active service instance running - success" do
+    transition_map = Diffo.Provider.Service.default_service_state_transition_map
     specification = Diffo.Provider.create_specification!(%{name: "activeRunning"})
+      |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
     updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       |> Diffo.Provider.activate_instance!()
       |> Diffo.Provider.transition_instance!(%{service_operating_status: :running})
@@ -77,8 +85,11 @@ defmodule Diffo.Provider.Instance_Test do
     assert updated_instance.service_operating_status == :running
   end
 
+  # TODO this test is failing as when validator is called on transition_instance the new service_state isn't seen by the validator
   test "transition an active service instance suspended - success" do
+    transition_map = Diffo.Provider.Service.default_service_state_transition_map
     specification = Diffo.Provider.create_specification!(%{name: "activeSuspended"})
+      |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
     updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       |> Diffo.Provider.activate_instance!()
       |> Diffo.Provider.transition_instance!(%{service_state: :suspended, service_operating_status: :limited})
@@ -87,7 +98,9 @@ defmodule Diffo.Provider.Instance_Test do
   end
 
   test "transition an initial service terminated - failure" do
+    transition_map = Diffo.Provider.Service.default_service_state_transition_map
     specification = Diffo.Provider.create_specification!(%{name: "initialTerminated"})
+      |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
     instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
     assert instance.service_state == :initial
     {:error, _error} = instance |> Diffo.Provider.transition_instance(%{service_state: :terminated})
