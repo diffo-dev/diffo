@@ -24,23 +24,21 @@ defmodule Diffo.Provider.Relationship do
       description "lists all relationships"
     end
 
-    read :find_by_id do
-      description "finds relationships by source_id or target_id"
+    read :list_service_relationships_from do
+      description "lists service relationships from the instance"
+      argument :instance_id, :uuid
+      filter expr((source_id == ^arg(:instance_id) and target_type == :service) or (target_id == ^arg(:instance_id) and source_type == :service))
     end
 
-    update :alias do
-      description "updates the source's alias for the target"
-      accept [:alias]
+    read :list_resource_relationships_from do
+      description "lists resource relationships from the instance"
+      argument :instance_id, :uuid
+      filter expr((source_id == ^arg(:instance_id) and target_type == :resource) or (target_id == ^arg(:instance_id) and source_type == :resource))
     end
 
-    update :type do
-      description "updates the type, the type of the relationship from the source to the target"
-      accept [:type]
-    end
-
-    update :reverse_type do
-      description "updates the reverse_type, the type of the relationship to the source from the target"
-      accept [:reverse_type]
+    update :update do
+      description "updates the relationship"
+      accept [:alias, :type, :reverse_type]
     end
   end
 
@@ -50,11 +48,10 @@ defmodule Diffo.Provider.Relationship do
       public? false
     end
 
-    attribute :alias, :string do
+    attribute :alias, :atom do
       description "the alias of this relationship"
       allow_nil? true
       public? true
-      constraints match: ~r/^[a-zA-Z0-9\s._-]+$/
     end
 
     attribute :type, :atom do
@@ -77,10 +74,12 @@ defmodule Diffo.Provider.Relationship do
   relationships do
     belongs_to :source, Diffo.Provider.Instance do
       allow_nil? false
+      public? true
     end
 
     belongs_to :target, Diffo.Provider.Instance do
       allow_nil? false
+      public? true
     end
   end
 
