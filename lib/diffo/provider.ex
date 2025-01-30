@@ -42,10 +42,9 @@ defmodule Diffo.Provider do
       define :create_relationship, action: :create
       define :get_relationship_by_id, action: :read, get_by: :id
       define :list_relationships, action: :list
-      define :find_relationships_by_id, action: :find_by_id
-      define :set_relationship_alias, action: :alias
-      define :set_relationship_type, action: :type
-      define :set_reverse_relationship_type, action: :reverse_type
+      define :list_service_relationships_from, action: :list_service_relationships_from, args: [:instance_id]
+      define :list_resource_relationships_from, action: :list_resource_relationships_from, args: [:instance_id]
+      define :update_relationship, action: :update
       define :delete_relationship, action: :destroy
     end
   end
