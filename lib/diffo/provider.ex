@@ -53,7 +53,7 @@ defmodule Diffo.Provider do
       define :create_characteristic, action: :create
       define :get_characteristic_by_id, action: :read, get_by: :id
       define :list_characteristics, action: :list
-      define :list_characteristics_by_relationship_id, action: :list_characteristics_by_relationship_id, args: [:relationship_id, :type]
+      define :list_characteristics_by_related_id, action: :list_characteristics_by_related_id, args: [:related_id, :type]
       define :update_characteristic, action: :update
       define :delete_characteristic, action: :destroy
     end

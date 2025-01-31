@@ -17,7 +17,7 @@ defmodule Diffo.Provider.Characteristic do
 
     create :create do
       description "creates a characteristic"
-      accept [:relationship_id, :name, :value, :type]
+      accept [:instance_id, :relationship_id, :name, :value, :type]
     end
 
     read :find_by_name do
@@ -33,11 +33,11 @@ defmodule Diffo.Provider.Characteristic do
       description "lists all characteristics"
     end
 
-    read :list_characteristics_by_relationship_id do
-      description "lists characteristics by relationship id, for the given direction"
-      argument :relationship_id, :uuid
+    read :list_characteristics_by_related_id do
+      description "lists characteristics by related id and type"
+      argument :related_id, :uuid
       argument :type, :atom
-      filter expr((relationship_id == ^arg(:relationship_id)) and (type == ^arg(:type)))
+      filter expr(((relationship_id == ^arg(:related_id)) or (instance_id == ^arg(:related_id))) and (type == ^arg(:type)))
     end
 
     update :update do
@@ -77,18 +77,31 @@ defmodule Diffo.Provider.Characteristic do
   end
 
   identities do
-    # a relationship characteristic is unique for a given relationship, direction and name
+    identity :instance_characteristic_uniqueness, [:instance_id, :name] do
+      message "another instance characteristic exists with same name"
+    end
+
     identity :relationship_characteristic_uniqueness, [:relationship_id, :type, :name] do
-      #where present(:relationship_id)
       message "another relationship characteristic exists with same name and direction"
     end
   end
 
   validations do
+    validate present(:instance_id) do
+      where one_of(:type, [:instance])
+      message "instance_id must be supplied"
+    end
+
+    validate absent(:instance_id) do
+      where negate(one_of(:type, [:instance]))
+      message "instance_id must not be supplied"
+    end
+
     validate present(:relationship_id) do
       where one_of(:type, [:forward_relationship, :reverse_relationship])
       message "relationship_id must be supplied"
     end
+
     validate absent(:relationship_id) do
       where negate(one_of(:type, [:forward_relationship, :reverse_relationship]))
       message "relationship_id must not be supplied"
@@ -96,6 +109,11 @@ defmodule Diffo.Provider.Characteristic do
   end
 
   relationships do
+    belongs_to :instance, Diffo.Provider.Instance do
+      allow_nil? true
+      public? true
+    end
+
     belongs_to :relationship, Diffo.Provider.Relationship do
       allow_nil? true
       public? true
