@@ -81,6 +81,11 @@ defmodule Diffo.Provider.Relationship do
       allow_nil? false
       public? true
     end
+
+    has_many :characteristic, Diffo.Provider.Characteristic do
+      allow_nil? true
+      public? true
+    end
   end
 
   validations do

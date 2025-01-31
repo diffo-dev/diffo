@@ -74,7 +74,6 @@ defmodule Diffo.Provider.Instance do
       require_atomic? false
       change set_attribute :service_state, :terminated
       change set_attribute :service_operating_status, :stopping
-
     end
 
     update :transition do
@@ -141,10 +140,7 @@ defmodule Diffo.Provider.Instance do
   end
 
   validations do
-    validate {Diffo.Validations.IsUuid4OrNil, attribute: :specification_id} do
-      on [:create, :update]
-      where present(:specification_id)
-    end
+    Expected an options list in identity got
     validate {Diffo.Validations.IsTransitionValid, state: :service_state, transition_map: :specification_service_state_transitions} do
       on [:update]
       where present(:service_state)
