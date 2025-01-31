@@ -11,6 +11,16 @@ defmodule Diffo.Provider.Characteristic_Test do
   end
 
   describe "Diffo.Provider read Characteristics" do
+    test "list feature characteristics - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "broadband"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :restriction})
+      Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :type, value: :fraudHeavy, type: :feature})
+      Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :expiry, value: "20250131", type: :feature})
+      feature_characteristics = Diffo.Provider.list_characteristics_by_related_id!(feature.id, :feature)
+      assert length(feature_characteristics) == 2
+    end
+
     test "list instance characteristics - success" do
       specification = Diffo.Provider.create_specification!(%{name: "broadband"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
@@ -55,6 +65,14 @@ defmodule Diffo.Provider.Characteristic_Test do
       _reverse_characteristic = Diffo.Provider.create_characteristic!(%{name: :role, value: "protect", relationship_id: relationship.id, type: :reverse_relationship})
       assert length(Diffo.Provider.list_characteristics_by_related_id!(relationship.id, :forward_relationship)) == 1
       assert length(Diffo.Provider.list_characteristics_by_related_id!(relationship.id, :reverse_relationship)) == 1
+    end
+
+    test "create duplicate characteristic on same feature - failure" do
+      specification = Diffo.Provider.create_specification!(%{name: "evc"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :restriction})
+      _first_characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :type, value: :fraudHeavy, type: :feature})
+      {:error, _error} = Diffo.Provider.create_characteristic(%{feature_id: feature.id, name: :type, value: :fraudHeavy, type: :feature})
     end
 
     test "create duplicate characteristic on same instance - failure" do
@@ -109,6 +127,13 @@ defmodule Diffo.Provider.Characteristic_Test do
         Diffo.Provider.delete_relationship!(%{id: relationship.id})
       end
       assert Diffo.Provider.list_relationships!() == []
+    end
+
+    test "ensure there are no features" do
+      for feature <- Diffo.Provider.list_features!() do
+        Diffo.Provider.delete_feature!(%{id: feature.id})
+      end
+      assert Diffo.Provider.list_features!() == []
     end
 
     test "ensure there are no instances" do

@@ -17,7 +17,7 @@ defmodule Diffo.Provider.Characteristic do
 
     create :create do
       description "creates a characteristic"
-      accept [:instance_id, :relationship_id, :name, :value, :type]
+      accept [:feature_id, :instance_id, :relationship_id, :name, :value, :type]
     end
 
     read :find_by_name do
@@ -37,7 +37,7 @@ defmodule Diffo.Provider.Characteristic do
       description "lists characteristics by related id and type"
       argument :related_id, :uuid
       argument :type, :atom
-      filter expr(((relationship_id == ^arg(:related_id)) or (instance_id == ^arg(:related_id))) and (type == ^arg(:type)))
+      filter expr(((relationship_id == ^arg(:related_id)) or (instance_id == ^arg(:related_id)) or (feature_id == ^arg(:related_id))) and (type == ^arg(:type)))
     end
 
     update :update do
@@ -77,6 +77,10 @@ defmodule Diffo.Provider.Characteristic do
   end
 
   identities do
+    identity :feature_characteristic_uniqueness, [:feature_id, :name] do
+      message "another feature characteristic exists with same name"
+    end
+
     identity :instance_characteristic_uniqueness, [:instance_id, :name] do
       message "another instance characteristic exists with same name"
     end
@@ -87,6 +91,16 @@ defmodule Diffo.Provider.Characteristic do
   end
 
   validations do
+    validate present(:feature_id) do
+      where one_of(:type, [:feature])
+      message "feature_id must be supplied"
+    end
+
+    validate absent(:feature_id) do
+      where negate(one_of(:type, [:feature]))
+      message "feature_id must not be supplied"
+    end
+
     validate present(:instance_id) do
       where one_of(:type, [:instance])
       message "instance_id must be supplied"
@@ -109,6 +123,11 @@ defmodule Diffo.Provider.Characteristic do
   end
 
   relationships do
+    belongs_to :feature, Diffo.Provider.Feature do
+      allow_nil? true
+      public? true
+    end
+
     belongs_to :instance, Diffo.Provider.Instance do
       allow_nil? true
       public? true

@@ -79,5 +79,9 @@ defmodule Diffo.Provider.Feature do
       allow_nil? false
       public? true
     end
+
+    has_many :characteristic, Diffo.Provider.Characteristic do
+      public? true
+    end
   end
 end
