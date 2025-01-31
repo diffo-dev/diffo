@@ -57,5 +57,14 @@ defmodule Diffo.Provider do
       define :update_characteristic, action: :update
       define :delete_characteristic, action: :destroy
     end
+
+    resource Diffo.Provider.Feature do
+      define :create_feature, action: :create
+      define :get_feature_by_id, action: :read, get_by: :id
+      define :list_features, action: :list
+      define :list_features_by_related_id, action: :list_features_by_related_id, args: [:related_id]
+      define :update_feature, action: :update
+      define :delete_feature, action: :destroy
+    end
   end
 end
