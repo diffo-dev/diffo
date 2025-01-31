@@ -141,7 +141,10 @@ defmodule Diffo.Provider.Instance do
   end
 
   validations do
-    validate {Diffo.Validations.IsUuid4OrNil, attribute: :specification_id}, on: :create
+    validate {Diffo.Validations.IsUuid4OrNil, attribute: :specification_id} do
+      on [:create, :update]
+      where present(:specification_id)
+    end
     validate {Diffo.Validations.IsTransitionValid, state: :service_state, transition_map: :specification_service_state_transitions} do
       on [:update]
       where present(:service_state)

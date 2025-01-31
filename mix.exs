@@ -29,10 +29,10 @@ defmodule Diffo.MixProject do
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
       {:ash, "~> 3.4"},
       {:igniter, "~> 0.3"},
-      {:phoenix, "~> 1.7.14"},
+      #{:phoenix, "~> 1.7.14"},
       {:uuid, "~> 1.1"},
       {:ex_doc, "~> 0.12"},
-      {:aja, "~>0.7.4"},
+      #{:aja, "~>0.7.4"},
       {:untangle, "~> 0.3.3"}
     ]
   end
