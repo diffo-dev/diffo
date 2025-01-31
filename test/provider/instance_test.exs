@@ -145,6 +145,26 @@ defmodule Diffo.Provider.Instance_Test do
         |> Diffo.Provider.name_instance!(%{name: "Westfield Doncaster L2.E16"})
       assert updated_instance.name == "Westfield Doncaster L2.E16"
     end
+
+    test "update a service instance specification - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      new_specification = Diffo.Provider.create_specification!(%{name: "wifiAccess", major_version: 2})
+      updated_instance = instance |> Diffo.Provider.specify_instance!(%{specification_id: new_specification.id})
+      assert updated_instance.specification_id == new_specification.id
+    end
+
+    test "update a service instance specification - failure - does not exist" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      {:error, _error} = instance |> Diffo.Provider.specify_instance(%{specification_id: UUID.uuid4()})
+    end
+
+    test "update a service instance specification - failure - not a uuid" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      {:error, _error} = instance |> Diffo.Provider.specify_instance(%{specification_id: "not a uuid"})
+    end
   end
 
   describe "Diffo.Provider cleanup Instances" do

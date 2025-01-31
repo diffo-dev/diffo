@@ -35,6 +35,7 @@ defmodule Diffo.Provider do
       define :activate_instance, action: :activate
       define :terminate_instance, action: :terminate
       define :transition_instance, action: :transition
+      define :specify_instance, action: :specify
       define :delete_instance, action: :destroy
     end
 
