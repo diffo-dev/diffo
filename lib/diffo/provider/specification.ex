@@ -195,10 +195,6 @@ defmodule Diffo.Provider.Specification do
     identity :unique_major_version_per_name, [:name, :major_version]
   end
 
-  relationships do
-
-  end
-
   @doc """
   Derives the catalog prefix from the type
   ## Examples
