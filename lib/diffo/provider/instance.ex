@@ -141,6 +141,10 @@ defmodule Diffo.Provider.Instance do
     has_many :characteristic, Diffo.Provider.Characteristic do
       public? true
     end
+
+    has_many :feature, Diffo.Provider.Feature do
+      public? true
+    end
   end
 
   validations do
