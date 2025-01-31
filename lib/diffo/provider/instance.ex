@@ -137,10 +137,13 @@ defmodule Diffo.Provider.Instance do
     has_many :reverse_relationships, Diffo.Provider.Relationship do
       destination_attribute :target_id
     end
+
+    has_many :characteristic, Diffo.Provider.Characteristic do
+      public? true
+    end
   end
 
   validations do
-    Expected an options list in identity got
     validate {Diffo.Validations.IsTransitionValid, state: :service_state, transition_map: :specification_service_state_transitions} do
       on [:update]
       where present(:service_state)

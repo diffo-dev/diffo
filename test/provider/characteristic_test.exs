@@ -11,7 +11,16 @@ defmodule Diffo.Provider.Characteristic_Test do
   end
 
   describe "Diffo.Provider read Characteristics" do
-    test "list service characteristics from - success" do
+    test "list instance characteristics - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "broadband"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :port, value: "_not_null", type: :instance})
+      Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :circuit, value: "_not_null", type: :instance})
+      instance_characteristics = Diffo.Provider.list_characteristics_by_related_id!(instance.id, :instance)
+      assert length(instance_characteristics) == 2
+    end
+
+    test "list relationship characteristics - success" do
       broadband_specification = Diffo.Provider.create_specification!(%{name: "broadband"})
       dnsRecord_specification = Diffo.Provider.create_specification!(%{name: "dnsRecord", type: :resourceSpecification})
       broadband_instance = Diffo.Provider.create_instance!(%{specification_id: broadband_specification.id})
@@ -19,9 +28,9 @@ defmodule Diffo.Provider.Characteristic_Test do
       relationship = Diffo.Provider.create_relationship!(%{type: :dependency_on, source_id: broadband_instance.id, target_id: dnsRecord_instance.id})
       Diffo.Provider.create_characteristic!(%{relationship_id: relationship.id, name: :static, value: "true", type: :forward_relationship})
       Diffo.Provider.create_characteristic!(%{relationship_id: relationship.id, name: :publish, value: "true", type: :forward_relationship})
-      forward_characteristics = Diffo.Provider.list_characteristics_by_relationship_id!(relationship.id, :forward_relationship)
+      forward_characteristics = Diffo.Provider.list_characteristics_by_related_id!(relationship.id, :forward_relationship)
       assert length(forward_characteristics) == 2
-      assert Diffo.Provider.list_characteristics_by_relationship_id!(relationship.id, :reverse_relationship) == []
+      assert Diffo.Provider.list_characteristics_by_related_id!(relationship.id, :reverse_relationship) == []
     end
   end
 
@@ -44,8 +53,15 @@ defmodule Diffo.Provider.Characteristic_Test do
       relationship = Diffo.Provider.create_relationship!(%{type: :uses, reverse_type: :usedBy, source_id: first_instance.id, target_id: second_instance.id})
       _forward_characteristic = Diffo.Provider.create_characteristic!(%{name: :role, value: "worker", relationship_id: relationship.id, type: :forward_relationship})
       _reverse_characteristic = Diffo.Provider.create_characteristic!(%{name: :role, value: "protect", relationship_id: relationship.id, type: :reverse_relationship})
-      assert length(Diffo.Provider.list_characteristics_by_relationship_id!(relationship.id, :forward_relationship)) == 1
-      assert length(Diffo.Provider.list_characteristics_by_relationship_id!(relationship.id, :reverse_relationship)) == 1
+      assert length(Diffo.Provider.list_characteristics_by_related_id!(relationship.id, :forward_relationship)) == 1
+      assert length(Diffo.Provider.list_characteristics_by_related_id!(relationship.id, :reverse_relationship)) == 1
+    end
+
+    test "create duplicate characteristic on same instance - failure" do
+      specification = Diffo.Provider.create_specification!(%{name: "evc"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      _first_characteristic = Diffo.Provider.create_characteristic!(%{name: :port, value: "_not_null", instance_id: instance.id, type: :instance})
+      {:error, _error} = Diffo.Provider.create_characteristic(%{name: :port, value: "_not_null", instance_id: instance.id, type: :instance})
     end
 
     test "create duplicate characteristic on same relationship - failure" do
