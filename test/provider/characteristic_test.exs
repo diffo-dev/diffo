@@ -114,6 +114,19 @@ defmodule Diffo.Provider.Characteristic_Test do
     end
   end
 
+  describe "Diffo.Provider encode Characteristics" do
+    test "encode json - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      characteristic = Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :device, value: :managed, type: :instance})
+      encoding = Jason.encode!(characteristic);
+      assert String.starts_with?(encoding, "{")
+      assert String.contains?(encoding, ~s(\"name\":\"device\"))
+      assert String.contains?(encoding, ~s(\"value\":\"managed\"))
+      assert String.ends_with?(encoding, "}")
+    end
+  end
+
   describe "Diffo.Provider cleanup Characteristics" do
     test "ensure there are no characteristics" do
       for characteristic <- Diffo.Provider.list_characteristics!() do

@@ -49,6 +49,25 @@ defmodule Diffo.Provider.Feature_Test do
     end
   end
 
+  describe "Diffo.Provider encode Features" do
+    test "encode json - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :management})
+      _characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :device, value: :epic1000a, type: :feature})
+      loaded_feature = Diffo.Provider.get_feature_by_id!(feature.id, load: [:featureCharacteristic])
+      encoding = Jason.encode!(loaded_feature);
+      assert String.starts_with?(encoding, "{")
+      assert String.contains?(encoding, ~s(\"name\":\"management\"))
+      assert String.contains?(encoding, ~s(\"isEnabled\":true))
+      assert String.contains?(encoding, "[{")
+      assert String.contains?(encoding, ~s(\"name\":\"device\"))
+      assert String.contains?(encoding, ~s(\"value\":\"epic1000a\"))
+      assert String.contains?(encoding, "}]")
+      assert String.ends_with?(encoding, "}")
+    end
+  end
+
   describe "Diffo.Provider cleanup Features" do
     test "ensure there are no features" do
       for features <- Diffo.Provider.list_features!() do

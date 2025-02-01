@@ -5,11 +5,15 @@ defmodule Diffo.Provider.Specification do
 
   Specification - Ash Resource for a TMF Service or Resource Specification
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
 
   postgres do
     table "specifications"
     repo Diffo.Repo
+  end
+
+  jason do
+    pick [:id, :href, :name, :description, :version]
   end
 
   actions do
