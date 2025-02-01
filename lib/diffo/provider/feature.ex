@@ -5,11 +5,15 @@ defmodule Diffo.Provider.Feature do
 
   Feature - Ash Resource for a TMF Feature
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
 
   postgres do
     table "features"
     repo Diffo.Repo
+  end
+
+  jason do
+    pick [:name, :isEnabled, :featureCharacteristic]
   end
 
   actions do
@@ -80,7 +84,7 @@ defmodule Diffo.Provider.Feature do
       public? true
     end
 
-    has_many :characteristic, Diffo.Provider.Characteristic do
+    has_many :featureCharacteristic, Diffo.Provider.Characteristic do
       public? true
     end
   end

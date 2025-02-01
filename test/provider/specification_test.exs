@@ -9,7 +9,6 @@ defmodule Diffo.Provider.Specification_Test do
   end
 
   describe "Diffo.Provider read Specifications!" do
-
    test "find specifications by category" do
       Diffo.Provider.create_specification!(%{name: "compute", category: "cloud"})
       Diffo.Provider.create_specification!(%{name: "storage", category: "cloud"})
@@ -136,6 +135,22 @@ defmodule Diffo.Provider.Specification_Test do
       updated_specification = Diffo.Provider.create_specification!(%{name: "management"})
         |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
       assert updated_specification.service_state_transition_map["active"] == ["terminated"]
+    end
+  end
+
+  describe "Diffo.Provider encode Specifications" do
+    test "encode json - success" do
+      uuid = UUID.uuid4()
+      specification = Diffo.Provider.create_specification!(%{name: "radiationMonitor", description: "Radiation Monitoring Service", id: uuid})
+      loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:href, :version])
+      encoding = Jason.encode!(loaded_specification);
+      assert String.starts_with?(encoding, "{")
+      assert String.contains?(encoding, ~s(\"id\":\"#{uuid}\"))
+      assert String.contains?(encoding, ~s(\"name\":\"radiationMonitor\"))
+      assert String.contains?(encoding, ~s(\"description\":\"Radiation Monitoring Service\"))
+      assert String.contains?(encoding, ~s(\"version\":\"v1.0.0\"))
+      assert String.contains?(encoding, ~s(\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{uuid}\"))
+      assert String.ends_with?(encoding, "}")
     end
   end
 
