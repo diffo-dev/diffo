@@ -13,7 +13,8 @@ defmodule Diffo.Provider.Specification do
   end
 
   jason do
-    pick [:id, :href, :name, :description, :version]
+    pick [:id, :href, :name, :version]
+    order [:id, :href, :name, :version]
   end
 
   actions do

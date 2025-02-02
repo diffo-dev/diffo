@@ -120,10 +120,7 @@ defmodule Diffo.Provider.Characteristic_Test do
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       characteristic = Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :device, value: :managed, type: :instance})
       encoding = Jason.encode!(characteristic)
-      assert String.starts_with?(encoding, "{")
-      assert String.contains?(encoding, ~s(\"name\":\"device\"))
-      assert String.contains?(encoding, ~s(\"value\":\"managed\"))
-      assert String.ends_with?(encoding, "}")
+      assert encoding == "{\"name\":\"device\",\"value\":\"managed\"}"
     end
   end
 
