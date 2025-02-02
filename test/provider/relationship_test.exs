@@ -128,16 +128,7 @@ defmodule Diffo.Provider.Relationship_Test do
       _characteristic = Diffo.Provider.create_characteristic!(%{relationship_id: relationship.id, name: :role, value: :gateway, type: :relationship})
       parent_service_relationships = Diffo.Provider.list_service_relationships_from!(parent_instance.id, load: [:target_type, :target_href, :characteristic])
       encoding = Jason.encode!(parent_service_relationships)
-      assert String.starts_with?(encoding, "[{")
-      assert String.contains?(encoding, ~s(\"type\":\"bestows\"))
-      assert String.contains?(encoding, ~s(\"service\":{))
-      assert String.contains?(encoding, ~s(\"id\":\"#{child_instance.id}\"))
-      assert String.contains?(encoding, ~s(\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"))
-      assert String.contains?(encoding, ~s(\"serviceRelationshipCharacteristic\":[{))
-      assert String.contains?(encoding, ~s(\"name\":\"role\"))
-      assert String.contains?(encoding, ~s(\"value\":\"gateway\"))
-      assert String.contains?(encoding, "\}]")
-      assert String.ends_with?(encoding, "}]")
+      assert encoding == ~s([{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}])
     end
 
     test "encode service instance resourceRelationship json - success" do
@@ -149,16 +140,7 @@ defmodule Diffo.Provider.Relationship_Test do
       _characteristic = Diffo.Provider.create_characteristic!(%{relationship_id: relationship.id, name: :role, value: :primary, type: :relationship})
       parent_resource_relationships = Diffo.Provider.list_resource_relationships_from!(service_instance.id, load: [:target_type, :target_href, :characteristic])
       encoding = Jason.encode!(parent_resource_relationships)
-      assert String.starts_with?(encoding, "[{")
-      assert String.contains?(encoding, ~s(\"type\":\"isAssigned\"))
-      assert String.contains?(encoding, ~s(\"resource\":{))
-      assert String.contains?(encoding, ~s(\"id\":\"#{resource_instance.id}\"))
-      assert String.contains?(encoding, ~s(\"href\":\"resourceInventoryManagement/v4/resource/can/#{resource_instance.id}\"))
-      assert String.contains?(encoding, ~s(\"resourceRelationshipCharacteristic\":[{))
-      assert String.contains?(encoding, ~s(\"name\":\"role\"))
-      assert String.contains?(encoding, ~s(\"value\":\"primary\"))
-      assert String.contains?(encoding, "\}]")
-      assert String.ends_with?(encoding, "}]")
+      assert encoding == ~s([{\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{resource_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{resource_instance.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"primary\"}]}])
     end
 
     test "encode resource instance serviceRelationship json - success" do
@@ -169,12 +151,7 @@ defmodule Diffo.Provider.Relationship_Test do
       _relationship = Diffo.Provider.create_relationship!(%{type: :assignedTo, source_id: resource_instance.id, target_id: service_instance.id})
       child_service_relationships = Diffo.Provider.list_service_relationships_from!(resource_instance.id, load: [:target_type, :target_href, :characteristic])
       encoding = Jason.encode!(child_service_relationships)
-      assert String.starts_with?(encoding, "[{")
-      assert String.contains?(encoding, ~s(\"type\":\"assignedTo\"))
-      assert String.contains?(encoding, ~s(\"service\":{))
-      assert String.contains?(encoding, ~s(\"id\":\"#{service_instance.id}\"))
-      assert String.contains?(encoding, ~s(\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{service_instance.id}\"))
-      assert String.ends_with?(encoding, "}]")
+      assert encoding == ~s([{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{service_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{service_instance.id}\"}}])
     end
   end
 

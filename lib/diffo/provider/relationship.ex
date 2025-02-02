@@ -15,7 +15,6 @@ defmodule Diffo.Provider.Relationship do
   jason do
     pick [:target_href, :type, :characteristic, :target_type]
     customize fn result, _record ->
-
       relationship_characteristic_name = Diffo.Provider.Relationship.derive_relationship_characteristic_name(Map.get(result, :target_type))
       target_type = Map.get(result, :target_type)
       href = Map.get(result, :target_href)
@@ -24,8 +23,8 @@ defmodule Diffo.Provider.Relationship do
       result
         |> Map.put(target_type, %{id: id, href: href})
         |> Diffo.Util.put_not_empty(relationship_characteristic_name, characteristics)
-        |> Map.drop([:target_href, :target_type, :characteristic])
     end
+    order [:type, :service, :resource, :serviceRelationshipCharacteristic, :resourceRelationshipCharacteristic]
   end
 
   actions do

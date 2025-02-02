@@ -14,6 +14,7 @@ defmodule Diffo.Provider.Characteristic do
 
   jason do
     pick [:name, :value]
+    order [:name, :value]
   end
 
   actions do

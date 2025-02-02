@@ -14,6 +14,7 @@ defmodule Diffo.Provider.Feature do
 
   jason do
     pick [:name, :isEnabled, :featureCharacteristic]
+    order [:name, :isEnabled, :featureCharacteristic]
   end
 
   actions do

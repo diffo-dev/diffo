@@ -5,11 +5,37 @@ defmodule Diffo.Provider.Instance do
 
   Instance - Ash Resource for a TMF Service or Resource Instance
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
 
   postgres do
     table "instances"
     repo Diffo.Repo
+  end
+
+  jason do
+    pick [:id, :href, :category, :description, :name, :specification, :forward_relationships, :feature, :characteristic, :type]
+    customize fn result, _record ->
+      type = Map.get(result, :type)
+      IO.inspect(type)
+      specification = Map.get(result, :specification)
+      relationships = Map.get(result, :forward_relationships)
+      #TODO load relationships so they have target_type, target_href, characteristic
+      #service_relationships = relationships |> Map.filter(fn {key, value} -> {:target_type, :service} == {key, value} end)
+      #resource_relationships = relationships |> Map.filter(fn {key, value} -> {:target_type, :resource} == {key, value} end)
+      features = Map.get(result, :feature)
+      features_name = Diffo.Provider.Instance.derive_feature_collection_name(type)
+      characteristics = Map.get(result, :characteristic)
+      characteristics_name = Diffo.Provider.Instance.derive_characteristic_collection_name(type)
+      result
+        |> Map.put(specification.type, specification)
+        #|> Diffo.Util.put_not_empty(:serviceRelationship, service_relationships)
+        #|> Diffo.Util.put_not_empty(:resourceRelationship, resource_relationships)
+        |> Map.delete(:feature)
+        |> Diffo.Util.put_not_empty(features_name, features)
+        |> Diffo.Util.put_not_empty(characteristics_name, characteristics)
+    end
+    order [:id, :href, :category, :description, :name, :serviceSpecification, :resourceSpecification, :serviceRelationship,
+      :resourceRelationship, :feature, :activationFeature, :serviceCharacteristic, :resourceCharacteristic]
   end
 
   actions do

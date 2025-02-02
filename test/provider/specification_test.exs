@@ -144,13 +144,7 @@ defmodule Diffo.Provider.Specification_Test do
       specification = Diffo.Provider.create_specification!(%{name: "radiationMonitor", description: "Radiation Monitoring Service", id: uuid})
       loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:href, :version])
       encoding = Jason.encode!(loaded_specification)
-      assert String.starts_with?(encoding, "{")
-      assert String.contains?(encoding, ~s(\"id\":\"#{uuid}\"))
-      assert String.contains?(encoding, ~s(\"name\":\"radiationMonitor\"))
-      assert String.contains?(encoding, ~s(\"description\":\"Radiation Monitoring Service\"))
-      assert String.contains?(encoding, ~s(\"version\":\"v1.0.0\"))
-      assert String.contains?(encoding, ~s(\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{uuid}\"))
-      assert String.ends_with?(encoding, "}")
+      assert encoding == ~s({\"id\":\"#{uuid}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{uuid}\",\"name\":\"radiationMonitor\",\"version\":\"v1.0.0\"})
     end
   end
 

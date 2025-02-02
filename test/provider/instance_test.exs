@@ -167,6 +167,21 @@ defmodule Diffo.Provider.Instance_Test do
     end
   end
 
+  #TODO incomplete
+  describe "Diffo.Provider encode Instances" do
+    test "encode service with service child instance json - success" do
+      parent_specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+      child_specification = Diffo.Provider.create_specification!(%{name: "device"})
+      parent_instance = Diffo.Provider.create_instance!(%{specification_id: parent_specification.id})
+      child_instance = Diffo.Provider.create_instance!(%{specification_id: child_specification.id})
+      _relationship = Diffo.Provider.create_relationship!(%{type: :bestows, source_id: parent_instance.id, target_id: child_instance.id})
+      parent_service = Diffo.Provider.get_instance_by_id!(parent_instance.id,
+        load: [:href, :category, :description, :specification, :forward_relationships, :feature, :characteristic])
+      encoding = Jason.encode!(parent_service)
+      assert encoding == ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"name\":\"siteConnection\"}})
+    end
+  end
+
   describe "Diffo.Provider cleanup Instances" do
     test "ensure there are no instances" do
       for instance <- Diffo.Provider.list_instances!() do
