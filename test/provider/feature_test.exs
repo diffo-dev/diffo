@@ -56,7 +56,7 @@ defmodule Diffo.Provider.Feature_Test do
       feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :management})
       _characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :device, value: :epic1000a, type: :feature})
       loaded_feature = Diffo.Provider.get_feature_by_id!(feature.id, load: [:featureCharacteristic])
-      encoding = Jason.encode!(loaded_feature);
+      encoding = Jason.encode!(loaded_feature)
       assert String.starts_with?(encoding, "{")
       assert String.contains?(encoding, ~s(\"name\":\"management\"))
       assert String.contains?(encoding, ~s(\"isEnabled\":true))

@@ -202,4 +202,38 @@ defmodule Diffo.Provider.Instance do
       :resourceSpecification -> :resource
     end
   end
+
+  @doc """
+  Derives the instance feature collection name from the instance type
+  ## Examples
+    iex> Diffo.Provider.Instance.derive_feature_collection_name(:service)
+    :feature
+
+    iex> Diffo.Provider.Instance.derive_feature_collection_name(:resource)
+    :activationFeature
+
+  """
+  def derive_feature_collection_name(type) do
+    case type do
+      :service -> :feature
+      :resource -> :activationFeature
+    end
+  end
+
+  @doc """
+  Derives the instance characteristic collection name from the instance type
+  ## Examples
+    iex> Diffo.Provider.Instance.derive_characteristic_collection_name(:service)
+    :serviceCharacteristic
+
+    iex> Diffo.Provider.Instance.derive_characteristic_collection_name(:resource)
+    :resourceCharacteristic
+
+  """
+  def derive_characteristic_collection_name(type) do
+    case type do
+      :service -> :serviceCharacteristic
+      :resource -> :resourceCharacteristic
+    end
+  end
 end
