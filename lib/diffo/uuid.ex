@@ -84,4 +84,34 @@ defmodule Diffo.Uuid do
     def uuid4_or_nil?(nil) do
       true
     end
+
+    @doc ~S"""
+    Returns trailing uuid4 if valid, or nil.
+    ## Examples
+      iex> Diffo.Uuid.trailing_uuid4("serviceInventoryManagement/v4/service/accessEvc/d2566874-d5ee-400b-9983-10d63ec52f32")
+      "d2566874-d5ee-400b-9983-10d63ec52f32"
+
+      iex> Diffo.Uuid.trailing_uuid4("serviceInventoryManagement/v4/service/accessEvc/d2566874-d5ee-400b-9983")
+      nil
+
+      iex> Diffo.Uuid.trailing_uuid4("d2566874-d5ee-400b-9983-10d63ec52f32")
+      "d2566874-d5ee-400b-9983-10d63ec52f32"
+
+      iex> Diffo.Uuid.trailing_uuid4(nil)
+      nil
+
+    """
+    def trailing_uuid4(input) when is_bitstring(input) do
+      uuid = String.slice(input, -36, 36)
+      if (uuid4?(uuid)) do
+        uuid
+      else
+        nil
+      end
+    end
+
+    def trailing_uuid4(_) do
+      nil
+    end
+
   end

@@ -72,7 +72,7 @@ defmodule Diffo.Provider.Characteristic do
       description "the type of the characteristic"
       allow_nil? false
       public? true
-      constraints one_of: [:instance, :feature, :forward_relationship, :reverse_relationship]
+      constraints one_of: [:instance, :feature, :relationship]
     end
 
     create_timestamp :inserted_at
@@ -116,12 +116,12 @@ defmodule Diffo.Provider.Characteristic do
     end
 
     validate present(:relationship_id) do
-      where one_of(:type, [:forward_relationship, :reverse_relationship])
+      where one_of(:type, [:relationship])
       message "relationship_id must be supplied"
     end
 
     validate absent(:relationship_id) do
-      where negate(one_of(:type, [:forward_relationship, :reverse_relationship]))
+      where negate(one_of(:type, [:relationship]))
       message "relationship_id must not be supplied"
     end
   end

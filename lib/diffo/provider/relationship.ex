@@ -5,11 +5,27 @@ defmodule Diffo.Provider.Relationship do
 
   Relationship - Ash Resource for a TMF Service or Resource Relationship
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
 
   postgres do
     table "relationships"
     repo Diffo.Repo
+  end
+
+  jason do
+    pick [:target_href, :type, :characteristic, :target_type]
+    customize fn result, _record ->
+
+      relationship_characteristic_name = Diffo.Provider.Relationship.derive_relationship_characteristic_name(Map.get(result, :target_type))
+      target_type = Map.get(result, :target_type)
+      href = Map.get(result, :target_href)
+      id = Diffo.Uuid.trailing_uuid4(href)
+      characteristics = Map.get(result, :characteristic)
+      result
+        |> Map.put(target_type, %{id: id, href: href})
+        |> Diffo.Util.put_not_empty(relationship_characteristic_name, characteristics)
+        |> Map.drop([:target_href, :target_type, :characteristic])
+    end
   end
 
   actions do
@@ -17,7 +33,7 @@ defmodule Diffo.Provider.Relationship do
 
     create :create do
       description "creates a relationship between a source and target instance"
-      accept [:source_id, :target_id, :type, :reverse_type, :alias]
+      accept [:source_id, :target_id, :type, :alias]
     end
 
     read :list do
@@ -27,18 +43,18 @@ defmodule Diffo.Provider.Relationship do
     read :list_service_relationships_from do
       description "lists service relationships from the instance"
       argument :instance_id, :uuid
-      filter expr((source_id == ^arg(:instance_id) and target_type == :service) or (target_id == ^arg(:instance_id) and source_type == :service))
+      filter expr(source_id == ^arg(:instance_id) and target_type == :service)
     end
 
     read :list_resource_relationships_from do
       description "lists resource relationships from the instance"
       argument :instance_id, :uuid
-      filter expr((source_id == ^arg(:instance_id) and target_type == :resource) or (target_id == ^arg(:instance_id) and source_type == :resource))
+      filter expr(source_id == ^arg(:instance_id) and target_type == :resource)
     end
 
     update :update do
       description "updates the relationship"
-      accept [:alias, :type, :reverse_type]
+      accept [:alias, :type]
     end
   end
 
@@ -56,12 +72,6 @@ defmodule Diffo.Provider.Relationship do
 
     attribute :type, :atom do
       description "the type of the relationship from the source to the target"
-      allow_nil? true
-      public? true
-    end
-
-    attribute :reverse_type, :atom do
-      description "the type of the reverse relationship (to the source from the target)"
       allow_nil? true
       public? true
     end
@@ -136,7 +146,7 @@ defmodule Diffo.Provider.Relationship do
     end
   end
 
-    @doc """
+  @doc """
   Derives the instance relationship characteristic name from the instance type
   ## Examples
     iex> Diffo.Provider.Relationship.derive_relationship_characteristic_name(:service)
