@@ -23,23 +23,33 @@ defmodule Diffo.Provider.Instance do
         |> Ash.load!([feature: [:featureCharacteristic]], opts)
         |> Ash.load!([forward_relationships: [:target_type, :target_href, :characteristic]], opts)
       type = Map.get(loaded_record, :type)
-      specification = Map.get(loaded_record, :specification)
-      relationships = Map.get(loaded_record, :forward_relationships)
+      specification = loaded_record.specification
+      relationships = loaded_record.forward_relationships |> Enum.sort({:asc, Diffo.Provider.Relationship})
       service_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
       resource_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
-      features = Map.get(loaded_record, :feature)
+      supporting_services =
+        service_relationships
+        |> Enum.filter(fn relationship -> relationship.alias != nil end)
+        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased) end)
+      supporting_resources =
+        resource_relationships
+        |> Enum.filter(fn relationship -> relationship.alias != nil end)
+        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased) end)
+      features = Map.get(loaded_record, :feature) |> Enum.sort({:asc, Diffo.Provider.Feature})
       features_name = Diffo.Provider.Instance.derive_feature_collection_name(type)
-      characteristics = Map.get(loaded_record, :characteristic)
+      characteristics = loaded_record.characteristic |> Enum.sort({:asc, Diffo.Provider.Characteristic})
       characteristics_name = Diffo.Provider.Instance.derive_characteristic_collection_name(type)
       result =
         result
         |> Map.put(:href, loaded_record.href)
-        |> Map.put(:category, specification.category)
-        |> Map.put(:description, specification.description)
+        |> Diffo.Util.ensure_not_nil(:category, specification.category)
+        |> Diffo.Util.ensure_not_nil(:description, specification.description)
         |> Map.put(specification.type, specification)
         |> Map.drop([:forward_relationships, :reverse_relationships])
         |> Diffo.Util.put_not_empty(:serviceRelationship, service_relationships)
         |> Diffo.Util.put_not_empty(:resourceRelationship, resource_relationships)
+        |> Diffo.Util.put_not_empty(:supportingService, supporting_services)
+        |> Diffo.Util.put_not_empty(:supportingResources, supporting_resources)
         |> Map.delete(:feature)
         |> Diffo.Util.put_not_empty(features_name, features)
         |> Diffo.Util.put_not_empty(characteristics_name, characteristics)

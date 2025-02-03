@@ -176,12 +176,49 @@ defmodule Diffo.Provider.Instance_Test do
       feature = Diffo.Provider.create_feature!(%{instance_id: parent_instance.id, name: :management})
       _feature_characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :device, value: :epic1000a, type: :feature})
       _characteristic = Diffo.Provider.create_characteristic!(%{instance_id: parent_instance.id, name: :device, value: :managed, type: :instance})
-      relationship = Diffo.Provider.create_relationship!(%{type: :bestows, source_id: parent_instance.id, target_id: child_instance.id})
-      _relationship_characteristic = Diffo.Provider.create_characteristic!(%{relationship_id: relationship.id, name: :role, value: :gateway, type: :relationship})
-      parent_service = Diffo.Provider.get_instance_by_id!(parent_instance.id)
-      #load: [:href, :category, :description, :specification, :forward_relationships, :feature, :characteristic])
-      encoding = Jason.encode!(parent_service)
-      assert encoding == ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"Site Connection Service\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}],\"feature\":[{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}],\"serviceCharacteristic\":[{\"name\":\"device\",\"value\":\"managed\"}]})
+      forward_relationship = Diffo.Provider.create_relationship!(%{type: :bestows, source_id: parent_instance.id, target_id: child_instance.id})
+      _forward_relationship_characteristic = Diffo.Provider.create_characteristic!(%{relationship_id: forward_relationship.id, name: :role, value: :gateway, type: :relationship})
+      _reverse_relationship = Diffo.Provider.create_relationship!(%{type: :providedTo, source_id: child_instance.id, target_id: parent_instance.id})
+      parent_encoding = Jason.encode!(parent_instance)
+      assert parent_encoding == ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"Site Connection Service\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}],\"feature\":[{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}],\"serviceCharacteristic\":[{\"name\":\"device\",\"value\":\"managed\"}]})
+      child_encoding = Jason.encode!(child_instance)
+      assert child_encoding == ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\",\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\"}}]})
+    end
+
+    test "encode service with resource child instance json - success" do
+      parent_specification = Diffo.Provider.create_specification!(%{name: "adslAccess", category: "connectivity", description: "ADSL Access Service"})
+      child_specification = Diffo.Provider.create_specification!(%{name: "can", category: "physical", description: "Customer Access Network Resource", type: :resourceSpecification})
+      parent_instance = Diffo.Provider.create_instance!(%{specification_id: parent_specification.id})
+      child_instance = Diffo.Provider.create_instance!(%{specification_id: child_specification.id, type: :resource})
+      feature = Diffo.Provider.create_feature!(%{instance_id: parent_instance.id, name: :dynamicLineManagement})
+      _feature_characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :goal, value: :stability, type: :feature})
+      _characteristic = Diffo.Provider.create_characteristic!(%{instance_id: parent_instance.id, name: :dslam, value: "QDONC1001", type: :instance})
+      _reverse_relationship = Diffo.Provider.create_relationship!(%{type: :assignedTo, source_id: child_instance.id, target_id: parent_instance.id})
+      _forward_relationship = Diffo.Provider.create_relationship!(%{type: :isAssigned, source_id: parent_instance.id, target_id: child_instance.id})
+      parent_encoding = Jason.encode!(parent_instance)
+      assert parent_encoding == ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"ADSL Access Service\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"adslAccess\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\"}}],\"feature\":[{\"name\":\"dynamicLineManagement\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"goal\",\"value\":\"stability\"}]}],\"serviceCharacteristic\":[{\"name\":\"dslam",\"value\":\"QDONC1001\"}]})
+      child_encoding = Jason.encode!(child_instance)
+      assert child_encoding == ~s({\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\",\"category\":\"physical\",\"description\":\"Customer Access Network Resource\",\"resourceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/#{child_specification.id}\",\"name\":\"can\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\"}}]})
+    end
+
+    test "encode sorts features - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      _feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :optimisation})
+      _feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :management})
+      _feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :security})
+      encoding = Jason.encode!(instance)
+      assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"feature\":[{\"name\":\"management\",\"isEnabled\":true},{\"name\":\"optimisation\",\"isEnabled\":true},{\"name\":\"security\",\"isEnabled\":true}]})
+    end
+
+    test "encode sorts characteristics - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      _characteristic = Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :optimisation, value: true, type: :instance})
+      _characteristic = Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :management, value: true, type: :instance})
+      _characteristic = Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :security, value: true, type: :instance})
+      encoding = Jason.encode!(instance)
+      assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceCharacteristic\":[{\"name\":\"management\",\"value\":true},{\"name\":\"optimisation\",\"value\":true},{\"name\":\"security\",\"value\":true}]})
     end
   end
 

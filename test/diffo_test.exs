@@ -4,6 +4,7 @@ defmodule DiffoTest do
   doctest Diffo
   doctest Diffo.Uuid
   doctest Diffo.Util
+  doctest Diffo.Provider.Reference
   doctest Diffo.Provider.Service
   doctest Diffo.Provider.Specification
   doctest Diffo.Provider.Instance
