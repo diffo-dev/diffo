@@ -116,6 +116,15 @@ defmodule Diffo.Provider.Relationship_Test do
       assert updated_relationship.type == :usedBy
       assert updated_relationship.alias == :lineCard
     end
+
+    test "add alias - failure - resource cannot have supporting service" do
+      parent_specification = Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
+      child_specification = Diffo.Provider.create_specification!(%{name: "adslAccess"})
+      parent_instance = Diffo.Provider.create_instance!(%{specification_id: parent_specification.id, type: :resource})
+      child_instance = Diffo.Provider.create_instance!(%{specification_id: child_specification.id})
+      relationship = Diffo.Provider.create_relationship(%{type: :bestows, source_id: parent_instance.id, target_id: child_instance.id})
+      {:error, _error} = relationship |> Diffo.Provider.update_relationship(%{alias: :access})
+    end
   end
 
   describe "Diffo.Provider encode Relationships" do

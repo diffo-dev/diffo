@@ -69,7 +69,7 @@ defmodule Diffo.Provider.Relationship do
     end
 
     attribute :alias, :atom do
-      description "the alias of this relationship"
+      description "the alias of this relationship, used for supporting service or resource"
       allow_nil? true
       public? true
     end
@@ -104,6 +104,11 @@ defmodule Diffo.Provider.Relationship do
   validations do
     validate {Diffo.Validations.IsUuid4OrNil, attribute: :source_id}, on: :create
     validate {Diffo.Validations.IsUuid4OrNil, attribute: :target_id}, on: :create
+    validate absent(:alias) do
+      on [:create, :update]
+      where [one_of(:source_type, [:resource]), one_of(:target_type, [:service])]
+      message "a resource cannot have a supporting service"
+    end
   end
 
   calculations do
@@ -166,4 +171,17 @@ defmodule Diffo.Provider.Relationship do
       :resource -> :resourceRelationshipCharacteristic
     end
   end
+
+  @doc """
+  Compares two relationship, by ascending target_href
+  ## Examples
+    iex> Diffo.Provider.Relationship.compare(%{target_href: "a"}, %{target_href: "a"})
+    :eq
+    iex> Diffo.Provider.Relationship.compare(%{target_href: "b"}, %{target_href: "a"})
+    :gt
+    iex> Diffo.Provider.Relationship.compare(%{target_href: "a"}, %{target_href: "b"})
+    :lt
+
+  """
+  def compare(%{target_href: href0}, %{target_href: href1}), do: Diffo.Util.compare(href0, href1)
 end

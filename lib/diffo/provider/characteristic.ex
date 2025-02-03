@@ -143,4 +143,17 @@ defmodule Diffo.Provider.Characteristic do
       public? true
     end
   end
+
+  @doc """
+  Compares two characteristic, by ascending name
+  ## Examples
+    iex> Diffo.Provider.Characteristic.compare(%{name: "a"}, %{name: "a"})
+    :eq
+    iex> Diffo.Provider.Characteristic.compare(%{name: "b"}, %{name: "a"})
+    :gt
+    iex> Diffo.Provider.Characteristic.compare(%{name: "a"}, %{name: "b"})
+    :lt
+
+  """
+  def compare(%{name: name0}, %{name: name1}), do: Diffo.Util.compare(name0, name1)
 end

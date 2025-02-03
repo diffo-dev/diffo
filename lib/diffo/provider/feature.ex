@@ -14,6 +14,15 @@ defmodule Diffo.Provider.Feature do
 
   jason do
     pick [:name, :isEnabled, :featureCharacteristic]
+    customize fn result, record ->
+      feature_characteristics =
+        result
+        |> Map.get(:featureCharacteristic)
+        |> Enum.sort({:asc, Diffo.Provider.Characteristic})
+      result
+      |> Map.delete(:featureCharacteristic)
+      |> Diffo.Util.put_not_empty(:featureCharacteristic, feature_characteristics)
+    end
     order [:name, :isEnabled, :featureCharacteristic]
   end
 
@@ -89,4 +98,17 @@ defmodule Diffo.Provider.Feature do
       public? true
     end
   end
+
+  @doc """
+  Compares two feature, by ascending name
+  ## Examples
+    iex> Diffo.Provider.Feature.compare(%{name: "a"}, %{name: "a"})
+    :eq
+    iex> Diffo.Provider.Feature.compare(%{name: "b"}, %{name: "a"})
+    :gt
+    iex> Diffo.Provider.Feature.compare(%{name: "a"}, %{name: "b"})
+    :lt
+
+  """
+  def compare(%{name: name0}, %{name: name1}), do: Diffo.Util.compare(name0, name1)
 end
