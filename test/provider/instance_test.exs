@@ -167,18 +167,21 @@ defmodule Diffo.Provider.Instance_Test do
     end
   end
 
-  #TODO incomplete
   describe "Diffo.Provider encode Instances" do
     test "encode service with service child instance json - success" do
-      parent_specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
-      child_specification = Diffo.Provider.create_specification!(%{name: "device"})
+      parent_specification = Diffo.Provider.create_specification!(%{name: "siteConnection", category: "connectivity", description: "Site Connection Service"})
+      child_specification = Diffo.Provider.create_specification!(%{name: "device", category: "connectivity", description: "Device Service"})
       parent_instance = Diffo.Provider.create_instance!(%{specification_id: parent_specification.id})
       child_instance = Diffo.Provider.create_instance!(%{specification_id: child_specification.id})
-      _relationship = Diffo.Provider.create_relationship!(%{type: :bestows, source_id: parent_instance.id, target_id: child_instance.id})
-      parent_service = Diffo.Provider.get_instance_by_id!(parent_instance.id,
-        load: [:href, :category, :description, :specification, :forward_relationships, :feature, :characteristic])
+      feature = Diffo.Provider.create_feature!(%{instance_id: parent_instance.id, name: :management})
+      _feature_characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :device, value: :epic1000a, type: :feature})
+      _characteristic = Diffo.Provider.create_characteristic!(%{instance_id: parent_instance.id, name: :device, value: :managed, type: :instance})
+      relationship = Diffo.Provider.create_relationship!(%{type: :bestows, source_id: parent_instance.id, target_id: child_instance.id})
+      _relationship_characteristic = Diffo.Provider.create_characteristic!(%{relationship_id: relationship.id, name: :role, value: :gateway, type: :relationship})
+      parent_service = Diffo.Provider.get_instance_by_id!(parent_instance.id)
+      #load: [:href, :category, :description, :specification, :forward_relationships, :feature, :characteristic])
       encoding = Jason.encode!(parent_service)
-      assert encoding == ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"name\":\"siteConnection\"}})
+      assert encoding == ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"Site Connection Service\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}],\"feature\":[{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}],\"serviceCharacteristic\":[{\"name\":\"device\",\"value\":\"managed\"}]})
     end
   end
 

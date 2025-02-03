@@ -1,6 +1,7 @@
 # Diffo
 
-**TODO: Add description**
+# Diffo - TMF Service and Resource Management with a difference
+# Copyright Matt Beanland beanland@live.com.au
 
 ## Installation
 
