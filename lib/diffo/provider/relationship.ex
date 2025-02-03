@@ -14,13 +14,18 @@ defmodule Diffo.Provider.Relationship do
 
   jason do
     pick [:target_href, :type, :characteristic, :target_type]
-    customize fn result, _record ->
-      relationship_characteristic_name = Diffo.Provider.Relationship.derive_relationship_characteristic_name(Map.get(result, :target_type))
-      target_type = Map.get(result, :target_type)
-      href = Map.get(result, :target_href)
+    customize fn result, record ->
+      opts = [lazy?: true]
+      loaded_record =
+        record
+        |> Ash.load!([:target_type, :target_href, :characteristic], opts)
+      target_type = loaded_record.target_type
+      relationship_characteristic_name = Diffo.Provider.Relationship.derive_relationship_characteristic_name(target_type)
+      href = loaded_record.target_href
       id = Diffo.Uuid.trailing_uuid4(href)
-      characteristics = Map.get(result, :characteristic)
-      result
+      characteristics = Map.get(loaded_record, :characteristic)
+      result =
+        result
         |> Map.put(target_type, %{id: id, href: href})
         |> Diffo.Util.put_not_empty(relationship_characteristic_name, characteristics)
     end
