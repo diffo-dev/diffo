@@ -24,7 +24,7 @@ defmodule Diffo.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash_jason, git: "https://github.com/matt-beanland/ash_jason", branch: "order"},
+      {:ash_jason, "~> 1.1"},
       {:spark, ">= 2.1.21 and < 3.0.0"},
       {:ash_postgres, "~> 2.0"},
       # {:dep_from_hexpm, "~> 0.3.0"},
