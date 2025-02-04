@@ -144,6 +144,10 @@ defmodule Diffo.Provider.Characteristic do
     end
   end
 
+  preparations do
+    prepare build(sort: [name: :asc])
+  end
+
   @doc """
   Compares two characteristic, by ascending name
   ## Examples

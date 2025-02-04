@@ -18,6 +18,7 @@ defmodule Diffo.Provider.Instance_Test do
       Diffo.Provider.create_instance!(%{specification_id: specification.id})
       instances = Diffo.Provider.find_instances_by_specification_id!(specification.id)
       assert length(instances) == 3
+      # TODO check sorted by href
     end
 
     test "find instances by name" do
@@ -27,6 +28,7 @@ defmodule Diffo.Provider.Instance_Test do
       Diffo.Provider.create_instance!(%{specification_id: specification.id, name: "Westfield Doncaster L2.M4"})
       instances = Diffo.Provider.find_instances_by_name!("Westfield Doncaster L2.M")
       assert length(instances) == 2
+      # TODO check sorted by href
     end
   end
 

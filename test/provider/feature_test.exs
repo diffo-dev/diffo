@@ -18,6 +18,9 @@ defmodule Diffo.Provider.Feature_Test do
       Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :restriction, isEnabled: false})
       instance_features = Diffo.Provider.list_features_by_related_id!(instance.id)
       assert length(instance_features) == 2
+      # should be sorted
+      assert List.first(instance_features).name == :mobileBackup
+      assert List.last(instance_features).name == :restriction
     end
   end
 

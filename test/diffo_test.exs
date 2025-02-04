@@ -11,4 +11,6 @@ defmodule DiffoTest do
   doctest Diffo.Provider.Relationship
   doctest Diffo.Provider.Characteristic
   doctest Diffo.Provider.Feature
+  doctest Diffo.Provider.Place
+  doctest Diffo.Provider.PlaceRef
 end

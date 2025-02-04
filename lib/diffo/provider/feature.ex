@@ -15,13 +15,8 @@ defmodule Diffo.Provider.Feature do
   jason do
     pick [:name, :isEnabled, :featureCharacteristic]
     customize fn result, record ->
-      feature_characteristics =
-        result
-        |> Map.get(:featureCharacteristic)
-        |> Enum.sort({:asc, Diffo.Provider.Characteristic})
       result
-      |> Map.delete(:featureCharacteristic)
-      |> Diffo.Util.put_not_empty(:featureCharacteristic, feature_characteristics)
+      |> Diffo.Util.delete_if_empty(:featureCharacteristic)
     end
     order [:name, :isEnabled, :featureCharacteristic]
   end
@@ -97,6 +92,10 @@ defmodule Diffo.Provider.Feature do
     has_many :featureCharacteristic, Diffo.Provider.Characteristic do
       public? true
     end
+  end
+
+  preparations do
+    prepare build(sort: [name: :asc])
   end
 
   @doc """
