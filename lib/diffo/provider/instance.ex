@@ -30,11 +30,11 @@ defmodule Diffo.Provider.Instance do
       supporting_services =
         service_relationships
         |> Enum.filter(fn relationship -> relationship.alias != nil end)
-        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased) end)
+        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
       supporting_resources =
         resource_relationships
         |> Enum.filter(fn relationship -> relationship.alias != nil end)
-        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased) end)
+        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
       features = Map.get(loaded_record, :feature) |> Enum.sort({:asc, Diffo.Provider.Feature})
       features_name = Diffo.Provider.Instance.derive_feature_collection_name(type)
       characteristics = loaded_record.characteristic |> Enum.sort({:asc, Diffo.Provider.Characteristic})
@@ -49,13 +49,14 @@ defmodule Diffo.Provider.Instance do
         |> Diffo.Util.put_not_empty(:serviceRelationship, service_relationships)
         |> Diffo.Util.put_not_empty(:resourceRelationship, resource_relationships)
         |> Diffo.Util.put_not_empty(:supportingService, supporting_services)
-        |> Diffo.Util.put_not_empty(:supportingResources, supporting_resources)
+        |> Diffo.Util.put_not_empty(:supportingResource, supporting_resources)
         |> Map.delete(:feature)
         |> Diffo.Util.put_not_empty(features_name, features)
         |> Diffo.Util.put_not_empty(characteristics_name, characteristics)
     end
-    order [:id, :href, :category, :description, :name, :serviceSpecification, :resourceSpecification, :serviceRelationship,
-      :resourceRelationship, :feature, :activationFeature, :serviceCharacteristic, :resourceCharacteristic]
+    order [:id, :href, :category, :description, :name, :serviceSpecification, :resourceSpecification,
+      :serviceRelationship, :resourceRelationship, :supportingService, :supportingResource,
+      :feature, :activationFeature, :serviceCharacteristic, :resourceCharacteristic]
   end
 
   actions do
