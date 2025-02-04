@@ -3,14 +3,22 @@ defmodule Diffo.Provider.Characteristic_Test do
   use ExUnit.Case
   use Diffo.DataCase, async: true
 
-
-  describe "Diffo.Provider prepare Characteristics" do
-    test "check there are no characteristics" do
-      assert Diffo.Provider.list_characteristics!() == []
-    end
-  end
-
   describe "Diffo.Provider read Characteristics" do
+    test "list characteristics - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "broadband"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :port, value: "_not_null", type: :instance})
+      Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :circuit, value: "_not_null", type: :instance})
+      feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :restriction})
+      Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :type, value: :fraudHeavy, type: :feature})
+      Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :expiry, value: "20250131", type: :feature})
+      characteristics = Diffo.Provider.list_characteristics!()
+      assert length(characteristics) == 4
+      # should be sorted by name
+      assert List.first(characteristics).name == :circuit
+      assert List.last(characteristics).name == :type
+    end
+
     test "list feature characteristics - success" do
       specification = Diffo.Provider.create_specification!(%{name: "broadband"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
@@ -127,40 +135,9 @@ defmodule Diffo.Provider.Characteristic_Test do
     end
   end
 
-  describe "Diffo.Provider cleanup Characteristics" do
-    test "ensure there are no characteristics" do
-      for characteristic <- Diffo.Provider.list_characteristics!() do
-        Diffo.Provider.delete_characteristic!(%{id: characteristic.id})
-      end
-      assert Diffo.Provider.list_characteristics!() == []
-    end
-
-    test "ensure there are no relationships" do
-      for relationship <- Diffo.Provider.list_relationships!() do
-        Diffo.Provider.delete_relationship!(%{id: relationship.id})
-      end
-      assert Diffo.Provider.list_relationships!() == []
-    end
-
-    test "ensure there are no features" do
-      for feature <- Diffo.Provider.list_features!() do
-        Diffo.Provider.delete_feature!(%{id: feature.id})
-      end
-      assert Diffo.Provider.list_features!() == []
-    end
-
-    test "ensure there are no instances" do
-      for instance <- Diffo.Provider.list_instances!() do
-        Diffo.Provider.delete_instance!(%{id: instance.id})
-      end
-      assert Diffo.Provider.list_instances!() == []
-    end
-
-    test "ensure there are no specifications" do
-      for specification <- Diffo.Provider.list_specifications!() do
-        Diffo.Provider.delete_specification!(%{id: specification.id})
-      end
-      assert Diffo.Provider.list_specifications!() == []
+  describe "Diffo.Provider delete Characteristics" do
+    test "bulk delete" do
+      Diffo.Provider.delete_characteristic!(Diffo.Provider.list_characteristics!())
     end
   end
 end

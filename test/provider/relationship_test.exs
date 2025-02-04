@@ -3,14 +3,25 @@ defmodule Diffo.Provider.Relationship_Test do
   use ExUnit.Case
   use Diffo.DataCase, async: true
 
-
-  describe "Diffo.Provider prepare Relationships" do
-    test "check there are no relationships" do
-      assert Diffo.Provider.list_relationships!() == []
-    end
-  end
-
   describe "Diffo.Provider read Relationships" do
+    test "list relationships - success" do
+      access_specification = Diffo.Provider.create_specification!(%{name: "access"})
+      aggregation_specification = Diffo.Provider.create_specification!(%{name: "aggregation"})
+      edge_specification = Diffo.Provider.create_specification!(%{name: "edge"})
+      access_instance = Diffo.Provider.create_instance!(%{specification_id: access_specification.id})
+      aggregation_instance = Diffo.Provider.create_instance!(%{specification_id: aggregation_specification.id})
+      edge_instance = Diffo.Provider.create_instance!(%{specification_id: edge_specification.id})
+      Diffo.Provider.create_relationship!(%{type: :refersTo, source_id: access_instance.id, target_id: aggregation_instance.id})
+      Diffo.Provider.create_relationship!(%{type: :refersTo, source_id: aggregation_instance.id, target_id: access_instance.id})
+      Diffo.Provider.create_relationship!(%{type: :refersTo, source_id: aggregation_instance.id, target_id: edge_instance.id})
+      Diffo.Provider.create_relationship!(%{type: :refersTo, source_id: edge_instance.id, target_id: aggregation_instance.id})
+      relationships = Diffo.Provider.list_relationships!()
+      assert length(relationships) == 4
+      # should be sorted by target href
+      assert String.contains?(List.first(relationships).target_href, "access")
+      assert String.contains?(List.last(relationships).target_href, "edge")
+    end
+
     test "list service relationships from - success" do
       specification = Diffo.Provider.create_specification!(%{name: "accessEvc"})
       evpl1 = Diffo.Provider.create_instance!(%{specification_id: specification.id, name: "evpl1"})
@@ -169,26 +180,9 @@ defmodule Diffo.Provider.Relationship_Test do
     end
   end
 
-  describe "Diffo.Provider cleanup Relationships" do
-    test "ensure there are no relationships" do
-      for relationship <- Diffo.Provider.list_relationships!() do
-        Diffo.Provider.delete_relationship!(%{id: relationship.id})
-      end
-      assert Diffo.Provider.list_relationships!() == []
-    end
-
-    test "ensure there are no instances" do
-      for instance <- Diffo.Provider.list_instances!() do
-        Diffo.Provider.delete_instance!(%{id: instance.id})
-      end
-      assert Diffo.Provider.list_instances!() == []
-    end
-
-    test "ensure there are no specifications" do
-      for specification <- Diffo.Provider.list_specifications!() do
-        Diffo.Provider.delete_specification!(%{id: specification.id})
-      end
-      assert Diffo.Provider.list_specifications!() == []
+  describe "Diffo.Provider delete Relationships" do
+    test "bulk delete" do
+      Diffo.Provider.delete_relationship!(Diffo.Provider.list_relationships!())
     end
   end
 end

@@ -13,15 +13,16 @@ defmodule Diffo.Provider.Instance do
   end
 
   jason do
-    pick [:id, :href, :category, :description, :name, :specification, :forward_relationships, :feature, :characteristic, :type]
+    pick [:id, :href, :category, :description, :name, :specification, :forward_relationships, :feature, :characteristic, :place, :type]
     customize fn result, record ->
       opts = [lazy?: true]
       loaded_record =
         record
-        |> Ash.load!([:href, :characteristic, :feature, :forward_relationships], opts)
+        |> Ash.load!([:href, :characteristic, :feature, :forward_relationships, :place], opts)
         |> Ash.load!([specification: [:href, :version]], opts)
         |> Ash.load!([feature: [:featureCharacteristic]], opts)
         |> Ash.load!([forward_relationships: [:target_type, :target_href, :characteristic]], opts)
+
       type = Map.get(loaded_record, :type)
       specification = loaded_record.specification
       relationships = loaded_record.forward_relationships
@@ -50,13 +51,19 @@ defmodule Diffo.Provider.Instance do
         |> Diffo.Util.put_not_empty(:resourceRelationship, resource_relationships)
         |> Diffo.Util.put_not_empty(:supportingService, supporting_services)
         |> Diffo.Util.put_not_empty(:supportingResource, supporting_resources)
-        |> Map.delete(:feature)
+        |> Map.drop([:feature, :place])
         |> Diffo.Util.put_not_empty(features_name, features)
         |> Diffo.Util.put_not_empty(characteristics_name, characteristics)
+        |> Diffo.Util.put_not_empty(:place, loaded_record.place)
     end
-    order [:id, :href, :category, :description, :name, :serviceSpecification, :resourceSpecification,
-      :serviceRelationship, :resourceRelationship, :supportingService, :supportingResource,
-      :feature, :activationFeature, :serviceCharacteristic, :resourceCharacteristic]
+    order [:id, :href, :category, :description, :name,
+      :serviceSpecification, :resourceSpecification,
+      :serviceRelationship, :resourceRelationship,
+      :supportingService, :supportingResource,
+      :feature, :activationFeature,
+      :serviceCharacteristic, :resourceCharacteristic,
+      :place
+    ]
   end
 
   actions do
@@ -190,6 +197,10 @@ defmodule Diffo.Provider.Instance do
     end
 
     has_many :feature, Diffo.Provider.Feature do
+      public? true
+    end
+
+    has_many :place, Diffo.Provider.PlaceRef do
       public? true
     end
   end
