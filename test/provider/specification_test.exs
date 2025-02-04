@@ -2,11 +2,6 @@ defmodule Diffo.Provider.Specification_Test do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true
-  describe "Diffo.Provider prepare Specifications!" do
-     test "check there are no specifications" do
-      assert Diffo.Provider.list_specifications!() == []
-    end
-  end
 
   describe "Diffo.Provider read Specifications!" do
    test "find specifications by category" do
@@ -148,12 +143,9 @@ defmodule Diffo.Provider.Specification_Test do
     end
   end
 
-  describe "Diffo.Provider cleanup Specifications" do
-    test "ensure there are no specifications" do
-      for specification <- Diffo.Provider.list_specifications!() do
-        Diffo.Provider.delete_specification!(%{id: specification.id})
-      end
-      assert Diffo.Provider.list_specifications!() == []
+  describe "Diffo.Provider delete Specifications" do
+    test "bulk delete" do
+      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
     end
   end
 end

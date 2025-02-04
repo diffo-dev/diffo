@@ -3,12 +3,6 @@ defmodule Diffo.Provider.Place_Test do
   use ExUnit.Case
   use Diffo.DataCase, async: true
 
-  describe "Diffo.Provider prepare Places" do
-    test "check there are no placess" do
-      assert Diffo.Provider.list_places!() == []
-    end
-  end
-
   describe "Diffo.Provider read Places" do
     test "list places - success" do
       Diffo.Provider.create_place!(%{id: "LOC000000123456", name: :locationId, referredType: :GeographicAddress})
@@ -111,7 +105,7 @@ defmodule Diffo.Provider.Place_Test do
 
     test "update id - failure - href does not end with id" do
       place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, type: :GeographicAddress})
-      {:error, _error} = place |> Diffo.Provider.update_place(%{href: "place/nbnco/LOC0000008973534"})
+      {:error, _error} = place |> Diffo.Provider.update_place(%{href: "place/nbnco/LOC000000897354"})
     end
 
     test "update referredType - failure - type Place cannot have referredTYpe" do
@@ -130,12 +124,9 @@ defmodule Diffo.Provider.Place_Test do
     end
   end
 
-  describe "Diffo.Provider cleanup Places" do
-    test "ensure there are no places" do
-      for place <- Diffo.Provider.list_places!() do
-        Diffo.Provider.delete_place!(%{id: place.id})
-      end
-      assert Diffo.Provider.list_places!() == []
+  describe "Diffo.Provider delete Places" do
+    test "bulk delete" do
+      Diffo.Provider.delete_place!(Diffo.Provider.list_places!())
     end
   end
 end

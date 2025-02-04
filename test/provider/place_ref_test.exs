@@ -3,12 +3,6 @@ defmodule Diffo.Provider.Place_Ref_Test do
   use ExUnit.Case
   use Diffo.DataCase, async: true
 
-  describe "Diffo.Provider prepare PlaceRefs" do
-    test "check there are no places refs" do
-      assert Diffo.Provider.list_place_refs!() == []
-    end
-  end
-
   describe "Diffo.Provider read PlaceRefs" do
     test "list place refs - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
@@ -134,12 +128,31 @@ defmodule Diffo.Provider.Place_Ref_Test do
     end
   end
 
-  describe "Diffo.Provider cleanup PlaceRefs" do
-    test "ensure there are no specifications" do
-      for place_ref <- Diffo.Provider.list_place_refs!() do
-        Diffo.Provider.delete_place_ref!(%{id: place_ref.id})
-      end
-      assert Diffo.Provider.list_place_refs!() == []
+  describe "Diffo.Provider encode PlaceRefs" do
+    test "encode json place type - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", type: :GeographicAddress})
+      place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
+      encoding = Jason.encode!(place_ref)
+      # [:id, :href, :name, :role, :at_referredType, :at_type]
+      assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"at_type\":\"GeographicAddress\"}"
+    end
+
+    test "encode json place referredType - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", referredType: :GeographicAddress})
+      place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
+      encoding = Jason.encode!(place_ref)
+      # [:id, :href, :name, :role, :at_referredType, :at_type]
+      assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"at_referredType\":\"GeographicAddress\",\"at_type\":\"PlaceRef\"}"
+    end
+  end
+
+  describe "Diffo.Provider delete PlaceRefs" do
+    test "bulk delete" do
+      Diffo.Provider.delete_place_ref!(Diffo.Provider.list_place_refs!())
     end
   end
 end

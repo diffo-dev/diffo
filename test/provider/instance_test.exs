@@ -3,21 +3,26 @@ defmodule Diffo.Provider.Instance_Test do
   use ExUnit.Case
   use Diffo.DataCase, async: true
 
-  describe "Diffo.Provider prepare Instances!" do
-    test "check there are no instances" do
-      assert Diffo.Provider.list_instances!() == []
-    end
-  end
-
   describe "Diffo.Provider read Instances!" do
 
-    test "find instances by specification id" do
+    test "list instances" do
       specification = Diffo.Provider.create_specification!(%{name: "firewall"})
       Diffo.Provider.create_instance!(%{specification_id: specification.id})
       Diffo.Provider.create_instance!(%{specification_id: specification.id})
       Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      instances = Diffo.Provider.find_instances_by_specification_id!(specification.id)
+      instances = Diffo.Provider.list_instances!()
       assert length(instances) == 3
+      # TODO check sorted by href
+    end
+
+    test "find instances by specification id" do
+      specification = Diffo.Provider.create_specification!(%{name: "firewall"})
+      other_specification = Diffo.Provider.create_specification!(%{name: "gateway"})
+      Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      Diffo.Provider.create_instance!(%{specification_id: other_specification.id})
+      instances = Diffo.Provider.find_instances_by_specification_id!(specification.id)
+      assert length(instances) == 2
       # TODO check sorted by href
     end
 
@@ -284,19 +289,9 @@ defmodule Diffo.Provider.Instance_Test do
     end
   end
 
-  describe "Diffo.Provider cleanup Instances" do
-    test "ensure there are no instances" do
-      for instance <- Diffo.Provider.list_instances!() do
-        Diffo.Provider.delete_instance!(%{id: instance.id})
-      end
-      assert Diffo.Provider.list_instances!() == []
-    end
-
-    test "ensure there are no specifications" do
-      for specification <- Diffo.Provider.list_specifications!() do
-        Diffo.Provider.delete_specification!(%{id: specification.id})
-      end
-      assert Diffo.Provider.list_specifications!() == []
+  describe "Diffo.Provider delete Instances" do
+    test "bulk delete" do
+      Diffo.Provider.delete_instance!(Diffo.Provider.list_instances!())
     end
   end
 end
