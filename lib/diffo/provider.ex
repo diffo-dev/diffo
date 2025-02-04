@@ -66,5 +66,25 @@ defmodule Diffo.Provider do
       define :update_feature, action: :update
       define :delete_feature, action: :destroy
     end
+
+    resource Diffo.Provider.Place do
+      define :create_place, action: :create
+      define :get_place_by_id, action: :read, get_by: :id
+      define :list_places, action: :list
+      define :find_places_by_name, action: :find_by_name, args: [:query]
+      define :update_place, action: :update
+      define :delete_place, action: :destroy
+    end
+
+    resource Diffo.Provider.PlaceRef do
+      define :create_place_ref, action: :create
+      define :get_place_ref_by_id, action: :read, get_by: :id
+      define :list_place_refs, action: :list
+      define :find_place_refs_by_place_id, action: :find_by_place_id, args: [:query]
+      define :list_place_refs_by_place_id, action: :list_place_refs_by_place_id, args: [:place_id]
+      define :list_place_refs_by_instance_id, action: :list_place_refs_by_instance_id, args: [:instance_id]
+      define :update_place_ref, action: :update
+      define :delete_place_ref, action: :destroy
+    end
   end
 end

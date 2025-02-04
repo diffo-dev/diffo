@@ -22,6 +22,7 @@ defmodule Diffo.Provider.Relationship_Test do
       Diffo.Provider.create_relationship!(%{type: :refersTo, source_id: evpl3.id, target_id: evpl1.id})
       service_relationships_from_evpl1 = Diffo.Provider.list_service_relationships_from!(evpl1.id)
       assert length(service_relationships_from_evpl1) == 2
+      # TODO check sorted by href
       service_relationships_from_evpl2 = Diffo.Provider.list_service_relationships_from!(evpl2.id)
       assert length(service_relationships_from_evpl2) == 1
       service_relationships_from_evpl3 = Diffo.Provider.list_service_relationships_from!(evpl3.id)
@@ -44,6 +45,7 @@ defmodule Diffo.Provider.Relationship_Test do
       assert length(resource_relationships_from_cable1) == 1
       resource_relationships_from_cable2 = Diffo.Provider.list_resource_relationships_from!(cable2.id)
       assert length(resource_relationships_from_cable2) == 2
+       # TODO check sorted by href
       resource_relationships_from_cable3 = Diffo.Provider.list_resource_relationships_from!(cable3.id)
       assert length(resource_relationships_from_cable3) == 1
       # but there should be no service relationships

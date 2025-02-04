@@ -24,7 +24,7 @@ defmodule Diffo.Provider.Instance do
         |> Ash.load!([forward_relationships: [:target_type, :target_href, :characteristic]], opts)
       type = Map.get(loaded_record, :type)
       specification = loaded_record.specification
-      relationships = loaded_record.forward_relationships |> Enum.sort({:asc, Diffo.Provider.Relationship})
+      relationships = loaded_record.forward_relationships
       service_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
       resource_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
       supporting_services =
@@ -35,9 +35,9 @@ defmodule Diffo.Provider.Instance do
         resource_relationships
         |> Enum.filter(fn relationship -> relationship.alias != nil end)
         |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
-      features = Map.get(loaded_record, :feature) |> Enum.sort({:asc, Diffo.Provider.Feature})
+      features = Map.get(loaded_record, :feature)
       features_name = Diffo.Provider.Instance.derive_feature_collection_name(type)
-      characteristics = loaded_record.characteristic |> Enum.sort({:asc, Diffo.Provider.Characteristic})
+      characteristics = loaded_record.characteristic
       characteristics_name = Diffo.Provider.Instance.derive_characteristic_collection_name(type)
       result =
         result
@@ -231,6 +231,10 @@ defmodule Diffo.Provider.Instance do
 
   identities do
     identity :unique_name_per_specification_id, [:name, :specification_id]
+  end
+
+  preparations do
+    prepare build(sort: [href: :asc])
   end
 
   @doc """

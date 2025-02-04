@@ -200,6 +200,10 @@ defmodule Diffo.Provider.Specification do
     identity :unique_major_version_per_name, [:name, :major_version]
   end
 
+  preparations do
+    prepare build(sort: [name: :asc, major_version: :asc])
+  end
+
   @doc """
   Derives the catalog prefix from the type
   ## Examples

@@ -7,6 +7,24 @@ defmodule Diffo.Util do
   """
 
   @doc """
+  Deletes value to map if empty []
+  ## Examples
+    iex> Diffo.Util.delete_if_empty(%{serviceCharacteristic: [%{name: :port, value: 1}]}, :serviceCharacteristic)
+    %{serviceCharacteristic: [%{name: :port, value: 1}]}
+
+    iex> Diffo.Util.delete_if_empty(%{serviceCharacteristic: []}, :serviceCharacteristic)
+    %{}
+
+  """
+  def delete_if_empty(map, key) when is_map(map) do
+    if (Map.get(map, key) == []) do
+      Map.delete(map, key)
+    else
+      map
+    end
+  end
+
+  @doc """
   Adds value to map if not empty []
   ## Examples
     iex> Diffo.Util.put_not_empty(%{}, :serviceCharacteristic, [%{name: :port, value: 1}])

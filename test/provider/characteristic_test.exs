@@ -19,6 +19,9 @@ defmodule Diffo.Provider.Characteristic_Test do
       Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :expiry, value: "20250131", type: :feature})
       feature_characteristics = Diffo.Provider.list_characteristics_by_related_id!(feature.id, :feature)
       assert length(feature_characteristics) == 2
+      # should be sorted
+      assert List.first(feature_characteristics).name == :expiry
+      assert List.last(feature_characteristics).name == :type
     end
 
     test "list instance characteristics - success" do

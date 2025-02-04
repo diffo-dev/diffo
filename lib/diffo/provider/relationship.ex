@@ -138,6 +138,10 @@ defmodule Diffo.Provider.Relationship do
     identity :unique_source_and_target, [:source_id, :target_id]
   end
 
+  preparations do
+    prepare build(sort: [target_href: :asc])
+  end
+
   @doc """
   Derives the instance relationship name from the instance type
   ## Examples
