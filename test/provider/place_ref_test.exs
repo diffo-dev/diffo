@@ -135,8 +135,7 @@ defmodule Diffo.Provider.Place_Ref_Test do
       place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", type: :GeographicAddress})
       place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
       encoding = Jason.encode!(place_ref)
-      # [:id, :href, :name, :role, :at_referredType, :at_type]
-      assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"at_type\":\"GeographicAddress\"}"
+      assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@type\":\"GeographicAddress\"}"
     end
 
     test "encode json place referredType - success" do
@@ -145,8 +144,7 @@ defmodule Diffo.Provider.Place_Ref_Test do
       place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", referredType: :GeographicAddress})
       place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
       encoding = Jason.encode!(place_ref)
-      # [:id, :href, :name, :role, :at_referredType, :at_type]
-      assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"at_referredType\":\"GeographicAddress\",\"at_type\":\"PlaceRef\"}"
+      assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}"
     end
   end
 
