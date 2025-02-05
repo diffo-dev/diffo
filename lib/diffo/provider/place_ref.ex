@@ -28,6 +28,7 @@ defmodule Diffo.Provider.PlaceRef do
         |> Diffo.Util.ensure_not_nil(:at_type, loaded_record.place.type)
     end
     order [:id, :href, :name, :role, :at_referredType, :at_type]
+    rename %{at_referredType: "@referredType", at_type: "@type"}
   end
 
   actions do
