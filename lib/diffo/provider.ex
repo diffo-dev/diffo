@@ -31,10 +31,10 @@ defmodule Diffo.Provider do
       define :find_instances_by_name, action: :find_by_name, args: [:query]
       define :find_instances_by_specification_id, action: :find_by_specification_id, args: [:query]
       define :name_instance, action: :name
-      define :cancel_instance, action: :cancel
-      define :activate_instance, action: :activate
-      define :terminate_instance, action: :terminate
-      define :transition_instance, action: :transition
+      define :cancel_service, action: :cancel
+      define :activate_service, action: :activate
+      define :terminate_service, action: :terminate
+      define :transition_service, action: :transition
       define :specify_instance, action: :specify
       define :delete_instance, action: :destroy
     end
