@@ -85,7 +85,7 @@ defmodule Diffo.Uuid do
       true
     end
 
-    @doc ~S"""
+    @doc """
     Returns trailing uuid4 if valid, or nil.
     ## Examples
       iex> Diffo.Uuid.trailing_uuid4("serviceInventoryManagement/v4/service/accessEvc/d2566874-d5ee-400b-9983-10d63ec52f32")

@@ -25,6 +25,8 @@ defmodule Diffo.Provider.Instance do
 
       type = Map.get(loaded_record, :type)
       specification = loaded_record.specification
+      start_name = Diffo.Provider.Instance.derive_start_name(type)
+      end_name = Diffo.Provider.Instance.derive_end_name(type)
       relationships = loaded_record.forward_relationships
       service_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
       resource_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
@@ -46,6 +48,7 @@ defmodule Diffo.Provider.Instance do
         |> Diffo.Util.ensure_not_nil(:category, specification.category)
         |> Diffo.Util.ensure_not_nil(:description, specification.description)
         |> Map.put(specification.type, specification)
+        |> Diffo.Provider.Instance.dates(loaded_record)
         |> Map.drop([:forward_relationships, :reverse_relationships])
         |> Diffo.Util.put_not_empty(:serviceRelationship, service_relationships)
         |> Diffo.Util.put_not_empty(:resourceRelationship, resource_relationships)
@@ -58,6 +61,7 @@ defmodule Diffo.Provider.Instance do
         |> Diffo.Util.put_not_empty(:place, loaded_record.place)
     end
     order [:id, :href, :category, :description, :name,
+      :serviceDate, :startDate, :startOperatingDate, :endDate, :endOperatingDate,
       :serviceSpecification, :resourceSpecification,
       :serviceRelationship, :resourceRelationship,
       :supportingService, :supportingResource,
@@ -178,6 +182,14 @@ defmodule Diffo.Provider.Instance do
     create_timestamp :inserted_at
 
     update_timestamp :updated_at
+
+    attribute :started_at, :utc_datetime do
+      allow_nil? true
+    end
+
+    attribute :stopped_at, :utc_datetime do
+      allow_nil? true
+    end
   end
 
   relationships do
@@ -253,6 +265,13 @@ defmodule Diffo.Provider.Instance do
     prepare build(sort: [href: :asc])
   end
 
+  def dates(result, record) do
+    result
+    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_create_name(record.type), DateTime.truncate(record.inserted_at, :millisecond))
+    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_start_name(record.type), record.started_at)
+    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_end_name(record.type), record.stopped_at)
+  end
+
   @doc """
   Derives the type prefix from the specification type
   ## Examples
@@ -301,6 +320,60 @@ defmodule Diffo.Provider.Instance do
     case type do
       :service -> :serviceCharacteristic
       :resource -> :resourceCharacteristic
+    end
+  end
+
+  @doc """
+  Derives the instance create date from the instance type
+  ## Examples
+    iex> Diffo.Provider.Instance.derive_create_name(:service)
+    :serviceDate
+
+    iex> Diffo.Provider.Instance.derive_create_name(:resource)
+    nil
+
+  """
+
+  def derive_create_name(type) do
+    case type do
+      :service -> :serviceDate
+      :resource -> nil
+    end
+  end
+
+  @doc """
+  Derives the instance start date from the instance type
+  ## Examples
+    iex> Diffo.Provider.Instance.derive_start_name(:service)
+    :startDate
+
+    iex> Diffo.Provider.Instance.derive_start_name(:resource)
+    :startOperatingDate
+
+  """
+
+  def derive_start_name(type) do
+    case type do
+      :service -> :startDate
+      :resource -> :startOperatingDate
+    end
+  end
+
+  @doc """
+  Derives the instance end date from the instance type
+  ## Examples
+    iex> Diffo.Provider.Instance.derive_end_name(:service)
+    :endDate
+
+    iex> Diffo.Provider.Instance.derive_end_name(:resource)
+    :endOperatingDate
+
+  """
+
+  def derive_end_name(type) do
+    case type do
+      :service -> :endDate
+      :resource -> :endOperatingDate
     end
   end
 end
