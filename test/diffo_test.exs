@@ -13,4 +13,6 @@ defmodule DiffoTest do
   doctest Diffo.Provider.Feature
   doctest Diffo.Provider.Place
   doctest Diffo.Provider.PlaceRef
+  doctest Diffo.Provider.Party
+  doctest Diffo.Provider.PartyRef
 end
