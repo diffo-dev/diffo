@@ -13,12 +13,12 @@ defmodule Diffo.Provider.Instance do
   end
 
   jason do
-    pick [:id, :href, :category, :description, :name, :specification, :forward_relationships, :feature, :characteristic, :place, :type]
+    pick [:id, :href, :category, :description, :name, :specification, :forward_relationships, :feature, :characteristic, :place, :party, :type]
     customize fn result, record ->
       opts = [lazy?: true]
       loaded_record =
         record
-        |> Ash.load!([:href, :characteristic, :feature, :forward_relationships, :place], opts)
+        |> Ash.load!([:href, :characteristic, :feature, :forward_relationships, :place, :party], opts)
         |> Ash.load!([specification: [:href, :version]], opts)
         |> Ash.load!([feature: [:featureCharacteristic]], opts)
         |> Ash.load!([forward_relationships: [:target_type, :target_href, :characteristic]], opts)
@@ -54,6 +54,7 @@ defmodule Diffo.Provider.Instance do
         |> Map.drop([:feature, :place])
         |> Diffo.Util.put_not_empty(features_name, features)
         |> Diffo.Util.put_not_empty(characteristics_name, characteristics)
+        |> Diffo.Util.put_not_empty(:relatedParty, loaded_record.party)
         |> Diffo.Util.put_not_empty(:place, loaded_record.place)
     end
     order [:id, :href, :category, :description, :name,
@@ -62,7 +63,7 @@ defmodule Diffo.Provider.Instance do
       :supportingService, :supportingResource,
       :feature, :activationFeature,
       :serviceCharacteristic, :resourceCharacteristic,
-      :place
+      :place, :relatedParty
     ]
   end
 
@@ -197,6 +198,10 @@ defmodule Diffo.Provider.Instance do
     end
 
     has_many :feature, Diffo.Provider.Feature do
+      public? true
+    end
+
+    has_many :party, Diffo.Provider.PartyRef do
       public? true
     end
 

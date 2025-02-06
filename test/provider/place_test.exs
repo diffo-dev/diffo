@@ -32,7 +32,7 @@ defmodule Diffo.Provider.Place_Test do
       assert place.type == :PlaceRef
     end
 
-    test "create a GeographicLocation referredTypeplace - success" do
+    test "create a GeographicLocation referredType place - success" do
       place = Diffo.Provider.create_place!(%{id: "CSA000000124343", name: :csaId, referredType: :GeographicLocation})
       assert place.type == :PlaceRef
     end

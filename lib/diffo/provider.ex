@@ -86,5 +86,25 @@ defmodule Diffo.Provider do
       define :update_place_ref, action: :update
       define :delete_place_ref, action: :destroy
     end
+
+    resource Diffo.Provider.Party do
+      define :create_party, action: :create
+      define :get_party_by_id, action: :read, get_by: :id
+      define :list_parties, action: :list
+      define :find_parties_by_name, action: :find_by_name, args: [:query]
+      define :update_party, action: :update
+      define :delete_party, action: :destroy
+    end
+
+    resource Diffo.Provider.PartyRef do
+      define :create_party_ref, action: :create
+      define :get_party_ref_by_id, action: :read, get_by: :id
+      define :list_party_refs, action: :list
+      define :find_party_refs_by_party_id, action: :find_by_party_id, args: [:query]
+      define :list_party_refs_by_party_id, action: :list_party_refs_by_party_id, args: [:party_id]
+      define :list_party_refs_by_instance_id, action: :list_party_refs_by_instance_id, args: [:instance_id]
+      define :update_party_ref, action: :update
+      define :delete_party_ref, action: :destroy
+    end
   end
 end
