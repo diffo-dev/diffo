@@ -94,21 +94,21 @@ defmodule Diffo.Util do
   @doc """
   true if the datetime is close to (+/- 5 mins) from now
   ## Examples
-    iex> Diffo.Util.close_to_now?(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: 4))
+    iex> Diffo.Util.close_to_now?(DateTime.utc_now() |> DateTime.shift(minute: 4))
     true
 
-    iex> Diffo.Util.close_to_now?(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: -4))
+    iex> Diffo.Util.close_to_now?(DateTime.utc_now() |> DateTime.shift(minute: -4))
     true
 
-    iex> Diffo.Util.close_to_now?(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: 6))
+    iex> Diffo.Util.close_to_now?(DateTime.utc_now() |> DateTime.shift(minute: 6))
     false
 
-    iex> Diffo.Util.close_to_now?(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: -6))
+    iex> Diffo.Util.close_to_now?(DateTime.utc_now() |> DateTime.shift(minute: -6))
     false
 
   """
   def close_to_now?(datetime) do
-    now = DateTime.now!("Etc/UTC")
+    now = DateTime.utc_now()
     future = DateTime.shift(now, minute: 5)
     past = DateTime.shift(now, minute: -5)
     DateTime.after?(datetime, past) and DateTime.before?(datetime, future)
@@ -117,15 +117,15 @@ defmodule Diffo.Util do
   @doc """
   true if the datetime is past, more than 5 mins before now
     ## Examples
-    iex> Diffo.Util.past?(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: -6))
+    iex> Diffo.Util.past?(DateTime.utc_now() |> DateTime.shift(minute: -6))
     true
 
-    iex> Diffo.Util.past?(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: -4))
+    iex> Diffo.Util.past?(DateTime.utc_now() |> DateTime.shift(minute: -4))
     false
   """
 
   def past?(datetime) do
-    now = DateTime.now!("Etc/UTC")
+    now = DateTime.utc_now()
     past = DateTime.shift(now, minute: -5)
     DateTime.before?(datetime, past)
   end
@@ -133,32 +133,58 @@ defmodule Diffo.Util do
   @doc """
   true if the datetime is future, more than 5 mins after now
   ## Examples
-    iex> Diffo.Util.future?(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: 6))
+    iex> Diffo.Util.future?(DateTime.utc_now() |> DateTime.shift(minute: 6))
     true
 
-    iex> Diffo.Util.future?(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: 4))
+    iex> Diffo.Util.future?(DateTime.utc_now() |> DateTime.shift(minute: 4))
     false
   """
 
   def future?(datetime) do
-    now = DateTime.now!("Etc/UTC")
+    now = DateTime.utc_now()
     future = DateTime.shift(now, minute: 5)
     DateTime.after?(datetime, future)
   end
 
   @doc """
-  summarize datetimes in relation to now
+  realises a datetime from now conforming to the summary
   ## Examples
-    iex> Diffo.Util.summarise(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: 4))
+    iex> datetime = Diffo.Util.datetime(:now)
+    iex> Diffo.Util.summarise(datetime)
     :now
 
-    iex> Diffo.Util.summarise(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: -4))
-    :now
-
-    iex> Diffo.Util.summarise(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: 6))
+    iex> datetime = Diffo.Util.datetime(:future)
+    iex> Diffo.Util.summarise(datetime)
     :future
 
-    iex> Diffo.Util.summarise(DateTime.now!("Etc/UTC") |> DateTime.shift(minute: -6))
+    iex> datetime = Diffo.Util.datetime(:past)
+    iex> Diffo.Util.summarise(datetime)
+    :past
+
+  """
+  def datetime(summary) do
+    now = DateTime.utc_now(:millisecond)
+    case summary do
+      :now -> now
+      :future -> DateTime.shift(now, day: 1)
+      :past -> DateTime.shift(now, day: -1)
+      _ -> :error
+    end
+  end
+
+  @doc """
+  summarize datetimes in relation to now
+  ## Examples
+    iex> Diffo.Util.summarise(DateTime.utc_now() |> DateTime.shift(minute: 4))
+    :now
+
+    iex> Diffo.Util.summarise(DateTime.utc_now() |> DateTime.shift(minute: -4))
+    :now
+
+    iex> Diffo.Util.summarise(DateTime.utc_now() |> DateTime.shift(minute: 6))
+    :future
+
+    iex> Diffo.Util.summarise(DateTime.utc_now() |> DateTime.shift(minute: -6))
     :past
 
   """
@@ -174,17 +200,17 @@ defmodule Diffo.Util do
   @doc """
   Summarise ISO8601 dates, by comparing them with now, in a payload
   ## Examples
-    iex> now = DateTime.now!("Etc/UTC")
+    iex> now = DateTime.utc_now()
     iex> future = DateTime.shift(now, minute: 6)
     iex> past = DateTime.shift(now, minute: -6)
-    iex> payload = DateTime.to_iso8601(past) <> "," <> DateTime.to_iso8601(now) <> "," <> DateTime.to_iso8601(future)
+    iex> payload = Diffo.Util.to_iso8601(past) <> "," <> Diffo.Util.to_iso8601(now) <> "," <> Diffo.Util.to_iso8601(future)
     iex> Diffo.Util.summarise_dates(payload)
     "past,now,future"
 
   """
 
   def summarise_dates(payload) do
-   Regex.replace(~r/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}.\d{3,6}Z/, payload,
+   Regex.replace(~r/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}.\d{3}Z/, payload,
       fn iso8601 ->
         case DateTime.from_iso8601(iso8601) do
           {:ok, datetime, 0} -> Diffo.Util.summarise(datetime)
@@ -192,5 +218,16 @@ defmodule Diffo.Util do
         end
         |> Atom.to_string()
       end)
+  end
+
+  @doc """
+  Convert a dateime to iso8601, with millisecond resolution
+  """
+  def to_iso8601(datetime) do
+    if (datetime == nil) do
+      nil
+    else
+      DateTime.to_iso8601(DateTime.truncate(datetime, :millisecond))
+    end
   end
 end

@@ -49,6 +49,7 @@ defmodule Diffo.Provider.Instance do
         |> Diffo.Util.ensure_not_nil(:description, specification.description)
         |> Map.put(specification.type, specification)
         |> Diffo.Provider.Instance.dates(loaded_record)
+        |> Diffo.Provider.Instance.states(loaded_record)
         |> Map.drop([:forward_relationships, :reverse_relationships])
         |> Diffo.Util.put_not_empty(:serviceRelationship, service_relationships)
         |> Diffo.Util.put_not_empty(:resourceRelationship, resource_relationships)
@@ -62,6 +63,7 @@ defmodule Diffo.Provider.Instance do
     end
     order [:id, :href, :category, :description, :name,
       :serviceDate, :startDate, :startOperatingDate, :endDate, :endOperatingDate,
+      :state, :operatingStatus, :administrativeState, :operationalState, :resourceStatus, :usageState,
       :serviceSpecification, :resourceSpecification,
       :serviceRelationship, :resourceRelationship,
       :supportingService, :supportingResource,
@@ -112,33 +114,43 @@ defmodule Diffo.Provider.Instance do
       description "specifies the instance by specification id"
       require_atomic? false
       accept [:specification_id]
+      # todo validate that the new specification has same name (will have different major version)
     end
 
     update :cancel do
       description "cancels a service instance"
       require_atomic? false
+      validate attribute_equals(:type, :service)
       change set_attribute :service_state, :cancelled
       change set_attribute :service_operating_status, :pending
+      change set_attribute :stopped_at, &DateTime.utc_now/0
     end
 
     update :activate do
       description "activates a service instance"
       require_atomic? false
+      validate attribute_equals(:type, :service)
       change set_attribute :service_state, :active
       change set_attribute :service_operating_status, :starting
+      change set_attribute :started_at, &DateTime.utc_now/0
     end
 
     update :terminate do
       description "terminates a service instance"
       require_atomic? false
+      validate attribute_equals(:type, :service)
       change set_attribute :service_state, :terminated
       change set_attribute :service_operating_status, :stopping
+      change set_attribute :stopped_at, &DateTime.utc_now/0
     end
 
     update :transition do
-      require_atomic? false
       description "transition service state and/or operating status"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
       accept [:service_state, :service_operating_status]
+      #TODO need logic here started_at when nil and state transitions to active or inactive
+      #TODO need logic here stopped_at when nil and state transitions to cancelled or terminated
     end
   end
 
@@ -183,11 +195,11 @@ defmodule Diffo.Provider.Instance do
 
     update_timestamp :updated_at
 
-    attribute :started_at, :utc_datetime do
+    attribute :started_at, :utc_datetime_usec do
       allow_nil? true
     end
 
-    attribute :stopped_at, :utc_datetime do
+    attribute :stopped_at, :utc_datetime_usec do
       allow_nil? true
     end
   end
@@ -267,9 +279,24 @@ defmodule Diffo.Provider.Instance do
 
   def dates(result, record) do
     result
-    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_create_name(record.type), DateTime.truncate(record.inserted_at, :millisecond))
-    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_start_name(record.type), record.started_at)
-    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_end_name(record.type), record.stopped_at)
+    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_create_name(record.type), Diffo.Util.to_iso8601(record.inserted_at))
+    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_start_name(record.type), Diffo.Util.to_iso8601(record.started_at))
+    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_end_name(record.type), Diffo.Util.to_iso8601(record.stopped_at))
+  end
+
+  def states(result, record) do
+    case record.type do
+      :service ->
+        result
+        |> Diffo.Util.ensure_not_nil(:state, record.service_state)
+        |> Diffo.Util.ensure_not_nil(:operatingStatus, record.service_operating_status)
+      :resource ->
+        result
+        #|> Diffo.Util.ensure_not_nil(:administrativeState, record.resource_administrative_state)
+        #|> Diffo.Util.ensure_not_nil(:operationalState, record.resource_operational_state)
+        #|> Diffo.Util.ensure_not_nil(:resourceStatus, record.resource_status)
+        #|> Diffo.Util.ensure_not_nil(:usageState, record.resource_usage_state)
+    end
   end
 
   @doc """
