@@ -85,21 +85,17 @@ defmodule Diffo.Provider.Instance_Test do
 
   describe "Diffo.Provider update Instances" do
     test "cancel an initial service instance - success" do
-      transition_map = Diffo.Provider.Service.default_service_state_transition_map
       specification = Diffo.Provider.create_specification!(%{name: "initialCancel"})
-        |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       updated_instance = instance |> Diffo.Provider.cancel_service!()
       assert updated_instance.service_state == :cancelled
-      assert updated_instance.service_operating_status == :pending
+      assert updated_instance.service_operating_status == :unknown
       assert updated_instance.started_at == nil
       assert updated_instance.stopped_at != nil
     end
 
     test "activate an initial service instance - success" do
-      transition_map = Diffo.Provider.Service.default_service_state_transition_map
       specification = Diffo.Provider.create_specification!(%{name: "initialActive"})
-        |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
       updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
         |> Diffo.Provider.activate_service!()
       assert updated_instance.service_state == :active
@@ -109,9 +105,7 @@ defmodule Diffo.Provider.Instance_Test do
     end
 
     test "terminate an active service instance - success" do
-      transition_map = Diffo.Provider.Service.default_service_state_transition_map
       specification = Diffo.Provider.create_specification!(%{name: "activeTerminate"})
-        |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
       updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
         |> Diffo.Provider.activate_service!() |> Diffo.Provider.terminate_service!()
       assert updated_instance.service_state == :terminated
@@ -121,12 +115,10 @@ defmodule Diffo.Provider.Instance_Test do
     end
 
     test "transition an active service instance running - success" do
-      transition_map = Diffo.Provider.Service.default_service_state_transition_map
       specification = Diffo.Provider.create_specification!(%{name: "activeRunning"})
-        |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
       updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
         |> Diffo.Provider.activate_service!()
-        |> Diffo.Provider.transition_service!(%{service_operating_status: :running})
+        |> Diffo.Provider.status_instance!(%{service_operating_status: :running})
       assert updated_instance.service_state == :active
       assert updated_instance.service_operating_status == :running
       assert updated_instance.started_at != nil
@@ -134,12 +126,9 @@ defmodule Diffo.Provider.Instance_Test do
     end
 
     test "transition an active service instance suspended - success" do
-      transition_map = Diffo.Provider.Service.default_service_state_transition_map
       specification = Diffo.Provider.create_specification!(%{name: "activeSuspended"})
-        |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
       updated_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-        |> Diffo.Provider.activate_service!()
-        |> Diffo.Provider.transition_service!(%{service_state: :suspended, service_operating_status: :limited})
+        |> Diffo.Provider.activate_service!() |> Diffo.Provider.suspend_service!()
       assert updated_instance.service_state == :suspended
       assert updated_instance.service_operating_status == :limited
       assert updated_instance.started_at != nil
@@ -147,12 +136,10 @@ defmodule Diffo.Provider.Instance_Test do
     end
 
     test "transition an initial service terminated - failure" do
-      transition_map = Diffo.Provider.Service.default_service_state_transition_map
       specification = Diffo.Provider.create_specification!(%{name: "initialTerminated"})
-        |> Diffo.Provider.set_specification_service_state_transition_map!(%{service_state_transition_map: transition_map})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       assert instance.service_state == :initial
-      {:error, _error} = instance |> Diffo.Provider.transition_service(%{service_state: :terminated})
+      {:error, _error} = instance |> Diffo.Provider.terminate_service()
     end
 
     test "update a service instance name - success" do
@@ -305,20 +292,29 @@ defmodule Diffo.Provider.Instance_Test do
       assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceCharacteristic\":[{\"name\":\"management\",\"value\":true},{\"name\":\"optimisation\",\"value\":true},{\"name\":\"security\",\"value\":true}]})
     end
 
+
     test "encode cancelled service - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       cancelled_instance = Diffo.Provider.cancel_service!(instance)
       encoding = Jason.encode!(cancelled_instance) |> Diffo.Util.summarise_dates()
-      assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceDate\":\"now\",\"endDate\":\"now\",\"state\":\"cancelled\",\"operatingStatus\":\"pending\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"}})
+      assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceDate\":\"now\",\"endDate\":\"now\",\"state\":\"cancelled\",\"operatingStatus\":\"unknown\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"}})
     end
 
-    test "encode activated service - success" do
+    test "encode active service - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       activated_instance = Diffo.Provider.activate_service!(instance)
       encoding = Jason.encode!(activated_instance) |> Diffo.Util.summarise_dates()
       assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceDate\":\"now\",\"startDate\":\"now\",\"state\":\"active\",\"operatingStatus\":\"starting\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"}})
+    end
+
+    test "encode suspended service - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      activated_instance = Diffo.Provider.activate_service!(instance) |> Diffo.Provider.suspend_service!()
+      encoding = Jason.encode!(activated_instance) |> Diffo.Util.summarise_dates()
+      assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceDate\":\"now\",\"startDate\":\"now\",\"state\":\"suspended\",\"operatingStatus\":\"limited\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"}})
     end
 
     test "encode terminated service - success" do

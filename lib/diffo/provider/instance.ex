@@ -5,11 +5,27 @@ defmodule Diffo.Provider.Instance do
 
   Instance - Ash Resource for a TMF Service or Resource Instance
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource, AshStateMachine]
 
   postgres do
     table "instances"
     repo Diffo.Repo
+  end
+
+  state_machine do
+    initial_states [:initial]
+    default_initial_state :initial
+    state_attribute :service_state
+
+    transitions do
+      transition(action: :cancel, from: [:initial, :feasibilityChecked, :reserved], to: :cancelled)
+      transition(action: :feasibilityCheck, from: :initial, to: :feasibilityChecked)
+      transition(action: :reserve, from: [:initial, :feasibilityChecked], to: :reserved)
+      transition(action: :deactivate, from: [:active, :reserved], to: [:inactive])
+      transition(action: :activate, from: [:initial, :feasibilityChecked, :reserved, :inactive, :suspended, :terminated], to: :active)
+      transition(action: :suspend, from: :active, to: :suspended)
+      transition(action: :terminate, from: [:active, :inactive, :suspended], to: :terminated)
+    end
   end
 
   jason do
@@ -121,36 +137,66 @@ defmodule Diffo.Provider.Instance do
       description "cancels a service instance"
       require_atomic? false
       validate attribute_equals(:type, :service)
-      change set_attribute :service_state, :cancelled
-      change set_attribute :service_operating_status, :pending
+      change transition_state(:cancelled)
+      change set_attribute :service_operating_status, :unknown
       change set_attribute :stopped_at, &DateTime.utc_now/0
+    end
+
+    update :feasibilityCheck do
+      description "feasibilityChecks a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state(:feasibilityCheck)
+      change set_attribute :service_operating_status, :pending
+    end
+
+    update :reserve do
+      description "reserves a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state :reserved
+      change set_attribute :service_operating_status, :pending
+    end
+
+    update :deactivate do
+      description "deactivates a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state(:inactive)
+      change set_attribute :service_operating_status, :configured
     end
 
     update :activate do
       description "activates a service instance"
       require_atomic? false
       validate attribute_equals(:type, :service)
-      change set_attribute :service_state, :active
+      change transition_state :active
       change set_attribute :service_operating_status, :starting
       change set_attribute :started_at, &DateTime.utc_now/0
+    end
+
+    update :suspend do
+      description "suspends a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state :suspended
+      change set_attribute :service_operating_status, :limited
     end
 
     update :terminate do
       description "terminates a service instance"
       require_atomic? false
       validate attribute_equals(:type, :service)
-      change set_attribute :service_state, :terminated
+      change transition_state(:terminated)
       change set_attribute :service_operating_status, :stopping
       change set_attribute :stopped_at, &DateTime.utc_now/0
     end
 
-    update :transition do
-      description "transition service state and/or operating status"
+    update :status do
+      description "updates the status of an instance"
       require_atomic? false
       validate attribute_equals(:type, :service)
-      accept [:service_state, :service_operating_status]
-      #TODO need logic here started_at when nil and state transitions to active or inactive
-      #TODO need logic here stopped_at when nil and state transitions to cancelled or terminated
+      accept [:service_operating_status]
     end
   end
 
@@ -173,14 +219,6 @@ defmodule Diffo.Provider.Instance do
       allow_nil? true
       public? true
       constraints match: ~r/^[a-zA-Z0-9\s._-]+$/
-    end
-
-    attribute :service_state, :atom do
-      description "the service state, if this instance is a service"
-      allow_nil? true
-      public? true
-      default Diffo.Provider.Service.default_service_state
-      constraints one_of: Diffo.Provider.Service.service_states
     end
 
     attribute :service_operating_status, :atom do
@@ -235,10 +273,6 @@ defmodule Diffo.Provider.Instance do
   end
 
   validations do
-    validate {Diffo.Validations.IsTransitionValid, state: :service_state, transition_map: :specification_service_state_transitions} do
-      on [:update]
-      where present(:service_state)
-    end
     # TODO this isn't working as specified_instance_type is not loaded
     #validate confirm(:type, :specified_instance_type), on: [:create, :update]
   end
@@ -262,10 +296,6 @@ defmodule Diffo.Provider.Instance do
 
     calculate :href, :string, expr(type <> "InventoryManagement/v" <> tmf_version <> "/" <> type <> "/" <> specification_name <> "/" <> id) do
       description "the inventory href of the service or resource instance"
-    end
-
-    calculate :specification_service_state_transitions, :map, expr(specification.service_state_transition_map) do
-      description "the service state transitions specified by the specification"
     end
   end
 

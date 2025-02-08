@@ -1,4 +1,4 @@
-defmodule :"Elixir.Diffo.Repo.Migrations.Initial specificationExtensions1" do
+defmodule Diffo.Repo.Migrations.InitializeExtensions1 do
   @moduledoc """
   Installs any extensions that are mentioned in the repo's `installed_extensions/0` callback
 

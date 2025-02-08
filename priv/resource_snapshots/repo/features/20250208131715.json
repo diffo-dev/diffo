@@ -22,23 +22,13 @@
     },
     {
       "allow_nil?": true,
-      "default": "nil",
+      "default": "true",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "value",
-      "type": "binary"
-    },
-    {
-      "allow_nil?": false,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "type",
-      "type": "text"
+      "source": "isEnabled",
+      "type": "boolean"
     },
     {
       "allow_nil?": false,
@@ -61,7 +51,7 @@
       "type": "utc_datetime_usec"
     },
     {
-      "allow_nil?": true,
+      "allow_nil?": false,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
@@ -78,15 +68,15 @@
           "global": null,
           "strategy": null
         },
-        "name": "characteristics_relationship_id_fkey",
+        "name": "features_instance_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
         "schema": "public",
-        "table": "relationships"
+        "table": "instances"
       },
       "size": null,
-      "source": "relationship_id",
+      "source": "instance_id",
       "type": "uuid"
     }
   ],
@@ -95,27 +85,23 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "46B7CA5BE49B7D6FB91CA0732E3C2B404C068A090FBA1A641DF1EBF374BAD5E2",
+  "hash": "B36D87266EEC5E333871513F9DFB724E6BD20432CDA0DDB216E734505508272D",
   "identities": [
     {
       "all_tenants?": false,
       "base_filter": null,
-      "index_name": "characteristics_relationship_characteristic_uniqueness_index",
+      "index_name": "features_instance_feature_uniqueness_index",
       "keys": [
         {
           "type": "atom",
-          "value": "relationship_id"
-        },
-        {
-          "type": "atom",
-          "value": "type"
+          "value": "instance_id"
         },
         {
           "type": "atom",
           "value": "name"
         }
       ],
-      "name": "relationship_characteristic_uniqueness",
+      "name": "instance_feature_uniqueness",
       "nils_distinct?": true,
       "where": null
     }
@@ -127,5 +113,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "characteristics"
+  "table": "features"
 }

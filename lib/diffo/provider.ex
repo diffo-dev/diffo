@@ -20,7 +20,6 @@ defmodule Diffo.Provider do
       define :categorise_specification, action: :categorise
       define :next_minor_specification, action: :next_minor
       define :next_patch_specification, action: :next_patch
-      define :set_specification_service_state_transition_map, action: :set_service_state_transition_map
       define :delete_specification, action: :destroy
     end
 
@@ -32,9 +31,13 @@ defmodule Diffo.Provider do
       define :find_instances_by_specification_id, action: :find_by_specification_id, args: [:query]
       define :name_instance, action: :name
       define :cancel_service, action: :cancel
+      define :feasibilityCheck_service, action: :feasibilityCheck
+      define :reserve_service, action: :reserve
+      define :deactivate_service, action: :deactivate
       define :activate_service, action: :activate
+      define :suspend_service, action: :suspend
       define :terminate_service, action: :terminate
-      define :transition_service, action: :transition
+      define :status_instance, action: :status
       define :specify_instance, action: :specify
       define :delete_instance, action: :destroy
     end

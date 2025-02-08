@@ -32,7 +32,7 @@
     },
     {
       "allow_nil?": false,
-      "default": "\"PlaceRef\"",
+      "default": "\"PartyRef\"",
       "generated?": false,
       "primary_key?": false,
       "references": null,
@@ -41,7 +41,7 @@
       "type": "text"
     },
     {
-      "allow_nil?": false,
+      "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
@@ -76,7 +76,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "D2D446B4BEFDDB6C0E73FFA638D4A0FC0AD2814CCB980C6699CBF1933F1F8805",
+  "hash": "3643B446F6C1B962193622081F5E879DD5CC104C3CFE1C51C0907E97B8361748",
   "identities": [],
   "multitenancy": {
     "attribute": null,
@@ -85,5 +85,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "places"
+  "table": "parties"
 }

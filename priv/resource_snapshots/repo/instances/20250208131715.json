@@ -2,56 +2,6 @@
   "attributes": [
     {
       "allow_nil?": false,
-      "default": "\"serviceSpecification\"",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "type",
-      "type": "text"
-    },
-    {
-      "allow_nil?": false,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "name",
-      "type": "text"
-    },
-    {
-      "allow_nil?": false,
-      "default": "1",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "major_version",
-      "type": "bigint"
-    },
-    {
-      "allow_nil?": false,
-      "default": "0",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "minor_version",
-      "type": "bigint"
-    },
-    {
-      "allow_nil?": false,
-      "default": "0",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "patch_version",
-      "type": "bigint"
-    },
-    {
-      "allow_nil?": false,
       "default": "fragment(\"gen_random_uuid()\")",
       "generated?": false,
       "primary_key?": true,
@@ -61,34 +11,14 @@
       "type": "uuid"
     },
     {
-      "allow_nil?": true,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "description",
-      "type": "text"
-    },
-    {
-      "allow_nil?": true,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "category",
-      "type": "text"
-    },
-    {
       "allow_nil?": false,
-      "default": "4",
+      "default": "\"service\"",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "tmf_version",
-      "type": "bigint"
+      "source": "type",
+      "type": "text"
     },
     {
       "allow_nil?": true,
@@ -97,8 +27,18 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "strategy",
-      "type": "map"
+      "source": "name",
+      "type": "text"
+    },
+    {
+      "allow_nil?": true,
+      "default": "\"unknown\"",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "service_operating_status",
+      "type": "text"
     },
     {
       "allow_nil?": false,
@@ -119,6 +59,65 @@
       "size": null,
       "source": "updated_at",
       "type": "utc_datetime_usec"
+    },
+    {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "started_at",
+      "type": "utc_datetime_usec"
+    },
+    {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "stopped_at",
+      "type": "utc_datetime_usec"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": {
+        "deferrable": false,
+        "destination_attribute": "id",
+        "destination_attribute_default": null,
+        "destination_attribute_generated": null,
+        "index?": false,
+        "match_type": null,
+        "match_with": null,
+        "multitenancy": {
+          "attribute": null,
+          "global": null,
+          "strategy": null
+        },
+        "name": "instances_specification_id_fkey",
+        "on_delete": null,
+        "on_update": null,
+        "primary_key?": true,
+        "schema": "public",
+        "table": "specifications"
+      },
+      "size": null,
+      "source": "specification_id",
+      "type": "uuid"
+    },
+    {
+      "allow_nil?": false,
+      "default": "\"initial\"",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "service_state",
+      "type": "text"
     }
   ],
   "base_filter": null,
@@ -126,12 +125,12 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "8EB2752F15F06B60DBABC97C02C27385C50BA977D49C22DFE95810F8983C9CBC",
+  "hash": "858A4145E5B72278517D460B2B45A997FAA95A64F43B0DB7DF417665D998D01B",
   "identities": [
     {
       "all_tenants?": false,
       "base_filter": null,
-      "index_name": "specifications_unique_major_version_per_name_index",
+      "index_name": "instances_unique_name_per_specification_id_index",
       "keys": [
         {
           "type": "atom",
@@ -139,10 +138,10 @@
         },
         {
           "type": "atom",
-          "value": "major_version"
+          "value": "specification_id"
         }
       ],
-      "name": "unique_major_version_per_name",
+      "name": "unique_name_per_specification_id",
       "nils_distinct?": true,
       "where": null
     }
@@ -154,5 +153,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "specifications"
+  "table": "instances"
 }
