@@ -25,6 +25,7 @@ defmodule Diffo.MixProject do
   defp deps do
     [
       # {:ash_jason, "~> 1.1"},
+      # {:simple_sat, "~> 0.1.3"},
       {:ash_state_machine, "~> 0.2.7"},
       {:ash_jason, git: "https://github.com/matt-beanland/ash_jason", tag: "v1.1.1"},
       {:spark, ">= 2.1.21 and < 3.0.0"},
