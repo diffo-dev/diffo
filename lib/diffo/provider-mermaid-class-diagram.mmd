@@ -1,0 +1,162 @@
+classDiagram
+    class Specification {
+        String name
+        UUID id
+        String description
+        String category
+        destroy()
+        read()
+        create(Atom type, String name, Integer major_version, UUID id, ...)
+        list()
+        find_by_name(CiString query)
+        find_by_category(CiString query)
+        get_latest(CiString query)
+        describe(String description)
+        categorise(String category)
+        next_minor()
+        next_patch()
+    }
+    class Instance {
+        UUID id
+        Atom type
+        String name
+        Atom service_operating_status
+        Atom service_state
+        Characteristic[] characteristic
+        Feature[] feature
+        PartyRef[] party
+        PlaceRef[] place
+        destroy()
+        read()
+        create(UUID specification_id, String name, Atom type)
+        list()
+        find_by_name(CiString query)
+        find_by_specification_id(String query)
+        name(String name)
+        specify(UUID specification_id)
+        cancel()
+        feasibilityCheck()
+        reserve()
+        deactivate()
+        activate()
+        suspend()
+        terminate()
+        status(Atom service_operating_status)
+    }
+    class Relationship {
+        Atom alias
+        Atom type
+        UUID source_id
+        UUID target_id
+        Instance source
+        Instance target
+        Characteristic[] characteristic
+        destroy()
+        read()
+        create(UUID source_id, UUID target_id, Atom type, Atom alias)
+        list()
+        list_service_relationships_from(UUID instance_id)
+        list_resource_relationships_from(UUID instance_id)
+        update(Atom alias, Atom type)
+    }
+    class Characteristic {
+        Atom name
+        Term value
+        Atom type
+        UUID feature_id
+        UUID instance_id
+        UUID relationship_id
+        Feature feature
+        Instance instance
+        Relationship relationship
+        destroy()
+        read()
+        create(UUID feature_id, UUID instance_id, UUID relationship_id, Atom name, ...)
+        find_by_name(CiString query)
+        list()
+        list_characteristics_by_related_id(UUID related_id, Atom type)
+        update(Term value)
+    }
+    class Feature {
+        Atom name
+        Boolean isEnabled
+        UUID instance_id
+        Instance instance
+        Characteristic[] featureCharacteristic
+        destroy()
+        read()
+        create(UUID instance_id, Atom name, Boolean isEnabled)
+        find_by_name(CiString query)
+        list()
+        list_features_by_related_id(UUID related_id)
+        update(Boolean isEnabled)
+    }
+    class Place {
+        String id
+        String href
+        String name
+        Atom type
+        Atom referredType
+        PlaceRef[] place_refs
+        destroy()
+        read()
+        create(String id, String href, String name, Atom type, ...)
+        find_by_name(CiString query)
+        list()
+        update(String href, String name, Atom type, Atom referredType)
+    }
+    class PlaceRef {
+        Atom role
+        UUID instance_id
+        String place_id
+        Instance instance
+        Place place
+        destroy()
+        read()
+        create(UUID instance_id, Atom role, String place_id)
+        list()
+        list_place_refs_by_instance_id(UUID instance_id)
+        list_place_refs_by_place_id(String place_id)
+        find_by_place_id(CiString query)
+        update(Atom role)
+    }
+    class Party {
+        String id
+        String href
+        String name
+        Atom type
+        Atom referredType
+        PartyRef[] party_refs
+        destroy()
+        read()
+        create(String id, String href, String name, Atom type, ...)
+        find_by_name(CiString query)
+        list()
+        update(String href, String name, Atom type, Atom referredType)
+    }
+    class PartyRef {
+        Atom role
+        UUID instance_id
+        String party_id
+        Instance instance
+        Party party
+        destroy()
+        read()
+        create(UUID instance_id, Atom role, String party_id)
+        list()
+        list_party_refs_by_instance_id(UUID instance_id)
+        list_party_refs_by_party_id(String party_id)
+        find_by_party_id(CiString query)
+        update(Atom role)
+    }
+
+    Characteristic -- Feature
+    Characteristic -- Instance
+    Characteristic -- Relationship
+    Feature -- Instance
+    Instance -- PartyRef
+    Instance -- PlaceRef
+    Instance -- Relationship
+    Instance -- Specification
+    Party -- PartyRef
+    Place -- PlaceRef

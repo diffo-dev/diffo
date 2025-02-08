@@ -16,6 +16,7 @@ defmodule Diffo.Provider.Instance do
     initial_states [:initial]
     default_initial_state :initial
     state_attribute :service_state
+    #deprecated_states [:designed]
 
     transitions do
       transition(action: :cancel, from: [:initial, :feasibilityChecked, :reserved], to: :cancelled)
