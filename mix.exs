@@ -24,7 +24,8 @@ defmodule Diffo.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      #{:ash_jason, "~> 1.1"},
+      # {:ash_jason, "~> 1.1"},
+      {:ash_state_machine, "~> 0.2.7"},
       {:ash_jason, git: "https://github.com/matt-beanland/ash_jason", tag: "v1.1.1"},
       {:spark, ">= 2.1.21 and < 3.0.0"},
       {:ash_postgres, "~> 2.0"},
@@ -32,10 +33,10 @@ defmodule Diffo.MixProject do
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
       {:ash, "~> 3.4"},
       {:igniter, "~> 0.3"},
-      #{:phoenix, "~> 1.7.14"},
+      # {:phoenix, "~> 1.7.14"},
       {:uuid, "~> 1.1"},
       {:ex_doc, "~> 0.12"},
-      #{:aja, "~>0.7"},
+      # {:aja, "~>0.7"},
       {:untangle, "~> 0.3"}
     ]
   end

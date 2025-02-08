@@ -11,24 +11,24 @@
       "type": "uuid"
     },
     {
-      "allow_nil?": false,
+      "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "name",
+      "source": "alias",
       "type": "text"
     },
     {
       "allow_nil?": true,
-      "default": "true",
+      "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "isEnabled",
-      "type": "boolean"
+      "source": "type",
+      "type": "text"
     },
     {
       "allow_nil?": false,
@@ -51,7 +51,7 @@
       "type": "utc_datetime_usec"
     },
     {
-      "allow_nil?": true,
+      "allow_nil?": false,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
@@ -68,7 +68,7 @@
           "global": null,
           "strategy": null
         },
-        "name": "features_instance_id_fkey",
+        "name": "relationships_source_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
@@ -76,7 +76,36 @@
         "table": "instances"
       },
       "size": null,
-      "source": "instance_id",
+      "source": "source_id",
+      "type": "uuid"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": {
+        "deferrable": false,
+        "destination_attribute": "id",
+        "destination_attribute_default": null,
+        "destination_attribute_generated": null,
+        "index?": false,
+        "match_type": null,
+        "match_with": null,
+        "multitenancy": {
+          "attribute": null,
+          "global": null,
+          "strategy": null
+        },
+        "name": "relationships_target_id_fkey",
+        "on_delete": null,
+        "on_update": null,
+        "primary_key?": true,
+        "schema": "public",
+        "table": "instances"
+      },
+      "size": null,
+      "source": "target_id",
       "type": "uuid"
     }
   ],
@@ -85,23 +114,23 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "E6083FB1234CAABC64D006A7D5F3DF631878CD5C57FA89AEE40AFCFF62C49A1F",
+  "hash": "7B30F2F30A89E6453814AFEE9BE1149398A48619C1204847EA9C9ABBFC9F1047",
   "identities": [
     {
       "all_tenants?": false,
       "base_filter": null,
-      "index_name": "features_instance_feature_uniqueness_index",
+      "index_name": "relationships_unique_source_and_target_index",
       "keys": [
         {
           "type": "atom",
-          "value": "instance_id"
+          "value": "source_id"
         },
         {
           "type": "atom",
-          "value": "name"
+          "value": "target_id"
         }
       ],
-      "name": "instance_feature_uniqueness",
+      "name": "unique_source_and_target",
       "nils_distinct?": true,
       "where": null
     }
@@ -113,5 +142,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "features"
+  "table": "relationships"
 }

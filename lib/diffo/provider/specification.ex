@@ -78,11 +78,6 @@ defmodule Diffo.Provider.Specification do
       description "increments the patch version"
       change atomic_update :patch_version, expr(patch_version + 1)
     end
-
-    update :set_service_state_transition_map do
-      description "sets the map of service state transitions"
-      accept [:service_state_transition_map]
-    end
   end
 
   attributes do
@@ -151,12 +146,6 @@ defmodule Diffo.Provider.Specification do
       public? false
       default 4
       constraints min: 1
-    end
-
-    attribute :service_state_transition_map, :map do
-      description "the map of service state transitions"
-      allow_nil? true
-      public? false
     end
 
     create_timestamp :inserted_at

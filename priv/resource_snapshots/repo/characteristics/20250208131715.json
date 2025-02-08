@@ -11,13 +11,33 @@
       "type": "uuid"
     },
     {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "name",
+      "type": "text"
+    },
+    {
       "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "role",
+      "source": "value",
+      "type": "binary"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "type",
       "type": "text"
     },
     {
@@ -41,7 +61,7 @@
       "type": "utc_datetime_usec"
     },
     {
-      "allow_nil?": false,
+      "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
@@ -58,7 +78,36 @@
           "global": null,
           "strategy": null
         },
-        "name": "party_refs_instance_id_fkey",
+        "name": "characteristics_feature_id_fkey",
+        "on_delete": null,
+        "on_update": null,
+        "primary_key?": true,
+        "schema": "public",
+        "table": "features"
+      },
+      "size": null,
+      "source": "feature_id",
+      "type": "uuid"
+    },
+    {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": {
+        "deferrable": false,
+        "destination_attribute": "id",
+        "destination_attribute_default": null,
+        "destination_attribute_generated": null,
+        "index?": false,
+        "match_type": null,
+        "match_with": null,
+        "multitenancy": {
+          "attribute": null,
+          "global": null,
+          "strategy": null
+        },
+        "name": "characteristics_instance_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
@@ -70,7 +119,7 @@
       "type": "uuid"
     },
     {
-      "allow_nil?": false,
+      "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
@@ -87,16 +136,16 @@
           "global": null,
           "strategy": null
         },
-        "name": "party_refs_party_id_fkey",
+        "name": "characteristics_relationship_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
         "schema": "public",
-        "table": "parties"
+        "table": "relationships"
       },
       "size": null,
-      "source": "party_id",
-      "type": "text"
+      "source": "relationship_id",
+      "type": "uuid"
     }
   ],
   "base_filter": null,
@@ -104,12 +153,30 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "0CC997B46967D410A225471B0092C23670A11050C097AA97DD81FA78C6FF7AD6",
+  "hash": "14022F97C65D891A07F0B53161B8687C4579170CC5D429008A85C486FF525CAC",
   "identities": [
     {
       "all_tenants?": false,
       "base_filter": null,
-      "index_name": "party_refs_instance_party_uniqueness_index",
+      "index_name": "characteristics_feature_characteristic_uniqueness_index",
+      "keys": [
+        {
+          "type": "atom",
+          "value": "feature_id"
+        },
+        {
+          "type": "atom",
+          "value": "name"
+        }
+      ],
+      "name": "feature_characteristic_uniqueness",
+      "nils_distinct?": true,
+      "where": null
+    },
+    {
+      "all_tenants?": false,
+      "base_filter": null,
+      "index_name": "characteristics_instance_characteristic_uniqueness_index",
       "keys": [
         {
           "type": "atom",
@@ -117,10 +184,32 @@
         },
         {
           "type": "atom",
-          "value": "party_id"
+          "value": "name"
         }
       ],
-      "name": "instance_party_uniqueness",
+      "name": "instance_characteristic_uniqueness",
+      "nils_distinct?": true,
+      "where": null
+    },
+    {
+      "all_tenants?": false,
+      "base_filter": null,
+      "index_name": "characteristics_relationship_characteristic_uniqueness_index",
+      "keys": [
+        {
+          "type": "atom",
+          "value": "relationship_id"
+        },
+        {
+          "type": "atom",
+          "value": "type"
+        },
+        {
+          "type": "atom",
+          "value": "name"
+        }
+      ],
+      "name": "relationship_characteristic_uniqueness",
       "nils_distinct?": true,
       "where": null
     }
@@ -132,5 +221,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "party_refs"
+  "table": "characteristics"
 }
