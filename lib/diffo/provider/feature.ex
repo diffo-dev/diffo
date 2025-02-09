@@ -14,7 +14,7 @@ defmodule Diffo.Provider.Feature do
 
   jason do
     pick [:name, :isEnabled, :featureCharacteristic]
-    customize fn result, record ->
+    customize fn result, _record ->
       result
       |> Diffo.Util.delete_if_empty(:featureCharacteristic)
     end
@@ -95,7 +95,7 @@ defmodule Diffo.Provider.Feature do
   end
 
   preparations do
-    prepare build(sort: [name: :asc])
+    prepare build(load: [:featureCharacteristic], sort: [name: :asc])
   end
 
   @doc """

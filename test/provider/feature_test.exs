@@ -60,14 +60,15 @@ defmodule Diffo.Provider.FeatureTest do
   end
 
   describe "Diffo.Provider encode Features" do
-    test "encode json - success" do
+    test "encode json feature with sorted characteristics - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :management})
       _characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :device, value: :epic1000a, type: :feature})
-      loaded_feature = Diffo.Provider.get_feature_by_id!(feature.id, load: [:featureCharacteristic])
+      _characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :connection, value: :foreign, type: :feature})
+      loaded_feature = Diffo.Provider.get_feature_by_id!(feature.id)
       encoding = Jason.encode!(loaded_feature)
-      assert encoding == "{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}"
+      assert encoding == "{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"connection\",\"value\":\"foreign\"},{\"name\":\"device\",\"value\":\"epic1000a\"}]}"
     end
   end
 

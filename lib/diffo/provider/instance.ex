@@ -30,53 +30,19 @@ defmodule Diffo.Provider.Instance do
   end
 
   jason do
-    pick [:id, :href, :category, :description, :name, :specification, :forward_relationships, :feature, :characteristic, :place, :party, :type]
+    pick [:id, :href, :category, :description, :name, :specification, :specification_type, :forward_relationships, :feature, :characteristic, :place, :party, :type]
     customize fn result, record ->
-      opts = [lazy?: true]
-      loaded_record =
-        record
-        |> Ash.load!([:href, :characteristic, :feature, :forward_relationships, :place, :party], opts)
-        |> Ash.load!([specification: [:href, :version]], opts)
-        |> Ash.load!([feature: [:featureCharacteristic]], opts)
-        |> Ash.load!([forward_relationships: [:target_type, :target_href, :characteristic]], opts)
+      result
+      |> Map.put(result.specification_type, result.specification)
+      |> Diffo.Provider.Instance.dates(record)
+      |> Diffo.Provider.Instance.states(record)
+      |> Diffo.Provider.Instance.relationships()
+      |> Map.drop([:feature, :place])
+      |> Diffo.Util.put_not_empty(Diffo.Provider.Instance.derive_feature_collection_name(result.type), result.feature)
+      |> Diffo.Util.put_not_empty(Diffo.Provider.Instance.derive_characteristic_collection_name(result.type), result.characteristic)
+      |> Diffo.Util.put_not_empty(:relatedParty, result.party)
+      |> Diffo.Util.put_not_empty(:place, result.place)
 
-      type = Map.get(loaded_record, :type)
-      specification = loaded_record.specification
-      start_name = Diffo.Provider.Instance.derive_start_name(type)
-      end_name = Diffo.Provider.Instance.derive_end_name(type)
-      relationships = loaded_record.forward_relationships
-      service_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
-      resource_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
-      supporting_services =
-        service_relationships
-        |> Enum.filter(fn relationship -> relationship.alias != nil end)
-        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
-      supporting_resources =
-        resource_relationships
-        |> Enum.filter(fn relationship -> relationship.alias != nil end)
-        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
-      features = Map.get(loaded_record, :feature)
-      features_name = Diffo.Provider.Instance.derive_feature_collection_name(type)
-      characteristics = loaded_record.characteristic
-      characteristics_name = Diffo.Provider.Instance.derive_characteristic_collection_name(type)
-      result =
-        result
-        |> Map.put(:href, loaded_record.href)
-        |> Diffo.Util.ensure_not_nil(:category, specification.category)
-        |> Diffo.Util.ensure_not_nil(:description, specification.description)
-        |> Map.put(specification.type, specification)
-        |> Diffo.Provider.Instance.dates(loaded_record)
-        |> Diffo.Provider.Instance.states(loaded_record)
-        |> Map.drop([:forward_relationships, :reverse_relationships])
-        |> Diffo.Util.put_not_empty(:serviceRelationship, service_relationships)
-        |> Diffo.Util.put_not_empty(:resourceRelationship, resource_relationships)
-        |> Diffo.Util.put_not_empty(:supportingService, supporting_services)
-        |> Diffo.Util.put_not_empty(:supportingResource, supporting_resources)
-        |> Map.drop([:feature, :place])
-        |> Diffo.Util.put_not_empty(features_name, features)
-        |> Diffo.Util.put_not_empty(characteristics_name, characteristics)
-        |> Diffo.Util.put_not_empty(:relatedParty, loaded_record.party)
-        |> Diffo.Util.put_not_empty(:place, loaded_record.place)
     end
     order [:id, :href, :category, :description, :name,
       :serviceDate, :startDate, :startOperatingDate, :endDate, :endOperatingDate,
@@ -292,7 +258,11 @@ defmodule Diffo.Provider.Instance do
     end
 
     calculate :specification_name, :string, expr(specification.name) do
-      description "names the service or resource specification"
+      description "name of the related service or resource specification"
+    end
+
+    calculate :specification_type, :atom, expr(specification.type) do
+      description "type of the related service or resource specification"
     end
 
     calculate :href, :string, expr(type <> "InventoryManagement/v" <> tmf_version <> "/" <> type <> "/" <> specification_name <> "/" <> id) do
@@ -305,9 +275,12 @@ defmodule Diffo.Provider.Instance do
   end
 
   preparations do
-    prepare build(sort: [href: :asc])
+    prepare build(load: [:category, :description, :specification_type, :href, :specification,  :characteristic, :feature, :forward_relationships, :place, :party], sort: [href: :asc])
   end
 
+  @doc """
+  Assists in encoding instance dates
+  """
   def dates(result, record) do
     result
     |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_create_name(record.type), Diffo.Util.to_iso8601(record.inserted_at))
@@ -315,6 +288,9 @@ defmodule Diffo.Provider.Instance do
     |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_end_name(record.type), Diffo.Util.to_iso8601(record.stopped_at))
   end
 
+  @doc """
+  Assists in encoding instance states
+  """
   def states(result, record) do
     case record.type do
       :service ->
@@ -328,6 +304,29 @@ defmodule Diffo.Provider.Instance do
         #|> Diffo.Util.ensure_not_nil(:resourceStatus, record.resource_status)
         #|> Diffo.Util.ensure_not_nil(:usageState, record.resource_usage_state)
     end
+  end
+
+  @doc """
+  Assists in encoding instance-instance relationships
+  """
+  def relationships(result) do
+    relationships = result.forward_relationships
+    service_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
+    resource_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
+    supporting_services =
+      service_relationships
+      |> Enum.filter(fn relationship -> relationship.alias != nil end)
+      |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
+    supporting_resources =
+      resource_relationships
+      |> Enum.filter(fn relationship -> relationship.alias != nil end)
+      |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
+    result
+      |> Map.drop([:forward_relationships, :reverse_relationships])
+      |> Diffo.Util.put_not_empty(:serviceRelationship, service_relationships)
+      |> Diffo.Util.put_not_empty(:resourceRelationship, resource_relationships)
+      |> Diffo.Util.put_not_empty(:supportingService, supporting_services)
+      |> Diffo.Util.put_not_empty(:supportingResource, supporting_resources)
   end
 
   @doc """

@@ -182,7 +182,7 @@ defmodule Diffo.Provider.Specification do
   end
 
   preparations do
-    prepare build(sort: [major_version: :desc])
+    prepare build(load: [:version, :href, :instance_type], sort: [major_version: :desc])
   end
 
   identities do

@@ -24,7 +24,7 @@ defmodule Diffo.Provider.SpecificationTest do
       Diffo.Provider.create_specification!(%{name: "edge"})
       Diffo.Provider.create_specification!(%{name: "edge", major_version: 2})
       Diffo.Provider.create_specification!(%{name: "edge", major_version: 3})
-      latest = Diffo.Provider.get_latest_specification_by_name!("edge", load: :version)
+      latest = Diffo.Provider.get_latest_specification_by_name!("edge")
       assert latest.major_version == 3
       assert latest.version == "v3.0.0"
     end
@@ -37,7 +37,7 @@ defmodule Diffo.Provider.SpecificationTest do
       assert Diffo.Uuid.uuid4?(specification.id) == true
       assert specification.major_version == 1
       assert specification.type == :serviceSpecification
-      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:version, :href, :instance_type])
+      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
       assert loaded_specification.version == "v1.0.0"
       assert loaded_specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{specification.id}"
       assert loaded_specification.instance_type == :service
@@ -53,7 +53,7 @@ defmodule Diffo.Provider.SpecificationTest do
       specification = Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
       assert specification.name == "can"
       assert specification.type == :resourceSpecification
-      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:version, :href, :instance_type])
+      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
       assert loaded_specification.version == "v1.0.0"
       assert loaded_specification.href == "resourceCatalogManagement/v4/resourceSpecification/#{specification.id}"
       assert loaded_specification.instance_type == :resource
@@ -63,14 +63,14 @@ defmodule Diffo.Provider.SpecificationTest do
       uuid = UUID.uuid4()
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection", id: uuid})
       assert specification.id == uuid
-      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:href])
+      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
       assert loaded_specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{uuid}"
     end
 
     test "create a service specification - success - name and major_version supplied" do
       specification = Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
       assert specification.major_version == 2
-      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:version])
+      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
       assert loaded_specification.version == "v2.0.0"
     end
 
@@ -106,21 +106,21 @@ defmodule Diffo.Provider.SpecificationTest do
 
     test "make a new patch version - success" do
       specification = Diffo.Provider.create_specification!(%{name: "connectivity"})
-      updated_specification = specification |> Diffo.Provider.next_patch_specification!(load: :version)
+      updated_specification = specification |> Diffo.Provider.next_patch_specification!()
       assert updated_specification.version == "v1.0.1"
     end
 
     test "make a new minor version, resetting the patch version - success" do
       updated_specification = Diffo.Provider.create_specification!(%{name: "security"})
-        |> Diffo.Provider.next_patch_specification!(load: :version)
-        |> Diffo.Provider.next_minor_specification!(load: :version)
+        |> Diffo.Provider.next_patch_specification!()
+        |> Diffo.Provider.next_minor_specification!()
       assert updated_specification.version == "v1.1.0"
     end
 
     test "make a new patch on an minor version - success" do
       patched_specification = Diffo.Provider.create_specification!(%{name: "monitoring"})
-        |> Diffo.Provider.next_minor_specification!(load: :version)
-        |> Diffo.Provider.next_patch_specification!(load: :version)
+        |> Diffo.Provider.next_minor_specification!()
+        |> Diffo.Provider.next_patch_specification!()
       assert patched_specification.version == "v1.1.1"
     end
   end
@@ -129,7 +129,7 @@ defmodule Diffo.Provider.SpecificationTest do
     test "encode json - success" do
       uuid = UUID.uuid4()
       specification = Diffo.Provider.create_specification!(%{name: "radiationMonitor", description: "Radiation Monitoring Service", id: uuid})
-      loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id, load: [:href, :version])
+      loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
       encoding = Jason.encode!(loaded_specification)
       assert encoding == ~s({\"id\":\"#{uuid}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{uuid}\",\"name\":\"radiationMonitor\",\"version\":\"v1.0.0\"})
     end

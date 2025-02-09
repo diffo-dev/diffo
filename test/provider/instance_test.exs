@@ -46,7 +46,7 @@ defmodule Diffo.Provider.InstanceTest do
       assert instance.type == :service
       assert instance.service_state == :initial
       assert instance.service_operating_status == :unknown
-      loaded_instance = Diffo.Provider.get_instance_by_id!(instance.id, load: [:href, :category, :description, :specification])
+      loaded_instance = Diffo.Provider.get_instance_by_id!(instance.id)
       assert loaded_instance.category == "connectivity"
       assert loaded_instance.description == "Fibre Access Service"
       assert loaded_instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
@@ -59,7 +59,7 @@ defmodule Diffo.Provider.InstanceTest do
     #  {:ok, instance} = Diffo.Provider.create_instance(%{specification_id: specification.id, type: :resource})
     #  assert Diffo.Uuid.uuid4?(instance.id) == true
     #  assert instance.type == :resource
-    #  {:ok, loaded_instance} = Diffo.Provider.get_instance_by_id(instance.id, load: [:href, :category, :description])
+    #  {:ok, loaded_instance} = Diffo.Provider.get_instance_by_id(instance.id)
     #  assert loaded_instance.category == "physical"
     #  assert loaded_instance.description == "Copper Path Resource"
     #  assert loaded_instance.href == "resourceInventoryManagement/v4/resource/copperPath/#{instance.id}"
@@ -191,9 +191,9 @@ defmodule Diffo.Provider.InstanceTest do
       _partyRef = Diffo.Provider.create_party_ref!(%{instance_id: child_instance.id, role: :Consumer, party_id: t3_party.id})
       _partyRef = Diffo.Provider.create_party_ref!(%{instance_id: child_instance.id, role: :Provider, party_id: t4_party.id})
       refreshed_parent_instance = Diffo.Provider.get_instance_by_id!(parent_instance.id)
-      refreshed_child_instance = Diffo.Provider.get_instance_by_id!(child_instance.id)
       parent_encoding = Jason.encode!(refreshed_parent_instance) |> Diffo.Util.summarise_dates()
       assert parent_encoding == ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"Site Connection Service\","serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}],\"feature\":[{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}],\"serviceCharacteristic\":[{\"name\":\"device\",\"value\":\"managed\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
+      refreshed_child_instance = Diffo.Provider.get_instance_by_id!(child_instance.id)
       child_encoding = Jason.encode!(refreshed_child_instance) |> Diffo.Util.summarise_dates()
       assert child_encoding == ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\","serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\"}}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T4_CPE\",\"href\":\"entity/internal/T4_CPE\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
     end
@@ -308,7 +308,8 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       cancelled_instance = Diffo.Provider.cancel_service!(instance)
-      encoding = Jason.encode!(cancelled_instance) |> Diffo.Util.summarise_dates()
+      refreshed_instance = Diffo.Provider.get_instance_by_id!(cancelled_instance.id)
+      encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
       assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceDate\":\"now\",\"endDate\":\"now\",\"state\":\"cancelled\",\"operatingStatus\":\"unknown\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"}})
     end
 
@@ -316,15 +317,17 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       activated_instance = Diffo.Provider.activate_service!(instance)
-      encoding = Jason.encode!(activated_instance) |> Diffo.Util.summarise_dates()
+      refreshed_instance = Diffo.Provider.get_instance_by_id!(activated_instance.id)
+      encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
       assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceDate\":\"now\",\"startDate\":\"now\",\"state\":\"active\",\"operatingStatus\":\"starting\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"}})
     end
 
     test "encode suspended service - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      activated_instance = Diffo.Provider.activate_service!(instance) |> Diffo.Provider.suspend_service!()
-      encoding = Jason.encode!(activated_instance) |> Diffo.Util.summarise_dates()
+      suspended_instance = Diffo.Provider.activate_service!(instance) |> Diffo.Provider.suspend_service!()
+      refreshed_instance = Diffo.Provider.get_instance_by_id!(suspended_instance.id)
+      encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
       assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceDate\":\"now\",\"startDate\":\"now\",\"state\":\"suspended\",\"operatingStatus\":\"limited\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"}})
     end
 
@@ -332,7 +335,8 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       terminated_instance = Diffo.Provider.activate_service!(instance) |> Diffo.Provider.terminate_service!()
-      encoding = Jason.encode!(terminated_instance) |> Diffo.Util.summarise_dates()
+      refreshed_instance = Diffo.Provider.get_instance_by_id!(terminated_instance.id)
+      encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
       assert encoding == ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceDate\":\"now\",\"startDate\":\"now\",\"endDate\":\"now\",\"state\":\"terminated\",\"operatingStatus\":\"stopping\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"}})
     end
   end
