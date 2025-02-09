@@ -37,11 +37,10 @@ defmodule Diffo.Provider.Instance do
       |> Diffo.Provider.Instance.dates(record)
       |> Diffo.Provider.Instance.states(record)
       |> Diffo.Provider.Instance.relationships()
-      |> Map.drop([:feature, :place])
-      |> Diffo.Util.put_not_empty(Diffo.Provider.Instance.derive_feature_collection_name(result.type), result.feature)
-      |> Diffo.Util.put_not_empty(Diffo.Provider.Instance.derive_characteristic_collection_name(result.type), result.characteristic)
-      |> Diffo.Util.put_not_empty(:relatedParty, result.party)
-      |> Diffo.Util.put_not_empty(:place, result.place)
+      |> Diffo.Util.rename_ensure_not_empty(:feature, Diffo.Provider.Instance.derive_feature_collection_name(result.type))
+      |> Diffo.Util.rename_ensure_not_empty(:characteristic, Diffo.Provider.Instance.derive_characteristic_collection_name(result.type))
+      |> Diffo.Util.rename_ensure_not_empty(:party, :relatedParty)
+      |> Diffo.Util.delete_if_empty(:place)
 
     end
     order [:id, :href, :category, :description, :name,
