@@ -7,7 +7,28 @@ defmodule Diffo.Util do
   """
 
   @doc """
-  Deletes value to map if empty []
+  Renames map key, unless old value is empty
+  ## Examples
+    iex> Diffo.Util.rename_ensure_not_empty(%{characteristic: [%{name: :port, value: 1}]}, :characteristic, :serviceCharacteristic)
+    %{serviceCharacteristic: [%{name: :port, value: 1}]}
+
+    iex> Diffo.Util.rename_ensure_not_empty(%{characteristic: []}, :characteristic, :serviceCharacteristic)
+    %{}
+
+    iex> Diffo.Util.rename_ensure_not_empty(%{}, :characteristic, :serviceCharacteristic)
+    %{}
+  """
+  def rename_ensure_not_empty(map, key, new_key) when is_map(map) do
+    {value, map} = Map.pop(map, key)
+    if (value != [] and value != nil) do
+      Map.put(map, new_key, value)
+    else
+      map
+    end
+  end
+
+  @doc """
+  Deletes map value if empty []
   ## Examples
     iex> Diffo.Util.delete_if_empty(%{serviceCharacteristic: [%{name: :port, value: 1}]}, :serviceCharacteristic)
     %{serviceCharacteristic: [%{name: :port, value: 1}]}
