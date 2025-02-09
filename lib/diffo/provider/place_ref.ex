@@ -13,20 +13,8 @@ defmodule Diffo.Provider.PlaceRef do
   end
 
   jason do
-    pick [:role, :place]
-    customize fn result, record ->
-      opts = [lazy?: true]
-      loaded_record =
-        record
-        |> Ash.load!([:place], opts)
-      result =
-        result
-        |> Diffo.Util.ensure_not_nil(:id,  loaded_record.place.id)
-        |> Diffo.Util.ensure_not_nil(:href, loaded_record.place.href)
-        |> Diffo.Util.ensure_not_nil(:name, loaded_record.place.name)
-        |> Diffo.Util.ensure_not_nil("@referredType", loaded_record.place.referredType)
-        |> Diffo.Util.ensure_not_nil("@type", loaded_record.place.type)
-    end
+    pick [:role, :place_id, :href, :name, :referredType, :type]
+    rename %{:place_id => :id, :referredType => "@referredType", :type => "@type"}
     order [:id, :href, :name, :role, "@referredType", "@type"]
   end
 
@@ -36,6 +24,7 @@ defmodule Diffo.Provider.PlaceRef do
     create :create do
       description "creates a place ref"
       accept [:instance_id, :role, :place_id]
+      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Place]
     end
 
     read :list do
@@ -105,8 +94,26 @@ defmodule Diffo.Provider.PlaceRef do
     end
   end
 
+  calculations do
+    calculate :href, :string, expr(place.href) do
+      description "the href of the related place instance"
+    end
+
+    calculate :name, :string, expr(place.name) do
+      description "the name of the related place instance"
+    end
+
+    calculate :referredType, :string, expr(place.referredType) do
+      description "the referredType of the related place instance"
+    end
+
+    calculate :type, :string, expr(place.type) do
+      description "the type of the related place instance"
+    end
+  end
+
   preparations do
-    prepare build(sort: [place_id: :asc])
+    prepare build(load: [:href, :name, :referredType, :type], sort: [place_id: :asc])
   end
 
   @doc """

@@ -134,7 +134,8 @@ defmodule Diffo.Provider.PlaceRefTest do
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", type: :GeographicAddress})
       place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
-      encoding = Jason.encode!(place_ref)
+      refreshed_place_ref = Diffo.Provider.get_place_ref_by_id!(place_ref.id)
+      encoding = Jason.encode!(refreshed_place_ref)
       assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@type\":\"GeographicAddress\"}"
     end
 
@@ -143,7 +144,8 @@ defmodule Diffo.Provider.PlaceRefTest do
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", referredType: :GeographicAddress})
       place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
-      encoding = Jason.encode!(place_ref)
+      refreshed_place_ref = Diffo.Provider.get_place_ref_by_id!(place_ref.id)
+      encoding = Jason.encode!(refreshed_place_ref)
       assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}"
     end
   end

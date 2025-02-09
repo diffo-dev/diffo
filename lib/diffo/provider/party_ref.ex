@@ -13,21 +13,8 @@ defmodule Diffo.Provider.PartyRef do
   end
 
   jason do
-    pick [:role, :party]
-    customize fn result, record ->
-      opts = [lazy?: true]
-      loaded_record =
-        record
-        |> Ash.load!([:party], opts)
-      result =
-        result
-        |> Diffo.Util.ensure_not_nil(:id,  loaded_record.party.id)
-        |> Diffo.Util.ensure_not_nil(:href, loaded_record.party.href)
-        |> Diffo.Util.ensure_not_nil(:name, loaded_record.party.name)
-        |> Diffo.Util.ensure_not_nil("@referredType", loaded_record.party.referredType)
-        |> Diffo.Util.ensure_not_nil("@type", loaded_record.party.type)
-    end
-
+    pick [:role, :party_id, :href, :name, :referredType, :type]
+    rename %{:party_id => :id, :referredType => "@referredType", :type => "@type"}
     order [:id, :href, :name, :role, "@referredType", "@type"]
   end
 
@@ -37,6 +24,7 @@ defmodule Diffo.Provider.PartyRef do
     create :create do
       description "creates a party ref"
       accept [:instance_id, :role, :party_id]
+      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
     end
 
     read :list do
@@ -106,8 +94,26 @@ defmodule Diffo.Provider.PartyRef do
     end
   end
 
+  calculations do
+    calculate :href, :string, expr(party.href) do
+      description "the href of the related party instance"
+    end
+
+    calculate :name, :string, expr(party.name) do
+      description "the name of the related party instance"
+    end
+
+    calculate :referredType, :string, expr(party.referredType) do
+      description "the referredType of the related party instance"
+    end
+
+    calculate :type, :string, expr(party.type) do
+      description "the type of the related party instance"
+    end
+  end
+
   preparations do
-    prepare build(sort: [party_id: :asc])
+    prepare build(load: [:href, :name, :referredType, :type], sort: [party_id: :asc])
   end
 
   @doc """
