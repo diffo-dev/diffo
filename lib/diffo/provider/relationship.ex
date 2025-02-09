@@ -13,21 +13,14 @@ defmodule Diffo.Provider.Relationship do
   end
 
   jason do
-    pick [:target_href, :type, :characteristic, :target_type]
-    customize fn result, record ->
-      opts = [lazy?: true]
-      loaded_record =
-        record
-        |> Ash.load!([:target_type, :target_href, :characteristic], opts)
-      target_type = loaded_record.target_type
+    pick [:target_type, :type, :characteristic, :target_type, :target_id, :target_href]
+    customize fn result, _record ->
+      target_type = result.target_type
       relationship_characteristic_name = Diffo.Provider.Relationship.derive_relationship_characteristic_name(target_type)
-      href = loaded_record.target_href
-      id = Diffo.Uuid.trailing_uuid4(href)
-      characteristics = Map.get(loaded_record, :characteristic)
       result =
         result
-        |> Map.put(target_type, %{id: id, href: href})
-        |> Diffo.Util.put_not_empty(relationship_characteristic_name, characteristics)
+        |> Map.put(target_type, %{id: result.target_id, href: result.target_href})
+        |> Diffo.Util.put_not_empty(relationship_characteristic_name, result.characteristic)
     end
     order [:type, :service, :resource, :serviceRelationshipCharacteristic, :resourceRelationshipCharacteristic]
   end
@@ -112,25 +105,24 @@ defmodule Diffo.Provider.Relationship do
   end
 
   calculations do
-
     calculate :source_tmf_version, :string, expr(source.tmf_version) do
-      description "the TMF version of the source instance"
+      description "the TMF version of the related source instance"
     end
 
     calculate :source_type, :atom, expr(source.type) do
-      description "the type of the source instance"
-    end
-
-    calculate :target_type, :atom, expr(target.type) do
-      description "the type of the target instance"
+      description "the type of the related source instance"
     end
 
     calculate :source_href, :string, expr(source.href) do
-      description "the href of the source instance"
+      description "the href of the related source instance"
+    end
+
+    calculate :target_type, :atom, expr(target.type) do
+      description "the type of the related target instance"
     end
 
     calculate :target_href, :string, expr(target.href) do
-      description "the href of the target instance"
+      description "the href of the related target instance"
     end
   end
 
@@ -139,7 +131,7 @@ defmodule Diffo.Provider.Relationship do
   end
 
   preparations do
-    prepare build(sort: [target_href: :asc])
+    prepare build(load: [:target_type, :characteristic], sort: [target_href: :asc])
   end
 
   @doc """

@@ -136,7 +136,8 @@ defmodule Diffo.Provider.PartyRefTest do
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, href: "party/internal/IND000000897353", type: :Individual})
       party_ref = Diffo.Provider.create_party_ref!(%{instance_id: instance.id, role: :Organization, party_id: party.id})
-      encoding = Jason.encode!(party_ref)
+      refreshed_party_ref = Diffo.Provider.get_party_ref_by_id!(party_ref.id)
+      encoding = Jason.encode!(refreshed_party_ref)
       assert encoding == "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"role\":\"Organization\",\"@type\":\"Individual\"}"
     end
 
@@ -145,7 +146,8 @@ defmodule Diffo.Provider.PartyRefTest do
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, href: "party/internal/IND000000897353", referredType: :Individual})
       party_ref = Diffo.Provider.create_party_ref!(%{instance_id: instance.id, role: :Organization, party_id: party.id})
-      encoding = Jason.encode!(party_ref)
+      refreshed_party_ref = Diffo.Provider.get_party_ref_by_id!(party_ref.id)
+      encoding = Jason.encode!(refreshed_party_ref)
       assert encoding == "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"role\":\"Organization\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"}"
     end
   end
