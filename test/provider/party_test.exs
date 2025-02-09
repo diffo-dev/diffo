@@ -1,4 +1,4 @@
-defmodule Diffo.Provider.Party_Test do
+defmodule Diffo.Provider.PartyTest do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true
@@ -121,6 +121,20 @@ defmodule Diffo.Provider.Party_Test do
     test "update id - failure - not updatable" do
       party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, type: :Individual})
       {:error, _error} = party |> Diffo.Provider.update_party(%{id: "IND0000008973534"})
+    end
+  end
+
+  describe "Diffo.Provider encode Parties" do
+    test "encode json party type - success" do
+      party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, href: "party/internal/IND000000897353", type: :Individual})
+      encoding = Jason.encode!(party)
+      assert encoding == "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"@type\":\"Individual\"}"
+    end
+
+    test "encode json party referredType - success" do
+      party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, href: "party/internal/IND000000897353", referredType: :Individual})
+      encoding = Jason.encode!(party)
+      assert encoding == "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"}"
     end
   end
 

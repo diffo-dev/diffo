@@ -1,4 +1,4 @@
-defmodule Diffo.Provider.Place_Test do
+defmodule Diffo.Provider.PlaceTest do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true
@@ -121,6 +121,20 @@ defmodule Diffo.Provider.Place_Test do
     test "update id - failure - not updatable" do
       place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, type: :GeographicAddress})
       {:error, _error} = place |> Diffo.Provider.update_place(%{id: "LOC0000008973534"})
+    end
+  end
+
+  describe "Diffo.Provider encode Places" do
+    test "encode json place type - success" do
+      place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", type: :GeographicAddress})
+      encoding = Jason.encode!(place)
+      assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"@type\":\"GeographicAddress\"}"
+    end
+
+    test "encode json place referredType - success" do
+      place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", referredType: :GeographicAddress})
+      encoding = Jason.encode!(place)
+      assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}"
     end
   end
 

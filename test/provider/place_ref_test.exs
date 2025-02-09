@@ -1,4 +1,4 @@
-defmodule Diffo.Provider.Place_Ref_Test do
+defmodule Diffo.Provider.PlaceRefTest do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true

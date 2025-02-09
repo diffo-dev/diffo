@@ -24,11 +24,10 @@ defmodule Diffo.Provider.PlaceRef do
         |> Diffo.Util.ensure_not_nil(:id,  loaded_record.place.id)
         |> Diffo.Util.ensure_not_nil(:href, loaded_record.place.href)
         |> Diffo.Util.ensure_not_nil(:name, loaded_record.place.name)
-        |> Diffo.Util.ensure_not_nil(:at_referredType, loaded_record.place.referredType)
-        |> Diffo.Util.ensure_not_nil(:at_type, loaded_record.place.type)
+        |> Diffo.Util.ensure_not_nil("@referredType", loaded_record.place.referredType)
+        |> Diffo.Util.ensure_not_nil("@type", loaded_record.place.type)
     end
-    order [:id, :href, :name, :role, :at_referredType, :at_type]
-    rename %{at_referredType: "@referredType", at_type: "@type"}
+    order [:id, :href, :name, :role, "@referredType", "@type"]
   end
 
   actions do

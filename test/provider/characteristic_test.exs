@@ -1,4 +1,4 @@
-defmodule Diffo.Provider.Characteristic_Test do
+defmodule Diffo.Provider.CharacteristicTest do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true

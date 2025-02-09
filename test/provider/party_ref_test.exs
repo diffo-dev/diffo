@@ -1,4 +1,4 @@
-defmodule Diffo.Provider.Party_Ref_Test do
+defmodule Diffo.Provider.PartyRefTest do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true

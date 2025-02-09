@@ -24,11 +24,11 @@ defmodule Diffo.Provider.PartyRef do
         |> Diffo.Util.ensure_not_nil(:id,  loaded_record.party.id)
         |> Diffo.Util.ensure_not_nil(:href, loaded_record.party.href)
         |> Diffo.Util.ensure_not_nil(:name, loaded_record.party.name)
-        |> Diffo.Util.ensure_not_nil(:at_referredType, loaded_record.party.referredType)
-        |> Diffo.Util.ensure_not_nil(:at_type, loaded_record.party.type)
+        |> Diffo.Util.ensure_not_nil("@referredType", loaded_record.party.referredType)
+        |> Diffo.Util.ensure_not_nil("@type", loaded_record.party.type)
     end
-    order [:id, :href, :name, :role, :at_referredType, :at_type]
-    rename %{at_referredType: "@referredType", at_type: "@type"}
+
+    order [:id, :href, :name, :role, "@referredType", "@type"]
   end
 
   actions do
