@@ -73,12 +73,12 @@ defmodule Diffo.Provider.RelationshipTest do
       evpl2 = Diffo.Provider.create_instance!(%{specification_id: specification.id, name: "evpl2"})
       relationship1 = Diffo.Provider.create_relationship!(%{type: :refersTo, source_id: evpl1.id, target_id: evpl2.id})
       relationship2 = Diffo.Provider.create_relationship!(%{type: :refersTo, source_id: evpl2.id, target_id: evpl1.id})
-      loaded_relationship1 = Diffo.Provider.get_relationship_by_id!(relationship1.id, load: [:source_type, :target_type, :source_href, :target_href])
+      loaded_relationship1 = Diffo.Provider.get_relationship_by_id!(relationship1.id, load: [:source_type, :source_href])
       assert loaded_relationship1.source_type == :service
       assert loaded_relationship1.target_type == :service
       assert loaded_relationship1.source_href == "serviceInventoryManagement/v4/service/accessEvc/#{evpl1.id}"
       assert loaded_relationship1.target_href == "serviceInventoryManagement/v4/service/accessEvc/#{evpl2.id}"
-      loaded_relationship2 = Diffo.Provider.get_relationship_by_id!(relationship2.id, load: [:source_type, :target_type, :source_href, :target_href])
+      loaded_relationship2 = Diffo.Provider.get_relationship_by_id!(relationship2.id, load: [:source_type, :source_href])
       assert loaded_relationship2.source_type == :service
       assert loaded_relationship2.target_type == :service
       assert loaded_relationship2.source_href == "serviceInventoryManagement/v4/service/accessEvc/#{evpl2.id}"
@@ -91,12 +91,12 @@ defmodule Diffo.Provider.RelationshipTest do
       cable2 = Diffo.Provider.create_instance!(%{specification_id: resource_specification.id, type: :resource})
       relationship1 = Diffo.Provider.create_relationship!(%{type: :connectedTo, source_id: cable1.id, target_id: cable2.id})
       relationship2 = Diffo.Provider.create_relationship!(%{type: :connectedFrom, source_id: cable2.id, target_id: cable1.id})
-      loaded_relationship1 = Diffo.Provider.get_relationship_by_id!(relationship1.id, load: [:source_type, :target_type, :source_href, :target_href])
+      loaded_relationship1 = Diffo.Provider.get_relationship_by_id!(relationship1.id, load: [:source_type, :source_href])
       assert loaded_relationship1.source_type == :resource
       assert loaded_relationship1.target_type == :resource
       assert loaded_relationship1.source_href == "resourceInventoryManagement/v4/resource/cable/#{cable1.id}"
       assert loaded_relationship1.target_href == "resourceInventoryManagement/v4/resource/cable/#{cable2.id}"
-      loaded_relationship2 = Diffo.Provider.get_relationship_by_id!(relationship2.id, load: [:source_type, :target_type, :source_href, :target_href])
+      loaded_relationship2 = Diffo.Provider.get_relationship_by_id!(relationship2.id, load: [:source_type, :source_href])
       assert loaded_relationship2.source_type == :resource
       assert loaded_relationship2.target_type == :resource
       assert loaded_relationship2.source_href == "resourceInventoryManagement/v4/resource/cable/#{cable2.id}"
@@ -109,7 +109,7 @@ defmodule Diffo.Provider.RelationshipTest do
       service_instance = Diffo.Provider.create_instance!(%{specification_id: service_specification.id})
       resource_instance = Diffo.Provider.create_instance!(%{specification_id: resource_specification.id, type: :resource})
       relationship = Diffo.Provider.create_relationship!(%{type: :isAssigned, source_id: service_instance.id, target_id: resource_instance.id})
-      loaded_relationship = Diffo.Provider.get_relationship_by_id!(relationship.id, load: [:source_type, :target_type, :source_href, :target_href])
+      loaded_relationship = Diffo.Provider.get_relationship_by_id!(relationship.id, load: [:source_type, :source_href])
       assert loaded_relationship.source_type == :service
       assert loaded_relationship.target_type == :resource
       assert loaded_relationship.source_href == "serviceInventoryManagement/v4/service/adslAccess/#{service_instance.id}"
@@ -148,7 +148,6 @@ defmodule Diffo.Provider.RelationshipTest do
       child_instance = Diffo.Provider.create_instance!(%{specification_id: child_specification.id})
       relationship = Diffo.Provider.create_relationship!(%{type: :bestows, source_id: parent_instance.id, target_id: child_instance.id})
       _characteristic = Diffo.Provider.create_characteristic!(%{relationship_id: relationship.id, name: :role, value: :gateway, type: :relationship})
-      # load: [:target_type, :target_href, :characteristic]
       parent_service_relationships = Diffo.Provider.list_service_relationships_from!(parent_instance.id)
       encoding = Jason.encode!(parent_service_relationships)
       assert encoding == ~s([{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}])
@@ -161,7 +160,6 @@ defmodule Diffo.Provider.RelationshipTest do
       resource_instance = Diffo.Provider.create_instance!(%{specification_id: resource_specification.id, type: :resource})
       relationship = Diffo.Provider.create_relationship!(%{type: :isAssigned, source_id: service_instance.id, target_id: resource_instance.id})
       _characteristic = Diffo.Provider.create_characteristic!(%{relationship_id: relationship.id, name: :role, value: :primary, type: :relationship})
-      # load: [:target_type, :target_href, :characteristic]
       parent_resource_relationships = Diffo.Provider.list_resource_relationships_from!(service_instance.id)
       encoding = Jason.encode!(parent_resource_relationships)
       assert encoding == ~s([{\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{resource_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{resource_instance.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"primary\"}]}])
@@ -173,7 +171,6 @@ defmodule Diffo.Provider.RelationshipTest do
       service_instance = Diffo.Provider.create_instance!(%{specification_id: service_specification.id})
       resource_instance = Diffo.Provider.create_instance!(%{specification_id: resource_specification.id, type: :resource})
       _relationship = Diffo.Provider.create_relationship!(%{type: :assignedTo, source_id: resource_instance.id, target_id: service_instance.id})
-      #load: [:target_type, :target_href, :characteristic]
       child_service_relationships = Diffo.Provider.list_service_relationships_from!(resource_instance.id)
       encoding = Jason.encode!(child_service_relationships)
       assert encoding == ~s([{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{service_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{service_instance.id}\"}}])
