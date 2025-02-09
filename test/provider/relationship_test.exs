@@ -1,4 +1,4 @@
-defmodule Diffo.Provider.Relationship_Test do
+defmodule Diffo.Provider.RelationshipTest do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true

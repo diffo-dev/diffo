@@ -1,4 +1,4 @@
-defmodule Diffo.Provider.Specification_Test do
+defmodule Diffo.Provider.SpecificationTest do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true
