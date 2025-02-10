@@ -16,9 +16,8 @@ defmodule Diffo.Provider.Feature do
     pick [:name, :isEnabled, :featureCharacteristic]
     customize fn result, _record ->
       result
-      |> Diffo.Util.delete_if_empty(:featureCharacteristic)
+      |> Diffo.Util.suppress(:featureCharacteristic)
     end
-    order [:name, :isEnabled, :featureCharacteristic]
   end
 
   actions do

@@ -30,17 +30,26 @@ defmodule Diffo.Provider.Instance do
   end
 
   jason do
-    pick [:id, :href, :category, :description, :name, :specification, :specification_type, :forward_relationships, :feature, :characteristic, :place, :party, :type]
+    pick [:id, :href, :category, :description, :name, :specification_type, :specification, :forward_relationships, :feature, :characteristic, :place, :party, :type]
     customize fn result, record ->
+      #IO.inspect(result, label: "start instance jason customize")
+      type = Diffo.Util.get(result, :type)
+      specification_type = Diffo.Util.get(result, :specification_type)
+      specification = Diffo.Util.get(result, :specification)
       result
-      |> Map.put(result.specification_type, result.specification)
       |> Diffo.Provider.Instance.dates(record)
       |> Diffo.Provider.Instance.states(record)
       |> Diffo.Provider.Instance.relationships()
-      |> Diffo.Util.rename_ensure_not_empty(:feature, Diffo.Provider.Instance.derive_feature_collection_name(result.type))
-      |> Diffo.Util.rename_ensure_not_empty(:characteristic, Diffo.Provider.Instance.derive_characteristic_collection_name(result.type))
-      |> Diffo.Util.rename_ensure_not_empty(:party, :relatedParty)
-      |> Diffo.Util.delete_if_empty(:place)
+      |> Diffo.Util.rename(:specification, specification_type)
+      |> Diffo.Util.suppress(:feature) |> Diffo.Util.rename(:feature, Diffo.Provider.Instance.derive_feature_list_name(type))
+      |> Diffo.Util.suppress(:characteristic) |> Diffo.Util.rename(:characteristic, Diffo.Provider.Instance.derive_characteristic_list_name(type))
+      |> Diffo.Util.suppress(:party) |> Diffo.Util.rename(:party, :relatedParty)
+      |> Diffo.Util.suppress(:place)
+      #|> IO.inspect(label: "inside instance jason customize")
+
+
+
+
 
     end
     order [:id, :href, :category, :description, :name,
@@ -282,9 +291,9 @@ defmodule Diffo.Provider.Instance do
   """
   def dates(result, record) do
     result
-    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_create_name(record.type), Diffo.Util.to_iso8601(record.inserted_at))
-    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_start_name(record.type), Diffo.Util.to_iso8601(record.started_at))
-    |> Diffo.Util.ensure_not_nil(Diffo.Provider.Instance.derive_end_name(record.type), Diffo.Util.to_iso8601(record.stopped_at))
+    |> Diffo.Util.set(Diffo.Provider.Instance.derive_create_name(record.type), Diffo.Util.to_iso8601(record.inserted_at))
+    |> Diffo.Util.set(Diffo.Provider.Instance.derive_start_name(record.type), Diffo.Util.to_iso8601(record.started_at))
+    |> Diffo.Util.set(Diffo.Provider.Instance.derive_end_name(record.type), Diffo.Util.to_iso8601(record.stopped_at))
   end
 
   @doc """
@@ -294,8 +303,8 @@ defmodule Diffo.Provider.Instance do
     case record.type do
       :service ->
         result
-        |> Diffo.Util.ensure_not_nil(:state, record.service_state)
-        |> Diffo.Util.ensure_not_nil(:operatingStatus, record.service_operating_status)
+        |> Diffo.Util.set(:state, record.service_state)
+        |> Diffo.Util.set(:operatingStatus, record.service_operating_status)
       :resource ->
         result
         #|> Diffo.Util.ensure_not_nil(:administrativeState, record.resource_administrative_state)
@@ -309,7 +318,7 @@ defmodule Diffo.Provider.Instance do
   Assists in encoding instance-instance relationships
   """
   def relationships(result) do
-    relationships = result.forward_relationships
+    relationships = Diffo.Util.get(result, :forward_relationships)
     service_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
     resource_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
     supporting_services =
@@ -321,11 +330,10 @@ defmodule Diffo.Provider.Instance do
       |> Enum.filter(fn relationship -> relationship.alias != nil end)
       |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
     result
-      |> Map.drop([:forward_relationships, :reverse_relationships])
-      |> Diffo.Util.put_not_empty(:serviceRelationship, service_relationships)
-      |> Diffo.Util.put_not_empty(:resourceRelationship, resource_relationships)
-      |> Diffo.Util.put_not_empty(:supportingService, supporting_services)
-      |> Diffo.Util.put_not_empty(:supportingResource, supporting_resources)
+      |> Diffo.Util.set(:serviceRelationship, service_relationships)
+      |> Diffo.Util.set(:resourceRelationship, resource_relationships)
+      |> Diffo.Util.set(:supportingService, supporting_services)
+      |> Diffo.Util.set(:supportingResource, supporting_resources)
   end
 
   @doc """
@@ -346,16 +354,16 @@ defmodule Diffo.Provider.Instance do
   end
 
   @doc """
-  Derives the instance feature collection name from the instance type
+  Derives the instance feature list name from the instance type
   ## Examples
-    iex> Diffo.Provider.Instance.derive_feature_collection_name(:service)
+    iex> Diffo.Provider.Instance.derive_feature_list_name(:service)
     :feature
 
-    iex> Diffo.Provider.Instance.derive_feature_collection_name(:resource)
+    iex> Diffo.Provider.Instance.derive_feature_list_name(:resource)
     :activationFeature
 
   """
-  def derive_feature_collection_name(type) do
+  def derive_feature_list_name(type) do
     case type do
       :service -> :feature
       :resource -> :activationFeature
@@ -363,16 +371,16 @@ defmodule Diffo.Provider.Instance do
   end
 
   @doc """
-  Derives the instance characteristic collection name from the instance type
+  Derives the instance characteristic list name from the instance type
   ## Examples
-    iex> Diffo.Provider.Instance.derive_characteristic_collection_name(:service)
+    iex> Diffo.Provider.Instance.derive_characteristic_list_name(:service)
     :serviceCharacteristic
 
-    iex> Diffo.Provider.Instance.derive_characteristic_collection_name(:resource)
+    iex> Diffo.Provider.Instance.derive_characteristic_list_name(:resource)
     :resourceCharacteristic
 
   """
-  def derive_characteristic_collection_name(type) do
+  def derive_characteristic_list_name(type) do
     case type do
       :service -> :serviceCharacteristic
       :resource -> :resourceCharacteristic
