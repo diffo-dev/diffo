@@ -15,12 +15,15 @@ defmodule Diffo.Provider.Relationship do
   jason do
     pick [:target_type, :type, :characteristic, :target_type, :target_id, :target_href]
     customize fn result, _record ->
-      target_type = result.target_type
-      relationship_characteristic_name = Diffo.Provider.Relationship.derive_relationship_characteristic_name(target_type)
+      type = Diffo.Util.get(result, :target_type)
+      id = Diffo.Util.get(result, :target_id)
+      href = Diffo.Util.get(result, :target_href)
+      reference = %{id: id, href: href}
+      relationship_characteristic_list_name = Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(type)
       result =
         result
-        |> Map.put(target_type, %{id: result.target_id, href: result.target_href})
-        |> Diffo.Util.put_not_empty(relationship_characteristic_name, result.characteristic)
+        |> Diffo.Util.set(type, reference)
+        |> Diffo.Util.suppress(:characteristic) |> Diffo.Util.rename(:characteristic, relationship_characteristic_list_name)
     end
     order [:type, :service, :resource, :serviceRelationshipCharacteristic, :resourceRelationshipCharacteristic]
   end
@@ -152,16 +155,16 @@ defmodule Diffo.Provider.Relationship do
   end
 
   @doc """
-  Derives the instance relationship characteristic name from the instance type
+  Derives the instance relationship characteristic list name from the instance type
   ## Examples
-    iex> Diffo.Provider.Relationship.derive_relationship_characteristic_name(:service)
+    iex> Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(:service)
     :serviceRelationshipCharacteristic
 
-    iex> Diffo.Provider.Relationship.derive_relationship_characteristic_name(:resource)
+    iex> Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(:resource)
     :resourceRelationshipCharacteristic
 
   """
-  def derive_relationship_characteristic_name(instance_type) do
+  def derive_relationship_characteristic_list_name(instance_type) do
     case instance_type do
       :service -> :serviceRelationshipCharacteristic
       :resource -> :resourceRelationshipCharacteristic

@@ -251,4 +251,81 @@ defmodule Diffo.Util do
       DateTime.to_iso8601(DateTime.truncate(datetime, :millisecond))
     end
   end
+
+  @doc """
+  Gets a value from a list of tuples, or nil
+  ## Examples
+    iex> list = [a: 1, b: 2]
+    iex> Diffo.Util.get(list, :b)
+    2
+    iex> Diffo.Util.get(list, :c)
+    nil
+  """
+  def get(list, tuple_key) when is_list(list) do
+    case List.keyfind(list, tuple_key, 0) do
+      {^tuple_key, value} -> value
+      nil -> nil
+    end
+  end
+
+  @doc """
+  Adds a tuple or updates the existing tuple value in a list of tuples
+  ## Examples
+    iex> list = [a: 1, b: 2]
+    iex> Diffo.Util.set(list, :c, 3)
+    [a: 1, b: 2, c: 3]
+    iex> Diffo.Util.set(list, :b, 3)
+    [a: 1, b: 3]
+    iex> Diffo.Util.set(list, :c, nil)
+    [a: 1, b: 2]
+    iex> Diffo.Util.set(list, :b, nil)
+    [a: 1]
+    iex> Diffo.Util.set(list, :c, [])
+    [a: 1, b: 2]
+    iex> Diffo.Util.set(list, :b, [])
+    [a: 1]
+  """
+  def set(list, tuple_key, tuple_value) when is_list(list) do
+    if (tuple_value == nil) or (tuple_value == []) do
+      List.keydelete(list, tuple_key, 0)
+    else
+      List.keystore(list, tuple_key, 0, {tuple_key, tuple_value})
+    end
+  end
+
+  @doc """
+  Suppresses a tuple from a list of tuples if nil or empty
+    ## Examples
+    iex> list = [a: [], b: [1], c: nil]
+    iex> Diffo.Util.suppress(list, :a)
+    [b: [1], c: nil]
+    iex> Diffo.Util.suppress(list, :b)
+    [a: [], b: [1], c: nil]
+    iex> Diffo.Util.suppress(list, :c)
+    [a: [], b: [1]]
+    iex> Diffo.Util.suppress(list, :d)
+    [a: [], b: [1], c: nil]
+  """
+  def suppress(list, tuple_key) when is_list(list) do
+    value = get(list, tuple_key)
+    case value do
+      [] -> List.keydelete(list, tuple_key, 0)
+      nil -> List.keydelete(list, tuple_key, 0)
+      _ -> list
+    end
+  end
+
+  @doc """
+  Renames a tuple in a list, preserving its value and position
+    ## Examples
+    iex> list = [a: 1, b: 2, d: 3]
+    iex> Diffo.Util.rename(list, :b, :c)
+    [a: 1, c: 2, d: 3]
+    iex> Diffo.Util.rename(list, :c, :e)
+    [a: 1, b: 2, d: 3]
+  """
+  def rename(list, tuple_key, new_tuple_key) when is_list(list) do
+    value = get(list, tuple_key)
+    list |> List.keyreplace(tuple_key, 0, {new_tuple_key, value})
+  end
 end
