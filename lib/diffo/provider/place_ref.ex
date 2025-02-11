@@ -13,9 +13,8 @@ defmodule Diffo.Provider.PlaceRef do
   end
 
   jason do
-    pick [:role, :place_id, :href, :name, :referredType, :type]
-    rename %{:place_id => :id, :referredType => "@referredType", :type => "@type"}
-    order [:id, :href, :name, :role, "@referredType", "@type"]
+    pick [:place_id, :href, :name, :role, :referredType, :type]
+    rename place_id: :id, referredType: "@referredType", type: "@type"
   end
 
   actions do

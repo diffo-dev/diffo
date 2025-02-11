@@ -13,9 +13,8 @@ defmodule Diffo.Provider.PartyRef do
   end
 
   jason do
-    pick [:role, :party_id, :href, :name, :referredType, :type]
-    rename %{:party_id => :id, :referredType => "@referredType", :type => "@type"}
-    order [:id, :href, :name, :role, "@referredType", "@type"]
+    pick [:party_id, :href, :name, :role, :referredType, :type]
+    rename party_id: :id, referredType: "@referredType", type: "@type"
   end
 
   actions do

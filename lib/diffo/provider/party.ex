@@ -13,8 +13,8 @@ defmodule Diffo.Provider.Party do
   end
 
   jason do
-    rename %{:referredType => "@referredType", :type => "@type"}
-    order [:id, :href, :name, "@referredType", "@type"]
+    pick [:id, :href, :name, :referredType, :type]
+    rename referredType: "@referredType", type: "@type"
   end
 
   actions do
@@ -104,6 +104,11 @@ defmodule Diffo.Provider.Party do
   relationships do
     has_many :party_refs, Diffo.Provider.PartyRef do
       destination_attribute :party_id
+      public? true
+    end
+
+    has_many :external_identifiers, Diffo.Provider.ExternalIdentifier do
+      destination_attribute :owner_id
       public? true
     end
   end
