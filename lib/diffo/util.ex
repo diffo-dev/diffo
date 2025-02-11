@@ -294,6 +294,23 @@ defmodule Diffo.Util do
   end
 
   @doc """
+  Removes a tuple from a list of tuples
+    ## Examples
+    iex> list = [a: [], b: [1], c: nil]
+    iex> Diffo.Util.remove(list, :a)
+    [b: [1], c: nil]
+    iex> Diffo.Util.remove(list, :b)
+    [a: [], c: nil]
+    iex> Diffo.Util.remove(list, :c)
+    [a: [], b: [1]]
+    iex> Diffo.Util.remove(list, :d)
+    [a: [], b: [1], c: nil]
+  """
+  def remove(list, tuple_key) when is_list(list) do
+    List.keydelete(list, tuple_key, 0)
+  end
+
+  @doc """
   Suppresses a tuple from a list of tuples if nil or empty
     ## Examples
     iex> list = [a: [], b: [1], c: nil]

@@ -30,26 +30,29 @@ defmodule Diffo.Provider.Instance do
   end
 
   jason do
-    pick [:id, :href, :category, :description, :name, :specification_type, :specification, :forward_relationships, :feature, :characteristic, :place, :party, :type]
+    pick [:id, :href, :category, :description, :name, :externalIdentifier, :specification_type, :specification, :forward_relationships, :feature, :characteristic, :place, :party, :type]
     customize fn result, record ->
+      #IO.inspect(label: "start customize")
       type = Diffo.Util.get(result, :type)
       specification_type = Diffo.Util.get(result, :specification_type)
       specification = Diffo.Util.get(result, :specification)
       result
+      |> Diffo.Util.suppress(:externalIdentifier)
       |> Diffo.Provider.Instance.dates(record)
       |> Diffo.Provider.Instance.states(record)
       |> Diffo.Provider.Instance.relationships()
       |> Diffo.Util.rename(:specification, specification_type)
       |> Diffo.Util.suppress(:feature) |> Diffo.Util.rename(:feature, Diffo.Provider.Instance.derive_feature_list_name(type))
       |> Diffo.Util.suppress(:characteristic) |> Diffo.Util.rename(:characteristic, Diffo.Provider.Instance.derive_characteristic_list_name(type))
-      |> Diffo.Util.suppress(:party) |> Diffo.Util.rename(:party, :relatedParty)
       |> Diffo.Util.suppress(:place)
+      |> Diffo.Util.suppress(:party) |> Diffo.Util.rename(:party, :relatedParty)
+      #|> IO.inspect(label: "end customize")
     end
 
-    order [:id, :href, :category, :description, :name,
+    order [:id, :href, :category, :description, :name, :externalIdentifier,
+      :serviceSpecification, :resourceSpecification,
       :serviceDate, :startDate, :startOperatingDate, :endDate, :endOperatingDate,
       :state, :operatingStatus, :administrativeState, :operationalState, :resourceStatus, :usageState,
-      :serviceSpecification, :resourceSpecification,
       :serviceRelationship, :resourceRelationship,
       :supportingService, :supportingResource,
       :feature, :activationFeature,
@@ -212,7 +215,7 @@ defmodule Diffo.Provider.Instance do
   end
 
   relationships do
-    has_many :external_identifier, Diffo.Provider.ExternalIdentifier do
+    has_many :externalIdentifier, Diffo.Provider.ExternalIdentifier do
       public? true
     end
 
@@ -281,7 +284,7 @@ defmodule Diffo.Provider.Instance do
   end
 
   preparations do
-    prepare build(load: [:category, :description, :specification_type, :href, :specification,  :characteristic, :feature, :forward_relationships, :place, :party], sort: [href: :asc])
+    prepare build(load: [:category, :description, :externalIdentifier, :specification_type, :href, :specification,  :characteristic, :feature, :forward_relationships, :place, :party], sort: [href: :asc])
   end
 
   @doc """
@@ -328,6 +331,8 @@ defmodule Diffo.Provider.Instance do
       |> Enum.filter(fn relationship -> relationship.alias != nil end)
       |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
     result
+      |> Diffo.Util.remove(:forward_relationships)
+      |> Diffo.Util.remove(:reverse_relationships)
       |> Diffo.Util.set(:serviceRelationship, service_relationships)
       |> Diffo.Util.set(:resourceRelationship, resource_relationships)
       |> Diffo.Util.set(:supportingService, supporting_services)
