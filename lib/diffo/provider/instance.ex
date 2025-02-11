@@ -30,7 +30,7 @@ defmodule Diffo.Provider.Instance do
   end
 
   jason do
-    pick [:id, :href, :category, :description, :name, :externalIdentifier, :specification_type, :specification, :forward_relationships, :feature, :characteristic, :place, :party, :type]
+    pick [:id, :href, :category, :description, :name, :externalIdentifier, :specification_type, :specification, :processStatus, :forward_relationships, :feature, :characteristic, :place, :party, :type]
     customize fn result, record ->
       #IO.inspect(label: "start customize")
       type = Diffo.Util.get(result, :type)
@@ -42,6 +42,7 @@ defmodule Diffo.Provider.Instance do
       |> Diffo.Provider.Instance.states(record)
       |> Diffo.Provider.Instance.relationships()
       |> Diffo.Util.rename(:specification, specification_type)
+      |> Diffo.Util.suppress(:processStatus)
       |> Diffo.Util.suppress(:feature) |> Diffo.Util.rename(:feature, Diffo.Provider.Instance.derive_feature_list_name(type))
       |> Diffo.Util.suppress(:characteristic) |> Diffo.Util.rename(:characteristic, Diffo.Provider.Instance.derive_characteristic_list_name(type))
       |> Diffo.Util.suppress(:place)
@@ -53,6 +54,7 @@ defmodule Diffo.Provider.Instance do
       :serviceSpecification, :resourceSpecification,
       :serviceDate, :startDate, :startOperatingDate, :endDate, :endOperatingDate,
       :state, :operatingStatus, :administrativeState, :operationalState, :resourceStatus, :usageState,
+      :processStatus,
       :serviceRelationship, :resourceRelationship,
       :supportingService, :supportingResource,
       :feature, :activationFeature,
@@ -229,6 +231,10 @@ defmodule Diffo.Provider.Instance do
 
     has_many :reverse_relationships, Diffo.Provider.Relationship do
       destination_attribute :target_id
+    end
+
+    has_many :processStatus, Diffo.Provider.ProcessStatus do
+      public? true
     end
 
     has_many :characteristic, Diffo.Provider.Characteristic do
