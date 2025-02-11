@@ -16,4 +16,5 @@ defmodule DiffoTest do
   doctest Diffo.Provider.Party
   doctest Diffo.Provider.PartyRef
   doctest Diffo.Provider.ExternalIdentifier
+  doctest Diffo.Provider.ProcessStatus
 end
