@@ -32,7 +32,6 @@ defmodule Diffo.Provider.Instance do
   jason do
     pick [:id, :href, :category, :description, :name, :specification_type, :specification, :forward_relationships, :feature, :characteristic, :place, :party, :type]
     customize fn result, record ->
-      #IO.inspect(result, label: "start instance jason customize")
       type = Diffo.Util.get(result, :type)
       specification_type = Diffo.Util.get(result, :specification_type)
       specification = Diffo.Util.get(result, :specification)
@@ -45,13 +44,8 @@ defmodule Diffo.Provider.Instance do
       |> Diffo.Util.suppress(:characteristic) |> Diffo.Util.rename(:characteristic, Diffo.Provider.Instance.derive_characteristic_list_name(type))
       |> Diffo.Util.suppress(:party) |> Diffo.Util.rename(:party, :relatedParty)
       |> Diffo.Util.suppress(:place)
-      #|> IO.inspect(label: "inside instance jason customize")
-
-
-
-
-
     end
+
     order [:id, :href, :category, :description, :name,
       :serviceDate, :startDate, :startOperatingDate, :endDate, :endOperatingDate,
       :state, :operatingStatus, :administrativeState, :operationalState, :resourceStatus, :usageState,
@@ -218,6 +212,10 @@ defmodule Diffo.Provider.Instance do
   end
 
   relationships do
+    has_many :external_identifier, Diffo.Provider.ExternalIdentifier do
+      public? true
+    end
+
     belongs_to :specification, Diffo.Provider.Specification do
       allow_nil? false
     end

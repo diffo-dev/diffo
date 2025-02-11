@@ -109,5 +109,16 @@ defmodule Diffo.Provider do
       define :update_party_ref, action: :update
       define :delete_party_ref, action: :destroy
     end
+
+    resource Diffo.Provider.ExternalIdentifier do
+      define :create_external_identifier, action: :create
+      define :get_external_identifier_by_id, action: :read, get_by: :id
+      define :list_external_identifiers, action: :list
+      define :find_external_identifiers_by_external_id, action: :find_by_external_id, args: [:query]
+      define :list_external_identifiers_by_instance_id, action: :list_external_identifiers_by_instance_id, args: [:instance_id]
+      define :list_external_identifiers_by_owner_id, action: :list_external_identifiers_by_owner_id, args: [:owner_id]
+      define :update_external_identifier, action: :update
+      define :delete_external_identifier, action: :destroy
+    end
   end
 end
