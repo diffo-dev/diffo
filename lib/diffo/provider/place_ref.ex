@@ -76,7 +76,7 @@ defmodule Diffo.Provider.PlaceRef do
 
   identities do
     identity :instance_place_uniqueness, [:instance_id, :place_id] do
-      message "another place ref exists"
+      message "another place ref exists relating the same instance and place"
     end
   end
 

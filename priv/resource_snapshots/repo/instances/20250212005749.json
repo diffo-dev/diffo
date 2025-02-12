@@ -41,6 +41,19 @@
       "type": "text"
     },
     {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "process_statuses",
+      "type": [
+        "array",
+        "map"
+      ]
+    },
+    {
       "allow_nil?": false,
       "default": "fragment(\"(now() AT TIME ZONE 'utc')\")",
       "generated?": false,
@@ -125,7 +138,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "858A4145E5B72278517D460B2B45A997FAA95A64F43B0DB7DF417665D998D01B",
+  "hash": "144BE5A3F2135D66F4516DF214C6D7E8C2CE36304C3D59988F8678BD132F35B1",
   "identities": [
     {
       "all_tenants?": false,
