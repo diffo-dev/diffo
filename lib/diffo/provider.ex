@@ -128,5 +128,16 @@ defmodule Diffo.Provider do
       define :update_process_status, action: :update
       define :delete_process_status, action: :destroy
     end
+
+    resource Diffo.Provider.Note do
+      define :create_note, action: :create
+      define :get_note_by_id, action: :read, get_by: :id
+      define :list_notes, action: :list
+      define :find_notes_by_note_id, action: :find_by_note_id, args: [:query]
+      define :list_notes_by_instance_id, action: :list_notes_by_instance_id, args: [:instance_id]
+      define :list_notes_by_author_id, action: :list_notes_by_author_id, args: [:author_id]
+      define :update_note, action: :update
+      define :delete_note, action: :destroy
+    end
   end
 end
