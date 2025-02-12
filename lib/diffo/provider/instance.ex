@@ -30,24 +30,23 @@ defmodule Diffo.Provider.Instance do
   end
 
   jason do
-    pick [:id, :href, :category, :description, :name, :externalIdentifier, :specification_type, :specification, :processStatus, :forward_relationships, :feature, :characteristic, :place, :party, :type]
+    pick [:id, :href, :category, :description, :name, :external_identifiers, :process_statuses, :specification_type, :specification, :forward_relationships, :features, :characteristics, :places, :parties, :type]
     customize fn result, record ->
-      #IO.inspect(label: "start customize")
       type = Diffo.Util.get(result, :type)
       specification_type = Diffo.Util.get(result, :specification_type)
       specification = Diffo.Util.get(result, :specification)
       result
-      |> Diffo.Util.suppress(:externalIdentifier)
+      #|> IO.inspect(label: "start instance jason customize")
+      |> Diffo.Util.suppress(:external_identifiers) |> Diffo.Util.rename(:external_identifiers, :externalIdentifier)
       |> Diffo.Provider.Instance.dates(record)
       |> Diffo.Provider.Instance.states(record)
       |> Diffo.Provider.Instance.relationships()
       |> Diffo.Util.rename(:specification, specification_type)
-      |> Diffo.Util.suppress(:processStatus)
-      |> Diffo.Util.suppress(:feature) |> Diffo.Util.rename(:feature, Diffo.Provider.Instance.derive_feature_list_name(type))
-      |> Diffo.Util.suppress(:characteristic) |> Diffo.Util.rename(:characteristic, Diffo.Provider.Instance.derive_characteristic_list_name(type))
-      |> Diffo.Util.suppress(:place)
-      |> Diffo.Util.suppress(:party) |> Diffo.Util.rename(:party, :relatedParty)
-      #|> IO.inspect(label: "end customize")
+      |> Diffo.Util.suppress(:process_statuses) |> Diffo.Util.rename(:process_statuses, :processStatus)
+      |> Diffo.Util.suppress(:features) |> Diffo.Util.rename(:features, Diffo.Provider.Instance.derive_feature_list_name(type))
+      |> Diffo.Util.suppress(:characteristics) |> Diffo.Util.rename(:characteristics, Diffo.Provider.Instance.derive_characteristic_list_name(type))
+      |> Diffo.Util.suppress(:places) |> Diffo.Util.rename(:places, :place)
+      |> Diffo.Util.suppress(:parties) |> Diffo.Util.rename(:parties, :relatedParty)
     end
 
     order [:id, :href, :category, :description, :name, :externalIdentifier,
@@ -217,39 +216,49 @@ defmodule Diffo.Provider.Instance do
   end
 
   relationships do
-    has_many :externalIdentifier, Diffo.Provider.ExternalIdentifier do
+    has_many :external_identifiers, Diffo.Provider.ExternalIdentifier do
+      description "the instance's list of external identifiers"
       public? true
     end
 
     belongs_to :specification, Diffo.Provider.Specification do
+      description "the specification which specifies this instance"
       allow_nil? false
+      public? true
+    end
+
+    has_many :process_statuses, Diffo.Provider.ProcessStatus do
+      description "the instance's process status collection"
+      public? true
     end
 
     has_many :forward_relationships, Diffo.Provider.Relationship do
+      description "the instance's outgoing relationships to other instances"
       destination_attribute :source_id
     end
 
     has_many :reverse_relationships, Diffo.Provider.Relationship do
+      description "the instance's incoming relationships from other instances"
       destination_attribute :target_id
     end
 
-    has_many :processStatus, Diffo.Provider.ProcessStatus do
+    has_many :features, Diffo.Provider.Feature do
+      description "the instance's collection of features"
       public? true
     end
 
-    has_many :characteristic, Diffo.Provider.Characteristic do
+    has_many :characteristics, Diffo.Provider.Characteristic do
+      description "the instance's collection of characteristics"
       public? true
     end
 
-    has_many :feature, Diffo.Provider.Feature do
+    has_many :places, Diffo.Provider.PlaceRef do
+      description "the instance's collection of place"
       public? true
     end
 
-    has_many :party, Diffo.Provider.PartyRef do
-      public? true
-    end
-
-    has_many :place, Diffo.Provider.PlaceRef do
+    has_many :parties, Diffo.Provider.PartyRef do
+      description "the instance's collection of related party"
       public? true
     end
   end
@@ -290,7 +299,7 @@ defmodule Diffo.Provider.Instance do
   end
 
   preparations do
-    prepare build(load: [:category, :description, :externalIdentifier, :specification_type, :href, :specification,  :characteristic, :feature, :forward_relationships, :place, :party], sort: [href: :asc])
+    prepare build(load: [:category, :description, :external_identifiers, :specification_type, :href, :specification, :process_statuses, :characteristics, :features, :forward_relationships, :places, :parties], sort: [href: :asc])
   end
 
   @doc """

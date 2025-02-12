@@ -1,4 +1,4 @@
-defmodule Diffo.Repo.Migrations.Initialize do
+defmodule Diffo.Repo.Migrations.Regenerate do
   @moduledoc """
   Updates resources based on their most recent snapshots.
 
@@ -211,6 +211,7 @@ defmodule Diffo.Repo.Migrations.Initialize do
       add(:type, :text, null: false, default: "service")
       add(:name, :text)
       add(:service_operating_status, :text, default: "unknown")
+      add(:process_statuses, {:array, :map})
 
       add(:inserted_at, :utc_datetime_usec,
         null: false,
@@ -272,6 +273,47 @@ defmodule Diffo.Repo.Migrations.Initialize do
 
     create unique_index(:features, [:instance_id, :name],
              name: "features_instance_feature_uniqueness_index"
+           )
+
+    create table(:externalIdentifiers, primary_key: false) do
+      add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
+      add(:type, :text)
+      add(:external_id, :text)
+
+      add(:inserted_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:updated_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(
+        :instance_id,
+        references(:instances,
+          column: :id,
+          name: "externalIdentifiers_instance_id_fkey",
+          type: :uuid,
+          prefix: "public"
+        ),
+        null: false
+      )
+
+      add(
+        :owner_id,
+        references(:parties,
+          column: :id,
+          name: "externalIdentifiers_owner_id_fkey",
+          type: :text,
+          prefix: "public"
+        )
+      )
+    end
+
+    create unique_index(:externalIdentifiers, [:instance_id, :type],
+             name: "externalIdentifiers_instance_type_uniqueness_index"
            )
 
     create table(:characteristics, primary_key: false) do
@@ -362,6 +404,18 @@ defmodule Diffo.Repo.Migrations.Initialize do
     drop(table(:characteristics))
 
     drop_if_exists(
+      unique_index(:externalIdentifiers, [:instance_id, :type],
+        name: "externalIdentifiers_instance_type_uniqueness_index"
+      )
+    )
+
+    drop(constraint(:externalIdentifiers, "externalIdentifiers_instance_id_fkey"))
+
+    drop(constraint(:externalIdentifiers, "externalIdentifiers_owner_id_fkey"))
+
+    drop(table(:externalIdentifiers))
+
+    drop_if_exists(
       unique_index(:features, [:instance_id, :name],
         name: "features_instance_feature_uniqueness_index"
       )
@@ -386,6 +440,7 @@ defmodule Diffo.Repo.Migrations.Initialize do
       remove(:started_at)
       remove(:updated_at)
       remove(:inserted_at)
+      remove(:process_statuses)
       remove(:service_operating_status)
       remove(:name)
       remove(:type)
