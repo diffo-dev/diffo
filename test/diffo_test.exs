@@ -18,4 +18,6 @@ defmodule DiffoTest do
   doctest Diffo.Provider.ExternalIdentifier
   doctest Diffo.Provider.ProcessStatus
   doctest Diffo.Provider.Note
+  doctest Diffo.Provider.EntityRef
+  doctest Diffo.Provider.Entity
 end
