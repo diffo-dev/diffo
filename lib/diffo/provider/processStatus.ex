@@ -20,7 +20,7 @@ defmodule Diffo.Provider.ProcessStatus do
       |> Diffo.Util.suppress(:parameterized_message)
       |> Diffo.Util.set(:timestamp, Diffo.Util.to_iso8601(record.timestamp))
     end
-    rename parameterized_message: :parameterizedMessage
+    rename parameterized_message: :parameterizedMessage, timestamp: :timeStamp
   end
 
   code_interface do
@@ -72,6 +72,7 @@ defmodule Diffo.Provider.ProcessStatus do
       description "the severity of this process status, this is a mandatory value"
       allow_nil? false
       public? true
+      constraints one_of: [:INFO, :WARN, :ERROR, :CRITICAL]
     end
 
     attribute :message, :string do
@@ -90,10 +91,6 @@ defmodule Diffo.Provider.ProcessStatus do
       description "the timestamp of this process status, timestamp is create or last update"
       allow_nil? false
     end
-
-    create_timestamp :inserted_at
-
-    update_timestamp :updated_at
   end
 
   relationships do
