@@ -53,6 +53,35 @@ defmodule Diffo.Provider.InstanceTest do
       assert loaded_instance.specification.id == specification.id
     end
 
+    test "create a service instance with a supplied id - success" do
+      uuid = UUID.uuid4()
+      specification = Diffo.Provider.create_specification!(%{name: "fibreAccess", description: "Fibre Access Service", category: "connectivity"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id, id: uuid})
+      assert instance.id == uuid
+      assert instance.type == :service
+      assert instance.service_state == :initial
+      assert instance.service_operating_status == :unknown
+      loaded_instance = Diffo.Provider.get_instance_by_id!(instance.id)
+      assert loaded_instance.category == "connectivity"
+      assert loaded_instance.description == "Fibre Access Service"
+      assert loaded_instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
+      assert loaded_instance.specification.id == specification.id
+    end
+
+    test "create a service instance with a supplied id - failure - not uuid v4" do
+      not_a_uuid = UUID.uuid4() <> "1"
+      specification = Diffo.Provider.create_specification!(%{name: "fibreAccess", description: "Fibre Access Service", category: "connectivity"})
+      {:error, _error} = Diffo.Provider.create_instance(%{specification_id: specification.id, id: not_a_uuid})
+    end
+
+    test "create a duplicate service instance - failure" do
+      uuid = UUID.uuid4()
+      specification = Diffo.Provider.create_specification!(%{name: "fibreAccess", description: "Fibre Access Service", category: "connectivity"})
+      {:ok, _result} = Diffo.Provider.create_instance(%{specification_id: specification.id, id: uuid})
+      {:error, _error} = Diffo.Provider.create_instance(%{specification_id: specification.id, id: uuid})
+    end
+
+
     #TODO fix this test, it is failing as specified_instance_type calculation is not loaded when create validation occurs
     #test "create a resource instance - success" do
     # {:ok, specification} = Diffo.Provider.create_specification(%{name: "copperPath", description: "Copper Path Resource", category: "physical", type: :resourceSpecification})
@@ -199,12 +228,14 @@ defmodule Diffo.Provider.InstanceTest do
       Diffo.Provider.create_process_status!(%{instance_id: child_instance.id, code: "CPEDEV-1002", severity: :WARN, message: "device unmanagable"})
       Diffo.Provider.create_note!(%{instance_id: parent_instance.id, text: :"non commercial", note_id: "NOT010000123456", author_id: t3_party.id})
       Diffo.Provider.create_note!(%{instance_id: parent_instance.id, text: :"non commercial", note_id: "NOT010000873982", author_id: t3_party2.id})
+      entity = Diffo.Provider.create_entity!(%{id: "COR000000123456", referredType: :cost, name: "2025-01"})
+      Diffo.Provider.create_entity_ref!(%{instance_id: child_instance.id, role: :expected, entity_id: entity.id})
       refreshed_parent_instance = Diffo.Provider.get_instance_by_id!(parent_instance.id)
       parent_encoding = Jason.encode!(refreshed_parent_instance) |> Diffo.Util.summarise_dates()
       assert parent_encoding == ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"Site Connection Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"siteId\",\"id\":\"ANS020000023234\",\"owner\":\"T3_ADAPTIVE_NETWORKS\"}],\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}],\"feature\":[{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}],\"serviceCharacteristic\":[{\"name\":\"device\",\"value\":\"managed\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],"relatedParty\":[{\"id\":\"T3_ADAPTIVE_NETWORKS\",\"href\":\"entity/internal/T3_ADAPTIVE_NETWORKS\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
       refreshed_child_instance = Diffo.Provider.get_instance_by_id!(child_instance.id)
       child_encoding = Jason.encode!(refreshed_child_instance) |> Diffo.Util.summarise_dates()
-      assert child_encoding == ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"connectionId\",\"id\":\"EVC010000873982\",\"owner\":\"T3_CONNECTIVITY\"},{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_CPE\"}],\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"processStatus\":[{\"code\":\"CPEDEV-1002\",\"severity\":\"WARN\",\"message\":\"device unmanagable\",\"timeStamp\":\"now\"},{\"code\":\"CPEDEV-1001\",\"severity\":\"INFO\",\"message\":\"device discovered\",\"timeStamp\":\"now\"}],\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\"}}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T4_CPE\",\"href\":\"entity/internal/T4_CPE\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
+      assert child_encoding == ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"connectionId\",\"id\":\"EVC010000873982\",\"owner\":\"T3_CONNECTIVITY\"},{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_CPE\"}],\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"processStatus\":[{\"code\":\"CPEDEV-1002\",\"severity\":\"WARN\",\"message\":\"device unmanagable\",\"timeStamp\":\"now\"},{\"code\":\"CPEDEV-1001\",\"severity\":\"INFO\",\"message\":\"device discovered\",\"timeStamp\":\"now\"}],\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\"}}],\"relatedEntity\":[{\"id\":\"COR000000123456\",\"name\":\"2025-01\",\"role\":\"expected\",\"@referredType\":\"cost\",\"@type\":\"EntityRef\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T4_CPE\",\"href\":\"entity/internal/T4_CPE\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
     end
 
     test "encode service with supporting service child instance json - success" do

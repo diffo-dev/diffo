@@ -7,6 +7,13 @@ defmodule Diffo.Uuid do
   """
 
     @doc """
+    Generates a uuid4
+    """
+    def uuid4() do
+      UUID.uuid4()
+    end
+
+    @doc """
     Ensures the supplied uuid is valid uuid4, if not creates one.
     ## Examples
       iex> validated = Diffo.Uuid.uuid4("4cc5b107-0ff3-4bda-80e1-e4264cbaf868")

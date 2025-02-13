@@ -23,7 +23,7 @@ defmodule Diffo.Provider.Relationship do
       result =
         result
         |> Diffo.Util.set(type, reference)
-        |> Diffo.Util.suppress(:characteristic) |> Diffo.Util.rename(:characteristic, relationship_characteristic_list_name)
+        |> Diffo.Util.suppress_rename(:characteristic, relationship_characteristic_list_name)
     end
     order [:type, :service, :resource, :serviceRelationshipCharacteristic, :resourceRelationshipCharacteristic]
   end
