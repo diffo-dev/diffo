@@ -345,4 +345,20 @@ defmodule Diffo.Util do
     value = get(list, tuple_key)
     list |> List.keyreplace(tuple_key, 0, {new_tuple_key, value})
   end
+
+  @doc """
+  Suppresses or renames, using suppress |> rename
+    ## Examples
+    iex> list = [a: [], b: [1], c: nil]
+    iex> Diffo.Util.suppress_rename(list, :a, :d)
+    [b: [1], c: nil]
+
+    iex> list = [a: [1], b: [1], c: nil]
+    iex> Diffo.Util.suppress_rename(list, :a, :d)
+    [d: [1], b: [1], c: nil]
+
+  """
+  def suppress_rename(list, tuple_key, new_tuple_key) when is_list(list) do
+    suppress(list, tuple_key) |> rename(tuple_key, new_tuple_key)
+  end
 end
