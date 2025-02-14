@@ -199,6 +199,68 @@ defmodule Diffo.Provider.InstanceTest do
     end
   end
 
+  describe "Diffo.Provider twin Instances" do
+    test "default created service is actual - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      actual = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      refreshed_actual = Diffo.Provider.get_instance_by_id!(actual.id)
+      assert refreshed_actual.which == :actual
+      assert refreshed_actual.twin == nil
+    end
+
+    test "create an actual service - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      actual = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :actual})
+      refreshed_actual = Diffo.Provider.get_instance_by_id!(actual.id)
+      assert refreshed_actual.which == :actual
+      assert refreshed_actual.twin == nil
+    end
+
+    test "create an expected service - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      expected = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected})
+      refreshed_expected = Diffo.Provider.get_instance_by_id!(expected.id)
+      assert refreshed_expected.which == :expected
+      assert refreshed_expected.twin == nil
+    end
+
+    test "create an expected service and twin it with an actual - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      expected = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected})
+      actual = Diffo.Provider.create_instance!(%{specification_id: specification.id}) |> Diffo.Provider.twin_instance!(%{twin_id: expected.id})
+      assert actual.which == :actual
+      assert actual.twin_id == expected.id
+      refreshed_expected = expected |> Diffo.Provider.twin_instance!(%{twin_id: actual.id})
+      assert refreshed_expected.which == :expected
+      assert refreshed_expected.twin_id == actual.id
+    end
+
+    test "create an actual service and twin it with an expected - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      actual = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      expected = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected}) |> Diffo.Provider.twin_instance!(%{twin_id: actual.id})
+      assert expected.which == :expected
+      assert expected.twin_id == actual.id
+      refreshed_actual = actual |> Diffo.Provider.twin_instance!(%{twin_id: expected.id})
+      assert refreshed_actual.which == :actual
+      assert refreshed_actual.twin_id == expected.id
+    end
+
+    test "create an actual service and twin it with an actual - failure" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      actual = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      actual2 = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      {:error, _error} = actual |> Diffo.Provider.twin_instance(%{twin_id: actual2.id})
+    end
+
+    test "create an expected service and twin it with an expected - failure" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      expected = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected})
+      expected2 = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected})
+      {:error, _error} = expected |> Diffo.Provider.twin_instance(%{twin_id: expected2.id})
+    end
+  end
+
   describe "Diffo.Provider encode Instances" do
     test "encode service with service child instance json - success" do
       parent_specification = Diffo.Provider.create_specification!(%{name: "siteConnection", category: "connectivity", description: "Site Connection Service"})

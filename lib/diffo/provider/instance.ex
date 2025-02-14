@@ -32,19 +32,16 @@ defmodule Diffo.Provider.Instance do
   jason do
     pick [:id, :href, :category, :description, :name, :external_identifiers, :process_statuses, :specification_type, :specification, :forward_relationships, :features, :characteristics, :entities, :places, :parties, :type]
     customize fn result, record ->
-      type = Diffo.Util.get(result, :type)
-      specification_type = Diffo.Util.get(result, :specification_type)
-      specification = Diffo.Util.get(result, :specification)
       result
       #|> IO.inspect(label: "start instance jason customize")
       |> Diffo.Util.suppress_rename(:external_identifiers, :externalIdentifier)
       |> Diffo.Provider.Instance.dates(record)
       |> Diffo.Provider.Instance.states(record)
       |> Diffo.Provider.Instance.relationships()
-      |> Diffo.Util.rename(:specification, specification_type)
+      |> Diffo.Util.rename(:specification, record.specification_type)
       |> Diffo.Util.suppress_rename(:process_statuses, :processStatus)
-      |> Diffo.Util.suppress_rename(:features, Diffo.Provider.Instance.derive_feature_list_name(type))
-      |> Diffo.Util.suppress_rename(:characteristics, Diffo.Provider.Instance.derive_characteristic_list_name(type))
+      |> Diffo.Util.suppress_rename(:features, Diffo.Provider.Instance.derive_feature_list_name(record.type))
+      |> Diffo.Util.suppress_rename(:characteristics, Diffo.Provider.Instance.derive_characteristic_list_name(record.type))
       |> Diffo.Util.suppress_rename(:entities, :relatedEntity)
       |> Diffo.Util.suppress_rename(:places, :place)
       |> Diffo.Util.suppress_rename(:parties, :relatedParty)
@@ -63,12 +60,16 @@ defmodule Diffo.Provider.Instance do
     ]
   end
 
+  code_interface do
+    define :read
+  end
+
   actions do
     defaults [:read, :destroy]
 
     create :create do
       description "creates a new instance of a service or resource according by specification id"
-      accept [:id, :specification_id, :name, :type]
+      accept [:id, :specification_id, :name, :type, :which]
     end
 
     read :list do
@@ -92,6 +93,13 @@ defmodule Diffo.Provider.Instance do
       end
       prepare build(sort: [name: :asc])
       filter expr(specification_id == ^arg(:query))
+    end
+
+    update :twin do
+      description "establishes a twin relationship"
+      require_atomic? false
+      accept [:twin_id]
+      validate {Diffo.Validations.IsRelatedDifferent, attribute: :which, related_id: :twin_id}
     end
 
     update :name do
@@ -183,6 +191,20 @@ defmodule Diffo.Provider.Instance do
       default &Diffo.Uuid.uuid4/0
     end
 
+    attribute :which, :atom do
+      description "which twin this instance is, either expected or actual"
+      allow_nil? false
+      default :actual
+      public? true
+      constraints one_of: [:expected, :actual]
+    end
+
+    attribute :expected_id_from_twin, :boolean do
+      description "whether the id should come from the twin"
+      default :false
+      public? true
+    end
+
     attribute :type, :atom do
       description "the type of the instance, either service or resource"
       allow_nil? false
@@ -220,6 +242,12 @@ defmodule Diffo.Provider.Instance do
   end
 
   relationships do
+    belongs_to :twin, Diffo.Provider.Instance do
+      description "the instance's twin"
+      destination_attribute :id
+      public? true
+    end
+
     has_many :external_identifiers, Diffo.Provider.ExternalIdentifier do
       description "the instance's list of external identifiers"
       public? true
@@ -273,8 +301,9 @@ defmodule Diffo.Provider.Instance do
   end
 
   validations do
-    # TODO this isn't working as specified_instance_type is not loaded
-    #validate confirm(:type, :specified_instance_type), on: [:create, :update]
+   #  do
+   #   message "the instance's twin must have a different which"
+   # end
   end
 
   calculations do
@@ -303,12 +332,8 @@ defmodule Diffo.Provider.Instance do
     end
   end
 
-  identities do
-    identity :unique_name_per_specification_id, [:name, :specification_id]
-  end
-
   preparations do
-    prepare build(load: [:category, :description, :external_identifiers, :specification_type, :href, :specification, :process_statuses, :forward_relationships, :features, :characteristics, :entities, :places, :parties], sort: [href: :asc])
+    prepare build(load: [:twin, :category, :description, :external_identifiers, :specification_type, :href, :specification, :process_statuses, :forward_relationships, :features, :characteristics, :entities, :places, :parties], sort: [href: :asc])
   end
 
   @doc """
@@ -465,6 +490,24 @@ defmodule Diffo.Provider.Instance do
     case type do
       :service -> :endDate
       :resource -> :endOperatingDate
+    end
+  end
+
+  @doc """
+  Given which returns the other which
+  ## Examples
+    iex> Diffo.Provider.Instance.other(:actual)
+    :expected
+
+    iex> Diffo.Provider.Instance.other(:expected)
+    :actual
+
+  """
+
+  def other(which) do
+    case which do
+      :actual -> :expected
+      :expected -> :actual
     end
   end
 end

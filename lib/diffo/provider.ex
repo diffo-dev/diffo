@@ -29,6 +29,7 @@ defmodule Diffo.Provider do
       define :list_instances, action: :list
       define :find_instances_by_name, action: :find_by_name, args: [:query]
       define :find_instances_by_specification_id, action: :find_by_specification_id, args: [:query]
+      define :twin_instance, action: :twin
       define :name_instance, action: :name
       define :cancel_service, action: :cancel
       define :feasibilityCheck_service, action: :feasibilityCheck

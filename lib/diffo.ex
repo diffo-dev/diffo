@@ -3,20 +3,20 @@ defmodule Diffo do
   Diffo - TMF Service and Resource Management with a difference
   Copyright Matt Beanland beanland@live.com.au
 
-  Diffo - hello
+  Diffo - Application entry point
   """
 
-  @spec hello() :: String.t()
+  @spec hey() :: String.t()
   @doc """
   Hello Diffo
 
   ## Examples
 
-      iex> Diffo.hello()
-      "Diffo - TMF Service and Resource Management with a difference"
+      iex> Diffo.hey()
+      "diffo>"
 
   """
-  def hello do
-    "Diffo - TMF Service and Resource Management with a difference"
+  def hey do
+    "diffo>"
   end
 end

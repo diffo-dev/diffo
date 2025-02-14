@@ -9,12 +9,12 @@ defmodule Diffo.Repo.Migrations.Regenerate do
 
   def up do
     create table(:specifications, primary_key: false) do
+      add(:id, :uuid, null: false, primary_key: true)
       add(:type, :text, null: false, default: "serviceSpecification")
       add(:name, :text, null: false)
       add(:major_version, :bigint, null: false, default: 1)
       add(:minor_version, :bigint, null: false, default: 0)
       add(:patch_version, :bigint, null: false, default: 0)
-      add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
       add(:description, :text)
       add(:category, :text)
       add(:tmf_version, :bigint, null: false, default: 4)
@@ -51,6 +51,16 @@ defmodule Diffo.Repo.Migrations.Regenerate do
 
       add(:source_id, :uuid, null: false)
       add(:target_id, :uuid, null: false)
+    end
+
+    create table(:process_statuses, primary_key: false) do
+      add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
+      add(:code, :text, null: false)
+      add(:severity, :text, null: false)
+      add(:message, :text, null: false)
+      add(:parameterized_message, :binary)
+      add(:timestamp, :utc_datetime_usec, null: false)
+      add(:instance_id, :uuid, null: false)
     end
 
     create table(:places, primary_key: false) do
@@ -125,8 +135,17 @@ defmodule Diffo.Repo.Migrations.Regenerate do
       )
     end
 
-    create table(:instances, primary_key: false) do
+    create table(:notes, primary_key: false) do
       add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
+      add(:text, :text, null: false)
+      add(:note_id, :text)
+      add(:timestamp, :utc_datetime_usec, null: false)
+      add(:instance_id, :uuid, null: false)
+      add(:author_id, :text)
+    end
+
+    create table(:instances, primary_key: false) do
+      add(:id, :uuid, null: false, primary_key: true)
     end
 
     alter table(:relationships) do
@@ -154,6 +173,18 @@ defmodule Diffo.Repo.Migrations.Regenerate do
     create unique_index(:relationships, [:source_id, :target_id],
              name: "relationships_unique_source_and_target_index"
            )
+
+    alter table(:process_statuses) do
+      modify(
+        :instance_id,
+        references(:instances,
+          column: :id,
+          name: "process_statuses_instance_id_fkey",
+          type: :uuid,
+          prefix: "public"
+        )
+      )
+    end
 
     alter table(:place_refs) do
       modify(
@@ -207,11 +238,43 @@ defmodule Diffo.Repo.Migrations.Regenerate do
              name: "party_refs_instance_party_uniqueness_index"
            )
 
+    alter table(:notes) do
+      modify(
+        :instance_id,
+        references(:instances,
+          column: :id,
+          name: "notes_instance_id_fkey",
+          type: :uuid,
+          prefix: "public"
+        )
+      )
+
+      modify(
+        :author_id,
+        references(:parties,
+          column: :id,
+          name: "notes_author_id_fkey",
+          type: :text,
+          prefix: "public"
+        )
+      )
+    end
+
+    create unique_index(:notes, [:instance_id, :note_id],
+             name: "notes_instance_note_id_uniqueness_index"
+           )
+
+    create unique_index(:notes, [:instance_id, :note_id, :text],
+             name: "notes_instance_text_uniqueness_index",
+             nulls_distinct: false
+           )
+
     alter table(:instances) do
+      add(:which, :text, null: false, default: "actual")
+      add(:expected_id_from_twin, :boolean, default: false)
       add(:type, :text, null: false, default: "service")
       add(:name, :text)
       add(:service_operating_status, :text, default: "unknown")
-      add(:process_statuses, {:array, :map})
 
       add(:inserted_at, :utc_datetime_usec,
         null: false,
@@ -227,6 +290,16 @@ defmodule Diffo.Repo.Migrations.Regenerate do
       add(:stopped_at, :utc_datetime_usec)
 
       add(
+        :actual_id,
+        references(:instances,
+          column: :id,
+          name: "instances_actual_id_fkey",
+          type: :uuid,
+          prefix: "public"
+        )
+      )
+
+      add(
         :specification_id,
         references(:specifications,
           column: :id,
@@ -239,10 +312,6 @@ defmodule Diffo.Repo.Migrations.Regenerate do
 
       add(:service_state, :text, null: false, default: "initial")
     end
-
-    create unique_index(:instances, [:name, :specification_id],
-             name: "instances_unique_name_per_specification_id_index"
-           )
 
     create table(:features, primary_key: false) do
       add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
@@ -315,6 +384,71 @@ defmodule Diffo.Repo.Migrations.Regenerate do
     create unique_index(:externalIdentifiers, [:instance_id, :type],
              name: "externalIdentifiers_instance_type_uniqueness_index"
            )
+
+    create table(:entity_refs, primary_key: false) do
+      add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
+      add(:role, :text)
+
+      add(:inserted_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:updated_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(
+        :instance_id,
+        references(:instances,
+          column: :id,
+          name: "entity_refs_instance_id_fkey",
+          type: :uuid,
+          prefix: "public"
+        ),
+        null: false
+      )
+
+      add(:entity_id, :text, null: false)
+    end
+
+    create table(:entities, primary_key: false) do
+      add(:id, :text, null: false, primary_key: true)
+    end
+
+    alter table(:entity_refs) do
+      modify(
+        :entity_id,
+        references(:entities,
+          column: :id,
+          name: "entity_refs_entity_id_fkey",
+          type: :text,
+          prefix: "public"
+        )
+      )
+    end
+
+    create unique_index(:entity_refs, [:instance_id, :entity_id],
+             name: "entity_refs_instance_entity_uniqueness_index"
+           )
+
+    alter table(:entities) do
+      add(:href, :text)
+      add(:name, :text)
+      add(:type, :text, null: false, default: "EntityRef")
+      add(:referredType, :text)
+
+      add(:inserted_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:updated_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+    end
 
     create table(:characteristics, primary_key: false) do
       add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
@@ -403,6 +537,33 @@ defmodule Diffo.Repo.Migrations.Regenerate do
 
     drop(table(:characteristics))
 
+    alter table(:entities) do
+      remove(:updated_at)
+      remove(:inserted_at)
+      remove(:referredType)
+      remove(:type)
+      remove(:name)
+      remove(:href)
+    end
+
+    drop_if_exists(
+      unique_index(:entity_refs, [:instance_id, :entity_id],
+        name: "entity_refs_instance_entity_uniqueness_index"
+      )
+    )
+
+    drop(constraint(:entity_refs, "entity_refs_entity_id_fkey"))
+
+    alter table(:entity_refs) do
+      modify(:entity_id, :text)
+    end
+
+    drop(table(:entities))
+
+    drop(constraint(:entity_refs, "entity_refs_instance_id_fkey"))
+
+    drop(table(:entity_refs))
+
     drop_if_exists(
       unique_index(:externalIdentifiers, [:instance_id, :type],
         name: "externalIdentifiers_instance_type_uniqueness_index"
@@ -425,25 +586,44 @@ defmodule Diffo.Repo.Migrations.Regenerate do
 
     drop(table(:features))
 
-    drop_if_exists(
-      unique_index(:instances, [:name, :specification_id],
-        name: "instances_unique_name_per_specification_id_index"
-      )
-    )
+    drop(constraint(:instances, "instances_actual_id_fkey"))
 
     drop(constraint(:instances, "instances_specification_id_fkey"))
 
     alter table(:instances) do
       remove(:service_state)
       remove(:specification_id)
+      remove(:actual_id)
       remove(:stopped_at)
       remove(:started_at)
       remove(:updated_at)
       remove(:inserted_at)
-      remove(:process_statuses)
       remove(:service_operating_status)
       remove(:name)
       remove(:type)
+      remove(:expected_id_from_twin)
+      remove(:which)
+    end
+
+    drop_if_exists(
+      unique_index(:notes, [:instance_id, :note_id, :text],
+        name: "notes_instance_text_uniqueness_index"
+      )
+    )
+
+    drop_if_exists(
+      unique_index(:notes, [:instance_id, :note_id],
+        name: "notes_instance_note_id_uniqueness_index"
+      )
+    )
+
+    drop(constraint(:notes, "notes_instance_id_fkey"))
+
+    drop(constraint(:notes, "notes_author_id_fkey"))
+
+    alter table(:notes) do
+      modify(:author_id, :text)
+      modify(:instance_id, :uuid)
     end
 
     drop_if_exists(
@@ -476,6 +656,12 @@ defmodule Diffo.Repo.Migrations.Regenerate do
       modify(:instance_id, :uuid)
     end
 
+    drop(constraint(:process_statuses, "process_statuses_instance_id_fkey"))
+
+    alter table(:process_statuses) do
+      modify(:instance_id, :uuid)
+    end
+
     drop_if_exists(
       unique_index(:relationships, [:source_id, :target_id],
         name: "relationships_unique_source_and_target_index"
@@ -493,6 +679,8 @@ defmodule Diffo.Repo.Migrations.Regenerate do
 
     drop(table(:instances))
 
+    drop(table(:notes))
+
     drop(table(:parties))
 
     drop(table(:party_refs))
@@ -500,6 +688,8 @@ defmodule Diffo.Repo.Migrations.Regenerate do
     drop(table(:place_refs))
 
     drop(table(:places))
+
+    drop(table(:process_statuses))
 
     drop(table(:relationships))
 
