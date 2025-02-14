@@ -9,7 +9,21 @@ defmodule Diffo.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      name: "Diffo",
+      source_url: "https://github.com/matt-beanland/diffo/",
+      homepage_url: "http://diffo.dev/diffo/",
+      docs: [
+        main: "Diffo.Provider",
+        before_closing_body_tag: fn
+          :html ->
+            """
+            <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+            <script>mermaid.initialize({startOnLoad: true})</script>
+            """
+          _ -> ""
+        end
+      ]
     ]
   end
 
@@ -26,14 +40,14 @@ defmodule Diffo.MixProject do
     [
       # {:simple_sat, "~> 0.1.3"},
       {:ash_state_machine, "~> 0.2.7"},
-      {:ash_jason, git: "https://github.com/vonagam/ash_jason", branch: "master"},#{:ash_jason, "~> 1.2"},
+      {:ash_jason, git: "https://github.com/vonagam/ash_jason", branch: "master"}, #{:ash_jason, "~> 1.2"},
       {:spark, ">= 2.1.21 and < 3.0.0"},
       {:ash_postgres, "~> 2.0"},
-      {:ash, "~> 3.4"},
+      {:ash, ">= 3.4.60 and < 4.0.0-0"},
       {:igniter, "~> 0.3"},
       # {:phoenix, "~> 1.7.14"},
       {:uuid, "~> 1.1"},
-      {:ex_doc, "~> 0.12"},
+      {:ex_doc, "~> 0.36"},
       # {:aja, "~>0.7"},
       {:untangle, "~> 0.3"}
     ]

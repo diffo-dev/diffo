@@ -11,47 +11,14 @@
       "type": "uuid"
     },
     {
-      "allow_nil?": false,
-      "default": "\"service\"",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "type",
-      "type": "text"
-    },
-    {
       "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "name",
+      "source": "role",
       "type": "text"
-    },
-    {
-      "allow_nil?": true,
-      "default": "\"unknown\"",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "service_operating_status",
-      "type": "text"
-    },
-    {
-      "allow_nil?": true,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "process_statuses",
-      "type": [
-        "array",
-        "map"
-      ]
     },
     {
       "allow_nil?": false,
@@ -74,24 +41,33 @@
       "type": "utc_datetime_usec"
     },
     {
-      "allow_nil?": true,
+      "allow_nil?": false,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
-      "references": null,
+      "references": {
+        "deferrable": false,
+        "destination_attribute": "id",
+        "destination_attribute_default": null,
+        "destination_attribute_generated": null,
+        "index?": false,
+        "match_type": null,
+        "match_with": null,
+        "multitenancy": {
+          "attribute": null,
+          "global": null,
+          "strategy": null
+        },
+        "name": "entity_refs_instance_id_fkey",
+        "on_delete": null,
+        "on_update": null,
+        "primary_key?": true,
+        "schema": "public",
+        "table": "instances"
+      },
       "size": null,
-      "source": "started_at",
-      "type": "utc_datetime_usec"
-    },
-    {
-      "allow_nil?": true,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "stopped_at",
-      "type": "utc_datetime_usec"
+      "source": "instance_id",
+      "type": "uuid"
     },
     {
       "allow_nil?": false,
@@ -111,25 +87,15 @@
           "global": null,
           "strategy": null
         },
-        "name": "instances_specification_id_fkey",
+        "name": "entity_refs_entity_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
         "schema": "public",
-        "table": "specifications"
+        "table": "entities"
       },
       "size": null,
-      "source": "specification_id",
-      "type": "uuid"
-    },
-    {
-      "allow_nil?": false,
-      "default": "\"initial\"",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "service_state",
+      "source": "entity_id",
       "type": "text"
     }
   ],
@@ -138,23 +104,23 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "144BE5A3F2135D66F4516DF214C6D7E8C2CE36304C3D59988F8678BD132F35B1",
+  "hash": "40BCC2C82EA1E0306FE34DB10F8C7CCE925971CAED181E1921576A8ED3D64B88",
   "identities": [
     {
       "all_tenants?": false,
       "base_filter": null,
-      "index_name": "instances_unique_name_per_specification_id_index",
+      "index_name": "entity_refs_instance_entity_uniqueness_index",
       "keys": [
         {
           "type": "atom",
-          "value": "name"
+          "value": "instance_id"
         },
         {
           "type": "atom",
-          "value": "specification_id"
+          "value": "entity_id"
         }
       ],
-      "name": "unique_name_per_specification_id",
+      "name": "instance_entity_uniqueness",
       "nils_distinct?": true,
       "where": null
     }
@@ -166,5 +132,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "instances"
+  "table": "entity_refs"
 }

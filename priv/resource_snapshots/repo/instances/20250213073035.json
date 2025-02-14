@@ -2,7 +2,7 @@
   "attributes": [
     {
       "allow_nil?": false,
-      "default": "fragment(\"gen_random_uuid()\")",
+      "default": "nil",
       "generated?": false,
       "primary_key?": true,
       "references": null,
@@ -12,32 +12,32 @@
     },
     {
       "allow_nil?": false,
-      "default": "nil",
+      "default": "\"actual\"",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "code",
+      "source": "which",
       "type": "text"
     },
     {
-      "allow_nil?": false,
-      "default": "nil",
+      "allow_nil?": true,
+      "default": "false",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "severity",
-      "type": "text"
+      "source": "expected_id_from_twin",
+      "type": "boolean"
     },
     {
       "allow_nil?": false,
-      "default": "nil",
+      "default": "\"service\"",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "message",
+      "source": "type",
       "type": "text"
     },
     {
@@ -47,18 +47,18 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "parameterized_message",
-      "type": "binary"
+      "source": "name",
+      "type": "text"
     },
     {
-      "allow_nil?": false,
-      "default": "nil",
+      "allow_nil?": true,
+      "default": "\"unknown\"",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "timestamp",
-      "type": "utc_datetime_usec"
+      "source": "service_operating_status",
+      "type": "text"
     },
     {
       "allow_nil?": false,
@@ -81,6 +81,55 @@
       "type": "utc_datetime_usec"
     },
     {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "started_at",
+      "type": "utc_datetime_usec"
+    },
+    {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "stopped_at",
+      "type": "utc_datetime_usec"
+    },
+    {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": {
+        "deferrable": false,
+        "destination_attribute": "id",
+        "destination_attribute_default": null,
+        "destination_attribute_generated": null,
+        "index?": false,
+        "match_type": null,
+        "match_with": null,
+        "multitenancy": {
+          "attribute": null,
+          "global": null,
+          "strategy": null
+        },
+        "name": "instances_twin_id_fkey",
+        "on_delete": null,
+        "on_update": null,
+        "primary_key?": true,
+        "schema": "public",
+        "table": "instances"
+      },
+      "size": null,
+      "source": "twin_id",
+      "type": "uuid"
+    },
+    {
       "allow_nil?": false,
       "default": "nil",
       "generated?": false,
@@ -98,16 +147,26 @@
           "global": null,
           "strategy": null
         },
-        "name": "process_statuses_instance_id_fkey",
+        "name": "instances_specification_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
         "schema": "public",
-        "table": "instances"
+        "table": "specifications"
       },
       "size": null,
-      "source": "instance_id",
+      "source": "specification_id",
       "type": "uuid"
+    },
+    {
+      "allow_nil?": false,
+      "default": "\"initial\"",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "service_state",
+      "type": "text"
     }
   ],
   "base_filter": null,
@@ -115,7 +174,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "73EE84C1712ED3A4ECD43477C6E34013110C5EB4D8D38D1A25A81F6F382D3875",
+  "hash": "B9FF060833A97685A830E38ABE9A17F041A0039317C55AB517389F75917063DC",
   "identities": [],
   "multitenancy": {
     "attribute": null,
@@ -124,5 +183,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "process_statuses"
+  "table": "instances"
 }

@@ -104,7 +104,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "1DB24538428F30F48B002AA13181B5FDBCDDAB06E97A75FC27A9DB56F363395C",
+  "hash": "FE13C87A4D07F1D00275F880B611AA613F4AFFBC287A8D97120321537E0E6965",
   "identities": [
     {
       "all_tenants?": false,
@@ -135,11 +135,15 @@
         },
         {
           "type": "atom",
+          "value": "note_id"
+        },
+        {
+          "type": "atom",
           "value": "text"
         }
       ],
       "name": "instance_text_uniqueness",
-      "nils_distinct?": true,
+      "nils_distinct?": false,
       "where": null
     }
   ],
