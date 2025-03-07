@@ -5,6 +5,7 @@ defmodule Diffo.Provider.Specification do
 
   Specification - Ash Resource for a TMF Service or Resource Specification
   """
+  require Ash.Resource.Change.Builtins
   use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
 
   postgres do
@@ -181,15 +182,11 @@ defmodule Diffo.Provider.Specification do
   end
 
   preparations do
-    prepare build(load: [:version, :href, :instance_type], sort: [major_version: :desc])
+    prepare build(load: [:version, :href, :instance_type], sort: [name: :asc, major_version: :desc])
   end
 
   identities do
     identity :unique_major_version_per_name, [:name, :major_version]
-  end
-
-  preparations do
-    prepare build(sort: [name: :asc, major_version: :asc])
   end
 
   @doc """

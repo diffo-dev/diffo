@@ -140,4 +140,35 @@ defmodule Diffo.Provider.SpecificationTest do
       Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
     end
   end
+
+  describe "Diffo.Provider outstanding Specification" do
+    test "any specification" do
+      use Outstand
+      version1 = Diffo.Provider.create_specification!(%{name: "access", major_version: 1})
+      version1_1 = version1 |> Diffo.Provider.next_minor_specification!()
+      version2 = Diffo.Provider.create_specification!(%{name: "access", major_version: 2})
+      accessor = Diffo.Provider.create_specification!(%{name: "accessor", major_version: 1})
+      assert Outstand.outstanding?(version1, accessor)
+      assert Outstand.outstanding?(version2, version1)
+      assert Outstand.outstanding?(version1, version2)
+      assert Outstand.nil_outstanding?(version1, version1)
+      assert Outstand.nil_outstanding?(version1_1, version1_1)
+      assert Outstand.nil_outstanding?(version2, version2)
+      assert Outstand.nil_outstanding?(version1_1, version1)
+      assert Outstand.nil_outstanding?(version1, version1_1)
+      # allow either of two major specifications if we have access to reference specifications
+      assert Outstand.nil_outstanding?({&Outstand.any_of/2, [version1, version2]}, version1)
+      assert Outstand.nil_outstanding?({&Outstand.any_of/2, [version1, version2]}, version2)
+      # alternatively we can make specific expectations on name and major version
+      assert Outstand.nil_outstanding?("access", version1_1.name)
+      assert Outstand.nil_outstanding?(1..2, version1_1.major_version)
+      assert Outstand.nil_outstanding?(1..2, version2.major_version)
+      # we can also use regex on version, but we must ensure it is loaded
+      loaded_version1_1 = Diffo.Provider.get_specification_by_id!(version1_1.id, load: [:version])
+      loaded_version2 = Diffo.Provider.get_specification_by_id!(version2.id, load: [:version])
+      assert Outstand.nil_outstanding?(~r/v[1..2]/, loaded_version1_1.version)
+      assert Outstand.nil_outstanding?(~r/v[1..2]/, loaded_version2.version)
+      assert Outstand.outstanding?(~r/v[1..2]/, "v3.1.0")
+    end
+  end
 end

@@ -22,7 +22,7 @@ defmodule Diffo.MixProject do
             <script>mermaid.initialize({startOnLoad: true})</script>
             """
           _ -> ""
-        end
+          end
       ]
     ]
   end
@@ -40,6 +40,7 @@ defmodule Diffo.MixProject do
     [
       # {:simple_sat, "~> 0.1.3"},
       {:ash_state_machine, "~> 0.2.7"},
+      {:outstanding, git: "https://github.com/matt-beanland/outstanding", branch: "2-expected-functions-with-arguments"},
       {:ash_jason, "~> 2.0"}, #{:ash_jason, git: "https://github.com/vonagam/ash_jason", branch: "master"}
       {:spark, ">= 2.1.21 and < 3.0.0"},
       {:ash_postgres, "~> 2.0"},
