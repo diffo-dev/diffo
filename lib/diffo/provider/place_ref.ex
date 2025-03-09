@@ -5,11 +5,15 @@ defmodule Diffo.Provider.PlaceRef do
 
   PlaceRef - Ash Resource for a TMF PlaceRef
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   postgres do
     table "place_refs"
     repo Diffo.Repo
+  end
+
+  outstanding do
+    expect [:id, :name, :role, :referredType, :type]
   end
 
   jason do
@@ -23,6 +27,7 @@ defmodule Diffo.Provider.PlaceRef do
     create :create do
       description "creates a place ref"
       accept [:instance_id, :role, :place_id]
+      change load [:href, :name, :referredType, :type]
       touches_resources [Diffo.Provider.Instance, Diffo.Provider.Place]
     end
 

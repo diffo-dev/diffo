@@ -2,6 +2,7 @@ defmodule Diffo.Provider.PartyRefTest do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true
+  use Outstand
 
   describe "Diffo.Provider read PartyRefs" do
     test "list party refs - success" do
@@ -136,8 +137,7 @@ defmodule Diffo.Provider.PartyRefTest do
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, href: "party/internal/IND000000897353", type: :Individual})
       party_ref = Diffo.Provider.create_party_ref!(%{instance_id: instance.id, role: :Organization, party_id: party.id})
-      refreshed_party_ref = Diffo.Provider.get_party_ref_by_id!(party_ref.id)
-      encoding = Jason.encode!(refreshed_party_ref)
+      encoding = Jason.encode!(party_ref)
       assert encoding == "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"role\":\"Organization\",\"@type\":\"Individual\"}"
     end
 
@@ -146,9 +146,19 @@ defmodule Diffo.Provider.PartyRefTest do
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, href: "party/internal/IND000000897353", referredType: :Individual})
       party_ref = Diffo.Provider.create_party_ref!(%{instance_id: instance.id, role: :Organization, party_id: party.id})
-      refreshed_party_ref = Diffo.Provider.get_party_ref_by_id!(party_ref.id)
-      encoding = Jason.encode!(refreshed_party_ref)
+      encoding = Jason.encode!(party_ref)
       assert encoding == "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"role\":\"Organization\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"}"
+    end
+  end
+
+  describe "Diffo.Provider outstanding PartyRefs" do
+    test "resolve a general expected party" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, href: "party/internal/IND000000897353", referredType: :Individual})
+      party_ref = Diffo.Provider.create_party_ref!(%{instance_id: instance.id, role: :Organization, party_id: party.id})
+      expected_party_ref = %Diffo.Provider.PartyRef{party_id: ~r/IND\d{12}/, name: "individualId", role: :Organization, referredType: "Individual", type: "PartyRef"}
+      refute expected_party_ref --- party_ref
     end
   end
 

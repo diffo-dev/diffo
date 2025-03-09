@@ -2,6 +2,7 @@ defmodule Diffo.Provider.PlaceRefTest do
   @moduledoc false
   use ExUnit.Case
   use Diffo.DataCase, async: true
+  use Outstand
 
   describe "Diffo.Provider read PlaceRefs" do
     test "list place refs - success" do
@@ -134,8 +135,7 @@ defmodule Diffo.Provider.PlaceRefTest do
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", type: :GeographicAddress})
       place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
-      refreshed_place_ref = Diffo.Provider.get_place_ref_by_id!(place_ref.id)
-      encoding = Jason.encode!(refreshed_place_ref)
+      encoding = Jason.encode!(place_ref)
       assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@type\":\"GeographicAddress\"}"
     end
 
@@ -144,9 +144,20 @@ defmodule Diffo.Provider.PlaceRefTest do
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", referredType: :GeographicAddress})
       place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
-      refreshed_place_ref = Diffo.Provider.get_place_ref_by_id!(place_ref.id)
-      encoding = Jason.encode!(refreshed_place_ref)
+      encoding = Jason.encode!(place_ref)
       assert encoding == "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}"
+    end
+  end
+
+  describe "Diffo.Provider outstanding PlaceRefs" do
+    test "resolve a general expected place" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", referredType: :GeographicAddress})
+      place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
+
+      expected_place_ref = %Diffo.Provider.PlaceRef{place_id: ~r/LOC\d{12}/, name: "locationId", role: :CustomerSite, referredType: "GeographicAddress", type: "PlaceRef"}
+      refute expected_place_ref --- place_ref
     end
   end
 

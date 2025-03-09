@@ -5,11 +5,15 @@ defmodule Diffo.Provider.PartyRef do
 
   PartyRef - Ash Resource for a TMF PartyRef
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   postgres do
     table "party_refs"
     repo Diffo.Repo
+  end
+
+  outstanding do
+    expect [:party_id, :name, :role, :referredType, :type]
   end
 
   jason do
@@ -23,6 +27,7 @@ defmodule Diffo.Provider.PartyRef do
     create :create do
       description "creates a party ref"
       accept [:instance_id, :role, :party_id]
+      change load [:href, :name, :referredType, :type]
       touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
     end
 
