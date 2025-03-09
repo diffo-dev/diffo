@@ -37,10 +37,9 @@ defmodule Diffo.Provider.SpecificationTest do
       assert Diffo.Uuid.uuid4?(specification.id) == true
       assert specification.major_version == 1
       assert specification.type == :serviceSpecification
-      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
-      assert loaded_specification.version == "v1.0.0"
-      assert loaded_specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{specification.id}"
-      assert loaded_specification.instance_type == :service
+      assert specification.version == "v1.0.0"
+      assert specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{specification.id}"
+      assert specification.instance_type == :service
     end
 
     test "create a service specification - success - name and type supplied" do
@@ -53,25 +52,23 @@ defmodule Diffo.Provider.SpecificationTest do
       specification = Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
       assert specification.name == "can"
       assert specification.type == :resourceSpecification
-      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
-      assert loaded_specification.version == "v1.0.0"
-      assert loaded_specification.href == "resourceCatalogManagement/v4/resourceSpecification/#{specification.id}"
-      assert loaded_specification.instance_type == :resource
+      assert specification.version == "v1.0.0"
+      assert specification.href == "resourceCatalogManagement/v4/resourceSpecification/#{specification.id}"
+      assert specification.instance_type == :resource
     end
 
     test "create a service specification - success - name and id supplied" do
       uuid = UUID.uuid4()
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection", id: uuid})
       assert specification.id == uuid
-      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
-      assert loaded_specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{uuid}"
+      assert specification = Diffo.Provider.get_specification_by_id!(specification.id)
+      assert specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{uuid}"
     end
 
     test "create a service specification - success - name and major_version supplied" do
       specification = Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
       assert specification.major_version == 2
-      assert loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
-      assert loaded_specification.version == "v2.0.0"
+      assert specification.version == "v2.0.0"
     end
 
     test "create a service specification - failure - no name" do
@@ -129,20 +126,13 @@ defmodule Diffo.Provider.SpecificationTest do
     test "encode json - success" do
       uuid = UUID.uuid4()
       specification = Diffo.Provider.create_specification!(%{name: "radiationMonitor", description: "Radiation Monitoring Service", id: uuid})
-      loaded_specification = Diffo.Provider.get_specification_by_id!(specification.id)
-      encoding = Jason.encode!(loaded_specification)
+      encoding = Jason.encode!(specification)
       assert encoding == ~s({\"id\":\"#{uuid}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{uuid}\",\"name\":\"radiationMonitor\",\"version\":\"v1.0.0\"})
     end
   end
 
-  describe "Diffo.Provider delete Specifications" do
-    test "bulk delete" do
-      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
-    end
-  end
-
   describe "Diffo.Provider outstanding Specification" do
-    test "any specification" do
+    test "outstanding specification" do
       use Outstand
       version1 = Diffo.Provider.create_specification!(%{name: "access", major_version: 1})
       version1_1 = version1 |> Diffo.Provider.next_minor_specification!()
@@ -163,12 +153,18 @@ defmodule Diffo.Provider.SpecificationTest do
       assert Outstand.nil_outstanding?("access", version1_1.name)
       assert Outstand.nil_outstanding?(1..2, version1_1.major_version)
       assert Outstand.nil_outstanding?(1..2, version2.major_version)
-      # we can also use regex on version, but we must ensure it is loaded
-      loaded_version1_1 = Diffo.Provider.get_specification_by_id!(version1_1.id, load: [:version])
-      loaded_version2 = Diffo.Provider.get_specification_by_id!(version2.id, load: [:version])
-      assert Outstand.nil_outstanding?(~r/v[1..2]/, loaded_version1_1.version)
-      assert Outstand.nil_outstanding?(~r/v[1..2]/, loaded_version2.version)
+      # we can separately run outstanding on the minor version, but by default minor version is not included in the Specification outstanding.
+      assert Outstand.nil_outstanding?(1..3, version1_1.minor_version)
+      # we can separately use regex on version, but by default version is not included in the the Specification outstanding.
+      assert Outstand.nil_outstanding?(~r/v[1..2]/, version1_1.version)
+      assert Outstand.nil_outstanding?(~r/v[1..2]/, version2.version)
       assert Outstand.outstanding?(~r/v[1..2]/, "v3.1.0")
+    end
+  end
+
+  describe "Diffo.Provider delete Specifications" do
+    test "bulk delete" do
+      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
     end
   end
 end
