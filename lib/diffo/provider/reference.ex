@@ -6,15 +6,17 @@ defmodule Diffo.Provider.Reference do
   Reference - utilities relating to reference
   """
 
+  defstruct id: nil, href: nil
+
   @doc """
   Creates a reference ordered object from an instance with id and href
     ## Examples
     iex> instance = %{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
     iex> Diffo.Provider.Reference.reference(instance)
-    %Jason.OrderedObject{values: [id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"]}
+    %Diffo.Provider.Reference{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
   """
   def reference(instance) when is_map(instance) do
-    Jason.OrderedObject.new([id: instance.id, href: instance.href])
+    %Diffo.Provider.Reference{id: instance.id, href: instance.href}
   end
 
   @doc """
@@ -22,10 +24,31 @@ defmodule Diffo.Provider.Reference do
     ## Examples
     iex> instance = %{target_href: "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
     iex> Diffo.Provider.Reference.reference(instance, :target_href)
-    %Jason.OrderedObject{values: [id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"]}
+    %Diffo.Provider.Reference{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
   """
   def reference(instance, attribute) when is_map(instance) and is_atom(attribute) do
     href = Map.get(instance, attribute)
-    Jason.OrderedObject.new([id: Diffo.Uuid.trailing_uuid4(href), href: href])
+    %Diffo.Provider.Reference{id: Diffo.Uuid.trailing_uuid4(href), href: href}
+  end
+
+  defimpl Jason.Encoder, for: Diffo.Provider.Reference do
+    def encode(reference, _opts) do
+      Jason.OrderedObject.new(id: reference.id, href: reference.href)
+      |> Jason.encode!()
+    end
+  end
+
+  use Outstand
+  defoutstanding expected :: Diffo.Provider.Reference, actual :: Any do
+    expected_map = Map.take(expected, [:id, :href])
+    case {expected, actual} do
+      {%name{}, %_{}} ->
+        Outstanding.outstanding(expected_map, Map.from_struct(actual))
+        |> Outstand.map_to_struct(name)
+      {%name{}, _} ->
+        expected_map
+        |> Outstand.map_to_struct(name)
+    end
+
   end
 end
