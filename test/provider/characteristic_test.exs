@@ -135,6 +135,29 @@ defmodule Diffo.Provider.CharacteristicTest do
     end
   end
 
+  describe "Diffo.Provider outstanding Characteristics" do
+    use Outstand
+    @port1 %Diffo.Provider.Characteristic{name: "port", value: 1}
+    @port3 %Diffo.Provider.Characteristic{name: "port", value: 3}
+    @port5 %Diffo.Provider.Characteristic{name: "port", value: 5}
+    @pair1 %Diffo.Provider.Characteristic{name: "pair", value: 1}
+    @name_only %Diffo.Provider.Characteristic{name: "port"}
+    @value_only %Diffo.Provider.Characteristic{value: 1}
+    @range_only %Diffo.Provider.Characteristic{value: 1..4}
+    @port_range %Diffo.Provider.Characteristic{name: "port", value: 1..4}
+
+
+    gen_nothing_outstanding_test("specific nothing outstanding", @port1, @port1)
+    gen_result_outstanding_test("specific name and value result", @port1, nil, @port1)
+    gen_result_outstanding_test("specific name result", @port1, @pair1, @name_only)
+    gen_result_outstanding_test("specific value result", @port1, @port3, @value_only)
+
+    gen_nothing_outstanding_test("port range nothing outstanding, port1", @port_range, @port1)
+    gen_nothing_outstanding_test("port range nothing outstanding, port3", @port_range, @port3)
+    gen_result_outstanding_test("port range name result, pair1", @port_range, @pair1, @name_only)
+    gen_result_outstanding_test("port range value result, port5", @port_range, @port5, @range_only)
+  end
+
   describe "Diffo.Provider delete Characteristics" do
     test "bulk delete" do
       Diffo.Provider.delete_characteristic!(Diffo.Provider.list_characteristics!())
