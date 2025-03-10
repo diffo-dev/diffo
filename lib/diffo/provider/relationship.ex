@@ -5,12 +5,17 @@ defmodule Diffo.Provider.Relationship do
 
   Relationship - Ash Resource for a TMF Service or Resource Relationship
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   postgres do
     table "relationships"
     repo Diffo.Repo
   end
+
+  outstanding do
+    expect [:type, :target_type, :target_id, :target_href, :characteristic]
+  end
+
 
   jason do
     pick [:target_type, :type, :characteristic, :target_type, :target_id, :target_href]
@@ -34,6 +39,8 @@ defmodule Diffo.Provider.Relationship do
     create :create do
       description "creates a relationship between a source and target instance"
       accept [:source_id, :target_id, :type, :alias]
+      change load [:target_type, :target_id, :target_href, :characteristic]
+      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Characteristic]
     end
 
     read :list do
@@ -134,7 +141,7 @@ defmodule Diffo.Provider.Relationship do
   end
 
   preparations do
-    prepare build(load: [:target_type, :characteristic], sort: [target_href: :asc])
+    prepare build(load: [:source_type, :source_href, :target_type, :target_href, :characteristic], sort: [target_href: :asc])
   end
 
   @doc """
