@@ -182,8 +182,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance1 = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       t4_party = Diffo.Provider.create_party!(%{id: "T4_ACCESS", name: :entityId, href: "entity/internal/T4_ACCESS", referredType: :Entity})
       external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance1.id, type: :orderId, external_id: "ORD00000123456", owner_id: t4_party.id})
-      refreshed_external_identifier = Diffo.Provider.get_external_identifier_by_id!(external_identifier.id)
-      encoding = Jason.encode!(refreshed_external_identifier)
+      encoding = Jason.encode!(external_identifier)
       assert encoding == "{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_ACCESS\"}"
     end
 
@@ -191,10 +190,28 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance1.id, type: :orderId, external_id: "ORD00000123456"})
-      refreshed_external_identifier = Diffo.Provider.get_external_identifier_by_id!(external_identifier.id)
-      encoding = Jason.encode!(refreshed_external_identifier)
+      encoding = Jason.encode!(external_identifier)
       assert encoding == "{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\"}"
     end
+  end
+
+  describe "Diffo.Provider outstanding ExternalIdentifiers" do
+    use Outstand
+    @type_only %Diffo.Provider.ExternalIdentifier{type: "orderId"}
+    @external_id_only %Diffo.Provider.ExternalIdentifier{external_id: "ORD000000123456"}
+    @owner_id_only %Diffo.Provider.ExternalIdentifier{owner_id: "T4_ACCESS"}
+    @specific_external_identifier %Diffo.Provider.ExternalIdentifier{type: "orderId", external_id: "ORD000000123456", owner_id: "T4_ACCESS"}
+    @generic_external_identifier %Diffo.Provider.ExternalIdentifier{type: "orderId", external_id: ~r/ORD\d{12}/, owner_id: nil}
+    @actual_external_identifier %Diffo.Provider.ExternalIdentifier{type: "orderId", external_id: "ORD000000123456", owner_id: "T4_ACCESS"}
+
+
+    gen_nothing_outstanding_test("specific nothing outstanding", @specific_external_identifier, @actual_external_identifier)
+    gen_result_outstanding_test("specific external_identifier result", @specific_external_identifier, nil, @specific_external_identifier)
+    gen_result_outstanding_test("specific type result", @specific_external_identifier, Map.delete(@actual_external_identifier, :type), @type_only)
+    gen_result_outstanding_test("specific external_id result", @specific_external_identifier, Map.delete(@actual_external_identifier, :external_id), @external_id_only)
+    gen_result_outstanding_test("specific owner_id result", @specific_external_identifier, Map.delete(@actual_external_identifier, :owner_id), @owner_id_only)
+
+    gen_nothing_outstanding_test("generic nothing outstanding", @generic_external_identifier, @actual_external_identifier)
   end
 
   describe "Diffo.Provider delete ExternalIdentifiers" do

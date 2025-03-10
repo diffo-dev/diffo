@@ -26,6 +26,8 @@ defmodule Diffo.Provider.Characteristic do
     create :create do
       description "creates a characteristic"
       accept [:feature_id, :instance_id, :relationship_id, :name, :value, :type]
+      change load [:type]
+      touches_resources [Diffo.Provider.Feature, Diffo.Provider.Instance, Diffo.Provider.Relationship]
     end
 
     read :find_by_name do
