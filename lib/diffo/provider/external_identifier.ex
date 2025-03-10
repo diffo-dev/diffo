@@ -5,11 +5,15 @@ defmodule Diffo.Provider.ExternalIdentifier do
 
   ExternalIdentifier - Ash Resource for a TMF ExternalIdentifier
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   postgres do
     table "externalIdentifiers"
     repo Diffo.Repo
+  end
+
+  outstanding do
+    expect [:type, :external_id, :owner_id]
   end
 
   jason do
@@ -28,6 +32,8 @@ defmodule Diffo.Provider.ExternalIdentifier do
     create :create do
       description "creates a external identifier"
       accept [:type, :external_id, :owner_id, :instance_id]
+      change load [:owner_id]
+      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
     end
 
     read :find_by_external_id do
