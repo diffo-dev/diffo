@@ -5,11 +5,15 @@ defmodule Diffo.Provider.Note do
 
   Note - Ash Resource for a TMF Note
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   postgres do
     table "notes"
     repo Diffo.Repo
+  end
+
+  outstanding do
+    expect [:text, :note_id, :author_id]
   end
 
   jason do
@@ -30,6 +34,7 @@ defmodule Diffo.Provider.Note do
       description "creates a note"
       accept [:instance_id, :text, :note_id, :author_id]
       change set_attribute :timestamp, &DateTime.utc_now/0
+      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
     end
 
     read :find_by_note_id do
