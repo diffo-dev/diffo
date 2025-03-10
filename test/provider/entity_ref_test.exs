@@ -150,6 +150,31 @@ defmodule Diffo.Provider.EntityRefTest do
     end
   end
 
+  describe "Diffo.Provider outstanding EntityRefs" do
+    use Outstand
+    @entity_id_only %Diffo.Provider.EntityRef{entity_id: "COR000000123456"}
+    @href_only %Diffo.Provider.EntityRef{href: "costManagement/v2/cost/COR000000123456"}
+    @name_only %Diffo.Provider.EntityRef{name: "2025-01"}
+    @role_only %Diffo.Provider.EntityRef{role: "expected"}
+    @referredType_only %Diffo.Provider.EntityRef{referredType: "cost"}
+    @type_only %Diffo.Provider.EntityRef{type: "EntityRef"}
+    @specific_cost %Diffo.Provider.EntityRef{entity_id: "COR000000123456", href: "costManagement/v2/cost/COR000000123456", name: "2025-01", role: "expected", referredType: "cost", type: "EntityRef"}
+    @generic_cost %Diffo.Provider.EntityRef{entity_id: ~r/COR\d{12}/, href: ~r/costManagement\/v2\/cost\/COR\d{12}/, name: nil, role: ~r/expected|actual/, referredType: "cost", type: nil}
+    @actual_cost %Diffo.Provider.EntityRef{entity_id: "COR000000123456", href: "costManagement/v2/cost/COR000000123456", name: "2025-01", role: "expected", referredType: "cost", type: "EntityRef"}
+
+
+    gen_nothing_outstanding_test("specific nothing outstanding", @specific_cost, @actual_cost)
+    gen_result_outstanding_test("specific cost result", @specific_cost, nil, @specific_cost)
+    gen_result_outstanding_test("specific entity_id result", @specific_cost, Map.delete(@actual_cost, :entity_id), @entity_id_only)
+    gen_result_outstanding_test("specific href result", @specific_cost, Map.delete(@actual_cost, :href), @href_only)
+    gen_result_outstanding_test("specific name result", @specific_cost, Map.delete(@actual_cost, :name), @name_only)
+    gen_result_outstanding_test("specific role result", @specific_cost, Map.delete(@actual_cost, :role), @role_only)
+    gen_result_outstanding_test("specific referredType result", @specific_cost, Map.delete(@actual_cost, :referredType), @referredType_only)
+    gen_result_outstanding_test("specific type result", @specific_cost, Map.delete(@actual_cost, :type), @type_only)
+
+    gen_nothing_outstanding_test("generic nothing outstanding", @generic_cost, @actual_cost)
+  end
+
   describe "Diffo.Provider delete EntityRefs" do
     test "bulk delete" do
       Diffo.Provider.delete_entity_ref!(Diffo.Provider.list_entity_refs!())

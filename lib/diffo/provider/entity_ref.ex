@@ -5,11 +5,15 @@ defmodule Diffo.Provider.EntityRef do
 
   EntityRef - Ash Resource for a TMF EntityRef
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   postgres do
     table "entity_refs"
     repo Diffo.Repo
+  end
+
+  outstanding do
+    expect [:entity_id, :href, :name, :role, :referredType, :type]
   end
 
   jason do
@@ -23,6 +27,7 @@ defmodule Diffo.Provider.EntityRef do
     create :create do
       description "creates a entity ref"
       accept [:instance_id, :role, :entity_id]
+      change load [:href, :name, :referredType, :type]
       touches_resources [Diffo.Provider.Instance, Diffo.Provider.Entity]
     end
 
