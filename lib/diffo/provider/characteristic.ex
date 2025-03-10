@@ -5,7 +5,7 @@ defmodule Diffo.Provider.Characteristic do
 
   Characteristic - Ash Resource for a TMF Characteristic
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   postgres do
     table "characteristics"
@@ -14,6 +14,10 @@ defmodule Diffo.Provider.Characteristic do
 
   jason do
     pick [:name, :value]
+  end
+
+  outstanding do
+    expect [:name, :value]
   end
 
   actions do
