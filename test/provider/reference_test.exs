@@ -9,7 +9,9 @@
       reference = %Diffo.Provider.Reference{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
       assert Jason.encode!(reference) == "{\"id\":\"8bcfbf9a-34a5-427a-8eae-5c3812466432\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432\"}"
     end
+  end
 
+  describe "Diffo.Provider.Reference outstanding" do
     use Outstand
     @id_and_href %Diffo.Provider.Reference{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
     @id_only %Diffo.Provider.Reference{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432"}
@@ -29,4 +31,4 @@
 
     gen_nothing_outstanding_test("realized by instance", @any_id_and_href, @instance_id_and_href)
   end
-end
+ end

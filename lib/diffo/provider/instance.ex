@@ -70,6 +70,7 @@ defmodule Diffo.Provider.Instance do
     create :create do
       description "creates a new instance of a service or resource according by specification id"
       accept [:id, :specification_id, :name, :type, :which]
+      change load [:href, :category, :description, :external_identifiers, :specification_type, :href, :specification]
     end
 
     read :list do
