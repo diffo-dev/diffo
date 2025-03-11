@@ -38,8 +38,8 @@ defmodule Diffo.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      #{:outstanding, git: "https://github.com/diffo-dev/outstanding/", branch: "4-structs-shouldnt-implement-outstanding-by-default"},
-      {:ash_outstanding, git: "https://github.com/diffo-dev/ash_outstanding/", branch: "dev"},
+      {:outstanding, "~> 0.1"},
+      {:ash_outstanding, "~> 0.1"},
       {:ash_jason, "~> 2.0"},
       {:ash_state_machine, "~> 0.2.7"},
       {:spark, ">= 2.1.21 and < 3.0.0"},

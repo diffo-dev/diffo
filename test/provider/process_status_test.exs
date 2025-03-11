@@ -103,4 +103,36 @@ defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
       assert encoding == "{\"code\":\"NBNACC-1003\",\"severity\":\"WARN\",\"message\":\"nbnProductOrder cancelled\",\"parameterizedMessage\":{\"reason\":\"cancelled due to force majeure\"},\"timeStamp\":\"now\"}"
     end
   end
+
+  [:code, :severity, :message, :parameterized_message, :timestamp]
+
+  describe "Diffo.Provider outstanding ProcessStatus" do
+    use Outstand
+    @now DateTime.utc_now()
+    @parameterized_message %{reason: "cancelled due to force majeure"}
+    @code_only %Diffo.Provider.ProcessStatus{code: "NBNACC-1003"}
+    @severity_only %Diffo.Provider.ProcessStatus{severity: "WARN"}
+    @message_only %Diffo.Provider.ProcessStatus{message: "nbnProductOrder cancelled"}
+    @parameterized_message_only %Diffo.Provider.ProcessStatus{parameterized_message: @parameterized_message}
+    @timestamp_only %Diffo.Provider.ProcessStatus{timestamp: @now}
+    @specific_process_status %Diffo.Provider.ProcessStatus{code: "NBNACC-1003", severity: "WARN", message: "nbnProductOrder cancelled", parameterized_message: @parameterized_message, timestamp: @now}
+    @generic_process_status %Diffo.Provider.ProcessStatus{code: ~r/NBNACC-\d{4}/, severity: nil, message: nil, parameterized_message: nil, timestamp: nil}
+    @actual_process_status %Diffo.Provider.ProcessStatus{code: "NBNACC-1003", severity: "WARN", message: "nbnProductOrder cancelled", parameterized_message: @parameterized_message, timestamp: @now}
+
+    gen_nothing_outstanding_test("specific nothing outstanding", @specific_process_status, @actual_process_status)
+    gen_result_outstanding_test("specific process_status result", @specific_process_status, nil, @specific_process_status)
+    gen_result_outstanding_test("specific code result", @specific_process_status, Map.delete(@actual_process_status, :code), @code_only)
+    gen_result_outstanding_test("specific severity result", @specific_process_status, Map.delete(@actual_process_status, :severity), @severity_only)
+    gen_result_outstanding_test("specific message result", @specific_process_status, Map.delete(@actual_process_status, :message), @message_only)
+    gen_result_outstanding_test("specific parameterized_message result", @specific_process_status, Map.delete(@actual_process_status, :parameterized_message), @parameterized_message_only)
+    gen_result_outstanding_test("specific timestamp result", @specific_process_status, Map.delete(@actual_process_status, :timestamp), @timestamp_only)
+
+    gen_nothing_outstanding_test("generic nothing outstanding", @generic_process_status, @actual_process_status)
+  end
+
+  describe "Diffo.Provider delete ProcessStatus" do
+    test "bulk delete" do
+      Diffo.Provider.delete_process_status!(Diffo.Provider.list_process_statuses!())
+    end
+  end
 end

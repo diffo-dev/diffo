@@ -5,11 +5,15 @@ defmodule Diffo.Provider.ProcessStatus do
 
   ProcessStatus - Ash Resource for a TMF ProcessStatus
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   postgres do
     table "process_statuses"
     repo Diffo.Repo
+  end
+
+  outstanding do
+    expect [:code, :severity, :message, :parameterized_message, :timestamp]
   end
 
   jason do
@@ -37,6 +41,7 @@ defmodule Diffo.Provider.ProcessStatus do
       primary? true
       accept [:instance_id, :code, :severity, :message, :parameterized_message]
       change set_attribute :timestamp, &DateTime.utc_now/0
+      touches_resources [Diffo.Provider.Instance]
     end
 
     read :list do
