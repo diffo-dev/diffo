@@ -125,6 +125,7 @@ defmodule Diffo.Provider do
     resource Diffo.Provider.ProcessStatus do
       define :create_process_status, action: :create
       define :get_process_status_by_id, action: :read, get_by: :id
+      define :list_process_statuses, action: :list
       define :list_process_statuses_by_instance_id, action: :list_process_statuses_by_instance_id, args: [:instance_id]
       define :update_process_status, action: :update
       define :delete_process_status, action: :destroy
