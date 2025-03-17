@@ -226,24 +226,20 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "create an expected service and twin it with an actual - success" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      expected = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected})
-      actual = Diffo.Provider.create_instance!(%{specification_id: specification.id}) |> Diffo.Provider.twin_instance!(%{twin_id: expected.id})
-      assert actual.which == :actual
-      assert actual.twin_id == expected.id
-      refreshed_expected = expected |> Diffo.Provider.twin_instance!(%{twin_id: actual.id})
-      assert refreshed_expected.which == :expected
-      assert refreshed_expected.twin_id == actual.id
-    end
-
-    test "create an actual service and twin it with an expected - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
       actual = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       expected = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected}) |> Diffo.Provider.twin_instance!(%{twin_id: actual.id})
       assert expected.which == :expected
       assert expected.twin_id == actual.id
-      refreshed_actual = actual |> Diffo.Provider.twin_instance!(%{twin_id: expected.id})
-      assert refreshed_actual.which == :actual
-      assert refreshed_actual.twin_id == expected.id
+      #refreshed_actual = actual |> Diffo.Provider.twin_instance!(%{twin_id: expected.id})
+      #assert refreshed_actual.which == :actual
+      #assert refreshed_actual.twin_id == expected.id
+    end
+
+    test "create an actual service and twin it with an expected - failure" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      expected = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected})
+      actual = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      {:error, _error} = actual |> Diffo.Provider.twin_instance(%{twin_id: expected.id})
     end
 
     test "create an actual service and twin it with an actual - failure" do
@@ -458,18 +454,14 @@ defmodule Diffo.Provider.InstanceTest do
 
   describe "Diffo.Provider outstanding Instances" do
     use Outstand
-    # expect a service to exist with a given specification and version
-    expected_specification = %Diffo.Provider.Specification{name: "freePhone", major_version: 1, minor_version: 0, version: nil}
-    expected_instance = %Diffo.Provider.Instance{specification: expected_specification, which: :expected}
-    |> Map.put(:id,  &Diffo.Uuid.expect_uuid4/1)
-    |> Map.put(:href, &Diffo.Uuid.expect_trailing_uuid4/1)
-    assert expected_instance >>> nil
+    # expect a service to exist with a given specification
+    specification = Diffo.Provider.create_specification!(%{name: "freePhone"})
+    expected_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected})
+    actual_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
 
-    actual_specification = Diffo.Provider.create_specification!(%{name: "freePhone"})
-    actual_instance = Diffo.Provider.create_instance!(%{specification_id: actual_specification.id})
-
-    assert expected_specification --- actual_specification == nil
-    assert expected_instance --- actual_instance == nil
+    twinned_expected_instance = expected_instance |> Diffo.Provider.twin_instance!(%{twin_id: actual_instance.id}) |> IO.inspect(label: "twinned expected instance")
+    IO.inspect(twinned_expected_instance --- actual_instance, label: "outstanding")
+    assert twinned_expected_instance --- actual_instance == nil
 
     # now expect the actual service to be active and starting
     expected_service = expected_instance |> Map.put(:service_state, :active) |> Map.put(:service_operating_status, :starting) |> IO.inspect(label: "expected service")
@@ -481,8 +473,9 @@ defmodule Diffo.Provider.InstanceTest do
     actual_service = actual_instance |> Diffo.Provider.activate_service!()|> IO.inspect(label: "actual service")
     assert expected_service --- actual_service == nil
 
+    Diffo.Provider.delete_instance!(expected_instance)
     Diffo.Provider.delete_instance!(actual_instance)
-    Diffo.Provider.delete_specification!(actual_specification)
+    Diffo.Provider.delete_specification!(specification)
   end
 
   describe "Diffo.Provider delete Instances" do

@@ -13,8 +13,24 @@ defmodule Diffo.Provider.Instance do
   end
 
   outstanding do
-    expect [:id, :href, :specification, :type, :service_state, :service_operating_status]
+    expect [:specification, :type, :service_state, :service_operating_status]
     #expect [:type, :name, :external_identifiers, :specification, :service_state, :service_operating_status, :forward_relationships, :reverse_relationships, :features, :characteristics, :entities, :process_statuses, :places, :parties]
+    customize fn outstanding, expected, actual ->
+      if (actual == nil) do
+        outstanding
+      else
+        outstanding_twin_id = Outstanding.outstanding(expected.twin_id, actual.id)
+        case {outstanding, outstanding_twin_id} do
+          {_, nil} ->
+            outstanding
+          {nil, _} ->
+            struct(:instance, %{id: outstanding_twin_id})
+          {_, _} ->
+            outstanding
+            |> Map.put(:id, outstanding_twin_id)
+        end
+      end
+    end
   end
 
   state_machine do
@@ -105,6 +121,7 @@ defmodule Diffo.Provider.Instance do
       description "establishes a twin relationship"
       require_atomic? false
       accept [:twin_id]
+      validate attribute_equals(:which, :expected)
       validate {Diffo.Validations.IsRelatedDifferent, attribute: :which, related_id: :twin_id}
     end
 
