@@ -456,9 +456,39 @@ defmodule Diffo.Provider.InstanceTest do
     end
   end
 
+  describe "Diffo.Provider outstanding Instances" do
+    use Outstand
+    # expect a service to exist with a given specification and version
+    expected_specification = %Diffo.Provider.Specification{name: "freePhone", major_version: 1, minor_version: 0, version: nil}
+    expected_instance = %Diffo.Provider.Instance{specification: expected_specification, which: :expected}
+    |> Map.put(:id,  &Diffo.Uuid.expect_uuid4/1)
+    |> Map.put(:href, &Diffo.Uuid.expect_trailing_uuid4/1)
+    assert expected_instance >>> nil
+
+    actual_specification = Diffo.Provider.create_specification!(%{name: "freePhone"})
+    actual_instance = Diffo.Provider.create_instance!(%{specification_id: actual_specification.id})
+
+    assert expected_specification --- actual_specification == nil
+    assert expected_instance --- actual_instance == nil
+
+    # now expect the actual service to be active and starting
+    expected_service = expected_instance |> Map.put(:service_state, :active) |> Map.put(:service_operating_status, :starting) |> IO.inspect(label: "expected service")
+    outstanding_service = expected_service --- actual_instance |> IO.inspect(label: "outstanding service")
+    assert outstanding_service.service_state == :active
+    assert outstanding_service.service_operating_status == :starting
+
+    # now resolve this by activing the actual service
+    actual_service = actual_instance |> Diffo.Provider.activate_service!()|> IO.inspect(label: "actual service")
+    assert expected_service --- actual_service == nil
+
+    Diffo.Provider.delete_instance!(actual_instance)
+    Diffo.Provider.delete_specification!(actual_specification)
+  end
+
   describe "Diffo.Provider delete Instances" do
     test "bulk delete" do
       Diffo.Provider.delete_instance!(Diffo.Provider.list_instances!())
+      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
     end
   end
 end

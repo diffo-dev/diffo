@@ -157,7 +157,7 @@ defmodule Diffo.Provider.PlaceRefTest do
       place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
 
       expected_place_ref = %Diffo.Provider.PlaceRef{place_id: ~r/LOC\d{12}/, name: "locationId", role: :CustomerSite, referredType: "GeographicAddress", type: "PlaceRef"}
-      refute expected_place_ref --- place_ref
+      refute expected_place_ref >>> place_ref
     end
   end
 

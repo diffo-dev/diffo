@@ -164,6 +164,7 @@ defmodule Diffo.Provider.SpecificationTest do
 
   describe "Diffo.Provider delete Specifications" do
     test "bulk delete" do
+      Diffo.Provider.delete_instance!(Diffo.Provider.list_instances!())
       Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
     end
   end

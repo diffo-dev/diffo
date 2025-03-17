@@ -158,7 +158,7 @@ defmodule Diffo.Provider.PartyRefTest do
       party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, href: "party/internal/IND000000897353", referredType: :Individual})
       party_ref = Diffo.Provider.create_party_ref!(%{instance_id: instance.id, role: :Organization, party_id: party.id})
       expected_party_ref = %Diffo.Provider.PartyRef{party_id: ~r/IND\d{12}/, name: "individualId", role: :Organization, referredType: "Individual", type: "PartyRef"}
-      refute expected_party_ref --- party_ref
+      refute expected_party_ref >>> party_ref
     end
   end
 
