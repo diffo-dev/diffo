@@ -121,4 +121,49 @@ defmodule Diffo.Uuid do
       nil
     end
 
+    @doc """
+    Callback function for outstanding to expect uuid4.
+    ## Examples
+
+      iex> Diffo.Uuid.expect_uuid4("d2566874-d5ee-400b-9983-10d63ec52f32")
+      nil
+
+      iex> Diffo.Uuid.expect_uuid4("serviceInventoryManagement/v4/service/accessEvc/d2566874-d5ee-400b-9983-10d63ec52f32")
+      :uuid4
+
+      iex> Diffo.Uuid.expect_uuid4(nil)
+      :uuid4
+
+    """
+    def expect_uuid4(actual) do
+      if uuid4?(actual) do
+        nil
+      else
+        :uuid4
+      end
+    end
+
+    @doc """
+    Callback function for outstanding to expect trailing uuid4.
+    ## Examples
+      iex> Diffo.Uuid.expect_trailing_uuid4("serviceInventoryManagement/v4/service/accessEvc/d2566874-d5ee-400b-9983-10d63ec52f32")
+      nil
+
+      iex> Diffo.Uuid.expect_trailing_uuid4("serviceInventoryManagement/v4/service/accessEvc/d2566874-d5ee-400b-9983")
+      :trailing_uuid4
+
+      iex> Diffo.Uuid.expect_trailing_uuid4("d2566874-d5ee-400b-9983-10d63ec52f32")
+      nil
+
+      iex> Diffo.Uuid.expect_trailing_uuid4(nil)
+      :trailing_uuid4
+
+    """
+    def expect_trailing_uuid4(actual) do
+      case trailing_uuid4(actual) do
+        nil -> :trailing_uuid4
+        _ -> nil
+      end
+    end
+
   end

@@ -5,11 +5,16 @@ defmodule Diffo.Provider.Instance do
 
   Instance - Ash Resource for a TMF Service or Resource Instance
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource, AshStateMachine]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource, AshStateMachine]
 
   postgres do
     table "instances"
     repo Diffo.Repo
+  end
+
+  outstanding do
+    expect [:id, :href, :specification, :type, :service_state, :service_operating_status]
+    #expect [:type, :name, :external_identifiers, :specification, :service_state, :service_operating_status, :forward_relationships, :reverse_relationships, :features, :characteristics, :entities, :process_statuses, :places, :parties]
   end
 
   state_machine do
@@ -30,7 +35,7 @@ defmodule Diffo.Provider.Instance do
   end
 
   jason do
-    pick [:id, :href, :category, :description, :name, :external_identifiers, :process_statuses, :specification_type, :specification, :forward_relationships, :features, :characteristics, :entities, :places, :parties, :type]
+    pick [:id, :href, :category, :description, :name, :external_identifiers, :process_statuses, :specification, :forward_relationships, :features, :characteristics, :entities, :places, :parties, :type]
     customize fn result, record ->
       result
       #|> IO.inspect(label: "start instance jason customize")
@@ -70,7 +75,7 @@ defmodule Diffo.Provider.Instance do
     create :create do
       description "creates a new instance of a service or resource according by specification id"
       accept [:id, :specification_id, :name, :type, :which]
-      change load [:href, :category, :description, :external_identifiers, :specification_type, :href, :specification]
+      change load [:href, :category, :description, :external_identifiers, :specification_name, :specification_type, :tmf_version]
     end
 
     read :list do
@@ -334,7 +339,7 @@ defmodule Diffo.Provider.Instance do
   end
 
   preparations do
-    prepare build(load: [:twin, :category, :description, :external_identifiers, :specification_type, :href, :specification, :process_statuses, :forward_relationships, :features, :characteristics, :entities, :places, :parties], sort: [href: :asc])
+    prepare build(load: [:twin, :category, :description, :external_identifiers, :specification_type, :specification_name, :tmf_version, :href, :specification, :process_statuses, :forward_relationships, :features, :characteristics, :entities, :places, :parties], sort: [href: :asc])
   end
 
   @doc """
