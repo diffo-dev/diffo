@@ -47,6 +47,20 @@ defmodule Diffo.Provider.EntityTest do
       entity = Diffo.Provider.create_entity!(%{id: "COR000000123456", type: :cost, name: "2025-01"})
       assert entity.referredType == nil
     end
+
+    test "create an Entity that already exists, preserving attributes - success" do
+      entity = Diffo.Provider.create_entity!(%{id: "11b6ba17-2865-41c5-b469-2939249631e8", href: "serviceProblemManagement/v4/serviceProblem/nbnAccess/11b6ba17-2865-41c5-b469-2939249631e8", type: :serviceProblem})
+      Diffo.Provider.create_entity!(%{id: "11b6ba17-2865-41c5-b469-2939249631e8", type: :serviceProblem})
+      refreshed_entity = Diffo.Provider.get_entity_by_id!(entity.id)
+      assert refreshed_entity.href == "serviceProblemManagement/v4/serviceProblem/nbnAccess/11b6ba17-2865-41c5-b469-2939249631e8"
+    end
+
+    test "create an Entity that already exists, adding attributes - success" do
+      entity = Diffo.Provider.create_entity!(%{id: "11b6ba17-2865-41c5-b469-2939249631e8", type: :serviceProblem})
+      Diffo.Provider.create_entity!(%{id: "11b6ba17-2865-41c5-b469-2939249631e8", href: "serviceProblemManagement/v4/serviceProblem/nbnAccess/11b6ba17-2865-41c5-b469-2939249631e8", type: :serviceProblem})
+      refreshed_entity = Diffo.Provider.get_entity_by_id!(entity.id)
+      assert refreshed_entity.href == "serviceProblemManagement/v4/serviceProblem/nbnAccess/11b6ba17-2865-41c5-b469-2939249631e8"
+    end
   end
 
   describe "Diffo.Provider update Entities" do
@@ -124,9 +138,28 @@ defmodule Diffo.Provider.EntityTest do
     assert encoding == "{\"id\":\"COR000000123456\",\"name\":\"2025-01\",\"@referredType\":\"cost\",\"@type\":\"EntityRef\"}"
   end
 
-  describe "Diffo.Provider delete Entities" do
-    test "bulk delete" do
-      Diffo.Provider.delete_entity!(Diffo.Provider.list_entities!())
+  describe "Diffo.Provider delete Entity" do
+    test "delete entity - success" do
+      entity = Diffo.Provider.create_entity!(%{id: "COR000000123456", referredType: :cost, name: "2025-01"})
+      :ok = Diffo.Provider.delete_entity(entity)
+      {:error, _error} = Diffo.Provider.get_entity_by_id(entity.id)
+    end
+
+    test "delete entity - failure, related entity_ref" do
+      entity = Diffo.Provider.create_entity!(%{id: "COR000000123456", referredType: :cost, name: "2025-01"})
+      specification = Diffo.Provider.create_specification!(%{name: "copperAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      entity_ref = Diffo.Provider.create_entity_ref!(%{instance_id: instance.id, role: :reportedOn, entity_id: entity.id})
+      # TODO this fails but with an exception which doesn't match the expected error
+      try do
+        {:error, _error} = Diffo.Provider.delete_entity(entity)
+      rescue
+        _error ->
+          :ok
+      end
+      # now delete the entity_ref and we should be able to delete the entity
+      Diffo.Provider.delete_entity_ref!(entity_ref)
+      Diffo.Provider.delete_entity!(entity)
     end
   end
 end

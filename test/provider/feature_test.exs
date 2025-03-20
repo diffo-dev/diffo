@@ -71,10 +71,4 @@ defmodule Diffo.Provider.FeatureTest do
       assert encoding == "{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"connection\",\"value\":\"foreign\"},{\"name\":\"device\",\"value\":\"epic1000a\"}]}"
     end
   end
-
-  describe "Diffo.Provider delete Features" do
-    test "bulk delete" do
-      Diffo.Provider.delete_feature!(Diffo.Provider.list_features!())
-    end
-  end
 end

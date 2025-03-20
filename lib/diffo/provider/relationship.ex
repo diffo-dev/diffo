@@ -16,7 +16,6 @@ defmodule Diffo.Provider.Relationship do
     expect [:type, :target_type, :target_id, :target_href, :characteristic]
   end
 
-
   jason do
     pick [:target_type, :type, :characteristic, :target_type, :target_id, :target_href]
     customize fn result, _record ->

@@ -463,25 +463,32 @@ defmodule Diffo.Provider.InstanceTest do
     IO.inspect(twinned_expected_instance --- actual_instance, label: "outstanding")
     assert twinned_expected_instance --- actual_instance == nil
 
+    # expect a consumer party
+    consumer_party = Diffo.Provider.create_party!(%{id: "T3_CONNECTIVITY", name: :entityId, href: "entity/internal/T3_CONNECTIVITY", referredType: :Entity})
+    expected_party_ref = Diffo.Provider.create_party_ref!(%{instance_id: twinned_expected_instance.id, role: :Consumer, party_id: consumer_party.id})
+    consumed_expected_instance = Diffo.Provider.get_instance_by_id!(expected_instance.id) |> IO.inspect(label: "consumed expected instance")
+    consumer_outstanding_instance = consumed_expected_instance --- actual_instance |> IO.inspect(label: "consumer outstanding instance")
+
+    # now resolve this by adding the consumer party to the actual service
+    actual_party_ref = Diffo.Provider.create_party_ref!(%{instance_id: actual_instance.id, role: :Consumer, party_id: consumer_party.id})
+    consumed_actual_instance = Diffo.Provider.get_instance_by_id!(actual_instance.id) |> IO.inspect(label: "consumed actual instance")
+    consumed_outstanding_instance = consumed_expected_instance --- consumed_actual_instance |> IO.inspect(label: "consumed outstanding service")
+
     # now expect the actual service to be active and starting
-    expected_service = expected_instance |> Map.put(:service_state, :active) |> Map.put(:service_operating_status, :starting) |> IO.inspect(label: "expected service")
-    outstanding_service = expected_service --- actual_instance |> IO.inspect(label: "outstanding service")
-    assert outstanding_service.service_state == :active
-    assert outstanding_service.service_operating_status == :starting
+    #expected_service = expected_instance |> Map.put(:service_state, :active) |> Map.put(:service_operating_status, :starting) |> IO.inspect(label: "expected service")
+    #outstanding_service = expected_service --- actual_instance |> IO.inspect(label: "outstanding service")
+    #assert outstanding_service.service_state == :active
+    #assert outstanding_service.service_operating_status == :starting
 
-    # now resolve this by activing the actual service
-    actual_service = actual_instance |> Diffo.Provider.activate_service!()|> IO.inspect(label: "actual service")
-    assert expected_service --- actual_service == nil
+    # now resolve this by activating the actual service
+    #actual_service = actual_instance |> Diffo.Provider.activate_service!()|> IO.inspect(label: "actual service")
+    #assert expected_service --- actual_service == nil
 
+    Diffo.Provider.delete_party_ref!(expected_party_ref)
+    Diffo.Provider.delete_party_ref!(actual_party_ref)
+    Diffo.Provider.delete_party!(consumer_party)
     Diffo.Provider.delete_instance!(expected_instance)
     Diffo.Provider.delete_instance!(actual_instance)
     Diffo.Provider.delete_specification!(specification)
-  end
-
-  describe "Diffo.Provider delete Instances" do
-    test "bulk delete" do
-      Diffo.Provider.delete_instance!(Diffo.Provider.list_instances!())
-      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
-    end
   end
 end

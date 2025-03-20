@@ -174,10 +174,4 @@ defmodule Diffo.Provider.EntityRefTest do
 
     gen_nothing_outstanding_test("generic nothing outstanding", @generic_cost, @actual_cost)
   end
-
-  describe "Diffo.Provider delete EntityRefs" do
-    test "bulk delete" do
-      Diffo.Provider.delete_entity_ref!(Diffo.Provider.list_entity_refs!())
-    end
-  end
 end

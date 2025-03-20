@@ -23,6 +23,7 @@ defmodule Diffo.Provider.Place do
     create :create do
       description "creates a place"
       accept [:id, :href, :name, :type, :referredType ]
+      upsert? true
     end
 
     read :find_by_name do

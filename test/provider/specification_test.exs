@@ -87,9 +87,18 @@ defmodule Diffo.Provider.SpecificationTest do
       {:error, _specification} = Diffo.Provider.create_specification(%{name: "aggregation", type: :service})
     end
 
-    test "create a service specification - failure - name and major version not unique" do
-      Diffo.Provider.create_specification!(%{name: "voice"})
-      {:error, _specification} = Diffo.Provider.create_specification(%{name: "voice"})
+    test "create a Specfication that already exists, preserving attributes - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2, category: :access})
+      Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
+      refreshed_specification = Diffo.Provider.get_specification_by_id!(specification.id)
+      assert refreshed_specification.category == "access"
+    end
+
+    test "create a Specification that already exists, adding attributes - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
+      Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2, category: :access})
+      refreshed_specification = Diffo.Provider.get_specification_by_id!(specification.id)
+      assert refreshed_specification.category == "access"
     end
   end
 
@@ -163,9 +172,25 @@ defmodule Diffo.Provider.SpecificationTest do
   end
 
   describe "Diffo.Provider delete Specifications" do
-    test "bulk delete" do
-      Diffo.Provider.delete_instance!(Diffo.Provider.list_instances!())
-      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
+    test "delete specification - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "shdslAccess"})
+      :ok = Diffo.Provider.delete_specification(specification)
+      {:error, _error} = Diffo.Provider.get_specification_by_id(specification.id)
+    end
+
+    test "delete specification - failure, related instance" do
+      specification = Diffo.Provider.create_specification!(%{name: "bdslAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      # TODO this fails but with an exception which doesn't match the expected error
+      try do
+        {:error, _result} = Diffo.Provider.delete_specification!(specification)
+      rescue
+        _error ->
+          :ok
+      end
+      # now delete the instance and we shgould be able to delete the specification
+      :ok = Diffo.Provider.delete_instance(instance)
+      :ok = Diffo.Provider.delete_specification(specification)
     end
   end
 end

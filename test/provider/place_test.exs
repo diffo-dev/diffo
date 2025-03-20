@@ -61,6 +61,20 @@ defmodule Diffo.Provider.PlaceTest do
       place = Diffo.Provider.create_place!(%{id: "3NBA", href: "place/nbnco/3NBA", name: :poiId, type: :GeographicSite})
       assert place.referredType == nil
     end
+
+    test "create a Place that already exists, preserving attributes - success" do
+      place = Diffo.Provider.create_place!(%{id: "3NBA", href: "place/nbnco/3NBA", name: :poiId, type: :GeographicSite})
+      Diffo.Provider.create_place!(%{id: "3NBA", name: :poiId, type: :GeographicSite})
+      refreshed_place = Diffo.Provider.get_place_by_id!(place.id)
+      assert refreshed_place.href == "place/nbnco/3NBA"
+    end
+
+    test "create a Place that already exists, adding attributes - success" do
+      place = Diffo.Provider.create_place!(%{id: "3NBA", name: :poiId, type: :GeographicSite})
+      Diffo.Provider.create_place!(%{id: "3NBA", href: "place/nbnco/3NBA", name: :poiId, type: :GeographicSite})
+      refreshed_place = Diffo.Provider.get_place_by_id!(place.id)
+      assert refreshed_place.href == "place/nbnco/3NBA"
+    end
   end
 
   describe "Diffo.Provider update Places" do
@@ -139,8 +153,21 @@ defmodule Diffo.Provider.PlaceTest do
   end
 
   describe "Diffo.Provider delete Places" do
-    test "bulk delete" do
-      Diffo.Provider.delete_place!(Diffo.Provider.list_places!())
+    test "delete place - success" do
+      place = Diffo.Provider.create_place!(%{id: "LOC000000898353", name: :locationId, href: "place/nbnco/LOC000000898353", referredType: :GeographicAddress})
+      :ok = Diffo.Provider.delete_place(place)
+      {:error, _error} = Diffo.Provider.get_place_by_id(place.id)
+    end
+
+    test "delete place - failure, related PlaceRef" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      place = Diffo.Provider.create_place!(%{id: "LOC000000899353", name: :locationId, href: "place/nbnco/LOC000000899353", referredType: :GeographicAddress})
+      place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
+      {:error, _error} = Diffo.Provider.delete_place(place)
+      # now delete the place_ref and we should be able to delete the place
+      :ok = Diffo.Provider.delete_place_ref(place_ref)
+      :ok = Diffo.Provider.delete_place(place)
     end
   end
 end

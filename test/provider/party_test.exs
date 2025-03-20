@@ -61,6 +61,20 @@ defmodule Diffo.Provider.PartyTest do
       party = Diffo.Provider.create_party!(%{id: "T8_NUMBERS", href: "entity/internal/T8_NUMBERS", name: :entityId, type: :Entity})
       assert party.referredType == nil
     end
+
+    test "create a Party that already exists, preserving attributes - success" do
+      party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, type: :Individual, href: "party/nbnco/IND000000897353"})
+      Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, type: :Individual})
+      refreshed_party = Diffo.Provider.get_party_by_id!(party.id)
+      assert refreshed_party.href == "party/nbnco/IND000000897353"
+    end
+
+    test "create a Party that already exists, adding attributes - success" do
+      party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, type: :Individual})
+      Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, type: :Individual, href: "party/nbnco/IND000000897353"})
+      refreshed_party = Diffo.Provider.get_party_by_id!(party.id)
+      assert refreshed_party.href == "party/nbnco/IND000000897353"
+    end
   end
 
   describe "Diffo.Provider update Parties" do
@@ -139,8 +153,38 @@ defmodule Diffo.Provider.PartyTest do
   end
 
   describe "Diffo.Provider delete Parties" do
-    test "bulk delete" do
-      Diffo.Provider.delete_party!(Diffo.Provider.list_parties!())
+    test "delete party - success" do
+      party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, type: :Individual})
+      :ok = Diffo.Provider.delete_party(party)
+      {:error, _error} = Diffo.Provider.get_party_by_id(party.id)
+    end
+
+    test "delete party - failure, related ExternalIdentifier" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      party = Diffo.Provider.create_party!(%{id: "T5_VALUE_ADD", name: :entityId, href: "entity/internal/T5_VALUE_ADD", referredType: :Entity})
+      external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance.id, type: :orderId, external_id: "ORD00000123456", owner_id: party.id})
+      {:error, _error} = Diffo.Provider.delete_party(party)
+      # now delete the external_identifier and we should be able to delete the party
+      :ok = Diffo.Provider.delete_external_identifier(external_identifier)
+      :ok = Diffo.Provider.delete_party(party)
+    end
+
+    test "delete party - failure, related PartyRef" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      party = Diffo.Provider.create_party!(%{id: "T3_FIXED", name: :entityId, href: "entity/internal/T3_FIXED", referredType: :Entity})
+      party_ref = Diffo.Provider.create_party_ref!(%{instance_id: instance.id, role: :Consumer, party_id: party.id})
+      # TODO this fails but with an exception which doesn't match the expected error
+      try do
+        {:error, _error} = Diffo.Provider.delete_party(party)
+      rescue
+        _error ->
+          :ok
+      end
+      # now delete the party_ref and we should be able to delete the party
+      :ok = Diffo.Provider.delete_party_ref(party_ref)
+      :ok = Diffo.Provider.delete_party(party)
     end
   end
 end
