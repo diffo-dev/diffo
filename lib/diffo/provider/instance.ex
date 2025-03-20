@@ -30,6 +30,8 @@ defmodule Diffo.Provider.Instance do
             |> Map.put(:id, outstanding_twin_id)
         end
       end
+      |> Diffo.Provider.Outstanding.instance_list_by_key(expected, actual, :places, :role)
+      |> Diffo.Provider.Outstanding.instance_list_by_key(expected, actual, :parties, :role)
     end
   end
 

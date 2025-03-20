@@ -192,6 +192,8 @@ defmodule Diffo.Provider.RelationshipTest do
   describe "Diffo.Provider delete Relationships" do
     test "bulk delete" do
       Diffo.Provider.delete_relationship!(Diffo.Provider.list_relationships!())
+      Diffo.Provider.delete_instance!(Diffo.Provider.list_instances!())
+      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
     end
   end
 end

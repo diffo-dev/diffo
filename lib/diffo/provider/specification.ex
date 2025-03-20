@@ -28,6 +28,8 @@ defmodule Diffo.Provider.Specification do
       description "creates a major version of a named serviceSpecification or resourceSpecification"
       accept [:id, :type, :name, :major_version, :description, :category]
       change load [:version, :href, :instance_type]
+      upsert? true
+      upsert_identity :unique_major_version_per_name
     end
 
     read :list do

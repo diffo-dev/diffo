@@ -133,6 +133,8 @@ defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
   describe "Diffo.Provider delete ProcessStatus" do
     test "bulk delete" do
       Diffo.Provider.delete_process_status!(Diffo.Provider.list_process_statuses!())
+      Diffo.Provider.delete_instance!(Diffo.Provider.list_instances!())
+      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
     end
   end
 end

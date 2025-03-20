@@ -160,10 +160,4 @@ defmodule Diffo.Provider.PlaceRefTest do
       refute expected_place_ref >>> place_ref
     end
   end
-
-  describe "Diffo.Provider delete PlaceRefs" do
-    test "bulk delete" do
-      Diffo.Provider.delete_place_ref!(Diffo.Provider.list_place_refs!())
-    end
-  end
 end

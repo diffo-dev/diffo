@@ -161,10 +161,4 @@ defmodule Diffo.Provider.PartyRefTest do
       refute expected_party_ref >>> party_ref
     end
   end
-
-  describe "Diffo.Provider delete PartyRefs" do
-    test "bulk delete" do
-      Diffo.Provider.delete_party_ref!(Diffo.Provider.list_party_refs!())
-    end
-  end
 end

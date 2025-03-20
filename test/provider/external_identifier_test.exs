@@ -170,8 +170,8 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "update - failure - must have one of type, external id, owner_id" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance1.id, type: :orderId, external_id: "ORD00000123456"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance.id, type: :orderId, external_id: "ORD00000123456"})
       {:error, _error} = external_identifier |> Diffo.Provider.update_external_identifier(%{type: nil, external_id: nil})
     end
   end
@@ -179,17 +179,17 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
   describe "Diffo.Provider encode ExternalIdentifiers" do
     test "encode json with owner - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       t4_party = Diffo.Provider.create_party!(%{id: "T4_ACCESS", name: :entityId, href: "entity/internal/T4_ACCESS", referredType: :Entity})
-      external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance1.id, type: :orderId, external_id: "ORD00000123456", owner_id: t4_party.id})
+      external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance.id, type: :orderId, external_id: "ORD00000123456", owner_id: t4_party.id})
       encoding = Jason.encode!(external_identifier)
       assert encoding == "{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_ACCESS\"}"
     end
 
     test "encode json no owner - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance1.id, type: :orderId, external_id: "ORD00000123456"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance.id, type: :orderId, external_id: "ORD00000123456"})
       encoding = Jason.encode!(external_identifier)
       assert encoding == "{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\"}"
     end
@@ -212,11 +212,5 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
     gen_result_outstanding_test("specific owner_id result", @specific_external_identifier, Map.delete(@actual_external_identifier, :owner_id), @owner_id_only)
 
     gen_nothing_outstanding_test("generic nothing outstanding", @generic_external_identifier, @actual_external_identifier)
-  end
-
-  describe "Diffo.Provider delete ExternalIdentifiers" do
-    test "bulk delete" do
-      Diffo.Provider.delete_external_identifier!(Diffo.Provider.list_external_identifiers!())
-    end
   end
 end

@@ -243,8 +243,12 @@ defmodule Diffo.Provider.NoteTest do
   end
 
   describe "Diffo.Provider delete Notes" do
-    test "bulk delete" do
-      Diffo.Provider.delete_note!(Diffo.Provider.list_notes!())
+    test "delete note - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance1 = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      note = Diffo.Provider.create_note!(%{instance_id: instance1.id, text: :"test service", note_id: "TST000000123456"})
+      :ok = Diffo.Provider.delete_note(note)
+      {:error, _error} = Diffo.Provider.get_note_by_id(note.id)
     end
   end
 end
