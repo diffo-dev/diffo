@@ -5,6 +5,7 @@ defmodule Diffo.Provider.PartyTest do
 
   describe "Diffo.Provider read Parties" do
     test "list parties - success" do
+      delete_all_parties()
       Diffo.Provider.create_party!(%{id: "IND000000123456", name: :individualId, referredType: :Individual})
       Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, referredType: :Individual})
       parties = Diffo.Provider.list_parties!()
@@ -186,5 +187,10 @@ defmodule Diffo.Provider.PartyTest do
       :ok = Diffo.Provider.delete_party_ref(party_ref)
       :ok = Diffo.Provider.delete_party(party)
     end
+  end
+
+  def delete_all_parties() do
+    parties = Diffo.Provider.list_parties!()
+    %Ash.BulkResult{status: :success} = Diffo.Provider.delete_party(parties)
   end
 end

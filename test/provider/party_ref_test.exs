@@ -6,6 +6,7 @@ defmodule Diffo.Provider.PartyRefTest do
 
   describe "Diffo.Provider read PartyRefs" do
     test "list party refs - success" do
+      delete_all_party_refs()
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       party1 = Diffo.Provider.create_party!(%{id: "IND000000123456", name: :individualId, type: :Individual})
@@ -160,5 +161,22 @@ defmodule Diffo.Provider.PartyRefTest do
       expected_party_ref = %Diffo.Provider.PartyRef{party_id: ~r/IND\d{12}/, name: "individualId", role: :Organization, referredType: "Individual", type: "PartyRef"}
       refute expected_party_ref >>> party_ref
     end
+  end
+
+  describe "Diffo.Provider delete PartyRefs" do
+    test "delete place_ref with related instance - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      party = Diffo.Provider.create_party!(%{id: "IND000000897353", name: :individualId, href: "party/internal/IND000000897353", referredType: :Individual})
+      party_ref = Diffo.Provider.create_party_ref!(%{instance_id: instance.id, role: :Organization, party_id: party.id})
+      :ok = Diffo.Provider.delete_party_ref(party_ref)
+      {:error, _error} = Diffo.Provider.get_party_ref_by_id(party_ref.id)
+    end
+  end
+
+  def delete_all_party_refs() do
+    party_refs = Diffo.Provider.list_party_refs!()
+    %Ash.BulkResult{status: :success} = Diffo.Provider.delete_party_ref(party_refs)
+    Diffo.Provider.PartyTest.delete_all_parties()
   end
 end

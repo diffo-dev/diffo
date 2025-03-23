@@ -188,7 +188,7 @@ defmodule Diffo.Provider.SpecificationTest do
         _error ->
           :ok
       end
-      # now delete the instance and we shgould be able to delete the specification
+      # now delete the instance and we should be able to delete the specification
       :ok = Diffo.Provider.delete_instance(instance)
       :ok = Diffo.Provider.delete_specification(specification)
     end

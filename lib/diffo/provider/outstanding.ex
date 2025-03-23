@@ -20,7 +20,6 @@ defmodule Diffo.Provider.Outstanding do
     expected_keywords = Keyword.new(Map.get(expected, list), fn element -> {Map.get(element, key), element} end)
     actual_keywords = Keyword.new(Map.get(actual, list), fn element -> {Map.get(element, key), element} end)
     outstanding_keywords = Outstanding.outstanding(expected_keywords, actual_keywords)
-    |> IO.inspect(label: "outstanding_keywords")
     if (outstanding_keywords == nil) do
       outstanding
     else

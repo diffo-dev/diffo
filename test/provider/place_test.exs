@@ -5,6 +5,7 @@ defmodule Diffo.Provider.PlaceTest do
 
   describe "Diffo.Provider read Places" do
     test "list places - success" do
+      delete_all_places()
       Diffo.Provider.create_place!(%{id: "LOC000000123456", name: :locationId, referredType: :GeographicAddress})
       Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, referredType: :GeographicAddress})
       places = Diffo.Provider.list_places!()
@@ -169,5 +170,10 @@ defmodule Diffo.Provider.PlaceTest do
       :ok = Diffo.Provider.delete_place_ref(place_ref)
       :ok = Diffo.Provider.delete_place(place)
     end
+  end
+
+  def delete_all_places() do
+    places = Diffo.Provider.list_places!()
+    %Ash.BulkResult{status: :success} = Diffo.Provider.delete_place(places)
   end
 end
