@@ -138,7 +138,7 @@ defmodule Diffo.Provider.EntityTest do
     assert encoding == "{\"id\":\"COR000000123456\",\"name\":\"2025-01\",\"@referredType\":\"cost\",\"@type\":\"EntityRef\"}"
   end
 
-  describe "Diffo.Provider delete Entity" do
+  describe "Diffo.Provider delete Entities" do
     test "delete entity - success" do
       entity = Diffo.Provider.create_entity!(%{id: "COR000000123456", referredType: :cost, name: "2025-01"})
       :ok = Diffo.Provider.delete_entity(entity)

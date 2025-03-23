@@ -159,8 +159,12 @@ defmodule Diffo.Provider.CharacteristicTest do
   end
 
   describe "Diffo.Provider delete Characteristics" do
-    test "bulk delete" do
-      Diffo.Provider.delete_characteristic!(Diffo.Provider.list_characteristics!())
+    test "delete characteristic with related instance - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      characteristic = Diffo.Provider.create_characteristic!(%{instance_id: instance.id, name: :device, value: :managed, type: :instance})
+      :ok = Diffo.Provider.delete_characteristic(characteristic)
+      {:error, _error} = Diffo.Provider.get_characteristic_by_id(characteristic.id)
     end
   end
 end

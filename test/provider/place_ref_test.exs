@@ -6,6 +6,7 @@ defmodule Diffo.Provider.PlaceRefTest do
 
   describe "Diffo.Provider read PlaceRefs" do
     test "list place refs - success" do
+      delete_all_place_refs()
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
       place1 = Diffo.Provider.create_place!(%{id: "LOC000000123456", name: :locationId, type: :GeographicAddress})
@@ -159,5 +160,22 @@ defmodule Diffo.Provider.PlaceRefTest do
       expected_place_ref = %Diffo.Provider.PlaceRef{place_id: ~r/LOC\d{12}/, name: "locationId", role: :CustomerSite, referredType: "GeographicAddress", type: "PlaceRef"}
       refute expected_place_ref >>> place_ref
     end
+  end
+
+  describe "Diffo.Provider delete PlaceRefs" do
+    test "delete place_ref with related instance - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      place = Diffo.Provider.create_place!(%{id: "LOC000000897353", name: :locationId, href: "place/nbnco/LOC000000897353", referredType: :GeographicAddress})
+      place_ref = Diffo.Provider.create_place_ref!(%{instance_id: instance.id, role: :CustomerSite, place_id: place.id})
+      :ok = Diffo.Provider.delete_place_ref(place_ref)
+      {:error, _error} = Diffo.Provider.get_place_ref_by_id(place_ref.id)
+    end
+  end
+
+  def delete_all_place_refs() do
+    place_refs = Diffo.Provider.list_place_refs!()
+    %Ash.BulkResult{status: :success} = Diffo.Provider.delete_place_ref(place_refs)
+    Diffo.Provider.PlaceTest.delete_all_places()
   end
 end

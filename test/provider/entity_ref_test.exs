@@ -174,4 +174,15 @@ defmodule Diffo.Provider.EntityRefTest do
 
     gen_nothing_outstanding_test("generic nothing outstanding", @generic_cost, @actual_cost)
   end
+
+  describe "Diffo.Provider delete EntityRefs" do
+    test "delete entity_ref with related instance - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      entity = Diffo.Provider.create_entity!(%{id: "COR000000123456", referredType: :cost, name: "2025-01"})
+      entity_ref = Diffo.Provider.create_entity_ref!(%{instance_id: instance.id, role: :expected, entity_id: entity.id})
+      :ok = Diffo.Provider.delete_entity_ref(entity_ref)
+      {:error, _error} = Diffo.Provider.get_entity_ref_by_id(entity_ref.id)
+    end
+  end
 end

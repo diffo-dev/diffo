@@ -131,10 +131,12 @@ defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
   end
 
   describe "Diffo.Provider delete ProcessStatus" do
-    test "bulk delete" do
-      Diffo.Provider.delete_process_status!(Diffo.Provider.list_process_statuses!())
-      Diffo.Provider.delete_instance!(Diffo.Provider.list_instances!())
-      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
+    test "delete process_status with related instance - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      process_status = Diffo.Provider.ProcessStatus.create!(%{instance_id: instance.id, code: "NBNACC-1003", severity: :WARN, message: "nbnProductOrder cancelled"})
+      :ok = Diffo.Provider.delete_process_status(process_status)
+      {:error, _error} = Diffo.Provider.get_process_status_by_id(process_status.id)
     end
   end
 end

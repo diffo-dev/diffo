@@ -213,4 +213,16 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     gen_nothing_outstanding_test("generic nothing outstanding", @generic_external_identifier, @actual_external_identifier)
   end
+
+  describe "Diffo.Provider delete ExternalIdentifiers" do
+    test "delete external_identifier with related instance - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      external_identifier = Diffo.Provider.create_external_identifier!(%{instance_id: instance.id, type: :orderId, external_id: "ORD00000123456"})
+      :ok = Diffo.Provider.delete_external_identifier(external_identifier)
+      {:error, _error} = Diffo.Provider.get_entity_ref_by_id(external_identifier.id)
+    end
+  end
+
+
 end

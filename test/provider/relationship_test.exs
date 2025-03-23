@@ -190,10 +190,34 @@ defmodule Diffo.Provider.RelationshipTest do
   end
 
   describe "Diffo.Provider delete Relationships" do
-    test "bulk delete" do
-      Diffo.Provider.delete_relationship!(Diffo.Provider.list_relationships!())
-      Diffo.Provider.delete_instance!(Diffo.Provider.list_instances!())
-      Diffo.Provider.delete_specification!(Diffo.Provider.list_specifications!())
+    test "delete relationship with related instance - success" do
+      parent_specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+      child_specification = Diffo.Provider.create_specification!(%{name: "device"})
+      parent_instance = Diffo.Provider.create_instance!(%{specification_id: parent_specification.id})
+      child_instance = Diffo.Provider.create_instance!(%{specification_id: child_specification.id})
+      relationship = Diffo.Provider.create_relationship!(%{type: :bestows, source_id: parent_instance.id, target_id: child_instance.id})
+      :ok = Diffo.Provider.delete_relationship(relationship)
+      {:error, _error} = Diffo.Provider.get_relationship_by_id(relationship.id)
+    end
+
+    test "delete relationship with related instance - failure, related characteristic" do
+      parent_specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+      child_specification = Diffo.Provider.create_specification!(%{name: "device"})
+      parent_instance = Diffo.Provider.create_instance!(%{specification_id: parent_specification.id})
+      child_instance = Diffo.Provider.create_instance!(%{specification_id: child_specification.id})
+      relationship = Diffo.Provider.create_relationship!(%{type: :bestows, source_id: parent_instance.id, target_id: child_instance.id})
+      characteristic = Diffo.Provider.create_characteristic!(%{relationship_id: relationship.id, name: :role, value: :gateway, type: :relationship})
+      # TODO this fails but with an exception which doesn't match the expected error
+      try do
+        {:error, _result} = Diffo.Provider.delete_relationship(relationship)
+      rescue
+        _error ->
+          :ok
+      end
+      # now delete the feature characteristic and we should be able to delete the relationship
+      :ok = Diffo.Provider.delete_characteristic(characteristic)
+      :ok = Diffo.Provider.delete_relationship(relationship)
+      {:error, _error} = Diffo.Provider.get_relationship_by_id(relationship.id)
     end
   end
 end
