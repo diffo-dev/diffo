@@ -5,12 +5,7 @@ defmodule Diffo.Provider.Feature do
 
   Feature - Ash Resource for a TMF Feature
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
-
-  postgres do
-    table "features"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshJason.Resource]
 
   jason do
     pick [:name, :isEnabled, :featureCharacteristic]
@@ -79,6 +74,7 @@ defmodule Diffo.Provider.Feature do
   identities do
     identity :instance_feature_uniqueness, [:instance_id, :name] do
       message "another instance feature exists with same name"
+      pre_check_with Diffo.Provider
     end
   end
 

@@ -5,12 +5,7 @@ defmodule Diffo.Provider.Instance do
 
   Instance - Ash Resource for a TMF Service or Resource Instance
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource, AshStateMachine]
-
-  postgres do
-    table "instances"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshOutstanding.Resource, AshJason.Resource, AshStateMachine]
 
   outstanding do
     expect [:specification, :type, :service_state, :service_operating_status]

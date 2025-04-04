@@ -1,7 +1,7 @@
 defmodule Diffo.Provider.RelationshipTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
+
 
   describe "Diffo.Provider read Relationships" do
     test "list relationships - success" do

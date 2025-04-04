@@ -5,12 +5,7 @@ defmodule Diffo.Provider.ExternalIdentifier do
 
   ExternalIdentifier - Ash Resource for a TMF ExternalIdentifier
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
-
-  postgres do
-    table "externalIdentifiers"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   outstanding do
     expect [:type, :external_id, :owner_id]
@@ -93,6 +88,7 @@ defmodule Diffo.Provider.ExternalIdentifier do
   identities do
     identity :instance_type_uniqueness, [:instance_id, :type] do
       message "another external identifier exists on the instance with same type"
+      pre_check_with Diffo.Provider
     end
   end
 

@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.CharacteristicTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider read Characteristics" do
     test "list characteristics - success" do

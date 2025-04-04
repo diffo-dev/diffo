@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider.ProcessStatus create" do
     test "create a process status - success" do

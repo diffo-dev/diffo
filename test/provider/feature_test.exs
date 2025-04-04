@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.FeatureTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider read Features" do
     test "list features - success" do

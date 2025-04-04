@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.EntityRefTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider read EntityRefs" do
     test "list entity refs - success" do

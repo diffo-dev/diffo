@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.InstanceTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider read Instances!" do
 

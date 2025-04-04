@@ -5,12 +5,7 @@ defmodule Diffo.Provider.Place do
 
   Place - Ash Resource for a TMF Place
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
-
-  postgres do
-    table "places"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshJason.Resource]
 
   jason do
     pick [:id, :href, :name, :referredType, :type]

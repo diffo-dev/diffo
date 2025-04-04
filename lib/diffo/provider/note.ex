@@ -5,12 +5,7 @@ defmodule Diffo.Provider.Note do
 
   Note - Ash Resource for a TMF Note
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
-
-  postgres do
-    table "notes"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   outstanding do
     expect [:text, :note_id, :author_id]
@@ -95,14 +90,14 @@ defmodule Diffo.Provider.Note do
 
   identities do
     identity :instance_text_uniqueness, [:instance_id, :note_id, :text] do
-      eager_check? true
       message "a duplicate note exists"
       nils_distinct? false
+      pre_check_with Diffo.Provider
     end
 
     identity :instance_note_id_uniqueness, [:instance_id, :note_id] do
-      eager_check? true
       message "another note exists on the instance with same note id"
+      pre_check_with Diffo.Provider
     end
   end
 

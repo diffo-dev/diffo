@@ -5,12 +5,7 @@ defmodule Diffo.Provider.Entity do
 
   Entity - Ash Resource for a TMF Entity
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
-
-  postgres do
-    table "entities"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshJason.Resource]
 
   jason do
     pick [:id, :href, :name, :referredType, :type]

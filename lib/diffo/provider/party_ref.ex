@@ -5,12 +5,7 @@ defmodule Diffo.Provider.PartyRef do
 
   PartyRef - Ash Resource for a TMF PartyRef
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
-
-  postgres do
-    table "party_refs"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   outstanding do
     expect [:party_id, :name, :role, :referredType, :type]
@@ -82,6 +77,7 @@ defmodule Diffo.Provider.PartyRef do
   identities do
     identity :instance_party_uniqueness, [:instance_id, :party_id] do
       message "another party ref exists"
+      pre_check_with Diffo.Provider
     end
   end
 

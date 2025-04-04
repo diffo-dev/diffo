@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.ExternalIdentifierTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider read ExternalIdentifiers" do
     test "list external identifiers - success" do

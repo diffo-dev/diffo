@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.PartyRefTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
   use Outstand
 
   describe "Diffo.Provider read PartyRefs" do

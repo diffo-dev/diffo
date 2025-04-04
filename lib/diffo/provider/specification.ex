@@ -6,12 +6,7 @@ defmodule Diffo.Provider.Specification do
   Specification - Ash Resource for a TMF Service or Resource Specification
   """
   require Ash.Resource.Change.Builtins
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
-
-  postgres do
-    table "specifications"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   outstanding do
     expect [:name, :major_version]
@@ -26,7 +21,7 @@ defmodule Diffo.Provider.Specification do
 
     create :create do
       description "creates a major version of a named serviceSpecification or resourceSpecification"
-      accept [:id, :type, :name, :major_version, :description, :category]
+      accept [:id, :type, :name, :major_version, :description, :category, :tmf_version]
       change load [:version, :href, :instance_type]
       upsert? true
       upsert_identity :unique_major_version_per_name
@@ -99,7 +94,7 @@ defmodule Diffo.Provider.Specification do
     attribute :type, :atom do
       description "indicates whether a serviceSpecification or resourceSpecification, defaults serviceSpecification"
       allow_nil? false
-      public? false
+      public? true
       default :serviceSpecification
       constraints one_of: [:serviceSpecification, :resourceSpecification]
     end
@@ -114,7 +109,7 @@ defmodule Diffo.Provider.Specification do
     attribute :major_version, :integer do
       description "the major version, defaults 1"
       allow_nil? false
-      public? false
+      public? true
       default 1
       constraints min: 0
     end
@@ -122,7 +117,7 @@ defmodule Diffo.Provider.Specification do
     attribute :minor_version, :integer do
       description "the minor version, defaults 0"
       allow_nil? false
-      public? false
+      public? true
       default 0
       constraints min: 0
     end
@@ -130,7 +125,7 @@ defmodule Diffo.Provider.Specification do
     attribute :patch_version, :integer do
       description "the patch version, defaults 0"
       allow_nil? false
-      public? false
+      public? true
       default 0
       constraints min: 0
     end
@@ -150,7 +145,7 @@ defmodule Diffo.Provider.Specification do
     attribute :tmf_version, :integer do
       description "the TMF version of the specified service or resource, e.g. v4"
       allow_nil? false
-      public? false
+      public? true
       default 4
       constraints min: 1
     end
@@ -165,14 +160,18 @@ defmodule Diffo.Provider.Specification do
   end
 
   calculations do
-    calculate :version, :string, expr("v" <> major_version <> "." <> minor_version <> "." <> patch_version) do
+    calculate :version, :string, expr(
+      "v" <> type(major_version, :string) <> "." <> type(minor_version, :string) <> "." <> type(patch_version, :string)
+      ) do
       description "the full version string, e.g. v1.0.0"
     end
 
+          #"
+
     calculate :href, :string, expr(
       cond do
-        type == :serviceSpecification -> "serviceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
-        type == :resourceSpecification -> "resourceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
+        type == :serviceSpecification -> "serviceCatalogManagement/v" <> type(tmf_version, :string) <> "/" <> type <> "/" <> id
+        type == :resourceSpecification -> "resourceCatalogManagement/v" <> type(tmf_version, :string) <> "/" <> type <> "/" <> id
       end
       ) do
         description "the href for the service or resource specification"
@@ -193,7 +192,10 @@ defmodule Diffo.Provider.Specification do
   end
 
   identities do
-    identity :unique_major_version_per_name, [:name, :major_version]
+    identity :unique_major_version_per_name, [:name, :major_version] do
+      message "another specification exists with the same name, major version"
+      pre_check_with Diffo.Provider.Specification
+    end
   end
 
   @doc """

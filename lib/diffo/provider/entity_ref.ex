@@ -5,12 +5,7 @@ defmodule Diffo.Provider.EntityRef do
 
   EntityRef - Ash Resource for a TMF EntityRef
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
-
-  postgres do
-    table "entity_refs"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   outstanding do
     expect [:entity_id, :href, :name, :role, :referredType, :type]
@@ -82,6 +77,7 @@ defmodule Diffo.Provider.EntityRef do
   identities do
     identity :instance_entity_uniqueness, [:instance_id, :entity_id] do
       message "another entity ref exists"
+      pre_check_with Diffo.Provider
     end
   end
 

@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.NoteTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider read Notes" do
     test "list notes - success" do

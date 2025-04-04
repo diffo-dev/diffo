@@ -1,4 +1,5 @@
 defmodule Diffo.Provider.Outstanding do
+  use Outstand
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
   Copyright Matt Beanland beanland@live.com.au
@@ -30,5 +31,9 @@ defmodule Diffo.Provider.Outstanding do
         outstanding |> Map.put(:parties, Keyword.values(outstanding_keywords))
       end
     end
+  end
+
+  defoutstanding expected :: Ash.Union, actual :: Any do
+    Outstanding.outstanding(Map.fetch(expected, :value), actual)
   end
 end

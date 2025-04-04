@@ -5,12 +5,7 @@ defmodule Diffo.Provider.Characteristic do
 
   Characteristic - Ash Resource for a TMF Characteristic
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
-
-  postgres do
-    table "characteristics"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   jason do
     pick [:name, :value]
@@ -89,14 +84,17 @@ defmodule Diffo.Provider.Characteristic do
   identities do
     identity :feature_characteristic_uniqueness, [:feature_id, :name] do
       message "another feature characteristic exists with same name"
+      pre_check_with Diffo.Provider
     end
 
     identity :instance_characteristic_uniqueness, [:instance_id, :name] do
       message "another instance characteristic exists with same name"
+      pre_check_with Diffo.Provider
     end
 
     identity :relationship_characteristic_uniqueness, [:relationship_id, :type, :name] do
       message "another relationship characteristic exists with same name and direction"
+      pre_check_with Diffo.Provider
     end
   end
 

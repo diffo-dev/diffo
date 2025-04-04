@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.SpecificationTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider read Specifications!" do
    test "find specifications by category" do

@@ -5,12 +5,7 @@ defmodule Diffo.Provider.PlaceRef do
 
   PlaceRef - Ash Resource for a TMF PlaceRef
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
-
-  postgres do
-    table "place_refs"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   outstanding do
     expect [:id, :name, :role, :referredType, :type]
@@ -81,7 +76,8 @@ defmodule Diffo.Provider.PlaceRef do
 
   identities do
     identity :instance_place_uniqueness, [:instance_id, :place_id] do
-      message "another place ref exists relating the same instance and place"
+     message "another place ref exists relating the same instance and place"
+     pre_check_with Diffo.Provider
     end
   end
 

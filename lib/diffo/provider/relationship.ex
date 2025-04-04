@@ -5,12 +5,7 @@ defmodule Diffo.Provider.Relationship do
 
   Relationship - Ash Resource for a TMF Service or Resource Relationship
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
-
-  postgres do
-    table "relationships"
-    repo Diffo.Repo
-  end
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: Ash.DataLayer.Ets, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   outstanding do
     expect [:type, :target_type, :target_id, :target_href, :characteristic]
@@ -136,7 +131,10 @@ defmodule Diffo.Provider.Relationship do
   end
 
   identities do
-    identity :unique_source_and_target, [:source_id, :target_id]
+    identity :unique_source_and_target, [:source_id, :target_id] do
+      message "another relationship exists between the same source and target"
+      pre_check_with Diffo.Provider
+    end
   end
 
   preparations do

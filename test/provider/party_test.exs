@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.PartyTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider read Parties" do
     test "list parties - success" do

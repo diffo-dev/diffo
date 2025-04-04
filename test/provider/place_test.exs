@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.PlaceTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider read Places" do
     test "list places - success" do
