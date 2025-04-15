@@ -2,7 +2,7 @@
   "attributes": [
     {
       "allow_nil?": false,
-      "default": "nil",
+      "default": "fragment(\"gen_random_uuid()\")",
       "generated?": false,
       "primary_key?": true,
       "references": null,
@@ -12,36 +12,6 @@
     },
     {
       "allow_nil?": false,
-      "default": "\"actual\"",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "which",
-      "type": "text"
-    },
-    {
-      "allow_nil?": true,
-      "default": "false",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "expected_id_from_twin",
-      "type": "boolean"
-    },
-    {
-      "allow_nil?": false,
-      "default": "\"service\"",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "type",
-      "type": "text"
-    },
-    {
-      "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
@@ -52,12 +22,22 @@
     },
     {
       "allow_nil?": true,
-      "default": "\"unknown\"",
+      "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "service_operating_status",
+      "source": "value",
+      "type": "binary"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "type",
       "type": "text"
     },
     {
@@ -85,20 +65,29 @@
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
-      "references": null,
+      "references": {
+        "deferrable": false,
+        "destination_attribute": "id",
+        "destination_attribute_default": null,
+        "destination_attribute_generated": null,
+        "index?": false,
+        "match_type": null,
+        "match_with": null,
+        "multitenancy": {
+          "attribute": null,
+          "global": null,
+          "strategy": null
+        },
+        "name": "characteristics_feature_id_fkey",
+        "on_delete": null,
+        "on_update": null,
+        "primary_key?": true,
+        "schema": "public",
+        "table": "features"
+      },
       "size": null,
-      "source": "started_at",
-      "type": "utc_datetime_usec"
-    },
-    {
-      "allow_nil?": true,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "stopped_at",
-      "type": "utc_datetime_usec"
+      "source": "feature_id",
+      "type": "uuid"
     },
     {
       "allow_nil?": true,
@@ -118,7 +107,7 @@
           "global": null,
           "strategy": null
         },
-        "name": "instances_twin_id_fkey",
+        "name": "characteristics_instance_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
@@ -126,11 +115,11 @@
         "table": "instances"
       },
       "size": null,
-      "source": "twin_id",
+      "source": "instance_id",
       "type": "uuid"
     },
     {
-      "allow_nil?": false,
+      "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
@@ -147,26 +136,16 @@
           "global": null,
           "strategy": null
         },
-        "name": "instances_specification_id_fkey",
+        "name": "characteristics_relationship_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
         "schema": "public",
-        "table": "specifications"
+        "table": "relationships"
       },
       "size": null,
-      "source": "specification_id",
+      "source": "relationship_id",
       "type": "uuid"
-    },
-    {
-      "allow_nil?": false,
-      "default": "\"initial\"",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "service_state",
-      "type": "text"
     }
   ],
   "base_filter": null,
@@ -174,8 +153,67 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "B9FF060833A97685A830E38ABE9A17F041A0039317C55AB517389F75917063DC",
-  "identities": [],
+  "hash": "0E989E0F6854038CCF73F74D0A7926E022A72C06727F224820F4F08C0E3D34E8",
+  "identities": [
+    {
+      "all_tenants?": false,
+      "base_filter": null,
+      "index_name": "characteristics_feature_characteristic_uniqueness_index",
+      "keys": [
+        {
+          "type": "atom",
+          "value": "feature_id"
+        },
+        {
+          "type": "atom",
+          "value": "name"
+        }
+      ],
+      "name": "feature_characteristic_uniqueness",
+      "nils_distinct?": true,
+      "where": null
+    },
+    {
+      "all_tenants?": false,
+      "base_filter": null,
+      "index_name": "characteristics_instance_characteristic_uniqueness_index",
+      "keys": [
+        {
+          "type": "atom",
+          "value": "instance_id"
+        },
+        {
+          "type": "atom",
+          "value": "name"
+        }
+      ],
+      "name": "instance_characteristic_uniqueness",
+      "nils_distinct?": true,
+      "where": null
+    },
+    {
+      "all_tenants?": false,
+      "base_filter": null,
+      "index_name": "characteristics_relationship_characteristic_uniqueness_index",
+      "keys": [
+        {
+          "type": "atom",
+          "value": "relationship_id"
+        },
+        {
+          "type": "atom",
+          "value": "type"
+        },
+        {
+          "type": "atom",
+          "value": "name"
+        }
+      ],
+      "name": "relationship_characteristic_uniqueness",
+      "nils_distinct?": true,
+      "where": null
+    }
+  ],
   "multitenancy": {
     "attribute": null,
     "global": null,
@@ -183,5 +221,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "instances"
+  "table": "characteristics"
 }

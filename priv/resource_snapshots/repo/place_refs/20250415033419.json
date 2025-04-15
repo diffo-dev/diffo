@@ -11,33 +11,33 @@
       "type": "uuid"
     },
     {
-      "allow_nil?": false,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "text",
-      "type": "text"
-    },
-    {
       "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "note_id",
+      "source": "role",
       "type": "text"
     },
     {
       "allow_nil?": false,
-      "default": "nil",
+      "default": "fragment(\"(now() AT TIME ZONE 'utc')\")",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "timestamp",
+      "source": "inserted_at",
+      "type": "utc_datetime_usec"
+    },
+    {
+      "allow_nil?": false,
+      "default": "fragment(\"(now() AT TIME ZONE 'utc')\")",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "updated_at",
       "type": "utc_datetime_usec"
     },
     {
@@ -58,7 +58,7 @@
           "global": null,
           "strategy": null
         },
-        "name": "notes_instance_id_fkey",
+        "name": "place_refs_instance_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
@@ -70,7 +70,7 @@
       "type": "uuid"
     },
     {
-      "allow_nil?": true,
+      "allow_nil?": false,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
@@ -87,15 +87,15 @@
           "global": null,
           "strategy": null
         },
-        "name": "notes_author_id_fkey",
+        "name": "place_refs_place_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
         "schema": "public",
-        "table": "parties"
+        "table": "places"
       },
       "size": null,
-      "source": "author_id",
+      "source": "place_id",
       "type": "text"
     }
   ],
@@ -104,12 +104,12 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "FE13C87A4D07F1D00275F880B611AA613F4AFFBC287A8D97120321537E0E6965",
+  "hash": "DB0EF442F581C38B29B27767B7C6C96D8F17FF29773E8E689EF14E263ED7144E",
   "identities": [
     {
       "all_tenants?": false,
       "base_filter": null,
-      "index_name": "notes_instance_note_id_uniqueness_index",
+      "index_name": "place_refs_instance_place_uniqueness_index",
       "keys": [
         {
           "type": "atom",
@@ -117,33 +117,11 @@
         },
         {
           "type": "atom",
-          "value": "note_id"
+          "value": "place_id"
         }
       ],
-      "name": "instance_note_id_uniqueness",
+      "name": "instance_place_uniqueness",
       "nils_distinct?": true,
-      "where": null
-    },
-    {
-      "all_tenants?": false,
-      "base_filter": null,
-      "index_name": "notes_instance_text_uniqueness_index",
-      "keys": [
-        {
-          "type": "atom",
-          "value": "instance_id"
-        },
-        {
-          "type": "atom",
-          "value": "note_id"
-        },
-        {
-          "type": "atom",
-          "value": "text"
-        }
-      ],
-      "name": "instance_text_uniqueness",
-      "nils_distinct?": false,
       "where": null
     }
   ],
@@ -154,5 +132,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "notes"
+  "table": "place_refs"
 }

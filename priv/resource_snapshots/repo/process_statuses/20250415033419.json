@@ -11,13 +11,33 @@
       "type": "uuid"
     },
     {
-      "allow_nil?": true,
+      "allow_nil?": false,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "type",
+      "source": "code",
+      "type": "text"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "severity",
+      "type": "text"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "message",
       "type": "text"
     },
     {
@@ -27,27 +47,17 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "external_id",
-      "type": "text"
+      "source": "parameterized_message",
+      "type": "binary"
     },
     {
       "allow_nil?": false,
-      "default": "fragment(\"(now() AT TIME ZONE 'utc')\")",
+      "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "inserted_at",
-      "type": "utc_datetime_usec"
-    },
-    {
-      "allow_nil?": false,
-      "default": "fragment(\"(now() AT TIME ZONE 'utc')\")",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "updated_at",
+      "source": "timestamp",
       "type": "utc_datetime_usec"
     },
     {
@@ -68,7 +78,7 @@
           "global": null,
           "strategy": null
         },
-        "name": "externalIdentifiers_instance_id_fkey",
+        "name": "process_statuses_instance_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
@@ -78,35 +88,6 @@
       "size": null,
       "source": "instance_id",
       "type": "uuid"
-    },
-    {
-      "allow_nil?": true,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": {
-        "deferrable": false,
-        "destination_attribute": "id",
-        "destination_attribute_default": null,
-        "destination_attribute_generated": null,
-        "index?": false,
-        "match_type": null,
-        "match_with": null,
-        "multitenancy": {
-          "attribute": null,
-          "global": null,
-          "strategy": null
-        },
-        "name": "externalIdentifiers_owner_id_fkey",
-        "on_delete": null,
-        "on_update": null,
-        "primary_key?": true,
-        "schema": "public",
-        "table": "parties"
-      },
-      "size": null,
-      "source": "owner_id",
-      "type": "text"
     }
   ],
   "base_filter": null,
@@ -114,27 +95,8 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "A177855A14788B6D0247E9C098234AEB83ACC26AE04074F2E55A7B1273FB3E23",
-  "identities": [
-    {
-      "all_tenants?": false,
-      "base_filter": null,
-      "index_name": "externalIdentifiers_instance_type_uniqueness_index",
-      "keys": [
-        {
-          "type": "atom",
-          "value": "instance_id"
-        },
-        {
-          "type": "atom",
-          "value": "type"
-        }
-      ],
-      "name": "instance_type_uniqueness",
-      "nils_distinct?": true,
-      "where": null
-    }
-  ],
+  "hash": "1F19285C7CFD982A000F08436557C62A56E71D04BE3E8B1279B4A96BC8DAA8C1",
+  "identities": [],
   "multitenancy": {
     "attribute": null,
     "global": null,
@@ -142,5 +104,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "externalIdentifiers"
+  "table": "process_statuses"
 }

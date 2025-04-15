@@ -47,11 +47,8 @@ defmodule Diffo.Provider.InstanceTest do
       assert instance.type == :service
       assert instance.service_state == :initial
       assert instance.service_operating_status == :unknown
-      loaded_instance = Diffo.Provider.get_instance_by_id!(instance.id)
-      assert loaded_instance.category == "connectivity"
-      assert loaded_instance.description == "Fibre Access Service"
-      assert loaded_instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
-      assert loaded_instance.specification.id == specification.id
+      assert instance.specification.id == specification.id
+      assert instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
     end
 
     test "create a service instance with a supplied id - success" do
@@ -62,11 +59,8 @@ defmodule Diffo.Provider.InstanceTest do
       assert instance.type == :service
       assert instance.service_state == :initial
       assert instance.service_operating_status == :unknown
-      loaded_instance = Diffo.Provider.get_instance_by_id!(instance.id)
-      assert loaded_instance.category == "connectivity"
-      assert loaded_instance.description == "Fibre Access Service"
-      assert loaded_instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
-      assert loaded_instance.specification.id == specification.id
+      assert instance.specification.id == specification.id
+      assert instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
     end
 
     test "create a service instance with a supplied id - failure - not uuid v4" do

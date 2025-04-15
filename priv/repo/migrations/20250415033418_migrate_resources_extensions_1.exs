@@ -1,4 +1,4 @@
-defmodule Diffo.Repo.Migrations.RegenerateExtensions1 do
+defmodule Diffo.Repo.Migrations.MigrateResourcesExtensions1 do
   @moduledoc """
   Installs any extensions that are mentioned in the repo's `installed_extensions/0` callback
 

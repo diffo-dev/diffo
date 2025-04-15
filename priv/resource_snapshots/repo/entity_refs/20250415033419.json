@@ -58,7 +58,7 @@
           "global": null,
           "strategy": null
         },
-        "name": "place_refs_instance_id_fkey",
+        "name": "entity_refs_instance_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
@@ -87,15 +87,15 @@
           "global": null,
           "strategy": null
         },
-        "name": "place_refs_place_id_fkey",
+        "name": "entity_refs_entity_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
         "schema": "public",
-        "table": "places"
+        "table": "entities"
       },
       "size": null,
-      "source": "place_id",
+      "source": "entity_id",
       "type": "text"
     }
   ],
@@ -104,12 +104,12 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "2069BC54BEA3385855F9424D3C93A6AABE462FC23C23E2EE0DCDCAE128273C0B",
+  "hash": "EC2D5B18534DA4CE22B5E88B078AD317B15F5947050F1359F7390D577E44AB1D",
   "identities": [
     {
       "all_tenants?": false,
       "base_filter": null,
-      "index_name": "place_refs_instance_place_uniqueness_index",
+      "index_name": "entity_refs_instance_entity_uniqueness_index",
       "keys": [
         {
           "type": "atom",
@@ -117,10 +117,10 @@
         },
         {
           "type": "atom",
-          "value": "place_id"
+          "value": "entity_id"
         }
       ],
-      "name": "instance_place_uniqueness",
+      "name": "instance_entity_uniqueness",
       "nils_distinct?": true,
       "where": null
     }
@@ -132,5 +132,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "place_refs"
+  "table": "entity_refs"
 }
