@@ -17,7 +17,17 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "role",
+      "source": "alias",
+      "type": "text"
+    },
+    {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "type",
       "type": "text"
     },
     {
@@ -58,7 +68,7 @@
           "global": null,
           "strategy": null
         },
-        "name": "entity_refs_instance_id_fkey",
+        "name": "relationships_source_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
@@ -66,7 +76,7 @@
         "table": "instances"
       },
       "size": null,
-      "source": "instance_id",
+      "source": "source_id",
       "type": "uuid"
     },
     {
@@ -87,16 +97,16 @@
           "global": null,
           "strategy": null
         },
-        "name": "entity_refs_entity_id_fkey",
+        "name": "relationships_target_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
         "schema": "public",
-        "table": "entities"
+        "table": "instances"
       },
       "size": null,
-      "source": "entity_id",
-      "type": "text"
+      "source": "target_id",
+      "type": "uuid"
     }
   ],
   "base_filter": null,
@@ -104,23 +114,23 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "40BCC2C82EA1E0306FE34DB10F8C7CCE925971CAED181E1921576A8ED3D64B88",
+  "hash": "F88970E69779052C7CA07FD2B3B76BD8590BDFF3753EC23D1F3E08D66DC5E70F",
   "identities": [
     {
       "all_tenants?": false,
       "base_filter": null,
-      "index_name": "entity_refs_instance_entity_uniqueness_index",
+      "index_name": "relationships_unique_source_and_target_index",
       "keys": [
         {
           "type": "atom",
-          "value": "instance_id"
+          "value": "source_id"
         },
         {
           "type": "atom",
-          "value": "entity_id"
+          "value": "target_id"
         }
       ],
-      "name": "instance_entity_uniqueness",
+      "name": "unique_source_and_target",
       "nils_distinct?": true,
       "where": null
     }
@@ -132,5 +142,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "entity_refs"
+  "table": "relationships"
 }

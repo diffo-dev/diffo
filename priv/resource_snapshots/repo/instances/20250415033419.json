@@ -2,7 +2,7 @@
   "attributes": [
     {
       "allow_nil?": false,
-      "default": "fragment(\"gen_random_uuid()\")",
+      "default": "nil",
       "generated?": false,
       "primary_key?": true,
       "references": null,
@@ -11,13 +11,33 @@
       "type": "uuid"
     },
     {
-      "allow_nil?": true,
-      "default": "nil",
+      "allow_nil?": false,
+      "default": "\"actual\"",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "alias",
+      "source": "which",
+      "type": "text"
+    },
+    {
+      "allow_nil?": true,
+      "default": "false",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "expected_id_from_twin",
+      "type": "boolean"
+    },
+    {
+      "allow_nil?": false,
+      "default": "\"service\"",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "type",
       "type": "text"
     },
     {
@@ -27,7 +47,17 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "type",
+      "source": "name",
+      "type": "text"
+    },
+    {
+      "allow_nil?": true,
+      "default": "\"unknown\"",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "service_operating_status",
       "type": "text"
     },
     {
@@ -51,7 +81,27 @@
       "type": "utc_datetime_usec"
     },
     {
-      "allow_nil?": false,
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "started_at",
+      "type": "utc_datetime_usec"
+    },
+    {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "stopped_at",
+      "type": "utc_datetime_usec"
+    },
+    {
+      "allow_nil?": true,
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
@@ -68,7 +118,7 @@
           "global": null,
           "strategy": null
         },
-        "name": "relationships_source_id_fkey",
+        "name": "instances_twin_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
@@ -76,7 +126,7 @@
         "table": "instances"
       },
       "size": null,
-      "source": "source_id",
+      "source": "twin_id",
       "type": "uuid"
     },
     {
@@ -97,16 +147,26 @@
           "global": null,
           "strategy": null
         },
-        "name": "relationships_target_id_fkey",
+        "name": "instances_specification_id_fkey",
         "on_delete": null,
         "on_update": null,
         "primary_key?": true,
         "schema": "public",
-        "table": "instances"
+        "table": "specifications"
       },
       "size": null,
-      "source": "target_id",
+      "source": "specification_id",
       "type": "uuid"
+    },
+    {
+      "allow_nil?": false,
+      "default": "\"initial\"",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "service_state",
+      "type": "text"
     }
   ],
   "base_filter": null,
@@ -114,27 +174,8 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "7B30F2F30A89E6453814AFEE9BE1149398A48619C1204847EA9C9ABBFC9F1047",
-  "identities": [
-    {
-      "all_tenants?": false,
-      "base_filter": null,
-      "index_name": "relationships_unique_source_and_target_index",
-      "keys": [
-        {
-          "type": "atom",
-          "value": "source_id"
-        },
-        {
-          "type": "atom",
-          "value": "target_id"
-        }
-      ],
-      "name": "unique_source_and_target",
-      "nils_distinct?": true,
-      "where": null
-    }
-  ],
+  "hash": "0CCECAFA4E663627D522CFEE3180BD997A86607E869D19850BBA1CCF236F2E29",
+  "identities": [],
   "multitenancy": {
     "attribute": null,
     "global": null,
@@ -142,5 +183,5 @@
   },
   "repo": "Elixir.Diffo.Repo",
   "schema": null,
-  "table": "relationships"
+  "table": "instances"
 }

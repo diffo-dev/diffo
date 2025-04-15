@@ -1,4 +1,4 @@
-defmodule Diffo.Repo.Migrations.Regenerate do
+defmodule Diffo.Repo.Migrations.MigrateResources1 do
   @moduledoc """
   Updates resources based on their most recent snapshots.
 
@@ -290,10 +290,10 @@ defmodule Diffo.Repo.Migrations.Regenerate do
       add(:stopped_at, :utc_datetime_usec)
 
       add(
-        :actual_id,
+        :twin_id,
         references(:instances,
           column: :id,
-          name: "instances_actual_id_fkey",
+          name: "instances_twin_id_fkey",
           type: :uuid,
           prefix: "public"
         )
@@ -586,14 +586,14 @@ defmodule Diffo.Repo.Migrations.Regenerate do
 
     drop(table(:features))
 
-    drop(constraint(:instances, "instances_actual_id_fkey"))
+    drop(constraint(:instances, "instances_twin_id_fkey"))
 
     drop(constraint(:instances, "instances_specification_id_fkey"))
 
     alter table(:instances) do
       remove(:service_state)
       remove(:specification_id)
-      remove(:actual_id)
+      remove(:twin_id)
       remove(:stopped_at)
       remove(:started_at)
       remove(:updated_at)
