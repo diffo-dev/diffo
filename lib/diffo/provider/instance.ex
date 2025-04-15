@@ -48,15 +48,17 @@ defmodule Diffo.Provider.Instance do
   end
 
   jason do
-    pick [:id, :href, :category, :description, :name, :external_identifiers, :process_statuses, :specification, :forward_relationships, :features, :characteristics, :entities, :places, :parties, :type]
+    pick [:id, :href, :name, :external_identifiers, :process_statuses, :specification, :forward_relationships, :features, :characteristics, :entities, :places, :parties, :type]
     customize fn result, record ->
       result
       #|> IO.inspect(label: "start instance jason customize")
+      |> Diffo.Util.add(:category, record.specification.category)
+      |> Diffo.Util.add(:description, record.specification.description)
       |> Diffo.Util.suppress_rename(:external_identifiers, :externalIdentifier)
       |> Diffo.Provider.Instance.dates(record)
       |> Diffo.Provider.Instance.states(record)
       |> Diffo.Provider.Instance.relationships()
-      |> Diffo.Util.rename(:specification, record.specification_type)
+      |> Diffo.Util.rename(:specification, record.specification.type)
       |> Diffo.Util.suppress_rename(:process_statuses, :processStatus)
       |> Diffo.Util.suppress_rename(:features, Diffo.Provider.Instance.derive_feature_list_name(record.type))
       |> Diffo.Util.suppress_rename(:characteristics, Diffo.Provider.Instance.derive_characteristic_list_name(record.type))
@@ -88,7 +90,9 @@ defmodule Diffo.Provider.Instance do
     create :create do
       description "creates a new instance of a service or resource according by specification id"
       accept [:id, :specification_id, :name, :type, :which]
-      change load [:href, :category, :description, :external_identifiers, :specification_name, :specification_type, :tmf_version]
+      transaction? true
+      manage_relationship(:specification, type: :append_and_remove)
+      #change load [:href, :category, :description, :external_identifiers, :specification_name, :specification_type, :tmf_version])
     end
 
     read :list do
@@ -277,6 +281,7 @@ defmodule Diffo.Provider.Instance do
       description "the specification which specifies this instance"
       allow_nil? false
       public? true
+      attribute_writable? true
     end
 
     has_many :process_statuses, Diffo.Provider.ProcessStatus do
@@ -327,33 +332,15 @@ defmodule Diffo.Provider.Instance do
   end
 
   calculations do
-    calculate :category, :string, expr(specification.category) do
-      description "indicates the category of the instance"
-    end
-
-    calculate :description, :string, expr(specification.description) do
-      description "describes the service or resource specification"
-    end
-
-    calculate :tmf_version, :string, expr(specification.tmf_version) do
-      description "indicates the TMF version of the service or resource"
-    end
-
-    calculate :specification_name, :string, expr(specification.name) do
-      description "name of the related service or resource specification"
-    end
-
-    calculate :specification_type, :atom, expr(specification.type) do
-      description "type of the related service or resource specification"
-    end
-
-    calculate :href, :string, expr(type <> "InventoryManagement/v" <> tmf_version <> "/" <> type <> "/" <> specification_name <> "/" <> id) do
+    calculate :href, :string, expr(type <> "InventoryManagement/v" <> type(specification.tmf_version, :string) <> "/" <> type <> "/" <> specification.name <> "/" <> id) do
       description "the inventory href of the service or resource instance"
     end
   end
 
   preparations do
-    prepare build(load: [:twin, :category, :description, :external_identifiers, :specification_type, :specification_name, :tmf_version, :href, :specification, :process_statuses, :forward_relationships, :features, :characteristics, :entities, :places, :parties], sort: [href: :asc])
+    prepare build(load: [:href])
+    #prepare build(load: [:specification, :href], sort: [href: :asc])
+    #prepare build(load: [:twin, :category, :description, :external_identifiers, :specification_type, :specification_name, :tmf_version, :href, :specification, :process_statuses, :forward_relationships, :features, :characteristics, :entities, :places, :parties], sort: [href: :asc])
   end
 
   @doc """
