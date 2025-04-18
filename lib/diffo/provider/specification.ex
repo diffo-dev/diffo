@@ -15,10 +15,27 @@ defmodule Diffo.Provider.Specification do
 
   outstanding do
     expect [:name, :major_version]
+    #pair expected_id: :id, expected_name: :name, expected_version: :version
+    #tag which: :outstanding
   end
 
   jason do
     pick [:id, :href, :name, :version]
+    customize fn result, record ->
+      case record.which do
+        :expected ->
+          result
+          |> Diffo.Util.set(:id, record.expected_id)
+          |> Diffo.Util.set(:name, record.expected_name)
+          |> Diffo.Util.set(:version, record.expected.version)
+          |> Diffo.Util.set("@which", :expected)
+        :actual ->
+          result
+        :outstanding ->
+          result
+          |> Diffo.Util.set("@which", :outstanding)
+      end
+    end
   end
 
   actions do
@@ -26,7 +43,7 @@ defmodule Diffo.Provider.Specification do
 
     create :create do
       description "creates a major version of a named serviceSpecification or resourceSpecification"
-      accept [:id, :type, :name, :major_version, :description, :category]
+      accept [:id, :type, :name, :major_version, :description, :category, :which]
       change load [:version, :href, :instance_type]
       upsert? true
       upsert_identity :unique_major_version_per_name
@@ -84,6 +101,12 @@ defmodule Diffo.Provider.Specification do
     update :next_patch do
       description "increments the patch version"
       change atomic_update :patch_version, expr(patch_version + 1)
+    end
+
+    update :expect do
+      description "updates expectations"
+      accept [:expected_id, :expected_name, :expected_version]
+      validate attribute_equals(:which, :expected)
     end
   end
 
@@ -155,6 +178,32 @@ defmodule Diffo.Provider.Specification do
       constraints min: 1
     end
 
+    attribute :which, :atom do
+      description "indicates which specification"
+      allow_nil? false
+      public? false
+      default :actual
+      constraints one_of: [:expected, :actual, :outstanding]
+    end
+
+    attribute :expected_id, :term do
+      description "the expected id of the specification, if any"
+      allow_nil? true
+      public? false
+    end
+
+    attribute :expected_name, :term do
+      description "the expected name of the specification, if any"
+      allow_nil? true
+      public? false
+    end
+
+    attribute :expected_version, :term do
+      description "the expected version of the specification, if any"
+      allow_nil? true
+      public? false
+    end
+
     create_timestamp :inserted_at
 
     update_timestamp :updated_at
@@ -193,7 +242,7 @@ defmodule Diffo.Provider.Specification do
   end
 
   identities do
-    identity :unique_major_version_per_name, [:name, :major_version]
+    identity :unique_major_version_per_name, [:name, :major_version, :which]
   end
 
   @doc """

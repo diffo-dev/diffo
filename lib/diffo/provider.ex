@@ -20,6 +20,7 @@ defmodule Diffo.Provider do
       define :categorise_specification, action: :categorise
       define :next_minor_specification, action: :next_minor
       define :next_patch_specification, action: :next_patch
+      define :expect_specification, action: :expect
       define :delete_specification, action: :destroy
     end
 

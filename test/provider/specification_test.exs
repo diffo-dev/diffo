@@ -40,6 +40,7 @@ defmodule Diffo.Provider.SpecificationTest do
       assert specification.version == "v1.0.0"
       assert specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{specification.id}"
       assert specification.instance_type == :service
+      assert specification.which == :actual
     end
 
     test "create a service specification - success - name and type supplied" do
@@ -100,6 +101,17 @@ defmodule Diffo.Provider.SpecificationTest do
       refreshed_specification = Diffo.Provider.get_specification_by_id!(specification.id)
       assert refreshed_specification.category == "access"
     end
+
+    test "create a expected specification - success" do
+      specification = Diffo.Provider.create_specification!(%{which: :expected, name: "adslAccess"})
+      assert specification.name == "adslAccess"
+      assert specification.major_version == 1
+      assert specification.type == :serviceSpecification
+      assert specification.version == "v1.0.0"
+      assert specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{specification.id}"
+      assert specification.instance_type == :service
+      assert specification.which == :expected
+    end
   end
 
   describe "Diffo.Provider update Specifications" do
@@ -128,6 +140,14 @@ defmodule Diffo.Provider.SpecificationTest do
         |> Diffo.Provider.next_minor_specification!()
         |> Diffo.Provider.next_patch_specification!()
       assert patched_specification.version == "v1.1.1"
+    end
+
+    test "set expecations on a specification - success" do
+      expected_specification = Diffo.Provider.create_specification!(%{which: :expected, name: "access"})
+        |> Diffo.Provider.expect_specification!(%{expected_name: "access", expected_id: &Outstand.any_bitstring/1, expected_version: ~r/v1/})
+      assert expected_specification.expected_name == "access"
+      assert expected_specification.expected_id == &Outstand.any_bitstring/1
+      assert expected_specification.expected_version == ~r/v1/
     end
   end
 
