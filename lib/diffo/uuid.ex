@@ -166,4 +166,18 @@ defmodule Diffo.Uuid do
       end
     end
 
+    @doc """
+    Returns a regex for uuid4.
+    ## Examples
+      iex> Diffo.Uuid.uuid4_regex()
+      ~r/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+      iex> Regex.match?(Diffo.Uuid.uuid4_regex(), "746e465b-3969-460a-980f-af69c9ab248a")
+      true
+      iex> Regex.match?(Diffo.Uuid.uuid4_regex(), "9a4cdc44-ca5a-11ef-9cd2-0242ac120002")
+      false
+    """
+    def uuid4_regex() do
+      ~r/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+    end
+
   end

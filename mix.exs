@@ -44,7 +44,7 @@ defmodule Diffo.MixProject do
       {:ash_state_machine, "~> 0.2.7"},
       {:spark, ">= 2.1.21 and < 3.0.0"},
       {:ash_postgres, "~> 2.0"},
-      {:ash, ">= 3.4.60 and < 4.0.0-0"},
+      {:ash, "~> 3.5"},
       {:igniter, "~> 0.3"},
       {:uuid, "~> 1.1"},
       {:ex_doc, "~> 0.37"},

@@ -186,7 +186,7 @@ defmodule Diffo.Provider.Specification do
       constraints one_of: [:expected, :actual, :outstanding]
     end
 
-    attribute :expected_id, :term do
+    attribute :expected_id, :function do
       description "the expected id of the specification, if any"
       allow_nil? true
       public? false

@@ -144,8 +144,16 @@ defmodule Diffo.Provider.SpecificationTest do
 
     test "set expecations on a specification - success" do
       expected_specification = Diffo.Provider.create_specification!(%{which: :expected, name: "access"})
-        |> Diffo.Provider.expect_specification!(%{expected_name: "access", expected_id: &Outstand.any_bitstring/1, expected_version: ~r/v1/})
+        |> Diffo.Provider.expect_specification!(%{expected_name: "access", expected_id: Diffo.Uuid.uuid4_regex, expected_version: ~r/v1/})
       assert expected_specification.expected_name == "access"
+      assert expected_specification.expected_id == Diffo.Uuid.uuid4_regex
+      assert expected_specification.expected_version == ~r/v1/
+    end
+
+    test "set expecations on a specification - success (bug)" do
+      expected_specification = Diffo.Provider.create_specification!(%{which: :expected, name: "hfcAccess"})
+        |> Diffo.Provider.expect_specification!(%{expected_name: "hfcAccess", expected_id: &Outstand.any_bitstring/1, expected_version: ~r/v1/})
+      assert expected_specification.expected_name == "hfcAccess"
       assert expected_specification.expected_id == &Outstand.any_bitstring/1
       assert expected_specification.expected_version == ~r/v1/
     end
