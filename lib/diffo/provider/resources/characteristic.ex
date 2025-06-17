@@ -5,11 +5,11 @@ defmodule Diffo.Provider.Characteristic do
 
   Characteristic - Ash Resource for a TMF Characteristic
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  postgres do
-    table "characteristics"
-    repo Diffo.Repo
+  neo4j do
+    label :Characteristic
+    translate id: :uuid
   end
 
   jason do

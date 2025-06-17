@@ -1,7 +1,16 @@
 defmodule Diffo.Provider.FeatureTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
+
+  setup_all do
+    AshNeo4j.BoltxHelper.start()
+  end
+
+  setup do
+    on_exit(fn ->
+      AshNeo4j.Neo4jHelper.delete_all()
+    end)
+  end
 
   describe "Diffo.Provider read Features" do
     test "list features - success" do

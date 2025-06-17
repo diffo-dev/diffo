@@ -2,7 +2,6 @@
  defmodule Diffo.Provider.ReferenceTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
 
   describe "Diffo.Provider.Reference encode" do
     test "encode json - success" do

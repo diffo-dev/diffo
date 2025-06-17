@@ -5,11 +5,11 @@ defmodule Diffo.Provider.PlaceRef do
 
   PlaceRef - Ash Resource for a TMF PlaceRef
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  postgres do
-    table "place_refs"
-    repo Diffo.Repo
+  neo4j do
+    label :PlaceRef
+    translate id: :uuid
   end
 
   outstanding do

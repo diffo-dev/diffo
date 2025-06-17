@@ -38,17 +38,17 @@ defmodule Diffo.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:outstanding, "~> 0.1"},
-      {:ash_outstanding, "~> 0.1"},
+      {:outstanding, "~> 0.2.2"},
+      {:ash_outstanding, "~> 0.2"},
       {:ash_jason, "~> 2.0"},
       {:ash_state_machine, "~> 0.2.7"},
-      {:spark, ">= 2.1.21 and < 3.0.0"},
-      {:ash_postgres, "~> 2.0"},
+      {:ash_neo4j, "~> 0.2"},
+      {:boltx, "~> 0.0.6"},
       {:ash, ">= 3.4.60 and < 4.0.0-0"},
-      {:igniter, "~> 0.3"},
+      {:spark, "~> 2.2.65"},
       {:uuid, "~> 1.1"},
-      {:ex_doc, "~> 0.37"},
-      {:untangle, "~> 0.3"}
+      {:igniter, "~> 0.5", only: [:dev, :test]},
+      {:ex_doc, "~> 0.37", only: [:dev, :test], runtime: false}
     ]
   end
 

@@ -5,20 +5,15 @@ defmodule Diffo.Repo do
 
   Repo - persistance
   """
-  use AshPostgres.Repo, otp_app: :diffo
 
-  def min_pg_version do
-    %Version{major: 16, minor: 0, patch: 0}
+  use GenServer
+
+  def init(init_arg) do
+    {:ok, init_arg}
   end
 
-  # Don't open unnecessary transactions
-  # will default to `false` in 4.0
-  def prefer_transaction? do
-    false
-  end
-
-  def installed_extensions do
-    # Add extensions here, and the migration generator will install them.
-    ["ash-functions"]
+  def start_link(_stack) do
+    config = Application.get_env(:boltx, Bolt)
+    Boltx.start_link(config)
   end
 end
