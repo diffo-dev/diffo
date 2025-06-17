@@ -6,11 +6,11 @@ defmodule Diffo.Provider.Specification do
   Specification - Ash Resource for a TMF Service or Resource Specification
   """
   require Ash.Resource.Change.Builtins
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  postgres do
-    table "specifications"
-    repo Diffo.Repo
+  neo4j do
+    label :Specification
+    translate id: :uuid
   end
 
   outstanding do
@@ -77,13 +77,13 @@ defmodule Diffo.Provider.Specification do
 
     update :next_minor do
       description "increments the minor version and resets the patch version"
-      change atomic_update :minor_version, expr(minor_version + 1)
-      change set_attribute :patch_version, 0
+      manual Diffo.Provider.IncrementMinorVersion
     end
 
     update :next_patch do
+      transaction? false
       description "increments the patch version"
-      change atomic_update :patch_version, expr(patch_version + 1)
+      manual Diffo.Provider.IncrementPatchVersion
     end
   end
 

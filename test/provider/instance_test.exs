@@ -1,7 +1,16 @@
 defmodule Diffo.Provider.InstanceTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
+
+  setup_all do
+    AshNeo4j.BoltxHelper.start()
+  end
+
+  setup do
+    on_exit(fn ->
+      AshNeo4j.Neo4jHelper.delete_all()
+    end)
+  end
 
   describe "Diffo.Provider read Instances!" do
 
@@ -450,7 +459,7 @@ defmodule Diffo.Provider.InstanceTest do
   describe "Diffo.Provider outstanding Instances" do
     use Outstand
     # expect a service to exist with a given specification
-    specification = Diffo.Provider.create_specification!(%{name: "freePhone"})
+    specification = Diffo.Provider.create_specification!(%{name: "freePhone"}) |> IO.inspect(label: :specification)
     expected_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id, which: :expected})
     actual_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
 

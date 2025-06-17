@@ -5,11 +5,11 @@ defmodule Diffo.Provider.Feature do
 
   Feature - Ash Resource for a TMF Feature
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshJason.Resource]
 
-  postgres do
-    table "features"
-    repo Diffo.Repo
+  neo4j do
+    label :Feature
+    translate id: :uuid
   end
 
   jason do

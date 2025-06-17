@@ -1,7 +1,16 @@
 defmodule Diffo.Provider.SpecificationTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
+
+  setup_all do
+    AshNeo4j.BoltxHelper.start()
+  end
+
+  setup do
+    on_exit(fn ->
+      AshNeo4j.Neo4jHelper.delete_all()
+    end)
+  end
 
   describe "Diffo.Provider read Specifications!" do
    test "find specifications by category" do
@@ -147,9 +156,9 @@ defmodule Diffo.Provider.SpecificationTest do
       version1_1 = version1 |> Diffo.Provider.next_minor_specification!()
       version2 = Diffo.Provider.create_specification!(%{name: "access", major_version: 2})
       accessor = Diffo.Provider.create_specification!(%{name: "accessor", major_version: 1})
-      assert Outstand.outstanding?(version1, accessor)
-      assert Outstand.outstanding?(version2, version1)
-      assert Outstand.outstanding?(version1, version2)
+      assert Outstanding.outstanding?(version1, accessor)
+      assert Outstanding.outstanding?(version2, version1)
+      assert Outstanding.outstanding?(version1, version2)
       assert Outstand.nil_outstanding?(version1, version1)
       assert Outstand.nil_outstanding?(version1_1, version1_1)
       assert Outstand.nil_outstanding?(version2, version2)
@@ -167,7 +176,7 @@ defmodule Diffo.Provider.SpecificationTest do
       # we can separately use regex on version, but by default version is not included in the the Specification outstanding.
       assert Outstand.nil_outstanding?(~r/v[1..2]/, version1_1.version)
       assert Outstand.nil_outstanding?(~r/v[1..2]/, version2.version)
-      assert Outstand.outstanding?(~r/v[1..2]/, "v3.1.0")
+      assert Outstanding.outstanding?(~r/v[1..2]/, "v3.1.0")
     end
   end
 

@@ -1,8 +1,17 @@
 defmodule Diffo.Provider.PartyRefTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
   use Outstand
+
+  setup_all do
+    AshNeo4j.BoltxHelper.start()
+  end
+
+  setup do
+    on_exit(fn ->
+      AshNeo4j.Neo4jHelper.delete_all()
+    end)
+  end
 
   describe "Diffo.Provider read PartyRefs" do
     test "list party refs - success" do

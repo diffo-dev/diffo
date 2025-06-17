@@ -5,11 +5,11 @@ defmodule Diffo.Provider.PartyRef do
 
   PartyRef - Ash Resource for a TMF PartyRef
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  postgres do
-    table "party_refs"
-    repo Diffo.Repo
+  neo4j do
+    label :PartyRef
+    translate id: :uuid
   end
 
   outstanding do

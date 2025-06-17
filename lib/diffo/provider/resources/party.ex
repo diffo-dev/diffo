@@ -1,15 +1,15 @@
-defmodule Diffo.Provider.Place do
+defmodule Diffo.Provider.Party do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
   Copyright Matt Beanland beanland@live.com.au
 
-  Place - Ash Resource for a TMF Place
+  Party - Ash Resource for a TMF Party
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshJason.Resource]
 
-  postgres do
-    table "places"
-    repo Diffo.Repo
+  neo4j do
+    label :Party
+    translate id: :uuid
   end
 
   jason do
@@ -21,64 +21,64 @@ defmodule Diffo.Provider.Place do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a place"
-      accept [:id, :href, :name, :type, :referredType ]
+      description "creates a party"
+      accept [:id, :href, :name, :type, :referredType]
       upsert? true
     end
 
     read :find_by_name do
-      description "finds place by name"
+      description "finds party by name"
       get? false
       argument :query, :ci_string do
-        description "Return only places with names including the given value."
+        description "Return only parties with names including the given value."
       end
       filter expr(contains(name, ^arg(:query)))
     end
 
     read :list do
-      description "lists all places"
+      description "lists all parties"
     end
 
     update :update do
-      description "updates the place"
+      description "updates the party"
       accept [:href, :name, :type, :referredType]
     end
   end
 
   attributes do
     attribute :id, :string do
-      description "the unique id of the place"
+      description "the unique id of the party"
       primary_key? true
       allow_nil? false
       public? true
     end
 
     attribute :href, :string do
-      description "the href of the place"
+      description "the href of the party"
       allow_nil? true
       public? true
     end
 
     attribute :name, :string do
-      description "the name of the place"
+      description "the name of the party"
       allow_nil? true
       public? true
       constraints match: ~r/^[a-zA-Z0-9\s._-]+$/
     end
 
     attribute :type, :atom do
-      description "the type of the place"
+      description "the type of the party"
       allow_nil? false
       public? true
-      default :PlaceRef
-      constraints one_of: [:PlaceRef, :GeographicSite, :GeographicLocation, :GeographicAddress]
+      default :PartyRef
+      constraints one_of: [:PartyRef, :Individual, :Organization, :Entity]
     end
 
     attribute :referredType, :atom do
-      description "the type of the place"
+      description "the type of the party"
       allow_nil? true
       public? true
-      constraints one_of: [:GeographicSite, :GeographicLocation, :GeographicAddress]
+      constraints one_of: [:Individual, :Organization, :Entity]
     end
 
     create_timestamp :inserted_at
@@ -91,20 +91,25 @@ defmodule Diffo.Provider.Place do
       where [present(:id), present(:href)]
     end
 
-    validate attribute_equals(:type, :PlaceRef) do
+    validate attribute_equals(:type, :PartyRef) do
       where present(:referredType)
-      message "when referredType is present, type must be PlaceRef"
+      message "when referredType is present, type must be PartyRef"
     end
 
-    validate attribute_does_not_equal(:type, :PlaceRef) do
+    validate attribute_does_not_equal(:type, :PartyRef) do
       where absent(:referredType)
-      message "when referredType is absent, type must be not be PlaceRef"
+      message "when referredType is absent, type must be not be PartyRef"
     end
   end
 
   relationships do
-    has_many :place_refs, Diffo.Provider.PlaceRef do
-      destination_attribute :place_id
+    has_many :party_refs, Diffo.Provider.PartyRef do
+      destination_attribute :party_id
+      public? true
+    end
+
+    has_many :external_identifiers, Diffo.Provider.ExternalIdentifier do
+      destination_attribute :owner_id
       public? true
     end
   end
@@ -114,13 +119,13 @@ defmodule Diffo.Provider.Place do
   end
 
   @doc """
-  Compares two place, by ascending id
+  Compares two party, by ascending id
   ## Examples
-    iex> Diffo.Provider.Place.compare(%{id: "a"}, %{id: "a"})
+    iex> Diffo.Provider.Party.compare(%{id: "a"}, %{id: "a"})
     :eq
-    iex> Diffo.Provider.Place.compare(%{id: "b"}, %{id: "a"})
+    iex> Diffo.Provider.Party.compare(%{id: "b"}, %{id: "a"})
     :gt
-    iex> Diffo.Provider.Place.compare(%{id: "a"}, %{id: "b"})
+    iex> Diffo.Provider.Party.compare(%{id: "a"}, %{id: "b"})
     :lt
 
   """

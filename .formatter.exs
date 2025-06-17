@@ -2,5 +2,5 @@
 [
   plugins: [Spark.Formatter],
   inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"],
-  import_deps: [:ash_postgres, :ash]
+  import_deps: [:ash]
 ]

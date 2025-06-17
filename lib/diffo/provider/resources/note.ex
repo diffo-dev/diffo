@@ -5,11 +5,11 @@ defmodule Diffo.Provider.Note do
 
   Note - Ash Resource for a TMF Note
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  postgres do
-    table "notes"
-    repo Diffo.Repo
+  neo4j do
+    label :Note
+    translate id: :uuid
   end
 
   outstanding do

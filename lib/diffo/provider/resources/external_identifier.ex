@@ -5,11 +5,11 @@ defmodule Diffo.Provider.ExternalIdentifier do
 
   ExternalIdentifier - Ash Resource for a TMF ExternalIdentifier
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshPostgres.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  postgres do
-    table "externalIdentifiers"
-    repo Diffo.Repo
+  neo4j do
+    label :ExternalIdentifier
+    translate id: :uuid
   end
 
   outstanding do
