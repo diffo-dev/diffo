@@ -13,7 +13,7 @@ defmodule Diffo.Provider.SpecificationTest do
   end
 
   describe "Diffo.Provider read Specifications!" do
-   test "find specifications by category" do
+    test "find specifications by category" do
       Diffo.Provider.create_specification!(%{name: "compute", category: "cloud"})
       Diffo.Provider.create_specification!(%{name: "storage", category: "cloud"})
       Diffo.Provider.create_specification!(%{name: "intelligence", category: "cloud"})
@@ -47,22 +47,32 @@ defmodule Diffo.Provider.SpecificationTest do
       assert specification.major_version == 1
       assert specification.type == :serviceSpecification
       assert specification.version == "v1.0.0"
-      assert specification.href == "serviceCatalogManagement/v4/serviceSpecification/#{specification.id}"
+
+      assert specification.href ==
+               "serviceCatalogManagement/v4/serviceSpecification/#{specification.id}"
+
       assert specification.instance_type == :service
     end
 
     test "create a service specification - success - name and type supplied" do
-      specification = Diffo.Provider.create_specification!(%{name: "broadband", type: :serviceSpecification})
+      specification =
+        Diffo.Provider.create_specification!(%{name: "broadband", type: :serviceSpecification})
+
       assert specification.name == "broadband"
       assert specification.type == :serviceSpecification
     end
 
     test "create a resource specification - success - name and type supplied" do
-      specification = Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
+      specification =
+        Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
+
       assert specification.name == "can"
       assert specification.type == :resourceSpecification
       assert specification.version == "v1.0.0"
-      assert specification.href == "resourceCatalogManagement/v4/resourceSpecification/#{specification.id}"
+
+      assert specification.href ==
+               "resourceCatalogManagement/v4/resourceSpecification/#{specification.id}"
+
       assert specification.instance_type == :resource
     end
 
@@ -75,7 +85,9 @@ defmodule Diffo.Provider.SpecificationTest do
     end
 
     test "create a service specification - success - name and major_version supplied" do
-      specification = Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
+      specification =
+        Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
+
       assert specification.major_version == 2
       assert specification.version == "v2.0.0"
     end
@@ -93,19 +105,33 @@ defmodule Diffo.Provider.SpecificationTest do
     end
 
     test "create a service specification - failure - type not correct" do
-      {:error, _specification} = Diffo.Provider.create_specification(%{name: "aggregation", type: :service})
+      {:error, _specification} =
+        Diffo.Provider.create_specification(%{name: "aggregation", type: :service})
     end
 
     test "create a Specfication that already exists, preserving attributes - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2, category: :access})
+      specification =
+        Diffo.Provider.create_specification!(%{
+          name: "adslAccess",
+          major_version: 2,
+          category: :access
+        })
+
       Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
       refreshed_specification = Diffo.Provider.get_specification_by_id!(specification.id)
       assert refreshed_specification.category == "access"
     end
 
     test "create a Specification that already exists, adding attributes - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
-      Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2, category: :access})
+      specification =
+        Diffo.Provider.create_specification!(%{name: "adslAccess", major_version: 2})
+
+      Diffo.Provider.create_specification!(%{
+        name: "adslAccess",
+        major_version: 2,
+        category: :access
+      })
+
       refreshed_specification = Diffo.Provider.get_specification_by_id!(specification.id)
       assert refreshed_specification.category == "access"
     end
@@ -113,9 +139,15 @@ defmodule Diffo.Provider.SpecificationTest do
 
   describe "Diffo.Provider update Specifications" do
     test "update the description of a specification - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "adsl", description: "ADSL Access Service"})
+      specification =
+        Diffo.Provider.create_specification!(%{name: "adsl", description: "ADSL Access Service"})
+
       assert specification.description == "ADSL Access Service"
-      updated_specification = specification |> Diffo.Provider.describe_specification!(%{description: "Asymmetric DSL Access Service"})
+
+      updated_specification =
+        specification
+        |> Diffo.Provider.describe_specification!(%{description: "Asymmetric DSL Access Service"})
+
       assert updated_specification.description == "Asymmetric DSL Access Service"
     end
 
@@ -126,16 +158,20 @@ defmodule Diffo.Provider.SpecificationTest do
     end
 
     test "make a new minor version, resetting the patch version - success" do
-      updated_specification = Diffo.Provider.create_specification!(%{name: "security"})
+      updated_specification =
+        Diffo.Provider.create_specification!(%{name: "security"})
         |> Diffo.Provider.next_patch_specification!()
         |> Diffo.Provider.next_minor_specification!()
+
       assert updated_specification.version == "v1.1.0"
     end
 
     test "make a new patch on an minor version - success" do
-      patched_specification = Diffo.Provider.create_specification!(%{name: "monitoring"})
+      patched_specification =
+        Diffo.Provider.create_specification!(%{name: "monitoring"})
         |> Diffo.Provider.next_minor_specification!()
         |> Diffo.Provider.next_patch_specification!()
+
       assert patched_specification.version == "v1.1.1"
     end
   end
@@ -143,9 +179,18 @@ defmodule Diffo.Provider.SpecificationTest do
   describe "Diffo.Provider encode Specifications" do
     test "encode json - success" do
       uuid = UUID.uuid4()
-      specification = Diffo.Provider.create_specification!(%{name: "radiationMonitor", description: "Radiation Monitoring Service", id: uuid})
+
+      specification =
+        Diffo.Provider.create_specification!(%{
+          name: "radiationMonitor",
+          description: "Radiation Monitoring Service",
+          id: uuid
+        })
+
       encoding = Jason.encode!(specification)
-      assert encoding == ~s({\"id\":\"#{uuid}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{uuid}\",\"name\":\"radiationMonitor\",\"version\":\"v1.0.0\"})
+
+      assert encoding ==
+               ~s({\"id\":\"#{uuid}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{uuid}\",\"name\":\"radiationMonitor\",\"version\":\"v1.0.0\"})
     end
   end
 
@@ -171,8 +216,10 @@ defmodule Diffo.Provider.SpecificationTest do
       assert Outstand.nil_outstanding?("access", version1_1.name)
       assert Outstand.nil_outstanding?(1..2, version1_1.major_version)
       assert Outstand.nil_outstanding?(1..2, version2.major_version)
+
       # we can separately run outstanding on the minor version, but by default minor version is not included in the Specification outstanding.
       assert Outstand.nil_outstanding?(1..3, version1_1.minor_version)
+
       # we can separately use regex on version, but by default version is not included in the the Specification outstanding.
       assert Outstand.nil_outstanding?(~r/v[1..2]/, version1_1.version)
       assert Outstand.nil_outstanding?(~r/v[1..2]/, version2.version)
@@ -189,7 +236,7 @@ defmodule Diffo.Provider.SpecificationTest do
 
     test "delete specification - failure, related instance" do
       specification = Diffo.Provider.create_specification!(%{name: "bdslAccess"})
-      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
+      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
       # TODO this fails but with an exception which doesn't match the expected error
       try do
         {:error, _result} = Diffo.Provider.delete_specification!(specification)
@@ -197,6 +244,7 @@ defmodule Diffo.Provider.SpecificationTest do
         _error ->
           :ok
       end
+
       # now delete the instance and we should be able to delete the specification
       :ok = Diffo.Provider.delete_instance(instance)
       :ok = Diffo.Provider.delete_specification(specification)

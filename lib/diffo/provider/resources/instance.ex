@@ -5,59 +5,50 @@ defmodule Diffo.Provider.Instance do
 
   Instance - Ash Resource for a TMF Service or Resource Instance
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource, AshStateMachine]
+  use Ash.Resource,
+    otp_app: :diffo,
+    domain: Diffo.Provider,
+    data_layer: AshNeo4j.DataLayer,
+    extensions: [AshOutstanding.Resource, AshJason.Resource, AshStateMachine]
 
   neo4j do
-    label :Instance
-    relate [{:specification, :SPECIFIES, :incoming}]
-    translate id: :uuid
-  end
-
-  outstanding do
-    expect [:specification, :type, :service_state, :service_operating_status]
-    #expect [:type, :name, :external_identifiers, :specification, :service_state, :service_operating_status, :forward_relationships, :reverse_relationships, :features, :characteristics, :entities, :process_statuses, :places, :parties]
-    customize fn outstanding, expected, actual ->
-      if (actual == nil) do
-        outstanding
-      else
-        outstanding_twin_id = Outstanding.outstanding(expected.twin_id, actual.id)
-        case {outstanding, outstanding_twin_id} do
-          {_, nil} ->
-            outstanding
-          {nil, _} ->
-            struct(:instance, %{id: outstanding_twin_id})
-          {_, _} ->
-            outstanding
-            |> Map.put(:id, outstanding_twin_id)
-        end
-      end
-      |> Diffo.Provider.Outstanding.instance_list_by_key(expected, actual, :places, :role)
-      |> Diffo.Provider.Outstanding.instance_list_by_key(expected, actual, :parties, :role)
-    end
-  end
-
-  state_machine do
-    initial_states [:initial]
-    default_initial_state :initial
-    state_attribute :service_state
-    #deprecated_states [:designed]
-
-    transitions do
-      transition(action: :cancel, from: [:initial, :feasibilityChecked, :reserved], to: :cancelled)
-      transition(action: :feasibilityCheck, from: :initial, to: :feasibilityChecked)
-      transition(action: :reserve, from: [:initial, :feasibilityChecked], to: :reserved)
-      transition(action: :deactivate, from: [:active, :reserved], to: [:inactive])
-      transition(action: :activate, from: [:initial, :feasibilityChecked, :reserved, :inactive, :suspended, :terminated], to: :active)
-      transition(action: :suspend, from: :active, to: :suspended)
-      transition(action: :terminate, from: [:active, :inactive, :suspended], to: :terminated)
-    end
+    label(:Instance)
+    relate([
+      {:twin, :TWINS, :outgoing},
+      {:external_identifiers, :REFERENCES, :outgoing},
+      {:specification, :SPECIFIES, :incoming},
+      {:process_statuses, :STATUSES, :incoming},
+      {:forward_relationships, :RELATES_HOW, :outgoing},
+      {:reverse_relationships, :RELATED_HOW, :incoming},
+      {:features, :DEFINES, :incoming},
+      {:characteristics, :DEFINES, :incoming},
+      {:entities, :RELATES_HOW, :outgoing},
+      {:places, :RELATES_HOW, :outgoing},
+      {:parties, :RELATES_HOW, :outgoing}
+    ])
+    translate(id: :uuid)
   end
 
   jason do
-    pick [:id, :href, :name, :external_identifiers, :specification, :process_statuses, :forward_relationships, :features, :characteristics, :entities, :places, :parties, :type]
-    customize fn result, record ->
+    pick([
+      :id,
+      :href,
+      :name,
+      :external_identifiers,
+      :specification,
+      :process_statuses,
+      :forward_relationships,
+      :features,
+      :characteristics,
+      :entities,
+      :places,
+      :parties,
+      :type
+    ])
+
+    customize(fn result, record ->
       result
-      #|> IO.inspect(label: "start instance jason customize")
+      # |> IO.inspect(label: "start instance jason customize")
       |> Diffo.Util.set(:category, record.specification.category)
       |> Diffo.Util.set(:description, record.specification.description)
       |> Diffo.Util.suppress_rename(:external_identifiers, :externalIdentifier)
@@ -66,148 +57,106 @@ defmodule Diffo.Provider.Instance do
       |> Diffo.Provider.Instance.relationships()
       |> Diffo.Util.rename(:specification, record.specification.type)
       |> Diffo.Util.suppress_rename(:process_statuses, :processStatus)
-      |> Diffo.Util.suppress_rename(:features, Diffo.Provider.Instance.derive_feature_list_name(record.type))
-      |> Diffo.Util.suppress_rename(:characteristics, Diffo.Provider.Instance.derive_characteristic_list_name(record.type))
+      |> Diffo.Util.suppress_rename(
+        :features,
+        Diffo.Provider.Instance.derive_feature_list_name(record.type)
+      )
+      |> Diffo.Util.suppress_rename(
+        :characteristics,
+        Diffo.Provider.Instance.derive_characteristic_list_name(record.type)
+      )
       |> Diffo.Util.suppress_rename(:entities, :relatedEntity)
       |> Diffo.Util.suppress_rename(:places, :place)
       |> Diffo.Util.suppress_rename(:parties, :relatedParty)
-    end
+    end)
 
-    order [:id, :href, :category, :description, :name, :externalIdentifier,
-      :serviceSpecification, :resourceSpecification,
-      :serviceDate, :startDate, :startOperatingDate, :endDate, :endOperatingDate,
-      :state, :operatingStatus, :administrativeState, :operationalState, :resourceStatus, :usageState,
+    order([
+      :id,
+      :href,
+      :category,
+      :description,
+      :name,
+      :externalIdentifier,
+      :serviceSpecification,
+      :resourceSpecification,
+      :serviceDate,
+      :startDate,
+      :startOperatingDate,
+      :endDate,
+      :endOperatingDate,
+      :state,
+      :operatingStatus,
+      :administrativeState,
+      :operationalState,
+      :resourceStatus,
+      :usageState,
       :processStatus,
-      :serviceRelationship, :resourceRelationship,
-      :supportingService, :supportingResource,
-      :feature, :activationFeature,
-      :serviceCharacteristic, :resourceCharacteristic,
-      :relatedEntity, :place, :relatedParty
-    ]
+      :serviceRelationship,
+      :resourceRelationship,
+      :supportingService,
+      :supportingResource,
+      :feature,
+      :activationFeature,
+      :serviceCharacteristic,
+      :resourceCharacteristic,
+      :relatedEntity,
+      :place,
+      :relatedParty
+    ])
   end
 
-  code_interface do
-    define :read
+  outstanding do
+    expect([:specification, :type, :service_state, :service_operating_status])
+
+    # expect [:type, :name, :external_identifiers, :specification, :service_state, :service_operating_status, :forward_relationships, :reverse_relationships, :features, :characteristics, :entities, :process_statuses, :places, :parties]
+    customize(fn outstanding, expected, actual ->
+      if actual == nil do
+        outstanding
+      else
+        outstanding_twin_id = Outstanding.outstanding(expected.twin_id, actual.id)
+
+        case {outstanding, outstanding_twin_id} do
+          {_, nil} ->
+            outstanding
+
+          {nil, _} ->
+            struct(:instance, %{id: outstanding_twin_id})
+
+          {_, _} ->
+            outstanding
+            |> Map.put(:id, outstanding_twin_id)
+        end
+      end
+      |> Diffo.Provider.Outstanding.instance_list_by_key(expected, actual, :places, :role)
+      |> Diffo.Provider.Outstanding.instance_list_by_key(expected, actual, :parties, :role)
+    end)
   end
 
-  actions do
-    defaults [:read, :destroy]
+  state_machine do
+    initial_states([:initial])
+    default_initial_state(:initial)
+    state_attribute(:service_state)
+    # deprecated_states [:designed]
 
-    create :create do
-      description "creates a new instance of a service or resource according by specification id"
-      accept [:id, :specification_id, :name, :type, :which]
-      manage_relationship(:specification, type: :append_and_remove)
-      change load [:href, :external_identifiers, :specification]
-    end
+    transitions do
+      transition(
+        action: :cancel,
+        from: [:initial, :feasibilityChecked, :reserved],
+        to: :cancelled
+      )
 
-    read :list do
-      description "lists all service and resource instances"
-    end
+      transition(action: :feasibilityCheck, from: :initial, to: :feasibilityChecked)
+      transition(action: :reserve, from: [:initial, :feasibilityChecked], to: :reserved)
+      transition(action: :deactivate, from: [:active, :reserved], to: [:inactive])
 
-    read :find_by_name do
-      description "finds service and resource instances by name"
-      get? false
-      argument :query, :ci_string do
-        description "Return only instances with names including the given value."
-      end
-      filter expr(contains(name, ^arg(:query)))
-    end
+      transition(
+        action: :activate,
+        from: [:initial, :feasibilityChecked, :reserved, :inactive, :suspended, :terminated],
+        to: :active
+      )
 
-    read :find_by_specification_id do
-      description "list service or resource instances by specification id"
-      get? false
-      argument :query, :string do
-        description "Return only instances specified by the given specification id."
-      end
-      prepare build(sort: [name: :asc])
-      filter expr(specification_id == ^arg(:query))
-    end
-
-    update :twin do
-      description "establishes a twin relationship"
-      require_atomic? false
-      accept [:twin_id]
-      validate attribute_equals(:which, :expected)
-      validate {Diffo.Validations.IsRelatedDifferent, attribute: :which, related_id: :twin_id}
-    end
-
-    update :name do
-      description "updates the name"
-      require_atomic? false
-      accept [:name]
-    end
-
-    update :specify do
-      description "specifies the instance by specification id"
-      require_atomic? false
-      accept [:specification_id]
-      # todo validate that the new specification has same name (will have different major version)
-    end
-
-    update :cancel do
-      description "cancels a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:cancelled)
-      change set_attribute :service_operating_status, :unknown
-      change set_attribute :stopped_at, &DateTime.utc_now/0
-    end
-
-    update :feasibilityCheck do
-      description "feasibilityChecks a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:feasibilityCheck)
-      change set_attribute :service_operating_status, :pending
-    end
-
-    update :reserve do
-      description "reserves a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state :reserved
-      change set_attribute :service_operating_status, :pending
-    end
-
-    update :deactivate do
-      description "deactivates a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:inactive)
-      change set_attribute :service_operating_status, :configured
-    end
-
-    update :activate do
-      description "activates a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state :active
-      change set_attribute :service_operating_status, :starting
-      change set_attribute :started_at, &DateTime.utc_now/0
-    end
-
-    update :suspend do
-      description "suspends a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state :suspended
-      change set_attribute :service_operating_status, :limited
-    end
-
-    update :terminate do
-      description "terminates a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:terminated)
-      change set_attribute :service_operating_status, :stopping
-      change set_attribute :stopped_at, &DateTime.utc_now/0
-    end
-
-    update :status do
-      description "updates the status of an instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      accept [:service_operating_status]
+      transition(action: :suspend, from: :active, to: :suspended)
+      transition(action: :terminate, from: [:active, :inactive, :suspended], to: :terminated)
     end
   end
 
@@ -230,7 +179,7 @@ defmodule Diffo.Provider.Instance do
 
     attribute :expected_id_from_twin, :boolean do
       description "whether the id should come from the twin"
-      default :false
+      default false
       public? true
     end
 
@@ -253,8 +202,8 @@ defmodule Diffo.Provider.Instance do
       description "the service operating status, if this instance is a service"
       allow_nil? true
       public? true
-      default Diffo.Provider.Service.default_service_operating_status
-      constraints one_of: Diffo.Provider.Service.service_operating_statuses
+      default Diffo.Provider.Service.default_service_operating_status()
+      constraints one_of: Diffo.Provider.Service.service_operating_statuses()
     end
 
     create_timestamp :inserted_at
@@ -330,20 +279,173 @@ defmodule Diffo.Provider.Instance do
     end
   end
 
-  validations do
-   #  do
-   #   message "the instance's twin must have a different which"
-   # end
-  end
+  actions do
+    defaults [:read, :destroy]
 
-  calculations do
-    calculate :href, :string, expr(type <> "InventoryManagement/v" <> specification.tmf_version <> "/" <> type <> "/" <> specification.name <> "/" <> id) do
-      description "the inventory href of the service or resource instance"
+    create :create do
+      description "creates a new instance of a service or resource according by specification id"
+      accept [:id, :name, :type, :which]
+      argument :specified_by, :uuid
+
+      change manage_relationship(:specified_by, :specification, type: :append_and_remove)
+      change load [:href, :external_identifiers, :specification]
+    end
+
+    read :list do
+      description "lists all service and resource instances"
+    end
+
+    read :find_by_name do
+      description "finds service and resource instances by name"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only instances with names including the given value."
+      end
+
+      filter expr(contains(name, ^arg(:query)))
+    end
+
+    read :find_by_specification_id do
+      description "list service or resource instances by specification id"
+      get? false
+
+      argument :query, :string do
+        description "Return only instances specified by the given specification id."
+      end
+
+      prepare build(sort: [name: :asc])
+      filter expr(specification_id == ^arg(:query))
+    end
+
+    update :twin do
+      description "establishes a twin relationship"
+      require_atomic? false
+      accept [:twin_id]
+      validate attribute_equals(:which, :expected)
+      validate {Diffo.Validations.IsRelatedDifferent, attribute: :which, related_id: :twin_id}
+    end
+
+    update :name do
+      description "updates the name"
+      require_atomic? false
+      accept [:name]
+    end
+
+    update :specify do
+      description "specifies the instance by specification id"
+      require_atomic? false
+      accept [:specification_id]
+      # todo validate that the new specification has same name (will have different major version)
+    end
+
+    update :cancel do
+      description "cancels a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state(:cancelled)
+      change set_attribute(:service_operating_status, :unknown)
+      change set_attribute(:stopped_at, &DateTime.utc_now/0)
+    end
+
+    update :feasibilityCheck do
+      description "feasibilityChecks a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state(:feasibilityCheck)
+      change set_attribute(:service_operating_status, :pending)
+    end
+
+    update :reserve do
+      description "reserves a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state(:reserved)
+      change set_attribute(:service_operating_status, :pending)
+    end
+
+    update :deactivate do
+      description "deactivates a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state(:inactive)
+      change set_attribute(:service_operating_status, :configured)
+    end
+
+    update :activate do
+      description "activates a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state(:active)
+      change set_attribute(:service_operating_status, :starting)
+      change set_attribute(:started_at, &DateTime.utc_now/0)
+    end
+
+    update :suspend do
+      description "suspends a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state(:suspended)
+      change set_attribute(:service_operating_status, :limited)
+    end
+
+    update :terminate do
+      description "terminates a service instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      change transition_state(:terminated)
+      change set_attribute(:service_operating_status, :stopping)
+      change set_attribute(:stopped_at, &DateTime.utc_now/0)
+    end
+
+    update :status do
+      description "updates the status of an instance"
+      require_atomic? false
+      validate attribute_equals(:type, :service)
+      accept [:service_operating_status]
     end
   end
 
+  code_interface do
+    define :read
+  end
+
   preparations do
-    prepare build(load: [:twin, :external_identifiers, :specification, :href, :specification, :process_statuses, :forward_relationships, :features, :characteristics, :entities, :places, :parties], sort: [href: :asc])
+    prepare build(
+              load: [
+                :external_identifiers,
+                :specification,
+                :href,
+                :specification,
+                :process_statuses,
+                :forward_relationships,
+                :features,
+                :characteristics,
+                :entities,
+                :places,
+                :parties
+              ],
+              sort: [href: :asc]
+            )
+  end
+
+  validations do
+    #  do
+    #   message "the instance's twin must have a different which"
+    # end
+  end
+
+  calculations do
+    calculate :href,
+              :string,
+              expr(
+                type <>
+                  "InventoryManagement/v" <>
+                  specification.tmf_version <>
+                  "/" <> type <> "/" <> specification.name <> "/" <> id
+              ) do
+      description "the inventory href of the service or resource instance"
+    end
   end
 
   @doc """
@@ -351,9 +453,18 @@ defmodule Diffo.Provider.Instance do
   """
   def dates(result, record) do
     result
-    |> Diffo.Util.set(Diffo.Provider.Instance.derive_create_name(record.type), Diffo.Util.to_iso8601(record.inserted_at))
-    |> Diffo.Util.set(Diffo.Provider.Instance.derive_start_name(record.type), Diffo.Util.to_iso8601(record.started_at))
-    |> Diffo.Util.set(Diffo.Provider.Instance.derive_end_name(record.type), Diffo.Util.to_iso8601(record.stopped_at))
+    |> Diffo.Util.set(
+      Diffo.Provider.Instance.derive_create_name(record.type),
+      Diffo.Util.to_iso8601(record.inserted_at)
+    )
+    |> Diffo.Util.set(
+      Diffo.Provider.Instance.derive_start_name(record.type),
+      Diffo.Util.to_iso8601(record.started_at)
+    )
+    |> Diffo.Util.set(
+      Diffo.Provider.Instance.derive_end_name(record.type),
+      Diffo.Util.to_iso8601(record.stopped_at)
+    )
   end
 
   @doc """
@@ -365,12 +476,13 @@ defmodule Diffo.Provider.Instance do
         result
         |> Diffo.Util.set(:state, record.service_state)
         |> Diffo.Util.set(:operatingStatus, record.service_operating_status)
+
       :resource ->
         result
-        #|> Diffo.Util.ensure_not_nil(:administrativeState, record.resource_administrative_state)
-        #|> Diffo.Util.ensure_not_nil(:operationalState, record.resource_operational_state)
-        #|> Diffo.Util.ensure_not_nil(:resourceStatus, record.resource_status)
-        #|> Diffo.Util.ensure_not_nil(:usageState, record.resource_usage_state)
+        # |> Diffo.Util.ensure_not_nil(:administrativeState, record.resource_administrative_state)
+        # |> Diffo.Util.ensure_not_nil(:operationalState, record.resource_operational_state)
+        # |> Diffo.Util.ensure_not_nil(:resourceStatus, record.resource_status)
+        # |> Diffo.Util.ensure_not_nil(:usageState, record.resource_usage_state)
     end
   end
 
@@ -379,23 +491,30 @@ defmodule Diffo.Provider.Instance do
   """
   def relationships(result) do
     relationships = Diffo.Util.get(result, :forward_relationships)
-    service_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
-    resource_relationships = relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
+
+    service_relationships =
+      relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
+
+    resource_relationships =
+      relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
+
     supporting_services =
       service_relationships
       |> Enum.filter(fn relationship -> relationship.alias != nil end)
       |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
+
     supporting_resources =
       resource_relationships
       |> Enum.filter(fn relationship -> relationship.alias != nil end)
       |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
+
     result
-      |> Diffo.Util.remove(:forward_relationships)
-      |> Diffo.Util.remove(:reverse_relationships)
-      |> Diffo.Util.set(:serviceRelationship, service_relationships)
-      |> Diffo.Util.set(:resourceRelationship, resource_relationships)
-      |> Diffo.Util.set(:supportingService, supporting_services)
-      |> Diffo.Util.set(:supportingResource, supporting_resources)
+    |> Diffo.Util.remove(:forward_relationships)
+    |> Diffo.Util.remove(:reverse_relationships)
+    |> Diffo.Util.set(:serviceRelationship, service_relationships)
+    |> Diffo.Util.set(:resourceRelationship, resource_relationships)
+    |> Diffo.Util.set(:supportingService, supporting_services)
+    |> Diffo.Util.set(:supportingResource, supporting_resources)
   end
 
   @doc """

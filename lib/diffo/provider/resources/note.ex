@@ -5,68 +5,35 @@ defmodule Diffo.Provider.Note do
 
   Note - Ash Resource for a TMF Note
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource,
+    otp_app: :diffo,
+    domain: Diffo.Provider,
+    data_layer: AshNeo4j.DataLayer,
+    extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label :Note
-    translate id: :uuid
-  end
-
-  outstanding do
-    expect [:text, :note_id, :author_id]
+    label(:Note)
+    relate [
+      {:instance, :ANNOTATES, :incoming},
+      {:author, :OWNS, :incoming}
+    ]
+    translate(id: :uuid)
   end
 
   jason do
-    pick [:text, :note_id, :author_id]
-    rename note_id: :id, author_id: :author, timestamp: :date
-    customize fn result, record ->
+    pick([:text, :note_id, :author_id])
+    rename(note_id: :id, author_id: :author, timestamp: :date)
+
+    customize(fn result, record ->
       result
       |> Diffo.Util.suppress(:id)
       |> Diffo.Util.suppress(:author)
       |> Diffo.Util.set(:date, Diffo.Util.to_iso8601(record.timestamp))
-    end
+    end)
   end
 
-  actions do
-    defaults [:read, :destroy]
-
-    create :create do
-      description "creates a note"
-      accept [:instance_id, :text, :note_id, :author_id]
-      change set_attribute :timestamp, &DateTime.utc_now/0
-      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
-    end
-
-    read :find_by_note_id do
-      description "finds notes by id"
-      get? false
-      argument :query, :ci_string do
-        description "Return only notes with id's including the given value."
-      end
-      filter expr(contains(note_id, ^arg(:query)))
-    end
-
-    read :list do
-      description "lists all notes"
-    end
-
-    read :list_notes_by_instance_id do
-      description "lists notes by instance id"
-      argument :instance_id, :uuid
-      filter expr((instance_id == ^arg(:instance_id)))
-    end
-
-    read :list_notes_by_author_id do
-      description "lists notes by author id"
-      argument :author_id, :string
-      filter expr((author_id == ^arg(:author_id)))
-    end
-
-    update :update do
-      description "updates the note, touching the timestamp"
-      accept [:instance_id, :text, :note_id, :author_id]
-      change set_attribute :timestamp, &DateTime.utc_now/0
-    end
+  outstanding do
+    expect([:text, :note_id, :author_id])
   end
 
   attributes do
@@ -93,19 +60,6 @@ defmodule Diffo.Provider.Note do
     end
   end
 
-  identities do
-    identity :instance_text_uniqueness, [:instance_id, :note_id, :text] do
-      eager_check? true
-      message "a duplicate note exists"
-      nils_distinct? false
-    end
-
-    identity :instance_note_id_uniqueness, [:instance_id, :note_id] do
-      eager_check? true
-      message "another note exists on the instance with same note id"
-    end
-  end
-
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
       description "the related instance"
@@ -118,6 +72,63 @@ defmodule Diffo.Provider.Note do
       attribute_type :string
       allow_nil? true
       public? true
+    end
+  end
+
+  actions do
+    defaults [:read, :destroy]
+
+    create :create do
+      description "creates a note"
+      accept [:instance_id, :text, :note_id, :author_id]
+      change set_attribute(:timestamp, &DateTime.utc_now/0)
+      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
+    end
+
+    read :find_by_note_id do
+      description "finds notes by id"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only notes with id's including the given value."
+      end
+
+      filter expr(contains(note_id, ^arg(:query)))
+    end
+
+    read :list do
+      description "lists all notes"
+    end
+
+    read :list_notes_by_instance_id do
+      description "lists notes by instance id"
+      argument :instance_id, :uuid
+      filter expr(instance_id == ^arg(:instance_id))
+    end
+
+    read :list_notes_by_author_id do
+      description "lists notes by author id"
+      argument :author_id, :string
+      filter expr(author_id == ^arg(:author_id))
+    end
+
+    update :update do
+      description "updates the note, touching the timestamp"
+      accept [:instance_id, :text, :note_id, :author_id]
+      change set_attribute(:timestamp, &DateTime.utc_now/0)
+    end
+  end
+
+  identities do
+    identity :instance_text_uniqueness, [:instance_id, :note_id, :text] do
+      eager_check? true
+      message "a duplicate note exists"
+      nils_distinct? false
+    end
+
+    identity :instance_note_id_uniqueness, [:instance_id, :note_id] do
+      eager_check? true
+      message "another note exists on the instance with same note id"
     end
   end
 
@@ -136,5 +147,6 @@ defmodule Diffo.Provider.Note do
     :lt
 
   """
-  def compare(%{timestamp: timestamp0}, %{timestamp: timestamp1}), do: Diffo.Util.compare(timestamp0, timestamp1)
+  def compare(%{timestamp: timestamp0}, %{timestamp: timestamp1}),
+    do: Diffo.Util.compare(timestamp0, timestamp1)
 end

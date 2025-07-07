@@ -5,55 +5,28 @@ defmodule Diffo.Provider.Characteristic do
 
   Characteristic - Ash Resource for a TMF Characteristic
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource,
+    otp_app: :diffo,
+    domain: Diffo.Provider,
+    data_layer: AshNeo4j.DataLayer,
+    extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label :Characteristic
-    translate id: :uuid
+    label(:Characteristic)
+    relate([
+      {:instance, :DEFINES, :outgoing},
+      {:feature, :DEFINES, :outgoing},
+      {:relationship, :DEFINES, :outgoing}
+    ])
+    translate(id: :uuid)
   end
 
   jason do
-    pick [:name, :value]
+    pick([:name, :value])
   end
 
   outstanding do
-    expect [:name, :value]
-  end
-
-  actions do
-    defaults [:read, :destroy]
-
-    create :create do
-      description "creates a characteristic"
-      accept [:feature_id, :instance_id, :relationship_id, :name, :value, :type]
-      change load [:type]
-      touches_resources [Diffo.Provider.Feature, Diffo.Provider.Instance, Diffo.Provider.Relationship]
-    end
-
-    read :find_by_name do
-      description "finds characteristics by name"
-      get? false
-      argument :query, :ci_string do
-        description "Return only characteristics with names including the given value."
-      end
-      filter expr(contains(name, ^arg(:query)))
-    end
-
-    read :list do
-      description "lists all characteristics"
-    end
-
-    read :list_characteristics_by_related_id do
-      description "lists characteristics by related id and type"
-      argument :related_id, :uuid
-      argument :type, :atom
-      filter expr(((relationship_id == ^arg(:related_id)) or (instance_id == ^arg(:related_id)) or (feature_id == ^arg(:related_id))) and (type == ^arg(:type)))
-    end
-
-    update :update do
-      description "updates the characteristic value"
-      accept [:value]
-    end
+    expect([:name, :value])
   end
 
   attributes do
@@ -86,6 +59,70 @@ defmodule Diffo.Provider.Characteristic do
     update_timestamp :updated_at
   end
 
+  relationships do
+    belongs_to :feature, Diffo.Provider.Feature do
+      allow_nil? true
+      public? true
+    end
+
+    belongs_to :instance, Diffo.Provider.Instance do
+      allow_nil? true
+      public? true
+    end
+
+    belongs_to :relationship, Diffo.Provider.Relationship do
+      allow_nil? true
+      public? true
+    end
+  end
+
+  actions do
+    defaults [:read, :destroy]
+
+    create :create do
+      description "creates a characteristic"
+      accept [:feature_id, :instance_id, :relationship_id, :name, :value, :type]
+      change load [:type]
+
+      touches_resources [
+        Diffo.Provider.Feature,
+        Diffo.Provider.Instance,
+        Diffo.Provider.Relationship
+      ]
+    end
+
+    read :find_by_name do
+      description "finds characteristics by name"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only characteristics with names including the given value."
+      end
+
+      filter expr(contains(name, ^arg(:query)))
+    end
+
+    read :list do
+      description "lists all characteristics"
+    end
+
+    read :list_characteristics_by_related_id do
+      description "lists characteristics by related id and type"
+      argument :related_id, :uuid
+      argument :type, :atom
+
+      filter expr(
+               (relationship_id == ^arg(:related_id) or instance_id == ^arg(:related_id) or
+                  feature_id == ^arg(:related_id)) and type == ^arg(:type)
+             )
+    end
+
+    update :update do
+      description "updates the characteristic value"
+      accept [:value]
+    end
+  end
+
   identities do
     identity :feature_characteristic_uniqueness, [:feature_id, :name] do
       message "another feature characteristic exists with same name"
@@ -98,6 +135,10 @@ defmodule Diffo.Provider.Characteristic do
     identity :relationship_characteristic_uniqueness, [:relationship_id, :type, :name] do
       message "another relationship characteristic exists with same name and direction"
     end
+  end
+
+  preparations do
+    prepare build(sort: [name: :asc])
   end
 
   validations do
@@ -130,27 +171,6 @@ defmodule Diffo.Provider.Characteristic do
       where negate(one_of(:type, [:relationship]))
       message "relationship_id must not be supplied"
     end
-  end
-
-  relationships do
-    belongs_to :feature, Diffo.Provider.Feature do
-      allow_nil? true
-      public? true
-    end
-
-    belongs_to :instance, Diffo.Provider.Instance do
-      allow_nil? true
-      public? true
-    end
-
-    belongs_to :relationship, Diffo.Provider.Relationship do
-      allow_nil? true
-      public? true
-    end
-  end
-
-  preparations do
-    prepare build(sort: [name: :asc])
   end
 
   @doc """

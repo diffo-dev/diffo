@@ -5,44 +5,23 @@ defmodule Diffo.Provider.Place do
 
   Place - Ash Resource for a TMF Place
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource,
+    otp_app: :diffo,
+    domain: Diffo.Provider,
+    data_layer: AshNeo4j.DataLayer,
+    extensions: [AshJason.Resource]
 
   neo4j do
-    label :Place
-    translate id: :uuid
+    label(:Place)
+    relate [
+      {:place_refs, :RELATED_HOW, :incoming}
+    ]
+    translate(id: :uuid)
   end
 
   jason do
-    pick [:id, :href, :name, :referredType, :type]
-    rename referredType: "@referredType", type: "@type"
-  end
-
-  actions do
-    defaults [:read, :destroy]
-
-    create :create do
-      description "creates a place"
-      accept [:id, :href, :name, :type, :referredType ]
-      upsert? true
-    end
-
-    read :find_by_name do
-      description "finds place by name"
-      get? false
-      argument :query, :ci_string do
-        description "Return only places with names including the given value."
-      end
-      filter expr(contains(name, ^arg(:query)))
-    end
-
-    read :list do
-      description "lists all places"
-    end
-
-    update :update do
-      description "updates the place"
-      accept [:href, :name, :type, :referredType]
-    end
+    pick([:id, :href, :name, :referredType, :type])
+    rename(referredType: "@referredType", type: "@type")
   end
 
   attributes do
@@ -86,6 +65,47 @@ defmodule Diffo.Provider.Place do
     update_timestamp :updated_at
   end
 
+  relationships do
+    has_many :place_refs, Diffo.Provider.PlaceRef do
+      destination_attribute :place_id
+      public? true
+    end
+  end
+
+  actions do
+    defaults [:read, :destroy]
+
+    create :create do
+      description "creates a place"
+      accept [:id, :href, :name, :type, :referredType]
+      upsert? true
+    end
+
+    read :find_by_name do
+      description "finds place by name"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only places with names including the given value."
+      end
+
+      filter expr(contains(name, ^arg(:query)))
+    end
+
+    read :list do
+      description "lists all places"
+    end
+
+    update :update do
+      description "updates the place"
+      accept [:href, :name, :type, :referredType]
+    end
+  end
+
+  preparations do
+    prepare build(sort: [id: :asc])
+  end
+
   validations do
     validate {Diffo.Validations.HrefEndsWithId, id: :id, href: :href} do
       where [present(:id), present(:href)]
@@ -100,17 +120,6 @@ defmodule Diffo.Provider.Place do
       where absent(:referredType)
       message "when referredType is absent, type must be not be PlaceRef"
     end
-  end
-
-  relationships do
-    has_many :place_refs, Diffo.Provider.PlaceRef do
-      destination_attribute :place_id
-      public? true
-    end
-  end
-
-  preparations do
-    prepare build(sort: [id: :asc])
   end
 
   @doc """

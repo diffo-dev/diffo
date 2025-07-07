@@ -24,6 +24,7 @@ defmodule Diffo.Validations.HrefEndsWithId do
   def validate(changeset, opts, _context) do
     id = Ash.Changeset.get_attribute(changeset, opts[:id])
     href = Ash.Changeset.get_attribute(changeset, opts[:href])
+
     if href == nil or String.ends_with?(href, id) do
       :ok
     else

@@ -6,85 +6,24 @@ defmodule Diffo.Provider.Specification do
   Specification - Ash Resource for a TMF Service or Resource Specification
   """
   require Ash.Resource.Change.Builtins
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+
+  use Ash.Resource,
+    otp_app: :diffo,
+    domain: Diffo.Provider,
+    data_layer: AshNeo4j.DataLayer,
+    extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label :Specification
-    translate id: :uuid
-  end
-
-  outstanding do
-    expect [:name, :major_version]
+    label(:Specification)
+    translate(id: :uuid)
   end
 
   jason do
-    pick [:id, :href, :name, :version]
+    pick([:id, :href, :name, :version])
   end
 
-  actions do
-    defaults [:read, :destroy]
-
-    create :create do
-      description "creates a major version of a named serviceSpecification or resourceSpecification"
-      accept [:id, :type, :name, :major_version, :description, :category]
-      change load [:version, :href, :instance_type]
-      upsert? true
-      upsert_identity :unique_major_version_per_name
-    end
-
-    read :list do
-      description "lists all serviceSpecification and resourceSpecification"
-    end
-
-    read :find_by_name do
-      description "finds specifications by name"
-      get? false
-      argument :query, :ci_string do
-        description "Return only specifications with names including the given value."
-      end
-      filter expr(contains(name, ^arg(:query)))
-    end
-
-    read :find_by_category do
-      description "finds specifications by category"
-      get? false
-      argument :query, :ci_string do
-        description "Return only specifications with category including the given value."
-      end
-      prepare build(sort: [name: :asc])
-      filter expr(contains(category, ^arg(:query)))
-    end
-
-    read :get_latest do
-      description "gets the serviceSpecification or resourceSpecification by name with highest major version"
-      get? true
-      argument :query, :ci_string do
-        description "Return only specifications with names including the given value."
-      end
-      prepare build(limit: 1, sort: [major_version: :desc])
-      filter expr(contains(name, ^arg(:query)))
-    end
-
-    update :describe do
-      description "updates the description"
-      accept [:description]
-    end
-
-    update :categorise do
-      description "updates the category"
-      accept [:category]
-    end
-
-    update :next_minor do
-      description "increments the minor version and resets the patch version"
-      manual Diffo.Provider.IncrementMinorVersion
-    end
-
-    update :next_patch do
-      transaction? false
-      description "increments the patch version"
-      manual Diffo.Provider.IncrementPatchVersion
-    end
+  outstanding do
+    expect([:name, :major_version])
   end
 
   attributes do
@@ -160,40 +99,124 @@ defmodule Diffo.Provider.Specification do
     update_timestamp :updated_at
   end
 
+  actions do
+    defaults [:read, :destroy]
+
+    create :create do
+      description "creates a major version of a named serviceSpecification or resourceSpecification"
+      accept [:id, :type, :name, :major_version, :description, :category]
+      change load [:version, :href, :instance_type]
+      upsert? true
+      upsert_identity :unique_major_version_per_name
+    end
+
+    read :list do
+      description "lists all serviceSpecification and resourceSpecification"
+    end
+
+    read :find_by_name do
+      description "finds specifications by name"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only specifications with names including the given value."
+      end
+
+      filter expr(contains(name, ^arg(:query)))
+    end
+
+    read :find_by_category do
+      description "finds specifications by category"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only specifications with category including the given value."
+      end
+
+      prepare build(sort: [name: :asc])
+      filter expr(contains(category, ^arg(:query)))
+    end
+
+    read :get_latest do
+      description "gets the serviceSpecification or resourceSpecification by name with highest major version"
+      get? true
+
+      argument :query, :ci_string do
+        description "Return only specifications with names including the given value."
+      end
+
+      prepare build(limit: 1, sort: [major_version: :desc])
+      filter expr(contains(name, ^arg(:query)))
+    end
+
+    update :describe do
+      description "updates the description"
+      accept [:description]
+    end
+
+    update :categorise do
+      description "updates the category"
+      accept [:category]
+    end
+
+    update :next_minor do
+      description "increments the minor version and resets the patch version"
+      manual Diffo.Provider.IncrementMinorVersion
+    end
+
+    update :next_patch do
+      transaction? false
+      description "increments the patch version"
+      manual Diffo.Provider.IncrementPatchVersion
+    end
+  end
+
+  identities do
+    identity :unique_major_version_per_name, [:name, :major_version]
+  end
+
+  preparations do
+    prepare build(
+              load: [:version, :href, :instance_type],
+              sort: [name: :asc, major_version: :desc]
+            )
+  end
+
   validations do
     validate {Diffo.Validations.IsUuid4OrNil, attribute: :id}, on: :create
   end
 
   calculations do
-    calculate :version, :string, expr("v" <> major_version <> "." <> minor_version <> "." <> patch_version) do
+    calculate :version,
+              :string,
+              expr("v" <> major_version <> "." <> minor_version <> "." <> patch_version) do
       description "the full version string, e.g. v1.0.0"
     end
 
-    calculate :href, :string, expr(
-      cond do
-        type == :serviceSpecification -> "serviceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
-        type == :resourceSpecification -> "resourceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
-      end
-      ) do
-        description "the href for the service or resource specification"
-      end
+    calculate :href,
+              :string,
+              expr(
+                cond do
+                  type == :serviceSpecification ->
+                    "serviceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
 
-    calculate :instance_type, :atom, expr(
-      cond do
-        type == :serviceSpecification -> :service
-        type == :resourceSpecification -> :resource
-      end
-      ) do
-        description "the type of the instance specified specification, either service or resource"
-      end
-  end
+                  type == :resourceSpecification ->
+                    "resourceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
+                end
+              ) do
+      description "the href for the service or resource specification"
+    end
 
-  preparations do
-    prepare build(load: [:version, :href, :instance_type], sort: [name: :asc, major_version: :desc])
-  end
-
-  identities do
-    identity :unique_major_version_per_name, [:name, :major_version]
+    calculate :instance_type,
+              :atom,
+              expr(
+                cond do
+                  type == :serviceSpecification -> :service
+                  type == :resourceSpecification -> :resource
+                end
+              ) do
+      description "the type of the instance specified specification, either service or resource"
+    end
   end
 
   @doc """

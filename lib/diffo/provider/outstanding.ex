@@ -16,18 +16,23 @@ defmodule Diffo.Provider.Outstanding do
     nil
   """
   def instance_list_by_key(outstanding, expected, actual, list, key) do
-    # assemble keyword lists of expected and actual parties
-    expected_keywords = Keyword.new(Map.get(expected, list), fn element -> {Map.get(element, key), element} end)
-    actual_keywords = Keyword.new(Map.get(actual, list), fn element -> {Map.get(element, key), element} end)
+    # assemble keyword lists of expected and actual lists
+    expected_keywords =
+      Keyword.new(Map.get(expected, list), fn element -> {Map.get(element, key), element} end)
+
+    actual_keywords =
+      Keyword.new(Map.get(actual, list), fn element -> {Map.get(element, key), element} end)
+
     outstanding_keywords = Outstanding.outstanding(expected_keywords, actual_keywords)
-    if (outstanding_keywords == nil) do
+
+    if outstanding_keywords == nil do
       outstanding
     else
       # accumulate outstanding, with outstanding result back as a list
-      if (outstanding == nil) do
-        Map.put(%Diffo.Provider.Instance{}, :parties, Keyword.values(outstanding_keywords))
+      if outstanding == nil do
+        Map.put(%Diffo.Provider.Instance{}, list, Keyword.values(outstanding_keywords))
       else
-        outstanding |> Map.put(:parties, Keyword.values(outstanding_keywords))
+        outstanding |> Map.put(list, Keyword.values(outstanding_keywords))
       end
     end
   end

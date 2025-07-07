@@ -19,6 +19,7 @@ defmodule Diffo.Validations.IsUuid4OrNil do
   @impl true
   def validate(changeset, opts, _context) do
     value = Ash.Changeset.get_attribute(changeset, opts[:attribute])
+
     if Diffo.Uuid.uuid4_or_nil?(value) do
       :ok
     else

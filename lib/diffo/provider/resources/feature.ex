@@ -5,52 +5,28 @@ defmodule Diffo.Provider.Feature do
 
   Feature - Ash Resource for a TMF Feature
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshJason.Resource]
+  use Ash.Resource,
+    otp_app: :diffo,
+    domain: Diffo.Provider,
+    data_layer: AshNeo4j.DataLayer,
+    extensions: [AshJason.Resource]
 
   neo4j do
-    label :Feature
-    translate id: :uuid
+    label(:Feature)
+    relate([
+      {:instance, :DEFINES, :outgoing},
+      {:featureCharacteristic, :DEFINES, :incoming}
+    ])
+    translate(id: :uuid)
   end
 
   jason do
-    pick [:name, :isEnabled, :featureCharacteristic]
-    customize fn result, _record ->
+    pick([:name, :isEnabled, :featureCharacteristic])
+
+    customize(fn result, _record ->
       result
       |> Diffo.Util.suppress(:featureCharacteristic)
-    end
-  end
-
-  actions do
-    defaults [:read, :destroy]
-
-    create :create do
-      description "creates a feature"
-      accept [:instance_id, :name, :isEnabled]
-    end
-
-    read :find_by_name do
-      description "finds features by name"
-      get? false
-      argument :query, :ci_string do
-        description "Return only features with names including the given value."
-      end
-      filter expr(contains(name, ^arg(:query)))
-    end
-
-    read :list do
-      description "lists all features"
-    end
-
-    read :list_features_by_related_id do
-      description "lists features by related id"
-      argument :related_id, :uuid
-      filter expr(instance_id == ^arg(:related_id))
-    end
-
-    update :update do
-      description "updates the feature isEnabled"
-      accept [:isEnabled]
-    end
+    end)
   end
 
   attributes do
@@ -76,12 +52,6 @@ defmodule Diffo.Provider.Feature do
     update_timestamp :updated_at
   end
 
-  identities do
-    identity :instance_feature_uniqueness, [:instance_id, :name] do
-      message "another instance feature exists with same name"
-    end
-  end
-
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
       allow_nil? false
@@ -90,6 +60,47 @@ defmodule Diffo.Provider.Feature do
 
     has_many :featureCharacteristic, Diffo.Provider.Characteristic do
       public? true
+    end
+  end
+
+  actions do
+    defaults [:read, :destroy]
+
+    create :create do
+      description "creates a feature"
+      accept [:instance_id, :name, :isEnabled]
+    end
+
+    read :find_by_name do
+      description "finds features by name"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only features with names including the given value."
+      end
+
+      filter expr(contains(name, ^arg(:query)))
+    end
+
+    read :list do
+      description "lists all features"
+    end
+
+    read :list_features_by_related_id do
+      description "lists features by related id"
+      argument :related_id, :uuid
+      filter expr(instance_id == ^arg(:related_id))
+    end
+
+    update :update do
+      description "updates the feature isEnabled"
+      accept [:isEnabled]
+    end
+  end
+
+  identities do
+    identity :instance_feature_uniqueness, [:instance_id, :name] do
+      message "another instance feature exists with same name"
     end
   end
 

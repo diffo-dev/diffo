@@ -5,63 +5,51 @@ defmodule Diffo.Provider.Relationship do
 
   Relationship - Ash Resource for a TMF Service or Resource Relationship
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource,
+    otp_app: :diffo,
+    domain: Diffo.Provider,
+    data_layer: AshNeo4j.DataLayer,
+    extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label :Relationship
-    translate id: :uuid
-  end
-
-  outstanding do
-    expect [:type, :target_type, :target_id, :target_href, :characteristic]
+    label(:Relationship)
+    relate [
+      {:source, :RELATES_HOW, :incoming},
+      {:target, :RELATED_HOW, :outgoing},
+      {:characteristic, :DEFINES, :incoming}
+    ]
+    translate(id: :uuid)
   end
 
   jason do
-    pick [:target_type, :type, :characteristic, :target_type, :target_id, :target_href]
-    customize fn result, _record ->
+    pick([:target_type, :type, :characteristic, :target_type, :target_id, :target_href])
+
+    customize(fn result, _record ->
       type = Diffo.Util.get(result, :target_type)
       id = Diffo.Util.get(result, :target_id)
       href = Diffo.Util.get(result, :target_href)
       reference = %{id: id, href: href}
-      relationship_characteristic_list_name = Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(type)
+
+      relationship_characteristic_list_name =
+        Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(type)
+
       result =
         result
         |> Diffo.Util.set(type, reference)
         |> Diffo.Util.suppress_rename(:characteristic, relationship_characteristic_list_name)
-    end
-    order [:type, :service, :resource, :serviceRelationshipCharacteristic, :resourceRelationshipCharacteristic]
+    end)
+
+    order([
+      :type,
+      :service,
+      :resource,
+      :serviceRelationshipCharacteristic,
+      :resourceRelationshipCharacteristic
+    ])
   end
 
-  actions do
-    defaults [:read, :destroy]
-
-    create :create do
-      description "creates a relationship between a source and target instance"
-      accept [:source_id, :target_id, :type, :alias]
-      change load [:target_type, :target_id, :target_href, :characteristic]
-      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Characteristic]
-    end
-
-    read :list do
-      description "lists all relationships"
-    end
-
-    read :list_service_relationships_from do
-      description "lists service relationships from the instance"
-      argument :instance_id, :uuid
-      filter expr(source_id == ^arg(:instance_id) and target_type == :service)
-    end
-
-    read :list_resource_relationships_from do
-      description "lists resource relationships from the instance"
-      argument :instance_id, :uuid
-      filter expr(source_id == ^arg(:instance_id) and target_type == :resource)
-    end
-
-    update :update do
-      description "updates the relationship"
-      accept [:alias, :type]
-    end
+  outstanding do
+    expect([:type, :target_type, :target_id, :target_href, :characteristic])
   end
 
   attributes do
@@ -103,9 +91,53 @@ defmodule Diffo.Provider.Relationship do
     end
   end
 
+  actions do
+    defaults [:read, :destroy]
+
+    create :create do
+      description "creates a relationship between a source and target instance"
+      accept [:source_id, :target_id, :type, :alias]
+      change load [:target_type, :target_id, :target_href, :characteristic]
+      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Characteristic]
+    end
+
+    read :list do
+      description "lists all relationships"
+    end
+
+    read :list_service_relationships_from do
+      description "lists service relationships from the instance"
+      argument :instance_id, :uuid
+      filter expr(source_id == ^arg(:instance_id) and target_type == :service)
+    end
+
+    read :list_resource_relationships_from do
+      description "lists resource relationships from the instance"
+      argument :instance_id, :uuid
+      filter expr(source_id == ^arg(:instance_id) and target_type == :resource)
+    end
+
+    update :update do
+      description "updates the relationship"
+      accept [:alias, :type]
+    end
+  end
+
+  identities do
+    identity :unique_source_and_target, [:source_id, :target_id]
+  end
+
+  preparations do
+    prepare build(
+              load: [:source_type, :source_href, :target_type, :target_href, :characteristic],
+              sort: [target_href: :asc]
+            )
+  end
+
   validations do
     validate {Diffo.Validations.IsUuid4OrNil, attribute: :source_id}, on: :create
     validate {Diffo.Validations.IsUuid4OrNil, attribute: :target_id}, on: :create
+
     validate absent(:alias) do
       on [:create, :update]
       where [one_of(:source_type, [:resource]), one_of(:target_type, [:service])]
@@ -133,14 +165,6 @@ defmodule Diffo.Provider.Relationship do
     calculate :target_href, :string, expr(target.href) do
       description "the href of the related target instance"
     end
-  end
-
-  identities do
-    identity :unique_source_and_target, [:source_id, :target_id]
-  end
-
-  preparations do
-    prepare build(load: [:source_type, :source_href, :target_type, :target_href, :characteristic], sort: [target_href: :asc])
   end
 
   @doc """
