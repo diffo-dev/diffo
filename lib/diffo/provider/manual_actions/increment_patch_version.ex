@@ -4,7 +4,8 @@ defmodule Diffo.Provider.IncrementPatchVersion do
   def update(changeset, _, _) do
     {_current, record} =
       changeset.data
-      |>  Map.get_and_update(:patch_version, fn value -> {value, value + 1} end)
+      |> Map.get_and_update(:patch_version, fn value -> {value, value + 1} end)
+
     {:ok, Diffo.Provider.Version.recalculate(record)}
   end
 end

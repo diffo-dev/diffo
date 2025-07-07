@@ -5,60 +5,35 @@ defmodule Diffo.Provider.ProcessStatus do
 
   ProcessStatus - Ash Resource for a TMF ProcessStatus
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource,
+    otp_app: :diffo,
+    domain: Diffo.Provider,
+    data_layer: AshNeo4j.DataLayer,
+    extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label :ProcessStatus
-    translate id: :uuid
-  end
-
-  outstanding do
-    expect [:code, :severity, :message, :parameterized_message, :timestamp]
+    label(:ProcessStatus)
+    relate [
+      {:instance, :STATUSES, :outgoing},
+    ]
+    translate(id: :uuid)
   end
 
   jason do
-    pick [:code, :severity, :message, :parameterized_message, :timestamp]
-    customize fn result, record ->
+    pick([:code, :severity, :message, :parameterized_message, :timestamp])
+
+    customize(fn result, record ->
       result
       |> Diffo.Util.suppress(:message)
       |> Diffo.Util.suppress(:parameterized_message)
       |> Diffo.Util.set(:timestamp, Diffo.Util.to_iso8601(record.timestamp))
-    end
-    rename parameterized_message: :parameterizedMessage, timestamp: :timeStamp
+    end)
+
+    rename(parameterized_message: :parameterizedMessage, timestamp: :timeStamp)
   end
 
-  code_interface do
-    define :create
-    define :update
-    define :destroy
-  end
-
-  actions do
-    defaults [:read, :destroy]
-
-    create :create do
-      description "creates a process status related to an instance"
-      primary? true
-      accept [:instance_id, :code, :severity, :message, :parameterized_message]
-      change set_attribute :timestamp, &DateTime.utc_now/0
-      touches_resources [Diffo.Provider.Instance]
-    end
-
-    read :list do
-      description "lists all process statuses"
-    end
-
-    read :list_process_statuses_by_instance_id do
-      description "lists process statuses by instance id"
-      argument :instance_id, :uuid
-      filter expr(instance_id == ^arg(:instance_id))
-    end
-
-    update :update do
-       description "updates a process status, touching the timestamp"
-       accept [:code, :severity, :message, :parameterized_message]
-       change set_attribute :timestamp, &DateTime.utc_now/0
-    end
+  outstanding do
+    expect([:code, :severity, :message, :parameterized_message, :timestamp])
   end
 
   attributes do
@@ -105,6 +80,40 @@ defmodule Diffo.Provider.ProcessStatus do
     end
   end
 
+  actions do
+    defaults [:read, :destroy]
+
+    create :create do
+      description "creates a process status related to an instance"
+      primary? true
+      accept [:instance_id, :code, :severity, :message, :parameterized_message]
+      change set_attribute(:timestamp, &DateTime.utc_now/0)
+      touches_resources [Diffo.Provider.Instance]
+    end
+
+    read :list do
+      description "lists all process statuses"
+    end
+
+    read :list_process_statuses_by_instance_id do
+      description "lists process statuses by instance id"
+      argument :instance_id, :uuid
+      filter expr(instance_id == ^arg(:instance_id))
+    end
+
+    update :update do
+      description "updates a process status, touching the timestamp"
+      accept [:code, :severity, :message, :parameterized_message]
+      change set_attribute(:timestamp, &DateTime.utc_now/0)
+    end
+  end
+
+  code_interface do
+    define :create
+    define :update
+    define :destroy
+  end
+
   preparations do
     prepare build(sort: [timestamp: :desc])
   end
@@ -120,5 +129,6 @@ defmodule Diffo.Provider.ProcessStatus do
     :lt
 
   """
-  def compare(%{timestamp: timestamp0}, %{timestamp: timestamp1}), do: Diffo.Util.compare(timestamp0, timestamp1)
+  def compare(%{timestamp: timestamp0}, %{timestamp: timestamp1}),
+    do: Diffo.Util.compare(timestamp0, timestamp1)
 end

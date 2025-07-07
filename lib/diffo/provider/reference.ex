@@ -39,16 +39,18 @@ defmodule Diffo.Provider.Reference do
   end
 
   use Outstand
+
   defoutstanding expected :: Diffo.Provider.Reference, actual :: Any do
     expected_map = Map.take(expected, [:id, :href])
+
     case {expected, actual} do
       {%name{}, %_{}} ->
         Outstanding.outstanding(expected_map, Map.from_struct(actual))
         |> Outstand.map_to_struct(name)
+
       {%name{}, _} ->
         expected_map
         |> Outstand.map_to_struct(name)
     end
-
   end
 end

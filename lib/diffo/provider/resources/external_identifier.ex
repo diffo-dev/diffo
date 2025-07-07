@@ -5,66 +5,34 @@ defmodule Diffo.Provider.ExternalIdentifier do
 
   ExternalIdentifier - Ash Resource for a TMF ExternalIdentifier
   """
-  use Ash.Resource, otp_app: :diffo, domain: Diffo.Provider, data_layer: AshNeo4j.DataLayer, extensions: [AshOutstanding.Resource, AshJason.Resource]
+  use Ash.Resource,
+    otp_app: :diffo,
+    domain: Diffo.Provider,
+    data_layer: AshNeo4j.DataLayer,
+    extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label :ExternalIdentifier
-    translate id: :uuid
-  end
-
-  outstanding do
-    expect [:type, :external_id, :owner_id]
+    label(:ExternalIdentifier)
+    relate([
+      {:instance, :REFERENCES, :incoming},
+      {:owner, :OWNS, :incoming}
+    ])
+    translate(id: :uuid)
   end
 
   jason do
-    pick [:type, :external_id, :owner_id]
-    rename type: :externalIdentifierType, external_id: :id, owner_id: :owner
-    customize fn result, _record ->
+    pick([:type, :external_id, :owner_id])
+    rename(type: :externalIdentifierType, external_id: :id, owner_id: :owner)
+
+    customize(fn result, _record ->
       result
       |> Diffo.Util.suppress(:id)
       |> Diffo.Util.suppress(:owner)
-    end
+    end)
   end
 
-  actions do
-    defaults [:read, :destroy]
-
-    create :create do
-      description "creates a external identifier"
-      accept [:type, :external_id, :owner_id, :instance_id]
-      change load [:owner_id]
-      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
-    end
-
-    read :find_by_external_id do
-      description "finds external identifiers by id"
-      get? false
-      argument :query, :ci_string do
-        description "Return only external identifiers with id's including the given value."
-      end
-      filter expr(contains(external_id, ^arg(:query)))
-    end
-
-    read :list do
-      description "lists all external identifiers"
-    end
-
-    read :list_external_identifiers_by_instance_id do
-      description "lists external identifiers by instance id"
-      argument :instance_id, :uuid
-      filter expr((instance_id == ^arg(:instance_id)))
-    end
-
-    read :list_external_identifiers_by_owner_id do
-      description "lists external identifiers by owner id"
-      argument :owner_id, :string
-      filter expr((owner_id == ^arg(:owner_id)))
-    end
-
-    update :update do
-      description "updates the external identifier"
-      accept [:type, :external_id, :owner_id, :instance_id]
-    end
+  outstanding do
+    expect([:type, :external_id, :owner_id])
   end
 
   attributes do
@@ -90,12 +58,6 @@ defmodule Diffo.Provider.ExternalIdentifier do
     update_timestamp :updated_at
   end
 
-  identities do
-    identity :instance_type_uniqueness, [:instance_id, :type] do
-      message "another external identifier exists on the instance with same type"
-    end
-  end
-
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
       description "the related instance"
@@ -108,6 +70,55 @@ defmodule Diffo.Provider.ExternalIdentifier do
       attribute_type :string
       allow_nil? true
       public? true
+    end
+  end
+
+  actions do
+    defaults [:read, :destroy]
+
+    create :create do
+      description "creates a external identifier"
+      accept [:type, :external_id, :owner_id, :instance_id]
+      change load [:owner_id]
+      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
+    end
+
+    read :find_by_external_id do
+      description "finds external identifiers by id"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only external identifiers with id's including the given value."
+      end
+
+      filter expr(contains(external_id, ^arg(:query)))
+    end
+
+    read :list do
+      description "lists all external identifiers"
+    end
+
+    read :list_external_identifiers_by_instance_id do
+      description "lists external identifiers by instance id"
+      argument :instance_id, :uuid
+      filter expr(instance_id == ^arg(:instance_id))
+    end
+
+    read :list_external_identifiers_by_owner_id do
+      description "lists external identifiers by owner id"
+      argument :owner_id, :string
+      filter expr(owner_id == ^arg(:owner_id))
+    end
+
+    update :update do
+      description "updates the external identifier"
+      accept [:type, :external_id, :owner_id, :instance_id]
+    end
+  end
+
+  identities do
+    identity :instance_type_uniqueness, [:instance_id, :type] do
+      message "another external identifier exists on the instance with same type"
     end
   end
 
@@ -132,5 +143,6 @@ defmodule Diffo.Provider.ExternalIdentifier do
     :lt
 
   """
-  def compare(%{inserted_at: inserted_at0}, %{inserted_at: inserted_at1}), do: Diffo.Util.compare(inserted_at0, inserted_at1)
+  def compare(%{inserted_at: inserted_at0}, %{inserted_at: inserted_at1}),
+    do: Diffo.Util.compare(inserted_at0, inserted_at1)
 end

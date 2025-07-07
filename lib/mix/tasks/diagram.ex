@@ -4,6 +4,6 @@ defmodule Mix.Tasks.Diagram do
 
   @shortdoc "Regenerates various diagrams"
   def run(_) do
-    Mix.Tasks.AshStateMachine.GenerateFlowCharts.run([type: :flow_chart])
+    Mix.Tasks.AshStateMachine.GenerateFlowCharts.run(type: :flow_chart)
   end
 end

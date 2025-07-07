@@ -6,7 +6,7 @@ config :ash, :missed_notifications, :ignore
 
 config :boltx, Bolt,
   uri: "bolt://localhost:7687",
-  auth: [username: "neo4j", password: ""],
+  auth: [username: "neo4j", password: "password"],
   user_agent: "DiffoTest/1",
   pool_size: 15,
   max_overflow: 3,

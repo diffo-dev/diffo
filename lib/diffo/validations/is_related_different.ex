@@ -23,25 +23,33 @@ defmodule Diffo.Validations.IsRelatedDifferent do
   @impl true
   def validate(changeset, opts, _context) do
     case Ash.Changeset.fetch_argument_or_change(changeset, opts[:related_id]) do
-    :error ->
-      :ok # related_id isn't changing
-    {:ok, nil}
-      :ok # related_id is nil
-    {:ok, related_id} ->
-      case Diffo.Provider.get_instance_by_id(related_id) do
-      {:error, _error} ->
-        :ok # no related
-      {:ok, related} ->
-        value = Ash.Changeset.get_attribute(changeset, opts[:attribute])
-        case Map.get(related, opts[:attribute])  do
-          nil ->
+      :error ->
+        # related_id isn't changing
+        :ok
+        {:ok, nil}
+        # related_id is nil
+        :ok
+
+      {:ok, related_id} ->
+        case Diffo.Provider.get_instance_by_id(related_id) do
+          {:error, _error} ->
+            # no related
             :ok
-          ^value ->
-            {:error, field: opts[:attribute], message: "related has same attribute value"}
-          _ ->
-            :ok
+
+          {:ok, related} ->
+            value = Ash.Changeset.get_attribute(changeset, opts[:attribute])
+
+            case Map.get(related, opts[:attribute]) do
+              nil ->
+                :ok
+
+              ^value ->
+                {:error, field: opts[:attribute], message: "related has same attribute value"}
+
+              _ ->
+                :ok
+            end
         end
-      end
     end
   end
 

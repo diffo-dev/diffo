@@ -21,8 +21,10 @@ defmodule Diffo.MixProject do
             <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
             <script>mermaid.initialize({startOnLoad: true})</script>
             """
-          _ -> ""
-          end
+
+          _ ->
+            ""
+        end
       ]
     ]
   end
@@ -35,6 +37,24 @@ defmodule Diffo.MixProject do
     ]
   end
 
+  defp ash_neo4j_version(default_version) do
+    case System.get_env("ASH_NEO4J_VERSION") do
+      nil -> default_version
+      "local" -> [path: "../ash_neo4j"]
+      "dev" -> [git: "https://github.com/diffo-dev/ash_neo4j"]
+      version -> "~> #{version}"
+    end
+  end
+
+  defp ash_version(default_version) do
+    case System.get_env("ASH_VERSION") do
+      nil -> default_version
+      "local" -> [path: "../ash"]
+      "main" -> [git: "https://github.com/ash-project/ash.git"]
+      version -> "~> #{version}"
+    end
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
@@ -42,9 +62,9 @@ defmodule Diffo.MixProject do
       {:ash_outstanding, "~> 0.2"},
       {:ash_jason, "~> 2.0"},
       {:ash_state_machine, "~> 0.2.7"},
-      {:ash_neo4j, "~> 0.2"},
+      {:ash_neo4j, ash_neo4j_version("~> 0.2")},
       {:boltx, "~> 0.0.6"},
-      {:ash, ">= 3.4.60 and < 4.0.0-0"},
+      {:ash, ash_version("~> 3.5")},
       {:spark, "~> 2.2.65"},
       {:uuid, "~> 1.1"},
       {:igniter, "~> 0.5", only: [:dev, :test]},

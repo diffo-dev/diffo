@@ -7,7 +7,16 @@ defmodule Diffo.Provider.Service do
   """
 
   def service_states() do
-    [:initial, :feasibilityChecked, :reserved, :inactive, :active, :suspended, :cancelled, :terminated]
+    [
+      :initial,
+      :feasibilityChecked,
+      :reserved,
+      :inactive,
+      :active,
+      :suspended,
+      :cancelled,
+      :terminated
+    ]
   end
 
   def default_service_state do
@@ -15,7 +24,18 @@ defmodule Diffo.Provider.Service do
   end
 
   def service_operating_statuses() do
-    [:pending, :configured, :starting, :running, :degraded, :failed, :limited, :stopping, :stopped, :unknown]
+    [
+      :pending,
+      :configured,
+      :starting,
+      :running,
+      :degraded,
+      :failed,
+      :limited,
+      :stopping,
+      :stopped,
+      :unknown
+    ]
   end
 
   def default_service_operating_status() do
