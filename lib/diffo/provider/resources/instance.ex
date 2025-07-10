@@ -14,7 +14,6 @@ defmodule Diffo.Provider.Instance do
   neo4j do
     label(:Instance)
     relate([
-      {:twin, :TWINS, :outgoing},
       {:external_identifiers, :REFERENCES, :outgoing},
       {:specification, :SPECIFIES, :incoming},
       {:process_statuses, :STATUSES, :incoming},
@@ -220,12 +219,6 @@ defmodule Diffo.Provider.Instance do
   end
 
   relationships do
-    belongs_to :twin, Diffo.Provider.Instance do
-      description "the instance's twin"
-      destination_attribute :id
-      public? true
-    end
-
     has_many :external_identifiers, Diffo.Provider.ExternalIdentifier do
       description "the instance's list of external identifiers"
       public? true
@@ -316,14 +309,6 @@ defmodule Diffo.Provider.Instance do
 
       prepare build(sort: [name: :asc])
       filter expr(specification_id == ^arg(:query))
-    end
-
-    update :twin do
-      description "establishes a twin relationship"
-      require_atomic? false
-      accept [:twin_id]
-      validate attribute_equals(:which, :expected)
-      validate {Diffo.Validations.IsRelatedDifferent, attribute: :which, related_id: :twin_id}
     end
 
     update :name do
