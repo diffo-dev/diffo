@@ -33,7 +33,6 @@ defmodule Diffo.Provider do
         action: :find_by_specification_id,
         args: [:query]
 
-      define :twin_instance, action: :twin
       define :name_instance, action: :name
       define :cancel_service, action: :cancel
       define :feasibilityCheck_service, action: :feasibilityCheck

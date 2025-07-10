@@ -13,12 +13,20 @@ defmodule Diffo.Provider.SpecificationTest do
   end
 
   describe "Diffo.Provider read Specifications!" do
+    test "list specifications" do
+      Diffo.Provider.create_specification!(%{name: "compute", category: "cloud"})
+      Diffo.Provider.create_specification!(%{name: "storage", category: "cloud"})
+      Diffo.Provider.create_specification!(%{name: "intelligence", category: "agent"})
+      specifications = Diffo.Provider.list_specifications!()
+      assert length(specifications) == 3
+    end
+
     test "find specifications by category" do
       Diffo.Provider.create_specification!(%{name: "compute", category: "cloud"})
       Diffo.Provider.create_specification!(%{name: "storage", category: "cloud"})
-      Diffo.Provider.create_specification!(%{name: "intelligence", category: "cloud"})
+      Diffo.Provider.create_specification!(%{name: "intelligence", category: "agent"})
       specifications = Diffo.Provider.find_specifications_by_category!("cloud")
-      assert length(specifications) == 3
+      assert length(specifications) == 2
     end
 
     test "find specifications by name" do

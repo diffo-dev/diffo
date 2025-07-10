@@ -15,6 +15,9 @@ defmodule Diffo.Provider.Specification do
 
   neo4j do
     label(:Specification)
+    relate [
+      {:instances, :SPECIFIES, :outgoing}
+    ]
     translate(id: :uuid)
   end
 
@@ -97,6 +100,13 @@ defmodule Diffo.Provider.Specification do
     create_timestamp :inserted_at
 
     update_timestamp :updated_at
+  end
+
+  relationships do
+    has_many :instances, Diffo.Provider.Instance do
+      destination_attribute :specification_id
+      public? true
+    end
   end
 
   actions do

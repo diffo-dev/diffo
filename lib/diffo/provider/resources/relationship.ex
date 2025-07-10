@@ -127,12 +127,12 @@ defmodule Diffo.Provider.Relationship do
     identity :unique_source_and_target, [:source_id, :target_id]
   end
 
-  preparations do
-    prepare build(
-              load: [:source_type, :source_href, :target_type, :target_href, :characteristic],
-              sort: [target_href: :asc]
-            )
-  end
+  #preparations do
+  #  prepare build(
+  #            load: [:source_type, :source_href, :target_type, :target_href, :characteristic],
+  #            sort: [target_href: :asc]
+  #          )
+  #end
 
   validations do
     validate {Diffo.Validations.IsUuid4OrNil, attribute: :source_id}, on: :create
