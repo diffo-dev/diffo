@@ -17,7 +17,7 @@ defmodule Diffo.Provider.Party do
       {:party_refs, :RELATED_HOW, :incoming},
       {:external_identifiers, :OWNS, :outgoing}
     ]
-    translate(id: :uuid)
+    translate(id: :partyId)
   end
 
   jason do

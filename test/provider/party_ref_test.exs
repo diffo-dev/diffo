@@ -45,7 +45,7 @@ defmodule Diffo.Provider.PartyRefTest do
         party_id: party2.id
       })
 
-      party_refs = Diffo.Provider.list_party_refs!()
+      party_refs = Diffo.Provider.list_party_refs!() |> IO.inspect()
       assert length(party_refs) == 2
       # should be sorted
       assert List.first(party_refs).party_id == "IND000000123456"
@@ -485,6 +485,7 @@ defmodule Diffo.Provider.PartyRefTest do
   def delete_all_party_refs() do
     party_refs = Diffo.Provider.list_party_refs!()
     %Ash.BulkResult{status: :success} = Diffo.Provider.delete_party_ref(party_refs)
-    Diffo.Provider.PartyTest.delete_all_parties()
+    parties = Diffo.Provider.list_parties!()
+    %Ash.BulkResult{status: :success} = Diffo.Provider.delete_party(parties)
   end
 end
