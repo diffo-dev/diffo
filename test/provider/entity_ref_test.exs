@@ -528,7 +528,7 @@ defmodule Diffo.Provider.EntityRefTest do
       actual == nil ->
         :generic_cost_id
 
-      Regex.match(~r/COR\d{12}/, String.Chars.to_string(actual)) ->
+      Regex.match?(~r/COR\d{12}/, String.Chars.to_string(actual)) ->
         nil
 
       true ->
