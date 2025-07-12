@@ -13,6 +13,7 @@ defmodule Diffo.Provider.NoteTest do
   end
 
   describe "Diffo.Provider read Notes" do
+    @tag debug: true
     test "list notes - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -691,7 +692,7 @@ defmodule Diffo.Provider.NoteTest do
       actual == nil ->
         :generic_note
 
-      Regex.match(~r/TST\d{12}/, String.Chars.to_string(actual)) ->
+      Regex.match?(~r/TST\d{12}/, String.Chars.to_string(actual)) ->
         nil
 
       true ->

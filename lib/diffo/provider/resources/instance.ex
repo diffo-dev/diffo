@@ -26,6 +26,7 @@ defmodule Diffo.Provider.Instance do
       {:parties, :RELATES_HOW, :outgoing}
     ])
     translate(id: :uuid)
+    skip [:specification_id]
   end
 
   jason do
@@ -280,7 +281,7 @@ defmodule Diffo.Provider.Instance do
         description "Return only instances specified by the given specification id."
       end
 
-      prepare build(sort: [name: :asc])
+      #prepare build(sort: [name: :asc])
       filter expr(specification_id == ^arg(:query))
     end
 
@@ -370,7 +371,8 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-        load: [:href]
+        load: [:href],
+        sort: [inserted_at: :desc]
       )
   end
 

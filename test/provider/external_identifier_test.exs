@@ -667,7 +667,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       actual == nil ->
         :generic_external_identifier
 
-      Regex.match(~r/ORD\d{12}/, String.Chars.to_string(actual)) ->
+      Regex.match?(~r/ORD\d{12}/, String.Chars.to_string(actual)) ->
         nil
 
       true ->

@@ -24,7 +24,7 @@ defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
           severity: :WARN,
           message: "nbnProductOrder cancelled"
         })
-
+Ex
       assert process_status.code == "NBNACC-1003"
     end
 
@@ -249,7 +249,7 @@ defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
       timestamp: @now
     }
     @generic_process_status %Diffo.Provider.ProcessStatus{
-      code: &Diffo.Provider.ProcessStatusTest.generic_process_status_code/1,
+      code: &__MODULE__.generic_process_status_code/1,
       severity: nil,
       message: nil,
       parameterized_message: nil,
@@ -341,7 +341,7 @@ defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
       actual == nil ->
         :generic_process_status_code
 
-      Regex.match(~r/NBNACC-\d{4}/, String.Chars.to_string(actual)) ->
+      Regex.match?(~r/NBNACC-\d{4}/, String.Chars.to_string(actual)) ->
         nil
 
       true ->
