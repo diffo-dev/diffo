@@ -473,6 +473,7 @@ defmodule Diffo.Provider.PlaceRefTest do
   def delete_all_place_refs() do
     place_refs = Diffo.Provider.list_place_refs!()
     %Ash.BulkResult{status: :success} = Diffo.Provider.delete_place_ref(place_refs)
-    Diffo.Provider.PlaceTest.delete_all_places()
+    places = Diffo.Provider.list_places!()
+    %Ash.BulkResult{status: :success} = Diffo.Provider.delete_place(places)
   end
 end

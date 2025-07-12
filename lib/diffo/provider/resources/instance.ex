@@ -108,27 +108,6 @@ defmodule Diffo.Provider.Instance do
     expect([:specification, :type, :service_state, :service_operating_status])
 
     # expect [:type, :name, :external_identifiers, :specification, :service_state, :service_operating_status, :forward_relationships, :reverse_relationships, :features, :characteristics, :entities, :process_statuses, :places, :parties]
-    customize(fn outstanding, expected, actual ->
-      if actual == nil do
-        outstanding
-      else
-        outstanding_twin_id = Outstanding.outstanding(expected.twin_id, actual.id)
-
-        case {outstanding, outstanding_twin_id} do
-          {_, nil} ->
-            outstanding
-
-          {nil, _} ->
-            struct(:instance, %{id: outstanding_twin_id})
-
-          {_, _} ->
-            outstanding
-            |> Map.put(:id, outstanding_twin_id)
-        end
-      end
-      |> Diffo.Provider.Outstanding.instance_list_by_key(expected, actual, :places, :role)
-      |> Diffo.Provider.Outstanding.instance_list_by_key(expected, actual, :parties, :role)
-    end)
   end
 
   state_machine do
@@ -169,17 +148,11 @@ defmodule Diffo.Provider.Instance do
     end
 
     attribute :which, :atom do
-      description "which twin this instance is, either expected or actual"
+      description "the which of the instance, either expected or actual"
       allow_nil? false
       default :actual
       public? true
       constraints one_of: [:expected, :actual]
-    end
-
-    attribute :expected_id_from_twin, :boolean do
-      description "whether the id should come from the twin"
-      default false
-      public? true
     end
 
     attribute :type, :atom do
@@ -281,7 +254,7 @@ defmodule Diffo.Provider.Instance do
       argument :specified_by, :uuid
 
       change manage_relationship(:specified_by, :specification, type: :append_and_remove)
-      change load [:href, :external_identifiers, :specification]
+      change load [:href, :external_identifiers]
     end
 
     read :list do
@@ -397,28 +370,10 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-              load: [
-                :external_identifiers,
-                :specification,
-                :href,
-                :specification,
-                :process_statuses,
-                :forward_relationships,
-                :features,
-                :characteristics,
-                :entities,
-                :places,
-                :parties
-              ],
-              sort: [href: :asc]
-            )
+        load: [:href]
+      )
   end
 
-  validations do
-    #  do
-    #   message "the instance's twin must have a different which"
-    # end
-  end
 
   calculations do
     calculate :href,
@@ -426,8 +381,10 @@ defmodule Diffo.Provider.Instance do
               expr(
                 type <>
                   "InventoryManagement/v" <>
-                  specification.tmf_version <>
-                  "/" <> type <> "/" <> specification.name <> "/" <> id
+                 #specification.tmf_version <>
+                  "/" <> type <> "/" <>
+                  #specification.name <>
+                  "/" <> id
               ) do
       description "the inventory href of the service or resource instance"
     end

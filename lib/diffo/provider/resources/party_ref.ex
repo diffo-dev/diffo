@@ -63,10 +63,16 @@ defmodule Diffo.Provider.PartyRef do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a party ref"
-      accept [:instance_id, :role, :party_id]
+      description "creates a party ref, relating an instance and a party"
+      accept [:role]
+
+      argument :instance_id, :uuid
+      argument :party_id, :string
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:party_id, :party, type: :append_and_remove)
+
       change load [:href, :name, :referredType, :type]
-      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
     end
 
     read :list do
