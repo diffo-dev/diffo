@@ -13,10 +13,12 @@ defmodule Diffo.Provider.EntityRef do
 
   neo4j do
     label(:EntityRef)
-    relate [
+
+    relate([
       {:instance, :RELATES_HOW, :incoming},
       {:entity, :RELATED_HOW, :outgoing}
-    ]
+    ])
+
     translate(id: :uuid)
   end
 

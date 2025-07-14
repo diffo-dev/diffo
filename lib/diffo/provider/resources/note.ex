@@ -13,10 +13,12 @@ defmodule Diffo.Provider.Note do
 
   neo4j do
     label(:Note)
-    relate [
+
+    relate([
       {:instance, :ANNOTATES, :incoming},
       {:author, :OWNS, :incoming}
-    ]
+    ])
+
     translate(id: :uuid)
   end
 
@@ -80,9 +82,14 @@ defmodule Diffo.Provider.Note do
 
     create :create do
       description "creates a note"
-      accept [:instance_id, :text, :note_id, :author_id]
+      accept [:text, :note_id]
+
+      argument :instance_id, :uuid
+      argument :author_id, :string
+
       change set_attribute(:timestamp, &DateTime.utc_now/0)
-      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:author_id, :author, type: :append_and_remove)
     end
 
     read :find_by_note_id do

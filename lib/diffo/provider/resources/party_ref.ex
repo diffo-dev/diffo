@@ -13,10 +13,12 @@ defmodule Diffo.Provider.PartyRef do
 
   neo4j do
     label(:PartyRef)
-    relate [
+
+    relate([
       {:instance, :RELATES_HOW, :incoming},
       {:party, :RELATED_HOW, :outgoing}
-    ]
+    ])
+
     translate(id: :uuid)
   end
 

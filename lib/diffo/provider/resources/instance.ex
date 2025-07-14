@@ -13,6 +13,7 @@ defmodule Diffo.Provider.Instance do
 
   neo4j do
     label(:Instance)
+
     relate([
       {:external_identifiers, :REFERENCES, :outgoing},
       {:specification, :SPECIFIES, :incoming},
@@ -22,11 +23,13 @@ defmodule Diffo.Provider.Instance do
       {:features, :DEFINES, :incoming},
       {:characteristics, :DEFINES, :incoming},
       {:entities, :RELATES_HOW, :outgoing},
+      {:notes, :ANNOTATES, :incoming},
       {:places, :RELATES_HOW, :outgoing},
       {:parties, :RELATES_HOW, :outgoing}
     ])
+
     translate(id: :uuid)
-    skip [:specification_id]
+    skip([:specification_id])
   end
 
   jason do
@@ -66,6 +69,7 @@ defmodule Diffo.Provider.Instance do
         Diffo.Provider.Instance.derive_characteristic_list_name(record.type)
       )
       |> Diffo.Util.suppress_rename(:entities, :relatedEntity)
+      |> Diffo.Util.suppress_rename(:notes, :note)
       |> Diffo.Util.suppress_rename(:places, :place)
       |> Diffo.Util.suppress_rename(:parties, :relatedParty)
     end)
@@ -100,6 +104,7 @@ defmodule Diffo.Provider.Instance do
       :serviceCharacteristic,
       :resourceCharacteristic,
       :relatedEntity,
+      :notes,
       :place,
       :relatedParty
     ])
@@ -221,17 +226,22 @@ defmodule Diffo.Provider.Instance do
     end
 
     has_many :features, Diffo.Provider.Feature do
-      description "the instance's collection of features"
+      description "the instance's collection of defining features"
       public? true
     end
 
     has_many :characteristics, Diffo.Provider.Characteristic do
-      description "the instance's collection of characteristics"
+      description "the instance's collection of defining characteristics"
       public? true
     end
 
     has_many :entities, Diffo.Provider.EntityRef do
       description "the instance's collection of related entities"
+      public? true
+    end
+
+    has_many :notes, Diffo.Provider.Note do
+      description "the instance's collection of annotating notes"
       public? true
     end
 
@@ -255,7 +265,7 @@ defmodule Diffo.Provider.Instance do
       argument :specified_by, :uuid
 
       change manage_relationship(:specified_by, :specification, type: :append_and_remove)
-      change load [:href, :external_identifiers]
+      change load [:href] #:external_identifiers
     end
 
     read :list do
@@ -281,7 +291,7 @@ defmodule Diffo.Provider.Instance do
         description "Return only instances specified by the given specification id."
       end
 
-      #prepare build(sort: [name: :asc])
+      # prepare build(sort: [name: :asc])
       filter expr(specification_id == ^arg(:query))
     end
 
@@ -371,21 +381,22 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-        load: [:href],
-        sort: [inserted_at: :desc]
-      )
+              load: [:href],
+              sort: [inserted_at: :desc]
+            )
   end
-
 
   calculations do
     calculate :href,
               :string,
               expr(
+                # specification.tmf_version <>
+                # specification.name <>
                 type <>
                   "InventoryManagement/v" <>
-                 #specification.tmf_version <>
-                  "/" <> type <> "/" <>
-                  #specification.name <>
+                  "/" <>
+                  type <>
+                  "/" <>
                   "/" <> id
               ) do
       description "the inventory href of the service or resource instance"

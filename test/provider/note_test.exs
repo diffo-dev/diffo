@@ -13,7 +13,6 @@ defmodule Diffo.Provider.NoteTest do
   end
 
   describe "Diffo.Provider read Notes" do
-    @tag debug: true
     test "list notes - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})

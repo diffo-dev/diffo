@@ -15,9 +15,11 @@ defmodule Diffo.Provider.Specification do
 
   neo4j do
     label(:Specification)
-    relate [
+
+    relate([
       {:instances, :SPECIFIES, :outgoing}
-    ]
+    ])
+
     translate(id: :uuid)
   end
 

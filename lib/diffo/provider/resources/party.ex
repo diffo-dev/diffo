@@ -13,10 +13,13 @@ defmodule Diffo.Provider.Party do
 
   neo4j do
     label(:Party)
-    relate [
+
+    relate([
       {:party_refs, :RELATED_HOW, :incoming},
-      {:external_identifiers, :OWNS, :outgoing}
-    ]
+      {:external_identifiers, :OWNS, :outgoing},
+      {:notes, :OWNS, :outgoing}
+    ])
+
     translate(id: :partyId)
   end
 
@@ -74,6 +77,11 @@ defmodule Diffo.Provider.Party do
 
     has_many :external_identifiers, Diffo.Provider.ExternalIdentifier do
       destination_attribute :owner_id
+      public? true
+    end
+
+    has_many :notes, Diffo.Provider.Note do
+      destination_attribute :note_id
       public? true
     end
   end

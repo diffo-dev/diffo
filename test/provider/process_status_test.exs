@@ -24,7 +24,7 @@ defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
           severity: :WARN,
           message: "nbnProductOrder cancelled"
         })
-Ex
+
       assert process_status.code == "NBNACC-1003"
     end
 

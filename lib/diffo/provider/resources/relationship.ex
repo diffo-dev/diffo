@@ -13,11 +13,13 @@ defmodule Diffo.Provider.Relationship do
 
   neo4j do
     label(:Relationship)
-    relate [
+
+    relate([
       {:source, :RELATES_HOW, :incoming},
       {:target, :RELATED_HOW, :outgoing},
       {:characteristic, :DEFINES, :incoming}
-    ]
+    ])
+
     translate(id: :uuid)
   end
 
@@ -127,12 +129,12 @@ defmodule Diffo.Provider.Relationship do
     identity :unique_source_and_target, [:source_id, :target_id]
   end
 
-  #preparations do
+  # preparations do
   #  prepare build(
   #            load: [:source_type, :source_href, :target_type, :target_href, :characteristic],
   #            sort: [target_href: :asc]
   #          )
-  #end
+  # end
 
   validations do
     validate {Diffo.Validations.IsUuid4OrNil, attribute: :source_id}, on: :create
