@@ -13,9 +13,11 @@ defmodule Diffo.Provider.Entity do
 
   neo4j do
     label(:Entity)
-    relate [
+
+    relate([
       {:entity_refs, :RELATED_HOW, :incoming}
-    ]
+    ])
+
     translate(id: :uuid)
   end
 

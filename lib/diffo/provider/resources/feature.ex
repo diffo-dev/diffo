@@ -13,10 +13,12 @@ defmodule Diffo.Provider.Feature do
 
   neo4j do
     label(:Feature)
+
     relate([
       {:instance, :DEFINES, :outgoing},
       {:featureCharacteristic, :DEFINES, :incoming}
     ])
+
     translate(id: :uuid)
   end
 

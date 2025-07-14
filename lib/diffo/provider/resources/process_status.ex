@@ -13,9 +13,11 @@ defmodule Diffo.Provider.ProcessStatus do
 
   neo4j do
     label(:ProcessStatus)
-    relate [
-      {:instance, :STATUSES, :outgoing},
-    ]
+
+    relate([
+      {:instance, :STATUSES, :outgoing}
+    ])
+
     translate(id: :uuid)
   end
 

@@ -13,9 +13,11 @@ defmodule Diffo.Provider.Place do
 
   neo4j do
     label(:Place)
-    relate [
+
+    relate([
       {:place_refs, :RELATED_HOW, :incoming}
-    ]
+    ])
+
     translate(id: :uuid)
   end
 

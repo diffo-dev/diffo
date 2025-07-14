@@ -304,7 +304,7 @@ defmodule Diffo.Provider.InstanceTest do
     end
   end
 
-  @doc"""
+  @doc """
   describe "Diffo.Provider twin Instances" do
     test "create an expected service and twin it with an actual - success" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})

@@ -13,10 +13,12 @@ defmodule Diffo.Provider.ExternalIdentifier do
 
   neo4j do
     label(:ExternalIdentifier)
+
     relate([
       {:instance, :REFERENCES, :incoming},
       {:owner, :OWNS, :incoming}
     ])
+
     translate(id: :uuid)
   end
 
