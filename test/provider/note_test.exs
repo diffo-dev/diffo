@@ -54,7 +54,7 @@ defmodule Diffo.Provider.NoteTest do
       assert List.last(notes).author_id == "T4_ACCESS"
     end
 
-    test "find notes by external id - success" do
+    test "find notes by note_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -103,7 +103,7 @@ defmodule Diffo.Provider.NoteTest do
         author_id: t3_party.id
       })
 
-      notes = Diffo.Provider.find_notes_by_note_id!("NOT")
+      notes = Diffo.Provider.find_notes_by_note_id!("NOT") |> IO.inspect(label: :sorted_notes)
       assert length(notes) == 2
       # should be sorted by most recent first
       assert List.first(notes).note_id == "NOT010000343853"
@@ -159,9 +159,9 @@ defmodule Diffo.Provider.NoteTest do
         author_id: t3_party.id
       })
 
-      notes = Diffo.Provider.list_notes_by_instance_id!(instance1.id)
+      notes = Diffo.Provider.list_notes_by_instance_id!(instance1.id) |> IO.inspect()
       assert length(notes) == 2
-      # should be sorted
+      # should be sorted by descending timestamp
       assert List.first(notes).author_id == "T3_CONNECTIVITY"
       assert List.last(notes).author_id == "T4_ACCESS"
     end
@@ -217,21 +217,22 @@ defmodule Diffo.Provider.NoteTest do
 
       notes = Diffo.Provider.list_notes_by_author_id!(t4_party.id)
       assert length(notes) == 2
-      # should be sorted
+
+      # notes are actually sorted by party_id, which is odd, as all the party_id's are the same! Should be sorted as notes!
       assert List.first(notes).note_id == "TST00000543543"
       assert List.last(notes).note_id == "TST00000123456"
     end
   end
 
   describe "Diffo.Provider create Notes" do
-    test "create an external identifier with no external id or author  - success" do
+    test "create a note with no author  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
       note = Diffo.Provider.create_note!(%{instance_id: instance1.id, text: "123"})
       assert note.text == "123"
     end
 
-    test "create an external identifier with external id and author  - success" do
+    test "create a note with external id and author  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
@@ -433,7 +434,7 @@ defmodule Diffo.Provider.NoteTest do
       assert updated_note.note_id == "TST000000123456"
     end
 
-    test "update author_id to nil - success" do
+    test "remove note author - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
@@ -453,11 +454,15 @@ defmodule Diffo.Provider.NoteTest do
           author_id: t4_party.id
         })
 
-      updated_note = note |> Diffo.Provider.update_note!(%{author_id: nil})
+      updated_note =
+        note
+        |> Diffo.Provider.update_note_author!(%{author_id: nil})
+        |> IO.inspect(label: :updated_note)
+
       assert updated_note.author_id == nil
     end
 
-    test "update author_id - success" do
+    test "replace note author - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
@@ -485,7 +490,7 @@ defmodule Diffo.Provider.NoteTest do
           author_id: t4_party.id
         })
 
-      updated_note = note |> Diffo.Provider.update_note!(%{author_id: t3_party.id})
+      updated_note = note |> Diffo.Provider.update_note_author!(%{author_id: t3_party.id})
       assert updated_note.author_id == "T3_CONNECTIVITY"
     end
 
@@ -509,10 +514,10 @@ defmodule Diffo.Provider.NoteTest do
           author_id: t4_party.id
         })
 
-      {:error, _error} = note |> Diffo.Provider.update_note(%{author_id: "T4_VIRTUAL"})
+      {:error, _error} = note |> Diffo.Provider.update_note_author(%{author_id: "T4_VIRTUAL"})
     end
 
-    test "update instance_id - success" do
+    test "update instance_id - failure" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -533,8 +538,7 @@ defmodule Diffo.Provider.NoteTest do
           author_id: t4_party.id
         })
 
-      updated_note = note |> Diffo.Provider.update_note!(%{instance_id: instance2.id})
-      assert updated_note.instance_id == instance2.id
+      {:error, _error} = note |> Diffo.Provider.update_note(%{instance_id: instance2.id})
     end
 
     test "update instance_id - failure - instance doesn't exist" do

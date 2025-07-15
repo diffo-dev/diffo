@@ -179,6 +179,7 @@ defmodule Diffo.Provider do
       define :list_notes_by_instance_id, action: :list_notes_by_instance_id, args: [:instance_id]
       define :list_notes_by_author_id, action: :list_notes_by_author_id, args: [:author_id]
       define :update_note, action: :update
+      define :update_note_author, action: :update_author
       define :delete_note, action: :destroy
     end
 

@@ -120,7 +120,6 @@ defmodule Diffo.Provider.Instance do
     initial_states([:initial])
     default_initial_state(:initial)
     state_attribute(:service_state)
-    # deprecated_states [:designed]
 
     transitions do
       transition(
@@ -174,6 +173,23 @@ defmodule Diffo.Provider.Instance do
       allow_nil? true
       public? true
       constraints match: ~r/^[a-zA-Z0-9\s._-]+$/
+    end
+
+    attribute :service_state, :atom do
+      allow_nil? false
+      default :initial
+      public? true
+
+      constraints one_of: [
+                    :initial,
+                    :cancelled,
+                    :feasibilityChecked,
+                    :reserved,
+                    :active,
+                    :inactive,
+                    :suspended,
+                    :terminated
+                  ]
     end
 
     attribute :service_operating_status, :atom do
@@ -265,7 +281,8 @@ defmodule Diffo.Provider.Instance do
       argument :specified_by, :uuid
 
       change manage_relationship(:specified_by, :specification, type: :append_and_remove)
-      change load [:href] #:external_identifiers
+      # :external_identifiers
+      change load [:href]
     end
 
     read :list do
@@ -304,7 +321,8 @@ defmodule Diffo.Provider.Instance do
     update :specify do
       description "specifies the instance by specification id"
       require_atomic? false
-      accept [:specification_id]
+      argument :specification_id, :uuid
+      change manage_relationship(:specification_id, :specification, type: :append_and_remove)
       # todo validate that the new specification has same name (will have different major version)
     end
 
