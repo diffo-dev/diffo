@@ -16,10 +16,12 @@ defmodule Diffo.Provider.Note do
 
     relate([
       {:instance, :ANNOTATES, :incoming},
-      {:author, :OWNS, :incoming}
+      {:author, :AUTHORS, :incoming}
     ])
 
     translate(id: :uuid)
+
+    # skip([:instance_id, :author_id])
   end
 
   jason do
@@ -121,26 +123,35 @@ defmodule Diffo.Provider.Note do
 
     update :update do
       description "updates the note, touching the timestamp"
-      accept [:instance_id, :text, :note_id, :author_id]
+      accept [:text, :note_id, :author_id]
+
       change set_attribute(:timestamp, &DateTime.utc_now/0)
+    end
+
+    update :update_author do
+      description "updates the note author, touching the timestamp"
+      argument :author_id, :string
+
+      change set_attribute(:timestamp, &DateTime.utc_now/0)
+      change manage_relationship(:author_id, :author, type: :append_and_remove)
     end
   end
 
   identities do
     identity :instance_text_uniqueness, [:instance_id, :note_id, :text] do
-      eager_check? true
+      pre_check? true
       message "a duplicate note exists"
       nils_distinct? false
     end
 
     identity :instance_note_id_uniqueness, [:instance_id, :note_id] do
-      eager_check? true
+      pre_check? true
       message "another note exists on the instance with same note id"
     end
   end
 
   preparations do
-    prepare build(load: [:author_id], sort: [timestamp: :desc])
+    prepare build(load: [:author], sort: [timestamp: :desc])
   end
 
   @doc """

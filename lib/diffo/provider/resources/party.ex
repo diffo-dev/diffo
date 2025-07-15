@@ -17,7 +17,7 @@ defmodule Diffo.Provider.Party do
     relate([
       {:party_refs, :RELATED_HOW, :incoming},
       {:external_identifiers, :OWNS, :outgoing},
-      {:notes, :OWNS, :outgoing}
+      {:notes, :AUTHORS, :outgoing}
     ])
 
     translate(id: :partyId)

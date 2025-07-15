@@ -176,12 +176,17 @@ defmodule Diffo.Provider.InstanceTest do
       assert updated_instance.stopped_at != nil
     end
 
+    @tag debug: true
     test "activate an initial service instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "initialActive"})
 
       updated_instance =
         Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        |> IO.inspect()
         |> Diffo.Provider.activate_service!()
+        |> IO.inspect()
+
+      Process.sleep(30000)
 
       assert updated_instance.service_state == :active
       assert updated_instance.service_operating_status == :starting
