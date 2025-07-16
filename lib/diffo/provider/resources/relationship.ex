@@ -99,8 +99,13 @@ defmodule Diffo.Provider.Relationship do
     create :create do
       description "creates a relationship between a source and target instance"
       accept [:source_id, :target_id, :type, :alias]
-      change load [:target_type, :target_id, :target_href, :characteristic]
-      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Characteristic]
+
+      argument :source_id, :uuid
+      argument :target_id, :string
+
+      change manage_relationship(:source_id, :source, type: :append_and_remove)
+      change manage_relationship(:target_id, :target, type: :append_and_remove)
+      change load [:target_type, :target_id, :target_href]
     end
 
     read :list do

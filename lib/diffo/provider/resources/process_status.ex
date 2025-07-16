@@ -88,9 +88,11 @@ defmodule Diffo.Provider.ProcessStatus do
     create :create do
       description "creates a process status related to an instance"
       primary? true
-      accept [:instance_id, :code, :severity, :message, :parameterized_message]
+      accept [:code, :severity, :message, :parameterized_message]
+      argument :instance_id, :uuid
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change set_attribute(:timestamp, &DateTime.utc_now/0)
-      touches_resources [Diffo.Provider.Instance]
     end
 
     read :list do

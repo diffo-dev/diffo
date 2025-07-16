@@ -23,8 +23,15 @@ defmodule Diffo.Provider.PlaceRef do
   end
 
   jason do
-    pick([:place_id, :href, :name, :role, :referredType, :type])
-    rename(place_id: :id, referredType: "@referredType", type: "@type")
+    pick([:href, :name, :role, :referredType, :type])
+
+    customize(fn result, record ->
+      result
+      |> id(record)
+    end)
+
+    rename(referredType: "@referredType", type: "@type")
+    order([:id, :href, :name, :role, "@referredType", "@type"])
   end
 
   outstanding do
@@ -65,10 +72,15 @@ defmodule Diffo.Provider.PlaceRef do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a place ref"
-      accept [:instance_id, :role, :place_id]
+      description "creates a place ref, relating an instance and a place"
+      accept [:role]
+      argument :instance_id, :uuid
+      argument :place_id, :string
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:place_id, :place, type: :append_and_remove)
+
       change load [:href, :name, :referredType, :type]
-      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Place]
     end
 
     read :list do
@@ -129,6 +141,23 @@ defmodule Diffo.Provider.PlaceRef do
 
     calculate :type, :string, expr(place.type) do
       description "the type of the related place instance"
+    end
+  end
+
+  @doc """
+  Assists in encoding place ref id
+  """
+  def id(result, record) do
+    place = Map.get(record, :place)
+    if is_struct(place, Diffo.Provider.Place) do
+      id = Map.get(place, :id)
+      if id != nil do
+        result |> Diffo.Util.set(:id, id)
+      else
+        result
+      end
+    else
+      result
     end
   end
 

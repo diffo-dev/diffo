@@ -45,7 +45,7 @@ defmodule Diffo.Provider.PartyRefTest do
         party_id: party2.id
       })
 
-      party_refs = Diffo.Provider.list_party_refs!() |> IO.inspect()
+      party_refs = Diffo.Provider.list_party_refs!() |> IO.inspect(label: :party_refs)
       assert length(party_refs) == 2
       # should be sorted
       assert List.first(party_refs).party_id == "IND000000123456"
@@ -98,8 +98,8 @@ defmodule Diffo.Provider.PartyRefTest do
       party_refs = Diffo.Provider.find_party_refs_by_party_id!("IND")
       assert length(party_refs) == 2
       # should be sorted
-      assert List.first(party_refs).party_id == "IND000000123456"
-      assert List.last(party_refs).party_id == "IND000000897353"
+      assert List.first(party_refs).party.id == "IND000000123456"
+      assert List.last(party_refs).party.id == "IND000000897353"
     end
 
     test "list party refs by related instance - success" do

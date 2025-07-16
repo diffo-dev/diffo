@@ -368,6 +368,12 @@ defmodule Diffo.Provider.CharacteristicTest do
 
       updated_characteristic =
         characteristic
+        |> Diffo.Provider.update_characteristic!(%{value: %{aEnd: 1, zEnd: 13}})
+
+      assert updated_characteristic.value == %{aEnd: 1, zEnd: 13}
+
+      updated_characteristic =
+        characteristic
         |> Diffo.Provider.update_characteristic!(%{value: %{"aEnd" => 1, "zEnd" => 13}})
 
       assert updated_characteristic.value == %{"aEnd" => 1, "zEnd" => 13}

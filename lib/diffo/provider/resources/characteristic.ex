@@ -82,15 +82,18 @@ defmodule Diffo.Provider.Characteristic do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a characteristic"
-      accept [:feature_id, :instance_id, :relationship_id, :name, :value, :type]
-      change load [:type]
+      description "creates a characteristic, relating it to an instance, feature or relationship"
+      accept [:name, :value, :type]
 
-      touches_resources [
-        Diffo.Provider.Feature,
-        Diffo.Provider.Instance,
-        Diffo.Provider.Relationship
-      ]
+      argument :instance_id, :uuid
+      argument :feature_id, :uuid
+      argument :relationship_id, :uuid
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:feature_id, :feature, type: :append_and_remove)
+      change manage_relationship(:relationship_id, :relationship, type: :append_and_remove)
+
+      change load [:type]
     end
 
     read :find_by_name do
@@ -144,32 +147,32 @@ defmodule Diffo.Provider.Characteristic do
   end
 
   validations do
-    validate present(:feature_id) do
+    validate present(:feature) do
       where one_of(:type, [:feature])
       message "feature_id must be supplied"
     end
 
-    validate absent(:feature_id) do
+    validate absent(:feature) do
       where negate(one_of(:type, [:feature]))
       message "feature_id must not be supplied"
     end
 
-    validate present(:instance_id) do
+    validate present(:instance) do
       where one_of(:type, [:instance])
       message "instance_id must be supplied"
     end
 
-    validate absent(:instance_id) do
+    validate absent(:instance) do
       where negate(one_of(:type, [:instance]))
       message "instance_id must not be supplied"
     end
 
-    validate present(:relationship_id) do
+    validate present(:relationship) do
       where one_of(:type, [:relationship])
       message "relationship_id must be supplied"
     end
 
-    validate absent(:relationship_id) do
+    validate absent(:relationship) do
       where negate(one_of(:type, [:relationship]))
       message "relationship_id must not be supplied"
     end
