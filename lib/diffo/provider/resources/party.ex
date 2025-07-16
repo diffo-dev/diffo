@@ -116,10 +116,6 @@ defmodule Diffo.Provider.Party do
     end
   end
 
-  preparations do
-    prepare build(sort: [id: :asc])
-  end
-
   validations do
     validate {Diffo.Validations.HrefEndsWithId, id: :id, href: :href} do
       where [present(:id), present(:href)]

@@ -65,10 +65,14 @@ defmodule Diffo.Provider.EntityRef do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a entity ref"
-      accept [:instance_id, :role, :entity_id]
+      description "creates a entity ref, relating an instance and entity"
+      accept [:role]
+      argument :instance_id, :uuid
+      argument :entity_id, :string
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:entity_id, :entity, type: :append_and_remove)
       change load [:href, :name, :referredType, :type]
-      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Entity]
     end
 
     read :list do

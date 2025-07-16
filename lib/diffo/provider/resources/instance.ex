@@ -52,8 +52,8 @@ defmodule Diffo.Provider.Instance do
     customize(fn result, record ->
       result
       # |> IO.inspect(label: "start instance jason customize")
-      |> Diffo.Util.set(:category, record.specification.category)
-      |> Diffo.Util.set(:description, record.specification.description)
+      |> Diffo.Provider.Instance.category(record)
+      |> Diffo.Provider.Instance.description(record)
       |> Diffo.Util.suppress_rename(:external_identifiers, :externalIdentifier)
       |> Diffo.Provider.Instance.dates(record)
       |> Diffo.Provider.Instance.states(record)
@@ -281,8 +281,7 @@ defmodule Diffo.Provider.Instance do
       argument :specified_by, :uuid
 
       change manage_relationship(:specified_by, :specification, type: :append_and_remove)
-      # :external_identifiers
-      change load [:href]
+      #change load [:href, :external_identifiers]
     end
 
     read :list do
@@ -321,8 +320,8 @@ defmodule Diffo.Provider.Instance do
     update :specify do
       description "specifies the instance by specification id"
       require_atomic? false
-      argument :specification_id, :uuid
-      change manage_relationship(:specification_id, :specification, type: :append_and_remove)
+      argument :specified_by, :uuid
+      change manage_relationship(:specified_by, :specification, type: :append_and_remove)
       # todo validate that the new specification has same name (will have different major version)
     end
 
@@ -399,7 +398,7 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-              load: [:href],
+              load: [:forward_relationships],
               sort: [inserted_at: :desc]
             )
   end
@@ -408,16 +407,46 @@ defmodule Diffo.Provider.Instance do
     calculate :href,
               :string,
               expr(
-                # specification.tmf_version <>
-                # specification.name <>
-                type <>
-                  "InventoryManagement/v" <>
-                  "/" <>
-                  type <>
-                  "/" <>
+                type <> "InventoryManagement/v" <> specification.tmf_version <>
+                  "/" <> type <>
+                  "/" <> specification.name <>
                   "/" <> id
               ) do
       description "the inventory href of the service or resource instance"
+    end
+  end
+
+  @doc """
+  Assists in encoding instance category
+  """
+  def category(result, record) do
+    specification = Map.get(record, :specification)
+    if is_struct(specification, Diffo.Provider.Specification) do
+      category = Map.get(specification, :category)
+      if category != nil do
+        result |> Diffo.Util.set(:category, category)
+      else
+        result
+      end
+    else
+      result
+    end
+  end
+
+  @doc """
+  Assists in encoding instance description
+  """
+  def description(result, record) do
+    specification = Map.get(record, :specification)
+    if is_struct(specification, Diffo.Provider.Specification) do
+      description = Map.get(specification, :description)
+      if description != nil do
+        result |> Diffo.Util.set(:description, description)
+      else
+        result
+      end
+    else
+      result
     end
   end
 
@@ -463,31 +492,35 @@ defmodule Diffo.Provider.Instance do
   Assists in encoding instance-instance relationships
   """
   def relationships(result) do
-    relationships = Diffo.Util.get(result, :forward_relationships)
+    if relationships = Diffo.Util.get(result, :forward_relationships) do
+      service_relationships =
+        relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
 
-    service_relationships =
-      relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
+      resource_relationships =
+        relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
 
-    resource_relationships =
-      relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
+      supporting_services =
+        service_relationships
+        |> Enum.filter(fn relationship -> relationship.alias != nil end)
+        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
 
-    supporting_services =
-      service_relationships
-      |> Enum.filter(fn relationship -> relationship.alias != nil end)
-      |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
+      supporting_resources =
+        resource_relationships
+        |> Enum.filter(fn relationship -> relationship.alias != nil end)
+        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
 
-    supporting_resources =
-      resource_relationships
-      |> Enum.filter(fn relationship -> relationship.alias != nil end)
-      |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
-
-    result
-    |> Diffo.Util.remove(:forward_relationships)
-    |> Diffo.Util.remove(:reverse_relationships)
-    |> Diffo.Util.set(:serviceRelationship, service_relationships)
-    |> Diffo.Util.set(:resourceRelationship, resource_relationships)
-    |> Diffo.Util.set(:supportingService, supporting_services)
-    |> Diffo.Util.set(:supportingResource, supporting_resources)
+      result
+      |> Diffo.Util.remove(:forward_relationships)
+      |> Diffo.Util.remove(:reverse_relationships)
+      |> Diffo.Util.set(:serviceRelationship, service_relationships)
+      |> Diffo.Util.set(:resourceRelationship, resource_relationships)
+      |> Diffo.Util.set(:supportingService, supporting_services)
+      |> Diffo.Util.set(:supportingResource, supporting_resources)
+    else
+      result
+      |> Diffo.Util.remove(:forward_relationships)
+      |> Diffo.Util.remove(:reverse_relationships)
+    end
   end
 
   @doc """

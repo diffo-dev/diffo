@@ -69,8 +69,11 @@ defmodule Diffo.Provider.Feature do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a feature"
-      accept [:instance_id, :name, :isEnabled]
+      description "creates a feature, related to an instance"
+      accept [:name, :isEnabled]
+      argument :instance_id, :uuid
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
     end
 
     read :find_by_name do

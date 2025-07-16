@@ -23,8 +23,14 @@ defmodule Diffo.Provider.PartyRef do
   end
 
   jason do
-    pick([:party_id, :href, :name, :role, :referredType, :type])
-    rename(party_id: :id, referredType: "@referredType", type: "@type")
+    pick([:href, :name, :role, :referredType, :type])
+    customize(fn result, record ->
+      result
+      |> id(record)
+    end)
+
+    rename(referredType: "@referredType", type: "@type")
+    order([:id, :href, :name, :role, "@referredType", "@type"])
   end
 
   outstanding do
@@ -74,7 +80,7 @@ defmodule Diffo.Provider.PartyRef do
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:party_id, :party, type: :append_and_remove)
 
-      change load [:href, :name, :referredType, :type]
+      change load [:href, :name, :referredType, :type, :party, :instance]
     end
 
     read :list do
@@ -117,7 +123,7 @@ defmodule Diffo.Provider.PartyRef do
   end
 
   preparations do
-    prepare build(load: [:href, :name, :referredType, :type], sort: [party_id: :asc])
+    prepare build(load: [:href, :name, :referredType, :type, :instance, :party], sort: [updated_at: :asc])
   end
 
   calculations do
@@ -135,6 +141,23 @@ defmodule Diffo.Provider.PartyRef do
 
     calculate :type, :string, expr(party.type) do
       description "the type of the related party instance"
+    end
+  end
+
+  @doc """
+  Assists in encoding party ref id
+  """
+  def id(result, record) do
+    party = Map.get(record, :party) |> IO.inspect(label: :party)
+    if is_struct(party, Diffo.Provider.Party) do
+      id = Map.get(party, :id)
+      if id != nil do
+        result |> Diffo.Util.set(:id, id)
+      else
+        result
+      end
+    else
+      result
     end
   end
 

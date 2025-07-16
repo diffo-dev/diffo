@@ -79,10 +79,14 @@ defmodule Diffo.Provider.ExternalIdentifier do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a external identifier"
-      accept [:type, :external_id, :owner_id, :instance_id]
+      description "creates a external identifier. related to an instance and optionally an owner party"
+      accept [:type, :external_id]
+      argument :instance_id, :uuid
+      argument :owner_id, :string
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:owner_id, :owner, type: :append_and_remove)
       change load [:owner_id]
-      touches_resources [Diffo.Provider.Instance, Diffo.Provider.Party]
     end
 
     read :find_by_external_id do
