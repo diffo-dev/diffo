@@ -1,6 +1,9 @@
 defmodule Diffo.Provider.EntityRefTest do
   @moduledoc false
   use ExUnit.Case
+  alias Diffo.Provider.Entity
+  alias Diffo.Provider.EntityRef
+  alias Diffo.Provider.Instance
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -164,13 +167,14 @@ defmodule Diffo.Provider.EntityRefTest do
         entity_id: entity3.id
       })
 
-      entity_refs = Diffo.Provider.list_entity_refs_by_instance_id!(instance1.id)
+      entity_refs = Diffo.Provider.list_entity_refs_by_instance_id!(instance1.id) |> IO.inspect()
       assert length(entity_refs) == 2
       # should be sorted
       assert List.first(entity_refs).entity_id == "11b6ba17-2865-41c5-b469-2939249631e8"
       assert List.last(entity_refs).entity_id == "33db60a1-62bf-4c11-abf3-265287a729c1"
     end
 
+    @tag debug: true
     test "list entity refs by related entity id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -226,6 +230,7 @@ defmodule Diffo.Provider.EntityRefTest do
   end
 
   describe "Diffo.Provider create EntityRefs" do
+    @tag debug: true
     test "create a reportedOn role entity ref  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -244,9 +249,42 @@ defmodule Diffo.Provider.EntityRefTest do
           role: :reportedOn,
           entity_id: entity.id
         })
+        |> IO.inspect(label: :created)
+        |> check_entity_ref(instance, entity)
 
       assert entity_ref.role == :reportedOn
+
+      #re-read
+      EntityRef |> Ash.read_one!
+      |> check_entity_ref(instance, entity)
+
+      #reload
+      entity_ref |> Ash.reload!()
+      |> check_entity_ref(instance, entity)
     end
+  end
+
+  defp check_entity_ref(entity_ref, instance, entity) do
+      #check inputs
+      assert is_struct(instance, Instance)
+      assert is_struct(entity_ref, EntityRef)
+      assert is_struct(entity, Entity)
+
+      #check EntityRef enrichment
+      assert entity_ref.instance_id == instance.id
+      assert is_struct(entity_ref.instance, Instance)
+      assert entity_ref.instance.id == instance.id
+      assert entity_ref.entity_id == entity.id
+      assert is_struct(entity_ref.entity, Entity)
+      assert entity_ref.entity.id == entity.id
+
+      #check EntityRef calculations
+      assert entity_ref.href == entity.href
+      assert entity_ref.name == entity.name
+      assert entity_ref.referredType == entity.referredType
+      assert entity_ref.type == entity.type
+
+      entity_ref
   end
 
   describe "Diffo.Provider update EntityRefs" do
