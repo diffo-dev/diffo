@@ -115,7 +115,7 @@ defmodule Diffo.Provider.EntityRef do
   end
 
   preparations do
-    prepare build(load: [:href, :name, :referredType, :type], sort: [entity_id: :asc])
+    prepare build(load: [:href, :name, :referredType, :type], sort: [role: :asc])
   end
 
   calculations do
@@ -127,11 +127,11 @@ defmodule Diffo.Provider.EntityRef do
       description "the name of the related entity instance"
     end
 
-    calculate :referredType, :string, expr(entity.referredType) do
+    calculate :referredType, :atom, expr(entity.referredType) do
       description "the referredType of the related entity instance"
     end
 
-    calculate :type, :string, expr(entity.type) do
+    calculate :type, :atom, expr(entity.type) do
       description "the type of the related entity instance"
     end
   end

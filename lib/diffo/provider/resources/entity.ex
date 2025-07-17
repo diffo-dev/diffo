@@ -67,7 +67,7 @@ defmodule Diffo.Provider.Entity do
 
   relationships do
     has_many :entity_refs, Diffo.Provider.EntityRef do
-      destination_attribute :entity_id
+      #destination_attribute :entity_id
       public? true
     end
   end
