@@ -24,6 +24,7 @@ defmodule Diffo.Provider.PartyRef do
 
   jason do
     pick([:href, :name, :role, :referredType, :type])
+
     customize(fn result, record ->
       result
       |> id(record)
@@ -123,7 +124,10 @@ defmodule Diffo.Provider.PartyRef do
   end
 
   preparations do
-    prepare build(load: [:href, :name, :referredType, :type, :instance, :party], sort: [updated_at: :asc])
+    prepare build(
+              load: [:href, :name, :referredType, :type, :instance, :party],
+              sort: [updated_at: :asc]
+            )
   end
 
   calculations do
@@ -149,8 +153,10 @@ defmodule Diffo.Provider.PartyRef do
   """
   def id(result, record) do
     party = Map.get(record, :party) |> IO.inspect(label: :party)
+
     if is_struct(party, Diffo.Provider.Party) do
       id = Map.get(party, :id)
+
       if id != nil do
         result |> Diffo.Util.set(:id, id)
       else

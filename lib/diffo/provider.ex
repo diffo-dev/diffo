@@ -187,6 +187,7 @@ defmodule Diffo.Provider do
       define :create_entity, action: :create
       define :get_entity_by_id, action: :read, get_by: :id
       define :list_entities, action: :list
+      define :find_entities_by_id, action: :find_by_id, args: [:query]
       define :find_entities_by_name, action: :find_by_name, args: [:query]
       define :update_entity, action: :update
       define :delete_entity, action: :destroy
@@ -196,7 +197,6 @@ defmodule Diffo.Provider do
       define :create_entity_ref, action: :create
       define :get_entity_ref_by_id, action: :read, get_by: :id
       define :list_entity_refs, action: :list
-      define :find_entity_refs_by_entity_id, action: :find_by_entity_id, args: [:query]
 
       define :list_entity_refs_by_entity_id,
         action: :list_entity_refs_by_entity_id,

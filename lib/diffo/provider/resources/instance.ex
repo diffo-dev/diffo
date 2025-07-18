@@ -281,7 +281,7 @@ defmodule Diffo.Provider.Instance do
       argument :specified_by, :uuid
 
       change manage_relationship(:specified_by, :specification, type: :append_and_remove)
-      #change load [:href, :external_identifiers]
+      # change load [:href, :external_identifiers]
     end
 
     read :list do
@@ -407,9 +407,13 @@ defmodule Diffo.Provider.Instance do
     calculate :href,
               :string,
               expr(
-                type <> "InventoryManagement/v" <> specification.tmf_version <>
-                  "/" <> type <>
-                  "/" <> specification.name <>
+                type <>
+                  "InventoryManagement/v" <>
+                  specification.tmf_version <>
+                  "/" <>
+                  type <>
+                  "/" <>
+                  specification.name <>
                   "/" <> id
               ) do
       description "the inventory href of the service or resource instance"
@@ -421,8 +425,10 @@ defmodule Diffo.Provider.Instance do
   """
   def category(result, record) do
     specification = Map.get(record, :specification)
+
     if is_struct(specification, Diffo.Provider.Specification) do
       category = Map.get(specification, :category)
+
       if category != nil do
         result |> Diffo.Util.set(:category, category)
       else
@@ -438,8 +444,10 @@ defmodule Diffo.Provider.Instance do
   """
   def description(result, record) do
     specification = Map.get(record, :specification)
+
     if is_struct(specification, Diffo.Provider.Specification) do
       description = Map.get(specification, :description)
+
       if description != nil do
         result |> Diffo.Util.set(:description, description)
       else
@@ -502,12 +510,16 @@ defmodule Diffo.Provider.Instance do
       supporting_services =
         service_relationships
         |> Enum.filter(fn relationship -> relationship.alias != nil end)
-        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
+        |> Enum.into([], fn aliased ->
+          Diffo.Provider.Reference.reference(aliased, :target_href)
+        end)
 
       supporting_resources =
         resource_relationships
         |> Enum.filter(fn relationship -> relationship.alias != nil end)
-        |> Enum.into([], fn aliased -> Diffo.Provider.Reference.reference(aliased, :target_href) end)
+        |> Enum.into([], fn aliased ->
+          Diffo.Provider.Reference.reference(aliased, :target_href)
+        end)
 
       result
       |> Diffo.Util.remove(:forward_relationships)

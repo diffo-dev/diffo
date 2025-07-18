@@ -149,8 +149,10 @@ defmodule Diffo.Provider.PlaceRef do
   """
   def id(result, record) do
     place = Map.get(record, :place)
+
     if is_struct(place, Diffo.Provider.Place) do
       id = Map.get(place, :id)
+
       if id != nil do
         result |> Diffo.Util.set(:id, id)
       else

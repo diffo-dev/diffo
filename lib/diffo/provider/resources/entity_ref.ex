@@ -91,17 +91,6 @@ defmodule Diffo.Provider.EntityRef do
       filter expr(entity_id == ^arg(:entity_id))
     end
 
-    read :find_by_entity_id do
-      description "finds entity refs by entity id"
-      get? false
-
-      argument :query, :ci_string do
-        description "Return only entity refs with entity_ids including the given value."
-      end
-
-      filter expr(contains(entity_id, ^arg(:query)))
-    end
-
     update :update do
       description "updates the entity ref role"
       accept [:role]
@@ -115,7 +104,7 @@ defmodule Diffo.Provider.EntityRef do
   end
 
   preparations do
-    prepare build(load: [:href, :name, :referredType, :type], sort: [role: :asc])
+    prepare build(load: [:href, :name, :referredType, :type], sort: [inserted_at: :desc])
   end
 
   calculations do

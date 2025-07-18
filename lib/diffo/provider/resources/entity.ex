@@ -67,7 +67,7 @@ defmodule Diffo.Provider.Entity do
 
   relationships do
     has_many :entity_refs, Diffo.Provider.EntityRef do
-      #destination_attribute :entity_id
+      # destination_attribute :entity_id
       public? true
     end
   end
@@ -81,12 +81,23 @@ defmodule Diffo.Provider.Entity do
       upsert? true
     end
 
+    read :find_by_id do
+      description "finds entity by id"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only entities with id including the given value."
+      end
+
+      filter expr(contains(id, ^arg(:query)))
+    end
+
     read :find_by_name do
       description "finds entity by name"
       get? false
 
       argument :query, :ci_string do
-        description "Return only parties with names including the given value."
+        description "Return only entities with names including the given value."
       end
 
       filter expr(contains(name, ^arg(:query)))
