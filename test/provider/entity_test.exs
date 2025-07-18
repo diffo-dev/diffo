@@ -42,6 +42,33 @@ defmodule Diffo.Provider.EntityTest do
       assert List.last(entities).id == "33db60a1-62bf-4c11-abf3-265287a729c1"
     end
 
+    test "find entities by id - success" do
+      Diffo.Provider.create_entity!(%{
+        id: "COR000000123456",
+        referredType: :cost,
+        name: "2025-01"
+      })
+
+      Diffo.Provider.create_entity!(%{
+        id: "22b85e20-06a9-4e51-baa3-41c2a72958c5",
+        href:
+          "serviceProblemManagement/v4/serviceProblem/nbnAccess/22b85e20-06a9-4e51-baa3-41c2a72958c5",
+        referredType: :serviceProblem
+      })
+
+      Diffo.Provider.create_entity!(%{
+        id: "COR000000767342",
+        referredType: :cost,
+        name: "2025-01"
+      })
+
+      entities = Diffo.Provider.find_entities_by_id!("COR")
+      assert length(entities) == 2
+      # should be sorted
+      assert List.first(entities).id == "COR000000123456"
+      assert List.last(entities).id == "COR000000767342"
+    end
+
     test "find entities by name - success" do
       Diffo.Provider.create_entity!(%{
         id: "COR000000123456",
