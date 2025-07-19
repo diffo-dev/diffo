@@ -245,13 +245,8 @@ defmodule Diffo.Provider.SpecificationTest do
     test "delete specification - failure, related instance" do
       specification = Diffo.Provider.create_specification!(%{name: "bdslAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      # TODO this fails but with an exception which doesn't match the expected error
-      try do
-        {:error, _result} = Diffo.Provider.delete_specification!(specification)
-      rescue
-        _error ->
-          :ok
-      end
+      
+      {:error, _result} = Diffo.Provider.delete_specification!(specification)
 
       # now delete the instance and we should be able to delete the specification
       :ok = Diffo.Provider.delete_instance(instance)

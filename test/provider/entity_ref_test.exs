@@ -117,14 +117,13 @@ defmodule Diffo.Provider.EntityRefTest do
         entity_id: entity3.id
       })
 
-      entity_refs = Diffo.Provider.list_entity_refs_by_instance_id!(instance1.id) |> IO.inspect()
+      entity_refs = Diffo.Provider.list_entity_refs_by_instance_id!(instance1.id)
       assert length(entity_refs) == 2
       # should be sorted
       assert List.first(entity_refs).entity_id == "11b6ba17-2865-41c5-b469-2939249631e8"
       assert List.last(entity_refs).entity_id == "33db60a1-62bf-4c11-abf3-265287a729c1"
     end
 
-    @tag debug: true
     test "list entity refs by related entity id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -174,7 +173,6 @@ defmodule Diffo.Provider.EntityRefTest do
 
       entity_refs =
         Diffo.Provider.list_entity_refs_by_entity_id!(entity2.id)
-        |> IO.inspect(label: :list_entity_refs_by_entity_id)
 
       assert length(entity_refs) == 1
 

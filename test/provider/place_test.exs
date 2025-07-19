@@ -331,6 +331,7 @@ defmodule Diffo.Provider.PlaceTest do
       {:error, _error} = Diffo.Provider.get_place_by_id(place.id)
     end
 
+    @tag debug: true
     test "delete place - failure, related PlaceRef" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -342,6 +343,7 @@ defmodule Diffo.Provider.PlaceTest do
           href: "place/nbnco/LOC000000899353",
           referredType: :GeographicAddress
         })
+        |> IO.inspect(label: :place)
 
       place_ref =
         Diffo.Provider.create_place_ref!(%{
@@ -349,7 +351,9 @@ defmodule Diffo.Provider.PlaceTest do
           role: :CustomerSite,
           place_id: place.id
         })
+        |> IO.inspect(label: :place_ref)
 
+      # we should not be able to delete the place if related to place_refs
       {:error, _error} = Diffo.Provider.delete_place(place)
       # now delete the place_ref and we should be able to delete the place
       :ok = Diffo.Provider.delete_place_ref(place_ref)
