@@ -119,9 +119,8 @@ defmodule Diffo.Provider.EntityRefTest do
 
       entity_refs = Diffo.Provider.list_entity_refs_by_instance_id!(instance1.id)
       assert length(entity_refs) == 2
-      # should be sorted
-      assert List.first(entity_refs).entity_id == "11b6ba17-2865-41c5-b469-2939249631e8"
-      assert List.last(entity_refs).entity_id == "33db60a1-62bf-4c11-abf3-265287a729c1"
+      # should be sorted newest entity ref to oldest
+      assert hd(entity_refs).entity_id == "33db60a1-62bf-4c11-abf3-265287a729c1"
     end
 
     test "list entity refs by related entity id - success" do
@@ -490,7 +489,7 @@ defmodule Diffo.Provider.EntityRefTest do
   end
 
   describe "Diffo.Provider delete EntityRefs" do
-    test "delete entity_ref with related instance - success" do
+    test "delete entity_ref with related instance and entity - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 

@@ -355,13 +355,7 @@ defmodule Diffo.Provider.EntityTest do
           entity_id: entity.id
         })
 
-      # TODO this fails but with an exception which doesn't match the expected error
-      try do
-        {:error, _error} = Diffo.Provider.delete_entity(entity)
-      rescue
-        _error ->
-          :ok
-      end
+      {:error, _error} = Diffo.Provider.delete_entity(entity) |> IO.inspect(label: :expected_error)
 
       # now delete the entity_ref and we should be able to delete the entity
       Diffo.Provider.delete_entity_ref!(entity_ref)
