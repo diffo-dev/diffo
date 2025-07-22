@@ -20,6 +20,10 @@ defmodule Diffo.Provider.Party do
       {:notes, :AUTHORS, :outgoing}
     ])
 
+    guard([
+      {:OWNS, :outgoing, :ExternalIdentifier}
+    ])
+
     translate(id: :partyId)
   end
 

@@ -353,7 +353,9 @@ defmodule Diffo.Provider.PartyTest do
           owner_id: party.id
         })
 
-      {:error, _error} = Diffo.Provider.delete_party(party)
+      {:error, error} = Diffo.Provider.delete_party(party)
+      assert is_struct(error, Ash.Error.Invalid)
+
       # now delete the external_identifier and we should be able to delete the party
       :ok = Diffo.Provider.delete_external_identifier(external_identifier)
       :ok = Diffo.Provider.delete_party(party)
@@ -378,13 +380,8 @@ defmodule Diffo.Provider.PartyTest do
           party_id: party.id
         })
 
-      # TODO this fails but with an exception which doesn't match the expected error
-      try do
-        {:error, _error} = Diffo.Provider.delete_party(party)
-      rescue
-        _error ->
-          :ok
-      end
+      {:error, error} = Diffo.Provider.delete_party(party) |> IO.inspect
+      assert is_struct(error, Ash.Error.Invalid)
 
       # now delete the party_ref and we should be able to delete the party
       :ok = Diffo.Provider.delete_party_ref(party_ref)

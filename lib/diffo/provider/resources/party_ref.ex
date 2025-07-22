@@ -125,8 +125,8 @@ defmodule Diffo.Provider.PartyRef do
 
   preparations do
     prepare build(
-              load: [:href, :name, :referredType, :type, :instance, :party],
-              sort: [updated_at: :asc]
+              load: [:href, :name, :referredType, :type, :instance],
+              sort: [inserted_at: :desc]
             )
   end
 
@@ -152,7 +152,7 @@ defmodule Diffo.Provider.PartyRef do
   Assists in encoding party ref id
   """
   def id(result, record) do
-    party = Map.get(record, :party) |> IO.inspect(label: :party)
+    party = Map.get(record, :party)
 
     if is_struct(party, Diffo.Provider.Party) do
       id = Map.get(party, :id)

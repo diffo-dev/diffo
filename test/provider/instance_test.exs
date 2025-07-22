@@ -1156,13 +1156,8 @@ defmodule Diffo.Provider.InstanceTest do
           target_id: child_instance.id
         })
 
-      # TODO this fails but with an exception which doesn't match the expected error
-      try do
-        {:error, _result} = Diffo.Provider.delete_instance!(parent_instance)
-      rescue
-        _error ->
-          :ok
-      end
+      {:error, error} = Diffo.Provider.delete_instance(parent_instance)
+      assert is_struct(error, Ash.Error.Invalid)
 
       # now delete the relationships and we should be able to delete the parent instance
       :ok = Diffo.Provider.delete_relationship(forward_relationship)

@@ -538,13 +538,8 @@ defmodule Diffo.Provider.RelationshipTest do
           type: :relationship
         })
 
-      # TODO this fails but with an exception which doesn't match the expected error
-      try do
-        {:error, _result} = Diffo.Provider.delete_relationship(relationship)
-      rescue
-        _error ->
-          :ok
-      end
+      {:error, error} = Diffo.Provider.delete_relationship(relationship)
+      assert is_struct(error, Ash.Error.Invalid)
 
       # now delete the feature characteristic and we should be able to delete the relationship
       :ok = Diffo.Provider.delete_characteristic(characteristic)

@@ -158,7 +158,7 @@ defmodule Diffo.Provider.PartyRefTest do
         party_id: party2.id
       })
 
-      party_refs = Diffo.Provider.list_party_refs_by_instance_id!(instance1.id)
+      party_refs = Diffo.Provider.list_party_refs_by_instance_id!(instance1.id) |> IO.inspect()
       assert length(party_refs) == 3
       # should be sorted
       assert List.first(party_refs).party_id == "IND000000897353"

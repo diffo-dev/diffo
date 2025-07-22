@@ -281,7 +281,7 @@ defmodule Diffo.Provider.Instance do
       argument :specified_by, :uuid
 
       change manage_relationship(:specified_by, :specification, type: :append_and_remove)
-      # change load [:href, :external_identifiers]
+      change load [:href, :external_identifiers]
     end
 
     read :list do
@@ -398,7 +398,7 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-              load: [:forward_relationships],
+              load: [:href, :forward_relationships],
               sort: [inserted_at: :desc]
             )
   end
