@@ -19,6 +19,10 @@ defmodule Diffo.Provider.Feature do
       {:featureCharacteristic, :DEFINES, :incoming}
     ])
 
+    guard([
+      {:DEFINES, :incoming, :Characteristic}
+    ])
+
     translate(id: :uuid)
   end
 

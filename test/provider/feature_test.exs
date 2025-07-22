@@ -151,13 +151,8 @@ defmodule Diffo.Provider.FeatureTest do
           type: :feature
         })
 
-      # TODO this fails but with an exception which doesn't match the expected error
-      try do
-        {:error, _result} = Diffo.Provider.delete_feature!(feature)
-      rescue
-        _error ->
-          :ok
-      end
+      {:error, error} = Diffo.Provider.delete_feature(feature)
+      assert is_struct(error, Ash.Error.Invalid)
 
       # now delete the feature characteristic and we should be able to delete the feature
       :ok = Diffo.Provider.delete_characteristic(characteristic1)
