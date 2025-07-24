@@ -61,15 +61,47 @@ defmodule Diffo.Provider.FeatureTest do
       assert feature.isEnabled == true
     end
 
-    test "create duplicate feature on same instance - failure" do
-      specification = Diffo.Provider.create_specification!(%{name: "evc"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+    test "create feature with different characteristic - success" do
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :encapsulation,
+          value: :qinq,
+          type: :feature
+        })
 
-      _first_feature =
-        Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :autoNegotiate})
+      second_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :evpl,
+          type: :feature
+        })
 
-      {:error, _error} =
-        Diffo.Provider.create_feature(%{instance_id: instance.id, name: :autoNegotiate})
+      Diffo.Provider.create_feature!(%{
+          name: :restriction,
+          characteristics: [first_characteristic.id, second_characteristic.id]
+        })
+    end
+
+    test "create duplicate characteristic on same feature - failure" do
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :fraudHeavy,
+          type: :feature
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :fraudLight,
+          type: :feature
+        })
+
+      {:error, _} =
+        Diffo.Provider.create_feature(%{
+          name: :restriction,
+          characteristics: [first_characteristic.id, second_characteristic.id]
+        })
     end
   end
 

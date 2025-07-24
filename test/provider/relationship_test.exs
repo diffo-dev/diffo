@@ -291,6 +291,69 @@ defmodule Diffo.Provider.RelationshipTest do
       assert relationship.target_href ==
                "resourceInventoryManagement/v4/resource/can/#{resource_instance.id}"
     end
+
+    test "create relationship with characteristics - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "evc"})
+
+      first_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "first"})
+
+      second_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "second"})
+
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :role,
+          value: "worker",
+          type: :relationship
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :evpl,
+          type: :relationship
+        })
+
+      Diffo.Provider.create_relationship!(%{
+          type: :uses,
+          source_id: first_instance.id,
+          target_id: second_instance.id,
+          characteristics: [first_characteristic.id, second_characteristic.id]
+        })
+    end
+
+    test "create duplicate characteristic on same relationship - failure" do
+      specification = Diffo.Provider.create_specification!(%{name: "evc"})
+
+      first_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "first"})
+
+      second_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "second"})
+
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :role,
+          value: "worker",
+          type: :relationship
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :role,
+          value: "protect",
+          type: :relationship
+        })
+
+      {:error, _} =
+        Diffo.Provider.create_relationship(%{
+          type: :uses,
+          source_id: first_instance.id,
+          target_id: second_instance.id,
+          characteristics: [first_characteristic.id, second_characteristic.id]
+        })
+    end
   end
 
   describe "Diffo.Provider updated Relationships" do
@@ -353,20 +416,23 @@ defmodule Diffo.Provider.RelationshipTest do
       parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
       child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
 
-      relationship =
-        Diffo.Provider.create_relationship!(%{
-          type: :bestows,
-          source_id: parent_instance.id,
-          target_id: child_instance.id
-        })
-
-      _characteristic =
+      characteristic =
         Diffo.Provider.create_characteristic!(%{
-          relationship_id: relationship.id,
           name: :role,
           value: :gateway,
           type: :relationship
         })
+
+      relationship =
+        Diffo.Provider.create_relationship!(%{
+          type: :bestows,
+          source_id: parent_instance.id,
+          target_id: child_instance.id,
+          characteristic_ids: [characteristic.id]
+        })
+        |> IO.inspect(label: :relationship)
+
+      relationship |> Ash.reload!() |> IO.inspect(label: :reloaded_relationship)
 
       parent_service_relationships =
         Diffo.Provider.list_service_relationships_from!(parent_instance.id)
@@ -392,20 +458,20 @@ defmodule Diffo.Provider.RelationshipTest do
           type: :resource
         })
 
-      relationship =
-        Diffo.Provider.create_relationship!(%{
-          type: :isAssigned,
-          source_id: service_instance.id,
-          target_id: resource_instance.id
-        })
-
-      _characteristic =
+      characteristic =
         Diffo.Provider.create_characteristic!(%{
-          relationship_id: relationship.id,
           name: :role,
           value: :primary,
           type: :relationship
         })
+
+      Diffo.Provider.create_relationship!(%{
+          type: :isAssigned,
+          source_id: service_instance.id,
+          target_id: resource_instance.id,
+          characteristic_ids: [characteristic.id]
+        })
+        |> IO.inspect(label: :relationship)
 
       parent_resource_relationships =
         Diffo.Provider.list_resource_relationships_from!(service_instance.id)
@@ -484,14 +550,14 @@ defmodule Diffo.Provider.RelationshipTest do
         type: :assignedTo,
         target_type: :service,
         target_href: service_instance.href,
-        characteristic: nil
+        characteristics: nil
       }
 
       expected_is_assigned_relationship = %Diffo.Provider.Relationship{
         type: :isAssigned,
         target_type: :resource,
         target_href: resource_instance.href,
-        characteristic: nil
+        characteristics: nil
       }
 
       refute expected_is_assigned_relationship --- is_assigned_relationship
@@ -523,25 +589,25 @@ defmodule Diffo.Provider.RelationshipTest do
       parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
       child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
 
-      relationship =
-        Diffo.Provider.create_relationship!(%{
-          type: :bestows,
-          source_id: parent_instance.id,
-          target_id: child_instance.id
-        })
-
       characteristic =
         Diffo.Provider.create_characteristic!(%{
-          relationship_id: relationship.id,
           name: :role,
           value: :gateway,
           type: :relationship
         })
 
+      relationship =
+        Diffo.Provider.create_relationship!(%{
+          type: :bestows,
+          source_id: parent_instance.id,
+          target_id: child_instance.id,
+          characteristic_ids: [characteristic.id]
+        })
+
       {:error, error} = Diffo.Provider.delete_relationship(relationship)
       assert is_struct(error, Ash.Error.Invalid)
 
-      # now delete the feature characteristic and we should be able to delete the relationship
+      # now delete the relationship characteristic and we should be able to delete the relationship
       :ok = Diffo.Provider.delete_characteristic(characteristic)
       :ok = Diffo.Provider.delete_relationship(relationship)
       {:error, _error} = Diffo.Provider.get_relationship_by_id(relationship.id)

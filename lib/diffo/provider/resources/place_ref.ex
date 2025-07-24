@@ -124,9 +124,9 @@ defmodule Diffo.Provider.PlaceRef do
 
   preparations do
     prepare build(
-        load: [:href, :name, :referredType, :type],
-        sort: [inserted_at: :desc]
-      )
+              load: [:href, :name, :referredType, :type],
+              sort: [inserted_at: :desc]
+            )
   end
 
   calculations do

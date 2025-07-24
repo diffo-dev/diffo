@@ -163,6 +163,96 @@ defmodule Diffo.Provider.InstanceTest do
     #   {:ok, specification} = Diffo.Provider.create_specification(%{name: "radioAccess", description: "Radio Access Service", category: "connectivity"})
     #   {:error, _specification} = Diffo.Provider.create_instance(%{specified_by: specification.id, type: :service})
     # end
+
+    test "create instance with characteristics - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "evc"})
+
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :port1,
+          value: :eth,
+          type: :instance
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic(%{
+          name: :port2,
+          value: :eth,
+          type: :instance
+        })
+
+      Diffo.Provider.create_instance!(%{
+        specified_by: specification.id,
+        characteristics: [first_characteristic.id, second_characteristic.id]
+      })
+    end
+
+    test "create instance with duplicate characteristics - failure" do
+      specification = Diffo.Provider.create_specification!(%{name: "evc"})
+
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :port,
+          value: "1",
+          type: :instance
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic(%{
+          name: :port,
+          value: "2",
+          type: :instance
+        })
+
+      {:error, _} =
+        Diffo.Provider.create_instance(%{
+          specified_by: specification.id,
+          characteristics: [first_characteristic.id, second_characteristic.id]
+        })
+    end
+
+    test "create instance with features - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "evc"})
+
+      first_feature =
+        Diffo.Provider.create_feature!(%{
+          name: :autoscaling,
+          isEnabled: true
+        })
+
+      second_feature =
+        Diffo.Provider.create_feature!(%{
+          name: :suspension,
+          isEnabled: false
+        })
+
+      Diffo.Provider.create_instance!(%{
+        specified_by: specification.id,
+        features: [first_feature.id, second_feature.id]
+      })
+    end
+
+    test "create instance with duplicate features - failure" do
+      specification = Diffo.Provider.create_specification!(%{name: "evc"})
+
+      first_feature =
+        Diffo.Provider.create_feature!(%{
+          name: :autoscaling,
+          isEnabled: true
+        })
+
+      second_feature =
+        Diffo.Provider.create_feature!(%{
+          name: :autoscaling,
+          isEnabled: false
+        })
+
+      {:error, _} =
+        Diffo.Provider.create_instance(%{
+          specified_by: specification.id,
+          features: [first_feature.id, second_feature.id]
+        })
+    end
   end
 
   describe "Diffo.Provider update Instances" do

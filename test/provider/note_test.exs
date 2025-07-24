@@ -103,7 +103,7 @@ defmodule Diffo.Provider.NoteTest do
         author_id: t3_party.id
       })
 
-      notes = Diffo.Provider.find_notes_by_note_id!("NOT") |> IO.inspect(label: :sorted_notes)
+      notes = Diffo.Provider.find_notes_by_note_id!("NOT")
       assert length(notes) == 2
       # should be sorted by most recent first
       assert List.first(notes).note_id == "NOT010000343853"
@@ -159,7 +159,7 @@ defmodule Diffo.Provider.NoteTest do
         author_id: t3_party.id
       })
 
-      notes = Diffo.Provider.list_notes_by_instance_id!(instance1.id) |> IO.inspect()
+      notes = Diffo.Provider.list_notes_by_instance_id!(instance1.id)
       assert length(notes) == 2
       # should be sorted by descending timestamp
       assert List.first(notes).author_id == "T3_CONNECTIVITY"
@@ -457,7 +457,6 @@ defmodule Diffo.Provider.NoteTest do
       updated_note =
         note
         |> Diffo.Provider.update_note_author!(%{author_id: nil})
-        |> IO.inspect(label: :updated_note)
 
       assert updated_note.author_id == nil
     end
