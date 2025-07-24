@@ -14,6 +14,12 @@ defmodule Diffo.Provider.Characteristic do
   neo4j do
     label(:Characteristic)
 
+    relate([
+      {:instance, :DEFINES, :outgoing},
+      {:feature, :DEFINES, :outgoing},
+      {:relationship, :DEFINES, :outgoing}
+    ])
+
     guard([
       {:DEFINES, :outgoing, :Instance},
       {:DEFINES, :outgoing, :Feature},
@@ -21,6 +27,8 @@ defmodule Diffo.Provider.Characteristic do
     ])
 
     translate(id: :uuid)
+
+    skip([:instance_id, :feature_id, :relationship_id])
   end
 
   jason do
@@ -62,12 +70,12 @@ defmodule Diffo.Provider.Characteristic do
   end
 
   relationships do
-    belongs_to :feature, Diffo.Provider.Feature do
+    belongs_to :instance, Diffo.Provider.Instance do
       allow_nil? true
       public? true
     end
 
-    belongs_to :instance, Diffo.Provider.Instance do
+    belongs_to :feature, Diffo.Provider.Feature do
       allow_nil? true
       public? true
     end
@@ -79,21 +87,15 @@ defmodule Diffo.Provider.Characteristic do
   end
 
   actions do
-    defaults [:read, :destroy]
+    defaults [:destroy]
 
     create :create do
-      description "creates a characteristic, relating it to an instance, feature or relationship"
+      description "creates a characteristic"
       accept [:name, :value, :type]
+    end
 
-      argument :instance_id, :uuid
-      argument :feature_id, :uuid
-      argument :relationship_id, :uuid
-
-      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
-      change manage_relationship(:feature_id, :feature, type: :append_and_remove)
-      change manage_relationship(:relationship_id, :relationship, type: :append_and_remove)
-
-      change load [:type]
+    read :read do
+      primary? true
     end
 
     read :find_by_name do
@@ -111,71 +113,15 @@ defmodule Diffo.Provider.Characteristic do
       description "lists all characteristics"
     end
 
-    read :list_characteristics_by_related_id do
-      description "lists characteristics by related id and type"
-      argument :related_id, :uuid
-      argument :type, :atom
-
-      filter expr(
-               (relationship_id == ^arg(:related_id) or instance_id == ^arg(:related_id) or
-                  feature_id == ^arg(:related_id)) and type == ^arg(:type)
-             )
-    end
-
     update :update do
+      primary? true
       description "updates the characteristic value"
       accept [:value]
     end
   end
 
-  identities do
-    identity :feature_characteristic_uniqueness, [:feature_id, :name] do
-      message "another feature characteristic exists with same name"
-    end
-
-    identity :instance_characteristic_uniqueness, [:instance_id, :name] do
-      message "another instance characteristic exists with same name"
-    end
-
-    identity :relationship_characteristic_uniqueness, [:relationship_id, :type, :name] do
-      message "another relationship characteristic exists with same name and direction"
-    end
-  end
-
   preparations do
     prepare build(sort: [name: :asc])
-  end
-
-  validations do
-    validate present(:feature) do
-      where one_of(:type, [:feature])
-      message "feature_id must be supplied"
-    end
-
-    validate absent(:feature) do
-      where negate(one_of(:type, [:feature]))
-      message "feature_id must not be supplied"
-    end
-
-    validate present(:instance) do
-      where one_of(:type, [:instance])
-      message "instance_id must be supplied"
-    end
-
-    validate absent(:instance) do
-      where negate(one_of(:type, [:instance]))
-      message "instance_id must not be supplied"
-    end
-
-    validate present(:relationship) do
-      where one_of(:type, [:relationship])
-      message "relationship_id must be supplied"
-    end
-
-    validate absent(:relationship) do
-      where negate(one_of(:type, [:relationship]))
-      message "relationship_id must not be supplied"
-    end
   end
 
   @doc """

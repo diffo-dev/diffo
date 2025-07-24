@@ -3,7 +3,7 @@ defmodule Diffo.Validations.IsRelatedDifferent do
   Diffo - TMF Service and Resource Management with a difference
   Copyright Matt Beanland beanland@live.com.au
 
-  IsTwinOtherWhich - Ash Resource Validation checking related Instance has different attribute value
+  IsRelatedDifferent - Ash Resource Validation checking related Instance has different attribute value
   """
   use Ash.Resource.Validation
 
@@ -21,6 +21,8 @@ defmodule Diffo.Validations.IsRelatedDifferent do
   end
 
   @impl true
+  @spec validate(Ash.Changeset.t(), nil | maybe_improper_list() | map(), any()) ::
+          :ok | {:error, [{:field, any()} | {:message, <<_::256>>}, ...]}
   def validate(changeset, opts, _context) do
     case Ash.Changeset.fetch_argument_or_change(changeset, opts[:related_id]) do
       :error ->

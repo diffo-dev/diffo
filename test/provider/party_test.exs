@@ -380,7 +380,7 @@ defmodule Diffo.Provider.PartyTest do
           party_id: party.id
         })
 
-      {:error, error} = Diffo.Provider.delete_party(party) |> IO.inspect
+      {:error, error} = Diffo.Provider.delete_party(party) |> IO.inspect()
       assert is_struct(error, Ash.Error.Invalid)
 
       # now delete the party_ref and we should be able to delete the party

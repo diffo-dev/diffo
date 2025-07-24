@@ -43,11 +43,16 @@ defmodule Diffo.Provider do
       define :terminate_service, action: :terminate
       define :status_instance, action: :status
       define :specify_instance, action: :specify
+      define :relate_instance_features, action: :relate_features
+      define :unrelate_instance_features, action: :unrelate_features
+      define :relate_instance_characteristics, action: :relate_characteristics
+      define :unrelate_instance_characteristics, action: :unrelate_characteristics
       define :delete_instance, action: :destroy
     end
 
     resource Diffo.Provider.Relationship do
       define :create_relationship, action: :create
+
       define :get_relationship_by_id, action: :read, get_by: :id
       define :list_relationships, action: :list
 
@@ -60,6 +65,8 @@ defmodule Diffo.Provider do
         args: [:instance_id]
 
       define :update_relationship, action: :update
+      define :relate_relationship_characteristics, action: :relate_characteristics
+      define :unrelate_relationship_characteristics, action: :unrelate_characteristics
       define :delete_relationship, action: :destroy
     end
 
@@ -67,11 +74,6 @@ defmodule Diffo.Provider do
       define :create_characteristic, action: :create
       define :get_characteristic_by_id, action: :read, get_by: :id
       define :list_characteristics, action: :list
-
-      define :list_characteristics_by_related_id,
-        action: :list_characteristics_by_related_id,
-        args: [:related_id, :type]
-
       define :update_characteristic, action: :update
       define :delete_characteristic, action: :destroy
     end
@@ -86,6 +88,8 @@ defmodule Diffo.Provider do
         args: [:related_id]
 
       define :update_feature, action: :update
+      define :relate_feature_characteristics, action: :relate_characteristics
+      define :unrelate_feature_characteristics, action: :unrelate_characteristics
       define :delete_feature, action: :destroy
     end
 

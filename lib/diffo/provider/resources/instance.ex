@@ -279,8 +279,12 @@ defmodule Diffo.Provider.Instance do
       description "creates a new instance of a service or resource according by specification id"
       accept [:id, :name, :type, :which]
       argument :specified_by, :uuid
+      argument :features, {:array, :uuid}
+      argument :characteristics, {:array, :uuid}
 
-      change manage_relationship(:specified_by, :specification, type: :append_and_remove)
+      change manage_relationship(:specified_by, :specification, type: :append)
+      change manage_relationship(:features, type: :append)
+      change manage_relationship(:characteristics, type: :append)
       change load [:href, :external_identifiers]
     end
 
@@ -390,6 +394,30 @@ defmodule Diffo.Provider.Instance do
       validate attribute_equals(:type, :service)
       accept [:service_operating_status]
     end
+
+    update :relate_features do
+      description "relates features to the instance"
+      argument :features, {:array, :uuid}
+      change manage_relationship(:features, type: :append)
+    end
+
+    update :unrelate_features do
+      description "unrelates features from the instance"
+      argument :features, {:array, :uuid}
+      change manage_relationship(:features, type: :remove)
+    end
+
+    update :relate_characteristics do
+      description "relates characteristics to the instance"
+      argument :characteristics, {:array, :uuid}
+      change manage_relationship(:characteristics, type: :append)
+    end
+
+    update :unrelate_characteristics do
+      description "unrelates characteristics from the instance"
+      argument :characteristics, {:array, :uuid}
+      change manage_relationship(:characteristics, type: :remove)
+    end
   end
 
   code_interface do
@@ -398,7 +426,7 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-              load: [:href, :forward_relationships],
+              load: [:href], #:forward_relationships
               sort: [inserted_at: :desc]
             )
   end

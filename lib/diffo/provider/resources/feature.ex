@@ -16,22 +16,24 @@ defmodule Diffo.Provider.Feature do
 
     relate([
       {:instance, :DEFINES, :outgoing},
-      {:featureCharacteristic, :DEFINES, :incoming}
+      {:characteristics, :DEFINES, :incoming}
     ])
 
     guard([
-      {:DEFINES, :incoming, :Characteristic}
+      {:DEFINES, :outgoing, :Instance}
     ])
 
     translate(id: :uuid)
+
+    skip([:instance_id])
   end
 
   jason do
-    pick([:name, :isEnabled, :featureCharacteristic])
+    pick([:name, :isEnabled, :characteristics])
 
     customize(fn result, _record ->
       result
-      |> Diffo.Util.suppress(:featureCharacteristic)
+      |> Diffo.Util.suppress_rename(:characteristics, :featureCharacteristic)
     end)
   end
 
@@ -53,6 +55,10 @@ defmodule Diffo.Provider.Feature do
       default true
     end
 
+    attribute :instance_id, :uuid do
+      allow_nil? false
+    end
+
     create_timestamp :inserted_at
 
     update_timestamp :updated_at
@@ -60,11 +66,11 @@ defmodule Diffo.Provider.Feature do
 
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
-      allow_nil? false
+      allow_nil? true
       public? true
     end
 
-    has_many :featureCharacteristic, Diffo.Provider.Characteristic do
+    has_many :characteristics, Diffo.Provider.Characteristic do
       public? true
     end
   end
@@ -73,11 +79,11 @@ defmodule Diffo.Provider.Feature do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a feature, related to an instance"
+      description "creates a feature, optionally with related characteristic"
       accept [:name, :isEnabled]
-      argument :instance_id, :uuid
+      argument :characteristics, {:array, :uuid}
 
-      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:characteristics, type: :append)
     end
 
     read :find_by_name do
@@ -102,8 +108,21 @@ defmodule Diffo.Provider.Feature do
     end
 
     update :update do
+      primary? true
       description "updates the feature isEnabled"
       accept [:isEnabled]
+    end
+
+    update :relate_characteristics do
+      description "relates characteristics to the feature"
+      argument :characteristics, {:array, :uuid}
+      change manage_relationship(:characteristics, type: :append)
+    end
+
+    update :unrelate_characteristics do
+      description "unrelates characteristics from the feature"
+      argument :characteristics, {:array, :uuid}
+      change manage_relationship(:characteristics, type: :remove)
     end
   end
 
@@ -114,7 +133,7 @@ defmodule Diffo.Provider.Feature do
   end
 
   preparations do
-    prepare build(load: [:featureCharacteristic], sort: [name: :asc])
+    prepare build(load: [:characteristics], sort: [name: :asc])
   end
 
   @doc """
