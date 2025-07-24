@@ -14,10 +14,10 @@ defmodule Diffo.Provider.Characteristic do
   neo4j do
     label(:Characteristic)
 
-    relate([
-      {:instance, :DEFINES, :outgoing},
-      {:feature, :DEFINES, :outgoing},
-      {:relationship, :DEFINES, :outgoing}
+    guard([
+      {:DEFINES, :outgoing, :Instance},
+      {:DEFINES, :outgoing, :Feature},
+      {:DEFINES, :outgoing, :Relationship}
     ])
 
     translate(id: :uuid)
