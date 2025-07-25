@@ -107,7 +107,7 @@ defmodule Diffo.Provider.Relationship do
       change manage_relationship(:source_id, :source, type: :append)
       change manage_relationship(:target_id, :target, type: :append)
       change manage_relationship(:characteristics, type: :append)
-      # change load [:target_type, :target_id, :target_href]
+      change load [:target_type, :target_id, :target_href]
     end
 
     read :list do
@@ -150,7 +150,7 @@ defmodule Diffo.Provider.Relationship do
 
   preparations do
     prepare build(
-              load: [:source_type, :source_href, :target_type, :target_href, :characteristics],
+              load: [:source, :target, :source_type, :source_href, :target_type, :target_href, :characteristics],
               sort: [alias: :asc, type: :asc]
             )
   end
@@ -165,9 +165,9 @@ defmodule Diffo.Provider.Relationship do
       message "a resource cannot have a supporting service"
     end
 
-    validate {Diffo.Validations.RelatedResourcesDifferent,
-              relationship: :characteristic, attribute: :name},
-             on: :update
+    #validate {Diffo.Validations.RelatedResourcesDifferent,
+    #          relationship: :characteristic, attribute: :name},
+    #        on: :update
   end
 
   calculations do
@@ -206,6 +206,7 @@ defmodule Diffo.Provider.Relationship do
     case instance_type do
       :service -> :serviceRelationship
       :resource -> :resourceRelationship
+      _ -> nil
     end
   end
 
@@ -223,6 +224,7 @@ defmodule Diffo.Provider.Relationship do
     case instance_type do
       :service -> :serviceRelationshipCharacteristic
       :resource -> :resourceRelationshipCharacteristic
+      _ -> nil
     end
   end
 

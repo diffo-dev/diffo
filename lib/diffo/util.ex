@@ -342,7 +342,14 @@ defmodule Diffo.Util do
     [a: 1, c: 2, d: 3]
     iex> Diffo.Util.rename(list, :c, :e)
     [a: 1, b: 2, d: 3]
+    iex> Diffo.Util.rename(list, :b, nil)
+    [a: 1, d: 3]
+
   """
+  def rename(list, tuple_key, nil) when is_list(list) do
+    list |> List.keydelete(tuple_key, 0)
+  end
+
   def rename(list, tuple_key, new_tuple_key) when is_list(list) do
     value = get(list, tuple_key)
     list |> List.keyreplace(tuple_key, 0, {new_tuple_key, value})
@@ -358,6 +365,8 @@ defmodule Diffo.Util do
     iex> list = [a: [1], b: [1], c: nil]
     iex> Diffo.Util.suppress_rename(list, :a, :d)
     [d: [1], b: [1], c: nil]
+    iex> Diffo.Util.suppress_rename(list, :a, nil)
+    [b: [1], c: nil]
 
   """
   def suppress_rename(list, tuple_key, new_tuple_key) when is_list(list) do

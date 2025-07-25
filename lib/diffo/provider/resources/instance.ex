@@ -426,7 +426,8 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-              load: [:href], #:forward_relationships
+              # :forward_relationships
+              load: [:href, :specification],
               sort: [inserted_at: :desc]
             )
   end
@@ -492,15 +493,15 @@ defmodule Diffo.Provider.Instance do
   def dates(result, record) do
     result
     |> Diffo.Util.set(
-      Diffo.Provider.Instance.derive_create_name(record.type),
+      Diffo.Provider.Instance.derive_create_date_name(record.type),
       Diffo.Util.to_iso8601(record.inserted_at)
     )
     |> Diffo.Util.set(
-      Diffo.Provider.Instance.derive_start_name(record.type),
+      Diffo.Provider.Instance.derive_start_date_name(record.type),
       Diffo.Util.to_iso8601(record.started_at)
     )
     |> Diffo.Util.set(
-      Diffo.Provider.Instance.derive_end_name(record.type),
+      Diffo.Provider.Instance.derive_end_date_name(record.type),
       Diffo.Util.to_iso8601(record.stopped_at)
     )
   end
@@ -577,6 +578,7 @@ defmodule Diffo.Provider.Instance do
     case specification_type do
       :serviceSpecification -> :service
       :resourceSpecification -> :resource
+      _ -> nil
     end
   end
 
@@ -594,6 +596,7 @@ defmodule Diffo.Provider.Instance do
     case type do
       :service -> :feature
       :resource -> :activationFeature
+      _ -> nil
     end
   end
 
@@ -611,60 +614,63 @@ defmodule Diffo.Provider.Instance do
     case type do
       :service -> :serviceCharacteristic
       :resource -> :resourceCharacteristic
+      _ -> nil
     end
   end
 
   @doc """
-  Derives the instance create date from the instance type
+  Derives the instance create date name from the instance type
   ## Examples
-    iex> Diffo.Provider.Instance.derive_create_name(:service)
+    iex> Diffo.Provider.Instance.derive_create_date_name(:service)
     :serviceDate
 
-    iex> Diffo.Provider.Instance.derive_create_name(:resource)
+    iex> Diffo.Provider.Instance.derive_create_date_name(:resource)
     nil
 
   """
 
-  def derive_create_name(type) do
+  def derive_create_date_name(type) do
     case type do
       :service -> :serviceDate
-      :resource -> nil
+      _ -> nil
     end
   end
 
   @doc """
-  Derives the instance start date from the instance type
+  Derives the instance start date name from the instance type
   ## Examples
-    iex> Diffo.Provider.Instance.derive_start_name(:service)
+    iex> Diffo.Provider.Instance.derive_start_date_name(:service)
     :startDate
 
-    iex> Diffo.Provider.Instance.derive_start_name(:resource)
+    iex> Diffo.Provider.Instance.derive_start_date_name(:resource)
     :startOperatingDate
 
   """
 
-  def derive_start_name(type) do
+  def derive_start_date_name(type) do
     case type do
       :service -> :startDate
       :resource -> :startOperatingDate
+      _ -> nil
     end
   end
 
   @doc """
-  Derives the instance end date from the instance type
+  Derives the instance end date name from the instance type
   ## Examples
-    iex> Diffo.Provider.Instance.derive_end_name(:service)
+    iex> Diffo.Provider.Instance.derive_end_date_name(:service)
     :endDate
 
-    iex> Diffo.Provider.Instance.derive_end_name(:resource)
+    iex> Diffo.Provider.Instance.derive_end_date_name(:resource)
     :endOperatingDate
 
   """
 
-  def derive_end_name(type) do
+  def derive_end_date_name(type) do
     case type do
       :service -> :endDate
       :resource -> :endOperatingDate
+      _ -> nil
     end
   end
 
@@ -683,6 +689,7 @@ defmodule Diffo.Provider.Instance do
     case which do
       :actual -> :expected
       :expected -> :actual
+      _ -> nil
     end
   end
 end
