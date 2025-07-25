@@ -71,11 +71,11 @@ defmodule Diffo.Provider.CharacteristicTest do
         })
 
       Diffo.Provider.create_relationship!(%{
-          type: :usedBy,
-          source_id: child_instance.id,
-          target_id: parent_instance.id,
-          characteristics: [characteristic.id]
-        })
+        type: :usedBy,
+        source_id: child_instance.id,
+        target_id: parent_instance.id,
+        characteristics: [characteristic.id]
+      })
 
       assert characteristic.name == :port
       assert characteristic.value == "port13"
@@ -241,7 +241,6 @@ defmodule Diffo.Provider.CharacteristicTest do
       {:error, _error} = Diffo.Provider.get_characteristic_by_id(characteristic.id)
     end
 
-    @tag debug: true
     test "delete characteristic with related instance - failure" do
       specification = Diffo.Provider.create_specification!(%{name: "evc"})
 
@@ -262,7 +261,9 @@ defmodule Diffo.Provider.CharacteristicTest do
       assert is_struct(error, Ash.Error.Invalid)
 
       # now unrelate the characteristic from the instance
-      Diffo.Provider.unrelate_instance_characteristics!(instance, %{characteristics: [characteristic.id]})
+      Diffo.Provider.unrelate_instance_characteristics!(instance, %{
+        characteristics: [characteristic.id]
+      })
 
       :ok = Diffo.Provider.delete_characteristic(characteristic)
       {:error, _error} = Diffo.Provider.get_characteristic_by_id(characteristic.id)

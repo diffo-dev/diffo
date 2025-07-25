@@ -101,16 +101,16 @@ defmodule Diffo.Provider.Feature do
       description "lists all features"
     end
 
-    read :list_features_by_related_id do
-      description "lists features by related id"
-      argument :related_id, :uuid
-      filter expr(instance_id == ^arg(:related_id))
+    update :update do
+      description "updates the feature"
+      accept [:isEnabled]
     end
 
-    update :update do
+    update :unrelate do
+      description "unrelates the feature from the instance"
       primary? true
-      description "updates the feature isEnabled"
-      accept [:isEnabled]
+      argument :instance, :uuid
+      change manage_relationship(:instance, type: :remove)
     end
 
     update :relate_characteristics do
@@ -123,12 +123,6 @@ defmodule Diffo.Provider.Feature do
       description "unrelates characteristics from the feature"
       argument :characteristics, {:array, :uuid}
       change manage_relationship(:characteristics, type: :remove)
-    end
-  end
-
-  identities do
-    identity :instance_feature_uniqueness, [:instance_id, :name] do
-      message "another instance feature exists with same name"
     end
   end
 

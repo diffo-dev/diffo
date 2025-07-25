@@ -120,6 +120,20 @@ defmodule Diffo.Provider.Characteristic do
     end
   end
 
+  identities do
+    identity :feature_characteristic_uniqueness, [:feature_id, :name] do
+      message "another feature characteristic exists with same name"
+    end
+
+    identity :instance_characteristic_uniqueness, [:instance_id, :name] do
+      message "another instance characteristic exists with same name"
+    end
+
+    identity :relationship_characteristic_uniqueness, [:relationship_id, :name] do
+      message "another relationship characteristic exists with same name and direction"
+    end
+  end
+
   preparations do
     prepare build(sort: [name: :asc])
   end

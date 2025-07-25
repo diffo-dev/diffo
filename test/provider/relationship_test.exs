@@ -316,11 +316,11 @@ defmodule Diffo.Provider.RelationshipTest do
         })
 
       Diffo.Provider.create_relationship!(%{
-          type: :uses,
-          source_id: first_instance.id,
-          target_id: second_instance.id,
-          characteristics: [first_characteristic.id, second_characteristic.id]
-        })
+        type: :uses,
+        source_id: first_instance.id,
+        target_id: second_instance.id,
+        characteristics: [first_characteristic.id, second_characteristic.id]
+      })
     end
 
     test "create duplicate characteristic on same relationship - failure" do
@@ -428,7 +428,7 @@ defmodule Diffo.Provider.RelationshipTest do
           type: :bestows,
           source_id: parent_instance.id,
           target_id: child_instance.id,
-          characteristic_ids: [characteristic.id]
+          characteristics: [characteristic.id]
         })
         |> IO.inspect(label: :relationship)
 
@@ -465,18 +465,22 @@ defmodule Diffo.Provider.RelationshipTest do
           type: :relationship
         })
 
-      Diffo.Provider.create_relationship!(%{
-          type: :isAssigned,
-          source_id: service_instance.id,
-          target_id: resource_instance.id,
-          characteristic_ids: [characteristic.id]
-        })
-        |> IO.inspect(label: :relationship)
+      relationship = Diffo.Provider.create_relationship!(%{
+        type: :isAssigned,
+        source_id: service_instance.id,
+        target_id: resource_instance.id,
+        characteristics: [characteristic.id]
+      })
+      |> IO.inspect(label: :relationship)
+
+      _read_relationship = Diffo.Provider.get_relationship_by_id!(relationship.id)
 
       parent_resource_relationships =
         Diffo.Provider.list_resource_relationships_from!(service_instance.id)
 
-      encoding = Jason.encode!(parent_resource_relationships)
+      reloaded_relationship = Ash.reload!(hd(parent_resource_relationships))
+
+      encoding = Jason.encode!([reloaded_relationship])
 
       assert encoding ==
                ~s([{\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{resource_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{resource_instance.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"primary\"}]}])
@@ -601,7 +605,7 @@ defmodule Diffo.Provider.RelationshipTest do
           type: :bestows,
           source_id: parent_instance.id,
           target_id: child_instance.id,
-          characteristic_ids: [characteristic.id]
+          characteristics: [characteristic.id]
         })
 
       {:error, error} = Diffo.Provider.delete_relationship(relationship)
