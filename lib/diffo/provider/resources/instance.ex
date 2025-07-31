@@ -286,6 +286,7 @@ defmodule Diffo.Provider.Instance do
       change manage_relationship(:features, type: :append)
       change manage_relationship(:characteristics, type: :append)
       change load [:href, :external_identifiers]
+      upsert? true
     end
 
     read :list do
@@ -426,8 +427,7 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-              # :forward_relationships
-              load: [:href, :specification],
+              load: [:href, :specification, :forward_relationships, :features, :characteristics],
               sort: [inserted_at: :desc]
             )
   end

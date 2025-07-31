@@ -465,13 +465,14 @@ defmodule Diffo.Provider.RelationshipTest do
           type: :relationship
         })
 
-      relationship = Diffo.Provider.create_relationship!(%{
-        type: :isAssigned,
-        source_id: service_instance.id,
-        target_id: resource_instance.id,
-        characteristics: [characteristic.id]
-      })
-      |> IO.inspect(label: :relationship)
+      relationship =
+        Diffo.Provider.create_relationship!(%{
+          type: :isAssigned,
+          source_id: service_instance.id,
+          target_id: resource_instance.id,
+          characteristics: [characteristic.id]
+        })
+        |> IO.inspect(label: :relationship)
 
       _read_relationship = Diffo.Provider.get_relationship_by_id!(relationship.id)
 
