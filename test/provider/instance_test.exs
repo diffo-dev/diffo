@@ -1,6 +1,7 @@
 defmodule Diffo.Provider.InstanceTest do
   @moduledoc false
   use ExUnit.Case
+  alias Diffo.Provider.Instance
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -110,7 +111,7 @@ defmodule Diffo.Provider.InstanceTest do
         Diffo.Provider.create_instance(%{specified_by: specification.id, id: not_a_uuid})
     end
 
-    test "create a duplicate service instance - failure" do
+    test "upsert a service instance - success" do
       uuid = UUID.uuid4()
 
       specification =
@@ -122,8 +123,11 @@ defmodule Diffo.Provider.InstanceTest do
 
       {:ok, _result} = Diffo.Provider.create_instance(%{specified_by: specification.id, id: uuid})
 
-      {:error, _error} =
+      {:ok, _result} =
         Diffo.Provider.create_instance(%{specified_by: specification.id, id: uuid})
+
+      instances = Instance |> Ash.read!()
+      assert length(instances) == 1
     end
 
     # TODO fix this test, it is failing as specified_instance_type calculation is not loaded when create validation occurs
@@ -175,7 +179,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       second_characteristic =
-        Diffo.Provider.create_characteristic(%{
+        Diffo.Provider.create_characteristic!(%{
           name: :port2,
           value: :eth,
           type: :instance
@@ -459,41 +463,48 @@ defmodule Diffo.Provider.InstanceTest do
           description: "Device Service"
         })
 
-      parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
-      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
-
-      feature =
-        Diffo.Provider.create_feature!(%{instance_id: parent_instance.id, name: :management})
-
-      _feature_characteristic =
+      feature_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          feature_id: feature.id,
           name: :device,
           value: :epic1000a,
           type: :feature
         })
 
-      _characteristic =
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :management,
+          characteristics: [feature_characteristic.id]
+        })
+
+      characteristic =
         Diffo.Provider.create_characteristic!(%{
-          instance_id: parent_instance.id,
           name: :device,
           value: :managed,
           type: :instance
         })
 
-      forward_relationship =
-        Diffo.Provider.create_relationship!(%{
-          type: :bestows,
-          source_id: parent_instance.id,
-          target_id: child_instance.id
+      parent_instance =
+        Diffo.Provider.create_instance!(%{
+          specified_by: parent_specification.id,
+          features: [feature.id],
+          characteristics: [characteristic.id]
         })
 
-      _forward_relationship_characteristic =
+      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
+
+      forward_relationship_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          relationship_id: forward_relationship.id,
           name: :role,
           value: :gateway,
           type: :relationship
+        })
+
+      _forward_relationship =
+        Diffo.Provider.create_relationship!(%{
+          type: :bestows,
+          source_id: parent_instance.id,
+          target_id: child_instance.id,
+          characteristics: [forward_relationship_characteristic.id]
         })
 
       _reverse_relationship =
@@ -633,7 +644,9 @@ defmodule Diffo.Provider.InstanceTest do
         entity_id: entity.id
       })
 
-      refreshed_parent_instance = Diffo.Provider.get_instance_by_id!(parent_instance.id)
+      refreshed_parent_instance =
+        Diffo.Provider.get_instance_by_id!(parent_instance.id)
+
       parent_encoding = Jason.encode!(refreshed_parent_instance) |> Diffo.Util.summarise_dates()
 
       assert parent_encoding ==
@@ -661,42 +674,49 @@ defmodule Diffo.Provider.InstanceTest do
           description: "Device Service"
         })
 
-      parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
-      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
-
-      feature =
-        Diffo.Provider.create_feature!(%{instance_id: parent_instance.id, name: :management})
-
-      _feature_characteristic =
+      feature_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          feature_id: feature.id,
           name: :device,
           value: :epic1000a,
           type: :feature
         })
 
-      _characteristic =
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :management,
+          characteristics: [feature_characteristic.id]
+        })
+
+      characteristic =
         Diffo.Provider.create_characteristic!(%{
-          instance_id: parent_instance.id,
           name: :device,
           value: :managed,
           type: :instance
         })
 
-      forward_relationship =
+      parent_instance =
+        Diffo.Provider.create_instance!(%{
+          specified_by: parent_specification.id,
+          features: [feature.id],
+          characteristics: [characteristic.id]
+        })
+
+      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
+
+      forward_relationship_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :role,
+          value: :gateway,
+          type: :relationship
+        })
+
+      _forward_relationship =
         Diffo.Provider.create_relationship!(%{
           type: :bestows,
           source_id: parent_instance.id,
           target_id: child_instance.id,
-          alias: :primary
-        })
-
-      _forward_relationship_characteristic =
-        Diffo.Provider.create_characteristic!(%{
-          relationship_id: forward_relationship.id,
-          name: :role,
-          value: :gateway,
-          type: :relationship
+          alias: :primary,
+          characteristics: [forward_relationship_characteristic.id]
         })
 
       _reverse_relationship =
@@ -824,32 +844,35 @@ defmodule Diffo.Provider.InstanceTest do
           type: :resourceSpecification
         })
 
-      parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
-
-      child_instance =
-        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
-
-      feature =
-        Diffo.Provider.create_feature!(%{
-          instance_id: parent_instance.id,
-          name: :dynamicLineManagement
-        })
-
-      _feature_characteristic =
+      feature_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          feature_id: feature.id,
           name: :goal,
           value: :stability,
           type: :feature
         })
 
-      _characteristic =
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :dynamicLineManagement,
+          characteristics: [feature_characteristic.id]
+        })
+
+      characteristic =
         Diffo.Provider.create_characteristic!(%{
-          instance_id: parent_instance.id,
           name: :dslam,
           value: "QDONC1001",
           type: :instance
         })
+
+      parent_instance =
+        Diffo.Provider.create_instance!(%{
+          specified_by: parent_specification.id,
+          features: [feature.id],
+          characteristics: [characteristic.id]
+        })
+
+      child_instance =
+        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
       _reverse_relationship =
         Diffo.Provider.create_relationship!(%{
@@ -894,32 +917,35 @@ defmodule Diffo.Provider.InstanceTest do
           type: :resourceSpecification
         })
 
-      parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
-
-      child_instance =
-        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
-
-      feature =
-        Diffo.Provider.create_feature!(%{
-          instance_id: parent_instance.id,
-          name: :dynamicLineManagement
-        })
-
-      _feature_characteristic =
+      feature_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          feature_id: feature.id,
           name: :goal,
           value: :stability,
           type: :feature
         })
 
-      _characteristic =
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :dynamicLineManagement,
+          characteristics: [feature_characteristic.id]
+        })
+
+      characteristic =
         Diffo.Provider.create_characteristic!(%{
-          instance_id: parent_instance.id,
           name: :dslam,
           value: "QDONC1001",
           type: :instance
         })
+
+      parent_instance =
+        Diffo.Provider.create_instance!(%{
+          specified_by: parent_specification.id,
+          features: [feature.id],
+          characteristics: [characteristic.id]
+        })
+
+      child_instance =
+        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
       _reverse_relationship =
         Diffo.Provider.create_relationship!(%{
@@ -1008,34 +1034,43 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "encode sorts characteristics within features - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :automations})
 
-      _characteristic =
+      first_feature_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          feature_id: feature.id,
           name: :optimisation,
           value: true,
           type: :feature
         })
 
-      _characteristic =
+      second_feature_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          feature_id: feature.id,
           name: :management,
           value: true,
           type: :feature
         })
 
-      _characteristic =
+      third_feature_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          feature_id: feature.id,
           name: :security,
           value: true,
           type: :feature
         })
 
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :automations,
+          characteristics: [
+            first_feature_characteristic.id,
+            second_feature_characteristic,
+            third_feature_characteristic.id
+          ]
+        })
+
+      instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id}, features: [feature.id])
+
       refreshed_instance = Diffo.Provider.get_instance_by_id!(instance.id)
+
       encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
@@ -1044,33 +1079,41 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "encode sorts characteristics - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
-      _characteristic =
+      first_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          instance_id: instance.id,
           name: :optimisation,
           value: true,
           type: :instance
         })
 
-      _characteristic =
+      second_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          instance_id: instance.id,
           name: :management,
           value: true,
           type: :instance
         })
 
-      _characteristic =
+      third_characteristic =
         Diffo.Provider.create_characteristic!(%{
-          instance_id: instance.id,
           name: :security,
           value: true,
           type: :instance
         })
 
-      refreshed_instance = Diffo.Provider.get_instance_by_id!(instance.id)
+      instance =
+        Diffo.Provider.create_instance!(%{
+          specified_by: specification.id,
+          characteristics: [
+            first_characteristic.id,
+            second_characteristic.id,
+            third_characteristic.id
+          ]
+        })
+
+      refreshed_instance =
+        Diffo.Provider.get_instance_by_id!(instance.id) |> IO.inspect(label: :refreshed_instance)
+
       encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
 
       assert encoding ==

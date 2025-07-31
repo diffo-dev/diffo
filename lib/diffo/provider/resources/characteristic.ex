@@ -115,22 +115,32 @@ defmodule Diffo.Provider.Characteristic do
 
     update :update do
       primary? true
-      description "updates the characteristic value"
+      description "updates the characteristic value or instance, feature or relationship"
       accept [:value]
+      argument :instance_id, :uuid
+      argument :feature_id, :uuid
+      argument :relationship_id, :uuid
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:feature_id, :feature, type: :append_and_remove)
+      change manage_relationship(:relationship_id, :relationship, type: :append_and_remove)
     end
   end
 
   identities do
     identity :feature_characteristic_uniqueness, [:feature_id, :name] do
-      message "another feature characteristic exists with same name"
+      message "feature has duplicate characteristic"
+      pre_check? true
     end
 
     identity :instance_characteristic_uniqueness, [:instance_id, :name] do
-      message "another instance characteristic exists with same name"
+      message "instance has duplicate characteristic"
+      pre_check? true
     end
 
     identity :relationship_characteristic_uniqueness, [:relationship_id, :name] do
-      message "another relationship characteristic exists with same name and direction"
+      message "relationship has duplicate characteristic"
+      pre_check? true
     end
   end
 

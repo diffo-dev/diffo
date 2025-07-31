@@ -57,8 +57,7 @@ defmodule Diffo.Provider.FeatureTest do
       })
     end
 
-    @tag debug: true
-    test "create duplicate characteristic on same feature - failure" do
+    test "create feature with duplicate characteristic - failure" do
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :type,
@@ -92,6 +91,59 @@ defmodule Diffo.Provider.FeatureTest do
       assert feature.isEnabled == false
       updated_feature = feature |> Diffo.Provider.update_feature!(%{isEnabled: true})
       assert updated_feature.isEnabled == true
+    end
+
+    test "update feature add characteristic - success" do
+      device_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :device,
+          value: :epic1000a,
+          type: :feature
+        })
+
+      connection_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :connection,
+          value: :foreign,
+          type: :feature
+        })
+
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :management,
+          characteristics: [device_characteristic.id]
+        })
+
+      _updated_feature =
+        feature |> Diffo.Provider.relate_feature_characteristics!(%{
+          characteristics: [connection_characteristic.id]
+        })
+    end
+
+    test "update feature with duplicate characteristic - failure" do
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :fraudHeavy,
+          type: :feature
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :fraudLight,
+          type: :feature
+        })
+
+      feature = Diffo.Provider.create_feature!(%{
+        name: :restriction,
+        characteristics: [first_characteristic.id]
+      })
+
+      {:error, _updated_feature} =
+        feature |> Diffo.Provider.relate_feature_characteristics(%{
+          characteristics: [second_characteristic.id]
+        })
     end
   end
 
@@ -141,7 +193,6 @@ defmodule Diffo.Provider.FeatureTest do
       Diffo.Provider.get_characteristic_by_id!(characteristic.id)
     end
 
-    @tag bugged: true
     test "delete feature with related instance - failure, related instance" do
       feature = Diffo.Provider.create_feature!(%{name: :management})
 

@@ -150,7 +150,7 @@ defmodule Diffo.Provider.Relationship do
 
   preparations do
     prepare build(
-              load: [:source, :target, :source_type, :source_href, :target_type, :target_href, :characteristics],
+              load: [:source_type, :source_href, :target_type, :target_href, :characteristics],
               sort: [alias: :asc, type: :asc]
             )
   end
@@ -165,7 +165,7 @@ defmodule Diffo.Provider.Relationship do
       message "a resource cannot have a supporting service"
     end
 
-    #validate {Diffo.Validations.RelatedResourcesDifferent,
+    # validate {Diffo.Validations.RelatedResourcesDifferent,
     #          relationship: :characteristic, attribute: :name},
     #        on: :update
   end
