@@ -23,19 +23,23 @@ defmodule Diffo.Provider.PlaceRef do
   end
 
   jason do
-    pick([:href, :name, :role, :referredType, :type])
+    pick([:role, :place])
 
-    customize(fn result, record ->
+    customize(fn result, _record ->
       result
-      |> id(record)
+      |> Diffo.Util.extract_suppress(:place, :id, :id)
+      |> Diffo.Util.extract_suppress(:place, :href, :href)
+      |> Diffo.Util.extract_suppress(:place, :name, :name)
+      |> Diffo.Util.extract_suppress(:place, :referredType, "@referredType")
+      |> Diffo.Util.extract_suppress(:place, :type, "@type")
+      |> Diffo.Util.remove(:place)
     end)
 
-    rename(referredType: "@referredType", type: "@type")
     order([:id, :href, :name, :role, "@referredType", "@type"])
   end
 
   outstanding do
-    expect([:id, :name, :role, :referredType, :type])
+    expect([:role, :place])
   end
 
   attributes do
@@ -80,7 +84,7 @@ defmodule Diffo.Provider.PlaceRef do
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:place_id, :place, type: :append_and_remove)
 
-      change load [:href, :name, :referredType, :type]
+      change load [:place]
     end
 
     read :list do
@@ -99,17 +103,6 @@ defmodule Diffo.Provider.PlaceRef do
       filter expr(place_id == ^arg(:place_id))
     end
 
-    read :find_by_place_id do
-      description "finds place refs by place id"
-      get? false
-
-      argument :query, :ci_string do
-        description "Return only place refs with place_ids including the given value."
-      end
-
-      filter expr(contains(place_id, ^arg(:query)))
-    end
-
     update :update do
       description "updates the place ref role"
       accept [:role]
@@ -124,46 +117,9 @@ defmodule Diffo.Provider.PlaceRef do
 
   preparations do
     prepare build(
-              load: [:href, :name, :referredType, :type],
-              sort: [inserted_at: :desc]
+              load: [:place],
+              sort: [role: :asc]
             )
-  end
-
-  calculations do
-    calculate :href, :string, expr(place.href) do
-      description "the href of the related place instance"
-    end
-
-    calculate :name, :string, expr(place.name) do
-      description "the name of the related place instance"
-    end
-
-    calculate :referredType, :string, expr(place.referredType) do
-      description "the referredType of the related place instance"
-    end
-
-    calculate :type, :string, expr(place.type) do
-      description "the type of the related place instance"
-    end
-  end
-
-  @doc """
-  Assists in encoding place ref id
-  """
-  def id(result, record) do
-    place = Map.get(record, :place)
-
-    if is_struct(place, Diffo.Provider.Place) do
-      id = Map.get(place, :id)
-
-      if id != nil do
-        result |> Diffo.Util.set(:id, id)
-      else
-        result
-      end
-    else
-      result
-    end
   end
 
   @doc """

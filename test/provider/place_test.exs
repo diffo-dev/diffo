@@ -1,6 +1,7 @@
 defmodule Diffo.Provider.PlaceTest do
   @moduledoc false
   use ExUnit.Case
+  use Outstand
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -29,6 +30,32 @@ defmodule Diffo.Provider.PlaceTest do
       })
 
       places = Diffo.Provider.list_places!()
+      assert length(places) == 2
+      # should be sorted
+      assert List.first(places).id == "LOC000000123456"
+      assert List.last(places).id == "LOC000000897353"
+    end
+
+    test "find places by id - success" do
+      Diffo.Provider.create_place!(%{
+        id: "LOC000000897353",
+        name: :locationId,
+        referredType: :GeographicAddress
+      })
+
+      Diffo.Provider.create_place!(%{
+        id: "LOC000000123456",
+        name: :locationId,
+        referredType: :GeographicAddress
+      })
+
+      Diffo.Provider.create_place!(%{
+        id: "163435034",
+        name: :adborId,
+        referredType: :GeographicAddress
+      })
+
+      places = Diffo.Provider.find_places_by_id!("LOC")
       assert length(places) == 2
       # should be sorted
       assert List.first(places).id == "LOC000000123456"
@@ -314,6 +341,27 @@ defmodule Diffo.Provider.PlaceTest do
 
       assert encoding ==
                "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}"
+    end
+  end
+
+  describe "Diffo.Provider outstanding Places" do
+    test "resolve a general expected place" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "LOC000000897353",
+          name: "locationId",
+          href: "place/nbnco/LOC000000897353",
+          referredType: :GeographicAddress
+        })
+
+      expected_place = %Diffo.Provider.Place{
+        id: ~r/LOC\d{12}/,
+        name: "locationId",
+        type: :PlaceRef,
+        referredType: :GeographicAddress
+      }
+
+      refute expected_place >>> place
     end
   end
 

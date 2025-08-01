@@ -202,7 +202,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       second_characteristic =
-        Diffo.Provider.create_characteristic(%{
+        Diffo.Provider.create_characteristic!(%{
           name: :port,
           value: "2",
           type: :instance
@@ -448,6 +448,8 @@ defmodule Diffo.Provider.InstanceTest do
   """
 
   describe "Diffo.Provider encode Instances" do
+    @tag debug: true
+    # serviceRelationship[], supportingService[] not present
     test "encode service with service child instance json - success" do
       parent_specification =
         Diffo.Provider.create_specification!(%{
@@ -646,6 +648,7 @@ defmodule Diffo.Provider.InstanceTest do
 
       refreshed_parent_instance =
         Diffo.Provider.get_instance_by_id!(parent_instance.id)
+        |> IO.inspect(label: :refreshed_parent_instance)
 
       parent_encoding = Jason.encode!(refreshed_parent_instance) |> Diffo.Util.summarise_dates()
 
@@ -1021,12 +1024,17 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "encode sorts features - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      _feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :optimisation})
-      _feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :management})
-      _feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :security})
-      refreshed_instance = Diffo.Provider.get_instance_by_id!(instance.id)
-      encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
+      feature1 = Diffo.Provider.create_feature!(%{name: :optimisation})
+      feature2 = Diffo.Provider.create_feature!(%{name: :management})
+      feature3 = Diffo.Provider.create_feature!(%{name: :security})
+
+      instance =
+        Diffo.Provider.create_instance!(%{
+          specified_by: specification.id,
+          features: [feature1.id, feature2.id, feature3.id]
+        })
+
+      encoding = Jason.encode!(instance) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
                ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"feature\":[{\"name\":\"management\",\"isEnabled\":true},{\"name\":\"optimisation\",\"isEnabled\":true},{\"name\":\"security\",\"isEnabled\":true}]})

@@ -9,7 +9,7 @@ defmodule Diffo.Provider.Place do
     otp_app: :diffo,
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
-    extensions: [AshJason.Resource]
+    extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
     label(:Place)
@@ -24,6 +24,10 @@ defmodule Diffo.Provider.Place do
   jason do
     pick([:id, :href, :name, :referredType, :type])
     rename(referredType: "@referredType", type: "@type")
+  end
+
+  outstanding do
+    expect([:id, :name, :referredType, :type])
   end
 
   attributes do
@@ -83,6 +87,17 @@ defmodule Diffo.Provider.Place do
       upsert? true
     end
 
+    read :find_by_id do
+      description "finds place by id"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only places with id's including the given value."
+      end
+
+      filter expr(contains(id, ^arg(:query)))
+    end
+
     read :find_by_name do
       description "finds place by name"
       get? false
@@ -105,7 +120,7 @@ defmodule Diffo.Provider.Place do
   end
 
   preparations do
-    prepare build(sort: [id: :asc])
+    prepare build(sort: [id: :asc, name: :asc])
   end
 
   validations do
