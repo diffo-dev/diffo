@@ -372,4 +372,29 @@ defmodule Diffo.Util do
   def suppress_rename(list, tuple_key, new_tuple_key) when is_list(list) do
     suppress(list, tuple_key) |> rename(tuple_key, new_tuple_key)
   end
+
+  @doc """
+  Extracts value from map in list of tuples, and sets if not nil
+    ## Examples
+    iex> duration = Duration.new!(month: 1)
+    iex> list = [duration: duration]
+    iex> result = Diffo.Util.extract_suppress(list, :duration, :month, :months)
+    iex> List.last(result)
+    {:months, 1}
+  """
+  def extract_suppress(list, tuple_key, map_key, new_tuple_key) when is_list(list) do
+    tuple_value = get(list, tuple_key)
+
+    if tuple_value != nil do
+      extracted_value = Map.get(tuple_value, map_key, nil)
+
+      if extracted_value != nil do
+        List.keystore(list, new_tuple_key, 0, {new_tuple_key, extracted_value})
+      else
+        list
+      end
+    else
+      list
+    end
+  end
 end

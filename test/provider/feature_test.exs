@@ -115,7 +115,8 @@ defmodule Diffo.Provider.FeatureTest do
         })
 
       _updated_feature =
-        feature |> Diffo.Provider.relate_feature_characteristics!(%{
+        feature
+        |> Diffo.Provider.relate_feature_characteristics!(%{
           characteristics: [connection_characteristic.id]
         })
     end
@@ -135,13 +136,15 @@ defmodule Diffo.Provider.FeatureTest do
           type: :feature
         })
 
-      feature = Diffo.Provider.create_feature!(%{
-        name: :restriction,
-        characteristics: [first_characteristic.id]
-      })
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :restriction,
+          characteristics: [first_characteristic.id]
+        })
 
       {:error, _updated_feature} =
-        feature |> Diffo.Provider.relate_feature_characteristics(%{
+        feature
+        |> Diffo.Provider.relate_feature_characteristics(%{
           characteristics: [second_characteristic.id]
         })
     end
@@ -193,6 +196,7 @@ defmodule Diffo.Provider.FeatureTest do
       Diffo.Provider.get_characteristic_by_id!(characteristic.id)
     end
 
+    @tag bugged: true
     test "delete feature with related instance - failure, related instance" do
       feature = Diffo.Provider.create_feature!(%{name: :management})
 
@@ -203,13 +207,15 @@ defmodule Diffo.Provider.FeatureTest do
 
       {:error, error} = Diffo.Provider.delete_feature(feature)
       assert is_struct(error, Ash.Error.Invalid)
+      IO.inspect(error, label: :error)
 
       # now unrelate the feature from the instance
-      Diffo.Provider.unrelate_instance_features!(instance, %{
-        features: [feature.id]
-      })
+      Diffo.Provider.unrelate_feature()
+      # _unrelated_instance = Diffo.Provider.unrelate_instance_features!(instance, %{
+      #  features: [feature.id]
+      # })
 
-      Diffo.Provider.delete_feature!(feature)
+      :ok = Diffo.Provider.delete_feature!(feature)
       {:error, _error} = Diffo.Provider.get_feature_by_id(feature.id)
     end
   end

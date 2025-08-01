@@ -234,11 +234,13 @@ defmodule Diffo.Provider.Instance do
     has_many :forward_relationships, Diffo.Provider.Relationship do
       description "the instance's outgoing relationships to other instances"
       destination_attribute :source_id
+      public? true
     end
 
     has_many :reverse_relationships, Diffo.Provider.Relationship do
       description "the instance's incoming relationships from other instances"
       destination_attribute :target_id
+      public? true
     end
 
     has_many :features, Diffo.Provider.Feature do
@@ -427,7 +429,19 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-              load: [:href, :specification, :forward_relationships, :features, :characteristics],
+              # :parties
+              load: [
+                :href,
+                :external_identifiers,
+                :specification,
+                :process_statuses,
+                :forward_relationships,
+                :entities,
+                :notes,
+                :features,
+                :characteristics,
+                :places
+              ],
               sort: [inserted_at: :desc]
             )
   end
@@ -529,12 +543,18 @@ defmodule Diffo.Provider.Instance do
   Assists in encoding instance-instance relationships
   """
   def relationships(result) do
+    IO.inspect(result, label: :instance_relationships)
+
     if relationships = Diffo.Util.get(result, :forward_relationships) do
       service_relationships =
-        relationships |> Enum.filter(fn relationship -> relationship.target_type == :service end)
+        relationships
+        |> Enum.filter(fn relationship -> relationship.target_type == :service end)
+        |> IO.inspect(label: :service_relationships)
 
       resource_relationships =
-        relationships |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
+        relationships
+        |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
+        |> IO.inspect(label: :resource_relationships)
 
       supporting_services =
         service_relationships
@@ -557,10 +577,12 @@ defmodule Diffo.Provider.Instance do
       |> Diffo.Util.set(:resourceRelationship, resource_relationships)
       |> Diffo.Util.set(:supportingService, supporting_services)
       |> Diffo.Util.set(:supportingResource, supporting_resources)
+      |> IO.inspect(label: :relationships_result)
     else
       result
       |> Diffo.Util.remove(:forward_relationships)
       |> Diffo.Util.remove(:reverse_relationships)
+      |> IO.inspect(label: :no_relationships_result)
     end
   end
 

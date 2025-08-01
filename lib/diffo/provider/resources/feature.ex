@@ -126,6 +126,13 @@ defmodule Diffo.Provider.Feature do
     end
   end
 
+  identities do
+    identity :instance_feature_uniqueness, [:instance_id, :name] do
+      message "instance has duplicate feature"
+      pre_check? true
+    end
+  end
+
   preparations do
     prepare build(load: [:characteristics], sort: [name: :asc])
   end

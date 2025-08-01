@@ -9,7 +9,7 @@ defmodule Diffo.Provider.Party do
     otp_app: :diffo,
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
-    extensions: [AshJason.Resource]
+    extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
     label(:Party)
@@ -30,6 +30,10 @@ defmodule Diffo.Provider.Party do
   jason do
     pick([:id, :href, :name, :referredType, :type])
     rename(referredType: "@referredType", type: "@type")
+  end
+
+  outstanding do
+    expect([:id, :name, :referredType, :type])
   end
 
   attributes do
@@ -118,6 +122,13 @@ defmodule Diffo.Provider.Party do
       description "updates the party"
       accept [:href, :name, :type, :referredType]
     end
+  end
+
+  preparations do
+    prepare build(
+              load: [:external_identifiers],
+              sort: [id: :asc, name: :asc]
+            )
   end
 
   validations do

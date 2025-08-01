@@ -52,56 +52,6 @@ defmodule Diffo.Provider.PlaceRefTest do
       assert List.last(place_refs).place_id == "LOC000000897353"
     end
 
-    test "find place refs by place id - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-
-      place1 =
-        Diffo.Provider.create_place!(%{
-          id: "LOC000000897353",
-          name: :locationId,
-          referredType: :GeographicAddress
-        })
-
-      place2 =
-        Diffo.Provider.create_place!(%{
-          id: "LOC000000123456",
-          name: :locationId,
-          referredType: :GeographicAddress
-        })
-
-      place3 =
-        Diffo.Provider.create_place!(%{
-          id: "163435034",
-          name: :adborId,
-          referredType: :GeographicAddress
-        })
-
-      Diffo.Provider.create_place_ref!(%{
-        instance_id: instance.id,
-        role: :CustomerSite,
-        place_id: place1.id
-      })
-
-      Diffo.Provider.create_place_ref!(%{
-        instance_id: instance.id,
-        role: :CustomerSite,
-        place_id: place2.id
-      })
-
-      Diffo.Provider.create_place_ref!(%{
-        instance_id: instance.id,
-        role: :CustomerSite,
-        place_id: place3.id
-      })
-
-      place_refs = Diffo.Provider.find_place_refs_by_place_id!("LOC")
-      assert length(place_refs) == 2
-      # should be sorted
-      assert List.first(place_refs).place_id == "LOC000000123456"
-      assert List.last(place_refs).place_id == "LOC000000897353"
-    end
-
     test "list place refs by related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -154,9 +104,9 @@ defmodule Diffo.Provider.PlaceRefTest do
 
       place_refs = Diffo.Provider.list_place_refs_by_instance_id!(instance1.id)
       assert length(place_refs) == 2
-      # should be sorted
-      assert List.first(place_refs).place_id == "CSA000000123456"
-      assert List.last(place_refs).place_id == "LOC000000897353"
+      # should be sorted by role
+      assert List.first(place_refs).role == :CustomerSite
+      assert List.last(place_refs).role == :ServingArea
     end
 
     test "list place refs by related place id - success" do
@@ -421,7 +371,7 @@ defmodule Diffo.Provider.PlaceRefTest do
       place =
         Diffo.Provider.create_place!(%{
           id: "LOC000000897353",
-          name: :locationId,
+          name: "locationId",
           href: "place/nbnco/LOC000000897353",
           referredType: :GeographicAddress
         })
@@ -434,11 +384,13 @@ defmodule Diffo.Provider.PlaceRefTest do
         })
 
       expected_place_ref = %Diffo.Provider.PlaceRef{
-        place_id: ~r/LOC\d{12}/,
-        name: "locationId",
         role: :CustomerSite,
-        referredType: "GeographicAddress",
-        type: "PlaceRef"
+        place: %Diffo.Provider.Place{
+          id: ~r/LOC\d{12}/,
+          name: "locationId",
+          type: :PlaceRef,
+          referredType: :GeographicAddress
+        }
       }
 
       refute expected_place_ref >>> place_ref

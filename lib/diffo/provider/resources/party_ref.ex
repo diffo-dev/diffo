@@ -126,7 +126,7 @@ defmodule Diffo.Provider.PartyRef do
   preparations do
     prepare build(
               load: [:href, :name, :referredType, :type, :instance],
-              sort: [inserted_at: :desc]
+              sort: [name: :asc]
             )
   end
 
