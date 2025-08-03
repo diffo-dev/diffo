@@ -448,7 +448,7 @@ defmodule Diffo.Provider.InstanceTest do
   """
 
   describe "Diffo.Provider encode Instances" do
-    @tag debug: true
+    @tag bugged: true
     # serviceRelationship[], supportingService[] not present
     test "encode service with service child instance json - success" do
       parent_specification =
@@ -648,7 +648,6 @@ defmodule Diffo.Provider.InstanceTest do
 
       refreshed_parent_instance =
         Diffo.Provider.get_instance_by_id!(parent_instance.id)
-        |> IO.inspect(label: :refreshed_parent_instance)
 
       parent_encoding = Jason.encode!(refreshed_parent_instance) |> Diffo.Util.summarise_dates()
 
@@ -1120,7 +1119,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       refreshed_instance =
-        Diffo.Provider.get_instance_by_id!(instance.id) |> IO.inspect(label: :refreshed_instance)
+        Diffo.Provider.get_instance_by_id!(instance.id)
 
       encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
 

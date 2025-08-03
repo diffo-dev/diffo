@@ -23,14 +23,18 @@ defmodule Diffo.Provider.PartyRef do
   end
 
   jason do
-    pick([:href, :name, :role, :referredType, :type])
+    pick([:role, :party])
 
-    customize(fn result, record ->
+    customize(fn result, _record ->
       result
-      |> id(record)
+      |> Diffo.Util.extract_suppress(:party, :id, :id)
+      |> Diffo.Util.extract_suppress(:party, :href, :href)
+      |> Diffo.Util.extract_suppress(:party, :name, :name)
+      |> Diffo.Util.extract_suppress(:party, :referredType, "@referredType")
+      |> Diffo.Util.extract_suppress(:party, :type, "@type")
+      |> Diffo.Util.remove(:party)
     end)
 
-    rename(referredType: "@referredType", type: "@type")
     order([:id, :href, :name, :role, "@referredType", "@type"])
   end
 
@@ -81,7 +85,7 @@ defmodule Diffo.Provider.PartyRef do
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:party_id, :party, type: :append_and_remove)
 
-      change load [:href, :name, :referredType, :type, :party, :instance]
+      change load [:party]
     end
 
     read :list do
@@ -125,27 +129,9 @@ defmodule Diffo.Provider.PartyRef do
 
   preparations do
     prepare build(
-              load: [:href, :name, :referredType, :type, :instance],
-              sort: [name: :asc]
+              load: [:party],
+              sort: [role: :asc]
             )
-  end
-
-  calculations do
-    calculate :href, :string, expr(party.href) do
-      description "the href of the related party instance"
-    end
-
-    calculate :name, :string, expr(party.name) do
-      description "the name of the related party instance"
-    end
-
-    calculate :referredType, :string, expr(party.referredType) do
-      description "the referredType of the related party instance"
-    end
-
-    calculate :type, :string, expr(party.type) do
-      description "the type of the related party instance"
-    end
   end
 
   @doc """

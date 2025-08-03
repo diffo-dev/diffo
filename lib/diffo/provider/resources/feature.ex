@@ -15,12 +15,12 @@ defmodule Diffo.Provider.Feature do
     label(:Feature)
 
     relate([
-      {:instance, :DEFINES, :outgoing},
-      {:characteristics, :DEFINES, :incoming}
+      {:instance, :FEATURE_DEFINES_INSTANCE, :outgoing},
+      {:characteristics, :DEFINES_FEATURE, :incoming}
     ])
 
     guard([
-      {:DEFINES, :outgoing, :Instance}
+      {:FEATURE_DEFINES_INSTANCE, :outgoing, :Instance}
     ])
 
     translate(id: :uuid)
@@ -53,10 +53,6 @@ defmodule Diffo.Provider.Feature do
       description "indicates whether the feature is enabled"
       public? true
       default true
-    end
-
-    attribute :instance_id, :uuid do
-      allow_nil? false
     end
 
     create_timestamp :inserted_at
@@ -102,15 +98,12 @@ defmodule Diffo.Provider.Feature do
     end
 
     update :update do
-      description "updates the feature"
-      accept [:isEnabled]
-    end
-
-    update :unrelate do
-      description "unrelates the feature from the instance"
       primary? true
-      argument :instance, :uuid
-      change manage_relationship(:instance, type: :remove)
+      description "updates the feature isEnabled or instance relationship"
+      accept [:isEnabled]
+      argument :instance_id, :uuid
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
     end
 
     update :relate_characteristics do

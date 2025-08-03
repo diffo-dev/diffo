@@ -430,9 +430,8 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: child_instance.id,
           characteristics: [characteristic.id]
         })
-        |> IO.inspect(label: :relationship)
 
-      relationship |> Ash.reload!() |> IO.inspect(label: :reloaded_relationship)
+      relationship |> Ash.reload!()
 
       parent_service_relationships =
         Diffo.Provider.list_service_relationships_from!(parent_instance.id)
@@ -472,7 +471,6 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: resource_instance.id,
           characteristics: [characteristic.id]
         })
-        |> IO.inspect(label: :relationship)
 
       _read_relationship = Diffo.Provider.get_relationship_by_id!(relationship.id)
 

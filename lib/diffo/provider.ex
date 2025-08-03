@@ -83,7 +83,6 @@ defmodule Diffo.Provider do
       define :get_feature_by_id, action: :read, get_by: :id
       define :list_features, action: :list
       define :update_feature, action: :update
-      define :unrelate_feature_from_instance, action: :unrelate
       define :relate_feature_characteristics, action: :relate_characteristics
       define :unrelate_feature_characteristics, action: :unrelate_characteristics
       define :delete_feature, action: :destroy
@@ -117,6 +116,7 @@ defmodule Diffo.Provider do
       define :create_party, action: :create
       define :get_party_by_id, action: :read, get_by: :id
       define :list_parties, action: :list
+      define :find_parties_by_id, action: :find_by_id, args: [:query]
       define :find_parties_by_name, action: :find_by_name, args: [:query]
       define :update_party, action: :update
       define :delete_party, action: :destroy
@@ -126,7 +126,6 @@ defmodule Diffo.Provider do
       define :create_party_ref, action: :create
       define :get_party_ref_by_id, action: :read, get_by: :id
       define :list_party_refs, action: :list
-      define :find_party_refs_by_party_id, action: :find_by_party_id, args: [:query]
       define :list_party_refs_by_party_id, action: :list_party_refs_by_party_id, args: [:party_id]
 
       define :list_party_refs_by_instance_id,

@@ -15,15 +15,15 @@ defmodule Diffo.Provider.Characteristic do
     label(:Characteristic)
 
     relate([
-      {:instance, :DEFINES, :outgoing},
-      {:feature, :DEFINES, :outgoing},
-      {:relationship, :DEFINES, :outgoing}
+      {:instance, :DEFINES_INSTANCE, :outgoing},
+      {:feature, :DEFINES_FEATURE, :outgoing},
+      {:relationship, :DEFINES_RELATIONSHIP, :outgoing}
     ])
 
     guard([
-      {:DEFINES, :outgoing, :Instance},
-      {:DEFINES, :outgoing, :Feature},
-      {:DEFINES, :outgoing, :Relationship}
+      {:DEFINES_INSTANCE, :outgoing, :Instance},
+      {:DEFINES_FEATURE, :outgoing, :Feature},
+      {:DEFINES_RELATIONSHIP, :outgoing, :Relationship}
     ])
 
     translate(id: :uuid)

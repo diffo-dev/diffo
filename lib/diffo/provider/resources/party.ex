@@ -103,6 +103,17 @@ defmodule Diffo.Provider.Party do
       upsert? true
     end
 
+    read :find_by_id do
+      description "finds party by id"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only parties with id's including the given value."
+      end
+
+      filter expr(contains(id, ^arg(:query)))
+    end
+
     read :find_by_name do
       description "finds party by name"
       get? false

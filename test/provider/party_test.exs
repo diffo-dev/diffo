@@ -1,6 +1,7 @@
 defmodule Diffo.Provider.PartyTest do
   @moduledoc false
   use ExUnit.Case
+  use Outstand
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -29,6 +30,32 @@ defmodule Diffo.Provider.PartyTest do
       })
 
       parties = Diffo.Provider.list_parties!()
+      assert length(parties) == 2
+      # should be sorted
+      assert List.first(parties).id == "IND000000123456"
+      assert List.last(parties).id == "IND000000897353"
+    end
+
+    test "find parties by id - success" do
+      Diffo.Provider.create_party!(%{
+        id: "IND000000897353",
+        name: :individualId,
+        referredType: :Individual
+      })
+
+      Diffo.Provider.create_party!(%{
+        id: "IND000000123456",
+        name: :individualId,
+        referredType: :Individual
+      })
+
+      Diffo.Provider.create_party!(%{
+        id: "ORG000163435034",
+        name: :organizationId,
+        referredType: :Organization
+      })
+
+      parties = Diffo.Provider.find_parties_by_id!("IND")
       assert length(parties) == 2
       # should be sorted
       assert List.first(parties).id == "IND000000123456"
@@ -317,6 +344,26 @@ defmodule Diffo.Provider.PartyTest do
 
       assert encoding ==
                "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"}"
+    end
+  end
+
+  describe "Diffo.Provider outstanding Party" do
+    test "resolve a general expected party" do
+      party =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897353",
+          name: "individualId",
+          href: "party/internal/IND000000897353",
+          referredType: :Individual
+        })
+
+      expected_party = %Diffo.Provider.Party{
+        id: ~r/IND\d{12}/,
+        name: "individualId",
+        referredType: :Individual
+      }
+
+      refute expected_party >>> party
     end
   end
 
