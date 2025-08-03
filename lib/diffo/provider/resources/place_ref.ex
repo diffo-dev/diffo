@@ -15,8 +15,8 @@ defmodule Diffo.Provider.PlaceRef do
     label(:PlaceRef)
 
     relate([
-      {:instance, :RELATES_HOW, :incoming},
-      {:place, :RELATED_HOW, :outgoing}
+      {:instance, :RELATES_HOW_PLACE, :incoming},
+      {:place, :RELATED_HOW_PLACE, :outgoing}
     ])
 
     translate(id: :uuid)
@@ -61,11 +61,13 @@ defmodule Diffo.Provider.PlaceRef do
 
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
+      description "the instance which relates to a place via this place ref"
       allow_nil? false
       public? true
     end
 
     belongs_to :place, Diffo.Provider.Place do
+      description "the place which is related from an instance via this place ref"
       attribute_type :string
       allow_nil? false
       public? true

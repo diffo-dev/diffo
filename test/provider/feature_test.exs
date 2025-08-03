@@ -196,7 +196,6 @@ defmodule Diffo.Provider.FeatureTest do
       Diffo.Provider.get_characteristic_by_id!(characteristic.id)
     end
 
-    @tag debug: true
     test "delete feature with related instance - failure, related instance" do
       feature = Diffo.Provider.create_feature!(%{name: :management})
 

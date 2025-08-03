@@ -19,6 +19,8 @@ defmodule Diffo.Provider.Reference do
     %Diffo.Provider.Reference{id: instance.id, href: instance.href}
   end
 
+  def reference(instance) when is_nil(instance), do: nil
+
   @doc """
   Creates a reference struct from an instance attribute containing a href
     ## Examples

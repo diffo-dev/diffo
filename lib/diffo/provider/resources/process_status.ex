@@ -77,6 +77,7 @@ defmodule Diffo.Provider.ProcessStatus do
 
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
+      description "the instance statused by this process status"
       allow_nil? false
       public? true
     end

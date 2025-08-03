@@ -15,8 +15,8 @@ defmodule Diffo.Provider.EntityRef do
     label(:EntityRef)
 
     relate([
-      {:instance, :RELATES_HOW, :incoming},
-      {:entity, :RELATED_HOW, :outgoing}
+      {:instance, :RELATES_HOW_ENTITY, :incoming},
+      {:entity, :RELATED_HOW_ENTITY, :outgoing}
     ])
 
     translate(id: :uuid)
@@ -50,11 +50,13 @@ defmodule Diffo.Provider.EntityRef do
 
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
+      description "the instance which relates to an entity via this entity ref"
       allow_nil? false
       public? true
     end
 
     belongs_to :entity, Diffo.Provider.Entity do
+      description "the entity which relates from an instance via this entity ref"
       attribute_type :string
       allow_nil? false
       public? true

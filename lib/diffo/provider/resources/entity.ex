@@ -15,7 +15,7 @@ defmodule Diffo.Provider.Entity do
     label(:Entity)
 
     relate([
-      {:entity_refs, :RELATED_HOW, :incoming}
+      {:entity_refs, :RELATED_HOW_ENTITY, :incoming}
     ])
 
     translate(id: :uuid)
@@ -67,6 +67,7 @@ defmodule Diffo.Provider.Entity do
 
   relationships do
     has_many :entity_refs, Diffo.Provider.EntityRef do
+      description "the entity ref which links this entity to a relating instance"
       # destination_attribute :entity_id
       public? true
     end

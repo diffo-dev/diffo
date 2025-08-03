@@ -187,25 +187,15 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: evpl1.id
         })
 
-      assert relationship1.source_type == :service
+      assert relationship1.source_id == evpl1.id
+      assert relationship1.target_id == evpl2.id
+      assert is_struct(relationship1.source, Ash.NotLoaded)
+      assert is_struct(relationship1.target, Diffo.Provider.Instance)
 
-      assert relationship1.source_href ==
-               "serviceInventoryManagement/v4/service/accessEvc/#{evpl1.id}"
-
-      assert relationship1.target_type == :service
-
-      assert relationship1.target_href ==
-               "serviceInventoryManagement/v4/service/accessEvc/#{evpl2.id}"
-
-      assert relationship2.source_type == :service
-
-      assert relationship2.source_href ==
-               "serviceInventoryManagement/v4/service/accessEvc/#{evpl2.id}"
-
-      assert relationship2.target_type == :service
-
-      assert relationship2.target_href ==
-               "serviceInventoryManagement/v4/service/accessEvc/#{evpl1.id}"
+      assert relationship2.source_id == evpl2.id
+      assert relationship2.target_id == evpl1.id
+      assert is_struct(relationship2.source, Ash.NotLoaded)
+      assert is_struct(relationship2.target, Diffo.Provider.Instance)
     end
 
     test "create a mutual connects resource relationship - success" do
@@ -238,25 +228,15 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: cable1.id
         })
 
-      assert relationship1.source_type == :resource
+      assert relationship1.source_id == cable1.id
+      assert relationship1.target_id == cable2.id
+      assert is_struct(relationship1.source, Ash.NotLoaded)
+      assert is_struct(relationship1.target, Diffo.Provider.Instance)
 
-      assert relationship1.source_href ==
-               "resourceInventoryManagement/v4/resource/cable/#{cable1.id}"
-
-      assert relationship1.target_type == :resource
-
-      assert relationship1.target_href ==
-               "resourceInventoryManagement/v4/resource/cable/#{cable2.id}"
-
-      assert relationship2.source_type == :resource
-
-      assert relationship2.source_href ==
-               "resourceInventoryManagement/v4/resource/cable/#{cable2.id}"
-
-      assert relationship2.target_type == :resource
-
-      assert relationship2.target_href ==
-               "resourceInventoryManagement/v4/resource/cable/#{cable1.id}"
+      assert relationship2.source_id == cable2.id
+      assert relationship2.target_id == cable1.id
+      assert is_struct(relationship2.source, Ash.NotLoaded)
+      assert is_struct(relationship2.target, Diffo.Provider.Instance)
     end
 
     test "create a service - resource relationship - success" do
@@ -281,15 +261,10 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: resource_instance.id
         })
 
-      assert relationship.source_type == :service
-
-      assert relationship.source_href ==
-               "serviceInventoryManagement/v4/service/adslAccess/#{service_instance.id}"
-
-      assert relationship.target_type == :resource
-
-      assert relationship.target_href ==
-               "resourceInventoryManagement/v4/resource/can/#{resource_instance.id}"
+      assert relationship.source_id == service_instance.id
+      assert relationship.target_id == resource_instance.id
+      assert is_struct(relationship.source, Diffo.Provider.Instance)
+      assert is_struct(relationship.target, Diffo.Provider.Instance)
     end
 
     test "create relationship with characteristics - success" do
@@ -551,15 +526,13 @@ defmodule Diffo.Provider.RelationshipTest do
 
       expected_assigned_to_relationship = %Diffo.Provider.Relationship{
         type: :assignedTo,
-        target_type: :service,
-        target_href: service_instance.href,
+        target: Diffo.Provider.Reference.reference(service_instance),
         characteristics: nil
       }
 
       expected_is_assigned_relationship = %Diffo.Provider.Relationship{
         type: :isAssigned,
-        target_type: :resource,
-        target_href: resource_instance.href,
+        target: Diffo.Provider.Reference.reference(resource_instance),
         characteristics: nil
       }
 
