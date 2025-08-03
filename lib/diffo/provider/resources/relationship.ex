@@ -17,7 +17,7 @@ defmodule Diffo.Provider.Relationship do
     relate([
       {:source, :RELATES_HOW, :incoming},
       {:target, :RELATED_HOW, :outgoing},
-      {:characteristics, :DEFINES, :incoming}
+      {:characteristics, :DEFINES_RELATIONSHIP, :incoming}
     ])
 
     translate(id: :uuid)

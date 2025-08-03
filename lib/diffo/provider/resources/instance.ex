@@ -20,8 +20,8 @@ defmodule Diffo.Provider.Instance do
       {:process_statuses, :STATUSES, :incoming},
       {:forward_relationships, :RELATES_HOW, :outgoing},
       {:reverse_relationships, :RELATED_HOW, :incoming},
-      {:features, :DEFINES, :incoming},
-      {:characteristics, :DEFINES, :incoming},
+      {:features, :FEATURE_DEFINES_INSTANCE, :incoming},
+      {:characteristics, :DEFINES_INSTANCE, :incoming},
       {:entities, :RELATES_HOW, :outgoing},
       {:notes, :ANNOTATES, :incoming},
       {:places, :RELATES_HOW, :outgoing},
@@ -51,7 +51,6 @@ defmodule Diffo.Provider.Instance do
 
     customize(fn result, record ->
       result
-      # |> IO.inspect(label: "start instance jason customize")
       |> Diffo.Provider.Instance.category(record)
       |> Diffo.Provider.Instance.description(record)
       |> Diffo.Util.suppress_rename(:external_identifiers, :externalIdentifier)
@@ -543,18 +542,14 @@ defmodule Diffo.Provider.Instance do
   Assists in encoding instance-instance relationships
   """
   def relationships(result) do
-    IO.inspect(result, label: :instance_relationships)
-
     if relationships = Diffo.Util.get(result, :forward_relationships) do
       service_relationships =
         relationships
         |> Enum.filter(fn relationship -> relationship.target_type == :service end)
-        |> IO.inspect(label: :service_relationships)
 
       resource_relationships =
         relationships
         |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
-        |> IO.inspect(label: :resource_relationships)
 
       supporting_services =
         service_relationships
@@ -577,12 +572,10 @@ defmodule Diffo.Provider.Instance do
       |> Diffo.Util.set(:resourceRelationship, resource_relationships)
       |> Diffo.Util.set(:supportingService, supporting_services)
       |> Diffo.Util.set(:supportingResource, supporting_resources)
-      |> IO.inspect(label: :relationships_result)
     else
       result
       |> Diffo.Util.remove(:forward_relationships)
       |> Diffo.Util.remove(:reverse_relationships)
-      |> IO.inspect(label: :no_relationships_result)
     end
   end
 

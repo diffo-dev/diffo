@@ -10,8 +10,8 @@ defmodule Diffo.Provider.Outstanding do
   Accumulates outstanding instance with list by key
   Outstanding, expected and actual are Diffo.Provider.Instance structs
     ## Examples
-    iex> expected_instance = %Diffo.Provider.Instance{parties: [%Diffo.Provider.PartyRef{party_id: nil, name: nil, role: :Consumer, type: "PartyRef", referredType: "Entity"}]}
-    iex> actual_instance = %Diffo.Provider.Instance{parties: [%Diffo.Provider.PartyRef{party_id: "T5_CONNECTIVITY", name: nil, role: :Consumer, type: "PartyRef", referredType: "Entity"}]}
+    iex> expected_instance = %Diffo.Provider.Instance{parties: [%Diffo.Provider.PartyRef{role: :Consumer, party: %Diffo.Provider.Party{id: nil, name: nil, type: "PartyRef", referredType: "Entity"}}]}
+    iex> actual_instance = %Diffo.Provider.Instance{parties: [%Diffo.Provider.PartyRef{role: :Consumer, party: %Diffo.Provider.Party{id: "T5_CONNECTIVITY", name: nil, type: "PartyRef", referredType: "Entity"}}]}
     iex> Diffo.Provider.Outstanding.instance_list_by_key(nil, expected_instance, actual_instance, :parties, :role)
     nil
   """

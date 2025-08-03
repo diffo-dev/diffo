@@ -198,7 +198,6 @@ defmodule Diffo.Provider.EntityRefTest do
           role: :reportedOn,
           entity_id: entity.id
         })
-        |> IO.inspect(label: :created)
         |> check_entity_ref(instance, entity)
 
       assert entity_ref.role == :reportedOn
