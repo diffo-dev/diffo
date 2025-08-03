@@ -16,7 +16,7 @@ defmodule Diffo.Provider.Feature do
 
     relate([
       {:instance, :FEATURE_DEFINES_INSTANCE, :outgoing},
-      {:characteristics, :DEFINES_FEATURE, :incoming}
+      {:characteristics, :CHARACTERISTIC_DEFINES_FEATURE, :incoming}
     ])
 
     guard([
@@ -62,11 +62,13 @@ defmodule Diffo.Provider.Feature do
 
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
+      description "the instance the feature defines"
       allow_nil? true
       public? true
     end
 
     has_many :characteristics, Diffo.Provider.Characteristic do
+      description "the feature's characteristic"
       public? true
     end
   end

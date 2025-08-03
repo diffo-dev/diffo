@@ -448,7 +448,7 @@ defmodule Diffo.Provider.InstanceTest do
   """
 
   describe "Diffo.Provider encode Instances" do
-    @tag bugged: true
+    @tag debug: true
     # serviceRelationship[], supportingService[] not present
     test "encode service with service child instance json - success" do
       parent_specification =
@@ -976,7 +976,7 @@ defmodule Diffo.Provider.InstanceTest do
       assert child_encoding ==
                ~s({\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\",\"category\":\"physical\",\"description\":\"Customer Access Network Resource\",\"resourceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/#{child_specification.id}\",\"name\":\"can\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\"}}]})
     end
-
+e
     test "encode sorts relationships - success" do
       parent_specification = Diffo.Provider.create_specification!(%{name: "broadband"})
       access_specification = Diffo.Provider.create_specification!(%{name: "fibreAccess"})
@@ -1068,13 +1068,13 @@ defmodule Diffo.Provider.InstanceTest do
           name: :automations,
           characteristics: [
             first_feature_characteristic.id,
-            second_feature_characteristic,
+            second_feature_characteristic.id,
             third_feature_characteristic.id
           ]
         })
 
       instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id}, features: [feature.id])
+        Diffo.Provider.create_instance!(%{specified_by: specification.id, features: [feature.id]})
 
       refreshed_instance = Diffo.Provider.get_instance_by_id!(instance.id)
 

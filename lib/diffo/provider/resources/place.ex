@@ -15,7 +15,7 @@ defmodule Diffo.Provider.Place do
     label(:Place)
 
     relate([
-      {:place_refs, :RELATED_HOW, :incoming}
+      {:place_refs, :RELATED_HOW_PLACE, :incoming}
     ])
 
     translate(id: :uuid)
@@ -73,6 +73,7 @@ defmodule Diffo.Provider.Place do
 
   relationships do
     has_many :place_refs, Diffo.Provider.PlaceRef do
+      description "the place refs relating this place to instances"
       destination_attribute :place_id
       public? true
     end

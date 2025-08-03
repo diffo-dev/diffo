@@ -15,7 +15,7 @@ defmodule Diffo.Provider.Party do
     label(:Party)
 
     relate([
-      {:party_refs, :RELATED_HOW, :incoming},
+      {:party_refs, :RELATED_HOW_PARTY, :incoming},
       {:external_identifiers, :OWNS, :outgoing},
       {:notes, :AUTHORS, :outgoing}
     ])
@@ -79,6 +79,7 @@ defmodule Diffo.Provider.Party do
 
   relationships do
     has_many :party_refs, Diffo.Provider.PartyRef do
+      description "the party refs relating this party to instances"
       destination_attribute :party_id
       public? true
     end

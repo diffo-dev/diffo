@@ -17,28 +17,27 @@ defmodule Diffo.Provider.Relationship do
     relate([
       {:source, :RELATES_HOW, :incoming},
       {:target, :RELATED_HOW, :outgoing},
-      {:characteristics, :DEFINES_RELATIONSHIP, :incoming}
+      {:characteristics, :CHARACTERISTIC_DEFINES_RELATIONSHIP, :incoming}
     ])
 
     translate(id: :uuid)
   end
 
   jason do
-    pick([:target_type, :type, :characteristics, :target_type, :target_id, :target_href])
+    pick([:type, :target, :characteristics])
 
     customize(fn result, _record ->
-      type = Diffo.Util.get(result, :target_type)
-      id = Diffo.Util.get(result, :target_id)
-      href = Diffo.Util.get(result, :target_href)
-      reference = %{id: id, href: href}
+      target = Diffo.Util.get(result, :target)
+      reference = Diffo.Provider.Reference.reference(target)
 
       relationship_characteristic_list_name =
-        Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(type)
+        Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(target.type)
 
       result =
         result
-        |> Diffo.Util.set(type, reference)
+        |> Diffo.Util.set(target.type, reference)
         |> Diffo.Util.suppress_rename(:characteristics, relationship_characteristic_list_name)
+        |> Diffo.Util.remove(:target)
     end)
 
     order([
@@ -51,7 +50,7 @@ defmodule Diffo.Provider.Relationship do
   end
 
   outstanding do
-    expect([:type, :target_type, :target_id, :target_href, :characteristics])
+    expect([:alias, :type, :target, :characteristics])
   end
 
   attributes do
@@ -79,11 +78,13 @@ defmodule Diffo.Provider.Relationship do
 
   relationships do
     belongs_to :source, Diffo.Provider.Instance do
+      description "the source instance which relates to the target instance via this relationship"
       allow_nil? false
       public? true
     end
 
     belongs_to :target, Diffo.Provider.Instance do
+      description "the target instance which is related from the source instance via this relationship"
       allow_nil? false
       public? true
     end
@@ -107,7 +108,7 @@ defmodule Diffo.Provider.Relationship do
       change manage_relationship(:source_id, :source, type: :append)
       change manage_relationship(:target_id, :target, type: :append)
       change manage_relationship(:characteristics, type: :append)
-      change load [:target_type, :target_id, :target_href]
+      change load [:target, :characteristics]
     end
 
     read :list do
@@ -150,7 +151,7 @@ defmodule Diffo.Provider.Relationship do
 
   preparations do
     prepare build(
-              load: [:source_type, :source_href, :target_type, :target_href, :characteristics],
+              load: [:target, :characteristics],
               sort: [alias: :asc, type: :asc]
             )
   end
@@ -159,37 +160,15 @@ defmodule Diffo.Provider.Relationship do
     validate {Diffo.Validations.IsUuid4OrNil, attribute: :source_id}, on: :create
     validate {Diffo.Validations.IsUuid4OrNil, attribute: :target_id}, on: :create
 
-    validate absent(:alias) do
-      on [:create, :update]
-      where [one_of(:source_type, [:resource]), one_of(:target_type, [:service])]
-      message "a resource cannot have a supporting service"
-    end
+    # validate present(:alias) do
+    #  on [:create, :update]
+    #  where [one_of(:source_type, [:resource]), one_of(:target_type, [:service])]
+    #  message "a resource cannot have a supporting service"
+    # end
 
     # validate {Diffo.Validations.RelatedResourcesDifferent,
     #          relationship: :characteristic, attribute: :name},
     #        on: :update
-  end
-
-  calculations do
-    calculate :source_tmf_version, :string, expr(source.tmf_version) do
-      description "the TMF version of the related source instance"
-    end
-
-    calculate :source_type, :atom, expr(source.type) do
-      description "the type of the related source instance"
-    end
-
-    calculate :source_href, :string, expr(source.href) do
-      description "the href of the related source instance"
-    end
-
-    calculate :target_type, :atom, expr(target.type) do
-      description "the type of the related target instance"
-    end
-
-    calculate :target_href, :string, expr(target.href) do
-      description "the href of the related target instance"
-    end
   end
 
   @doc """

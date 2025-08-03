@@ -15,8 +15,8 @@ defmodule Diffo.Provider.PartyRef do
     label(:PartyRef)
 
     relate([
-      {:instance, :RELATES_HOW, :incoming},
-      {:party, :RELATED_HOW, :outgoing}
+      {:instance, :RELATES_HOW_PARTY, :incoming},
+      {:party, :RELATED_HOW_PARTY, :outgoing}
     ])
 
     translate(id: :uuid)
@@ -61,11 +61,13 @@ defmodule Diffo.Provider.PartyRef do
 
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
+      description "the instance which relates to a party via this party ref"
       allow_nil? false
       public? true
     end
 
     belongs_to :party, Diffo.Provider.Party do
+      description "the party which is related from an instance via this party ref"
       attribute_type :string
       allow_nil? false
       public? true

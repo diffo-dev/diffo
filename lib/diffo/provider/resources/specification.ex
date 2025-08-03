@@ -106,6 +106,7 @@ defmodule Diffo.Provider.Specification do
 
   relationships do
     has_many :instances, Diffo.Provider.Instance do
+      description "instances specified by this specification"
       destination_attribute :specification_id
       public? false
     end

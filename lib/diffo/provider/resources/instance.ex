@@ -21,11 +21,11 @@ defmodule Diffo.Provider.Instance do
       {:forward_relationships, :RELATES_HOW, :outgoing},
       {:reverse_relationships, :RELATED_HOW, :incoming},
       {:features, :FEATURE_DEFINES_INSTANCE, :incoming},
-      {:characteristics, :DEFINES_INSTANCE, :incoming},
-      {:entities, :RELATES_HOW, :outgoing},
+      {:characteristics, :CHARACTERISTIC_DEFINES_INSTANCE, :incoming},
+      {:entities, :RELATES_HOW_ENTITY, :outgoing},
       {:notes, :ANNOTATES, :incoming},
-      {:places, :RELATES_HOW, :outgoing},
-      {:parties, :RELATES_HOW, :outgoing}
+      {:places, :RELATES_HOW_PLACE, :outgoing},
+      {:parties, :RELATES_HOW_PARTY, :outgoing}
     ])
 
     translate(id: :uuid)
@@ -434,7 +434,7 @@ defmodule Diffo.Provider.Instance do
                 :external_identifiers,
                 :specification,
                 :process_statuses,
-                :forward_relationships,
+                # :forward_relationships,
                 :entities,
                 :notes,
                 :features,

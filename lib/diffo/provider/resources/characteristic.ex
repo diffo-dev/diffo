@@ -15,15 +15,15 @@ defmodule Diffo.Provider.Characteristic do
     label(:Characteristic)
 
     relate([
-      {:instance, :DEFINES_INSTANCE, :outgoing},
-      {:feature, :DEFINES_FEATURE, :outgoing},
-      {:relationship, :DEFINES_RELATIONSHIP, :outgoing}
+      {:instance, :CHARACTERISTIC_DEFINES_INSTANCE, :outgoing},
+      {:feature, :CHARACTERISTIC_DEFINES_FEATURE, :outgoing},
+      {:relationship, :CHARACTERISTIC_DEFINES_RELATIONSHIP, :outgoing}
     ])
 
     guard([
-      {:DEFINES_INSTANCE, :outgoing, :Instance},
-      {:DEFINES_FEATURE, :outgoing, :Feature},
-      {:DEFINES_RELATIONSHIP, :outgoing, :Relationship}
+      {:CHARACTERISTIC_DEFINES_INSTANCE, :outgoing, :Instance},
+      {:CHARACTERISTIC_DEFINES_FEATURE, :outgoing, :Feature},
+      {:CHARACTERISTIC_DEFINES_RELATIONSHIP, :outgoing, :Relationship}
     ])
 
     translate(id: :uuid)
@@ -71,16 +71,19 @@ defmodule Diffo.Provider.Characteristic do
 
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
+      description "the instance the characteristic defines"
       allow_nil? true
       public? true
     end
 
     belongs_to :feature, Diffo.Provider.Feature do
+      description "the feature the characteristic defines"
       allow_nil? true
       public? true
     end
 
     belongs_to :relationship, Diffo.Provider.Relationship do
+      description "the relationship the characteristic defines"
       allow_nil? true
       public? true
     end
