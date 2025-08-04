@@ -160,7 +160,7 @@ defmodule Diffo.Provider.PlaceRefTest do
       })
 
       place_refs =
-        Diffo.Provider.list_place_refs_by_place_id!(place3.id) |> IO.inspect(label: :place_refs)
+        Diffo.Provider.list_place_refs_by_place_id!(place3.id)
 
       assert length(place_refs) == 2
       # should be sorted newest to oldest
