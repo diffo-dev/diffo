@@ -24,6 +24,7 @@ defmodule Diffo.Provider.EntityRef do
 
   jason do
     pick([:role, :entity])
+
     customize(fn result, _record ->
       result
       |> Diffo.Util.extract_suppress(:entity, :id, :id)
@@ -33,6 +34,7 @@ defmodule Diffo.Provider.EntityRef do
       |> Diffo.Util.extract_suppress(:entity, :type, "@type")
       |> Diffo.Util.remove(:party)
     end)
+
     order([:id, :href, :name, :role, "@referredType", "@type"])
   end
 

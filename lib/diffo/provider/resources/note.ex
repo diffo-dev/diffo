@@ -91,8 +91,8 @@ defmodule Diffo.Provider.Note do
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:author_id, :author, type: :append_and_remove)
 
-      #upsert? true
-      #upsert_identity :instance_text_uniqueness
+      # upsert? true
+      # upsert_identity :instance_text_uniqueness
     end
 
     read :find_by_note_id do

@@ -139,10 +139,7 @@ defmodule Diffo.Provider.Party do
   end
 
   preparations do
-    prepare build(
-              load: [:external_identifiers],
-              sort: [id: :asc, name: :asc]
-            )
+    prepare build(sort: [id: :asc, name: :asc])
   end
 
   validations do

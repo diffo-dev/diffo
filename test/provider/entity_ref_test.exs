@@ -180,7 +180,6 @@ defmodule Diffo.Provider.EntityRefTest do
   end
 
   describe "Diffo.Provider create EntityRefs" do
-    @tag debug: true
     test "create a reportedOn role entity ref  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -398,12 +397,14 @@ defmodule Diffo.Provider.EntityRefTest do
   describe "Diffo.Provider outstanding EntityRefs" do
     use Outstand
     @role_only %EntityRef{role: :expected}
-    @entity_only %EntityRef{entity: %Entity{
+    @entity_only %EntityRef{
+      entity: %Entity{
         id: "COR000000123456",
         href: "costManagement/v2/cost/COR000000123456",
         name: "2025-01",
         referredType: :cost,
-        type: :EntityRef}
+        type: :EntityRef
+      }
     }
     @id_only %EntityRef{entity: %Entity{id: "COR000000123456"}}
     @href_only %EntityRef{entity: %Entity{href: "costManagement/v2/cost/COR000000123456"}}
@@ -419,7 +420,6 @@ defmodule Diffo.Provider.EntityRefTest do
         referredType: :cost,
         type: :EntityRef
       }
-
     }
     @generic_cost %EntityRef{
       role: {&Outstand.any_of/2, [:expected, :actual]},

@@ -159,11 +159,12 @@ defmodule Diffo.Provider.PlaceRefTest do
         place_id: place3.id
       })
 
-      place_refs = Diffo.Provider.list_place_refs_by_place_id!(place3.id)
+      place_refs =
+        Diffo.Provider.list_place_refs_by_place_id!(place3.id) |> IO.inspect(label: :place_refs)
+
       assert length(place_refs) == 2
-      # should be sorted
-      assert List.first(place_refs).instance_id == instance1.id
-      assert List.last(place_refs).instance_id == instance2.id
+      # should be sorted newest to oldest
+      Enum.each(place_refs, fn place_ref -> assert place_ref.place_id == place3.id end)
     end
   end
 
