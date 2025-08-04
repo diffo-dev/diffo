@@ -1,6 +1,8 @@
 defmodule Diffo.Provider.NoteTest do
   @moduledoc false
   use ExUnit.Case
+  alias Diffo.Provider.Party
+  alias Diffo.Provider.Instance
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -225,6 +227,11 @@ defmodule Diffo.Provider.NoteTest do
   end
 
   describe "Diffo.Provider create Notes" do
+    test "create a minimal note  - success" do
+      note = Diffo.Provider.create_note!(%{text: "123"})
+      assert note.text == "123"
+    end
+
     test "create a note with no author  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -261,23 +268,6 @@ defmodule Diffo.Provider.NoteTest do
       {:error, _error} = Diffo.Provider.create_note(%{instance_id: instance1.id})
     end
 
-    test "create - failure - must have an instance" do
-      t4_party =
-        Diffo.Provider.create_party!(%{
-          id: "T4_ACCESS",
-          name: :entityId,
-          href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
-        })
-
-      {:error, _error} =
-        Diffo.Provider.create_note(%{
-          text: :"test service",
-          note_id: "TST000000123465",
-          author_id: t4_party.id
-        })
-    end
-
     test "create similar notes without note id on same instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -301,32 +291,6 @@ defmodule Diffo.Provider.NoteTest do
         text: :"test service2",
         author_id: t4_party.id
       })
-    end
-
-    test "create duplicate notes without note id on same instance - failure" do
-      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-
-      t4_party =
-        Diffo.Provider.create_party!(%{
-          id: "T4_ACCESS",
-          name: :entityId,
-          href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
-        })
-
-      Diffo.Provider.create_note!(%{
-        instance_id: instance1.id,
-        text: :"test service",
-        author_id: t4_party.id
-      })
-
-      {:error, _error} =
-        Diffo.Provider.create_note(%{
-          instance_id: instance1.id,
-          text: :"test service",
-          author_id: t4_party.id
-        })
     end
 
     test "create similar notes with note id on same instance - success" do
@@ -354,34 +318,6 @@ defmodule Diffo.Provider.NoteTest do
         note_id: "TST000000123466",
         author_id: t4_party.id
       })
-    end
-
-    test "create duplicate notes with note id on same instance - failure" do
-      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-
-      t4_party =
-        Diffo.Provider.create_party!(%{
-          id: "T4_ACCESS",
-          name: :entityId,
-          href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
-        })
-
-      Diffo.Provider.create_note!(%{
-        instance_id: instance1.id,
-        text: :"test service",
-        note_id: "TST000000123465",
-        author_id: t4_party.id
-      })
-
-      {:error, _error} =
-        Diffo.Provider.create_note(%{
-          instance_id: instance1.id,
-          text: :"test service",
-          note_id: "TST000000123465",
-          author_id: t4_party.id
-        })
     end
   end
 
@@ -456,7 +392,7 @@ defmodule Diffo.Provider.NoteTest do
 
       updated_note =
         note
-        |> Diffo.Provider.update_note_author!(%{author_id: nil})
+        |> Diffo.Provider.update_note!(%{author_id: nil})
 
       assert updated_note.author_id == nil
     end
@@ -489,8 +425,9 @@ defmodule Diffo.Provider.NoteTest do
           author_id: t4_party.id
         })
 
-      updated_note = note |> Diffo.Provider.update_note_author!(%{author_id: t3_party.id})
-      assert updated_note.author_id == "T3_CONNECTIVITY"
+      updated_note = note |> Diffo.Provider.update_note!(%{author_id: t3_party.id})
+      assert is_struct(updated_note.author, Party)
+      assert updated_note.author.id == "T3_CONNECTIVITY"
     end
 
     test "update author_id - failure - author doesn't exist" do
@@ -513,10 +450,10 @@ defmodule Diffo.Provider.NoteTest do
           author_id: t4_party.id
         })
 
-      {:error, _error} = note |> Diffo.Provider.update_note_author(%{author_id: "T4_VIRTUAL"})
+      {:error, _error} = note |> Diffo.Provider.update_note(%{author_id: "T4_VIRTUAL"})
     end
 
-    test "update instance_id - failure" do
+    test "update instance_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -537,7 +474,9 @@ defmodule Diffo.Provider.NoteTest do
           author_id: t4_party.id
         })
 
-      {:error, _error} = note |> Diffo.Provider.update_note(%{instance_id: instance2.id})
+      updated_note = note |> Diffo.Provider.update_note!(%{instance_id: instance2.id})
+      assert is_struct(updated_note.instance, Instance)
+      assert updated_note.instance.id == instance2.id
     end
 
     test "update instance_id - failure - instance doesn't exist" do

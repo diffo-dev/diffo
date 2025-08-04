@@ -68,7 +68,7 @@ defmodule Diffo.Provider.Feature do
     end
 
     has_many :characteristics, Diffo.Provider.Characteristic do
-      description "the feature's characteristic"
+      description "the feature's collection of defining characteristics"
       public? true
     end
   end

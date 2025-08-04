@@ -15,13 +15,11 @@ defmodule Diffo.Provider.Note do
     label(:Note)
 
     relate([
-      {:instance, :ANNOTATES, :incoming},
+      {:instance, :ANNOTATES, :outgoing},
       {:author, :AUTHORS, :incoming}
     ])
 
     translate(id: :uuid)
-
-    # skip([:instance_id, :author_id])
   end
 
   jason do
@@ -67,7 +65,7 @@ defmodule Diffo.Provider.Note do
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
       description "the related instance"
-      allow_nil? false
+      allow_nil? true
       public? true
     end
 
@@ -92,6 +90,9 @@ defmodule Diffo.Provider.Note do
       change set_attribute(:timestamp, &DateTime.utc_now/0)
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:author_id, :author, type: :append_and_remove)
+
+      #upsert? true
+      #upsert_identity :instance_text_uniqueness
     end
 
     read :find_by_note_id do
@@ -123,30 +124,22 @@ defmodule Diffo.Provider.Note do
 
     update :update do
       description "updates the note, touching the timestamp"
+      primary? true
       accept [:text, :note_id, :author_id]
-
-      change set_attribute(:timestamp, &DateTime.utc_now/0)
-    end
-
-    update :update_author do
-      description "updates the note author, touching the timestamp"
+      argument :instance_id, :uuid
       argument :author_id, :string
 
-      change set_attribute(:timestamp, &DateTime.utc_now/0)
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:author_id, :author, type: :append_and_remove)
+      change set_attribute(:timestamp, &DateTime.utc_now/0)
     end
   end
 
   identities do
-    identity :instance_text_uniqueness, [:instance_id, :note_id, :text] do
-      pre_check? true
-      message "a duplicate note exists"
-      nils_distinct? false
-    end
-
     identity :instance_note_id_uniqueness, [:instance_id, :note_id] do
       pre_check? true
       message "another note exists on the instance with same note id"
+      nils_distinct? true
     end
   end
 

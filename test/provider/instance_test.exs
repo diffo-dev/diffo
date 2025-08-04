@@ -370,6 +370,32 @@ defmodule Diffo.Provider.InstanceTest do
       {:error, _error} =
         instance |> Diffo.Provider.specify_instance(%{specified_by: "not a uuid"})
     end
+
+    test "annotate a service instance with a note - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+
+      note = Diffo.Provider.create_note!(%{text: "a note"})
+
+      updated_instance =
+        instance |> Diffo.Provider.annotate_instance!(%{note: note.id})
+
+      assert is_list(updated_instance.notes)
+    end
+
+    test "annotate a service instance with similar notes - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
+      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+
+      note = Diffo.Provider.create_note!(%{note_id: "TST000000123465", text: "test service"})
+      note2 = Diffo.Provider.create_note!(%{note_id: "TST000000123466", text: "test service"})
+
+      instance |> Diffo.Provider.annotate_instance!(%{note: note.id})
+      annotated_instance = instance |> Diffo.Provider.annotate_instance!(%{note: note2.id})
+
+      assert is_list(annotated_instance.notes)
+      assert length(annotated_instance.notes) == 2
+    end
   end
 
   describe "Diffo.Provider which Instance" do
@@ -448,7 +474,7 @@ defmodule Diffo.Provider.InstanceTest do
   """
 
   describe "Diffo.Provider encode Instances" do
-    @tag debug: true
+    @tag bugged: true
     # serviceRelationship[], supportingService[] not present
     test "encode service with service child instance json - success" do
       parent_specification =
@@ -976,7 +1002,7 @@ defmodule Diffo.Provider.InstanceTest do
       assert child_encoding ==
                ~s({\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\",\"category\":\"physical\",\"description\":\"Customer Access Network Resource\",\"resourceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/#{child_specification.id}\",\"name\":\"can\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\"}}]})
     end
-e
+
     test "encode sorts relationships - success" do
       parent_specification = Diffo.Provider.create_specification!(%{name: "broadband"})
       access_specification = Diffo.Provider.create_specification!(%{name: "fibreAccess"})

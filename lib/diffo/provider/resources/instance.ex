@@ -420,6 +420,12 @@ defmodule Diffo.Provider.Instance do
       argument :characteristics, {:array, :uuid}
       change manage_relationship(:characteristics, type: :remove)
     end
+
+    update :annotate do
+      description "annotates the instance with a note"
+      argument :note, :uuid
+      change manage_relationship(:note, :notes, type: :append)
+    end
   end
 
   code_interface do
