@@ -286,7 +286,7 @@ defmodule Diffo.Provider.Instance do
       change manage_relationship(:specified_by, :specification, type: :append)
       change manage_relationship(:features, type: :append)
       change manage_relationship(:characteristics, type: :append)
-      change load [:href, :external_identifiers]
+      change load [:href]
       upsert? true
     end
 

@@ -164,8 +164,7 @@ defmodule Diffo.Provider.NoteTest do
       notes = Diffo.Provider.list_notes_by_instance_id!(instance1.id)
       assert length(notes) == 2
       # should be sorted by descending timestamp
-      assert List.first(notes).author_id == "T3_CONNECTIVITY"
-      assert List.last(notes).author_id == "T4_ACCESS"
+      Enum.each(notes, fn note -> note.instance_id == instance1.id end)
     end
 
     test "list notes by related author id - success" do

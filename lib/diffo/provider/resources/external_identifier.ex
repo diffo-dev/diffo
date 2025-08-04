@@ -79,14 +79,14 @@ defmodule Diffo.Provider.ExternalIdentifier do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a external identifier. related to an instance and optionally an owner party"
+      description "creates a external identifier related to an instance and optionally an owner party"
       accept [:type, :external_id]
       argument :instance_id, :uuid
       argument :owner_id, :string
 
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:owner_id, :owner, type: :append_and_remove)
-      change load [:owner_id]
+      change load [:owner]
     end
 
     read :find_by_external_id do
@@ -118,7 +118,13 @@ defmodule Diffo.Provider.ExternalIdentifier do
 
     update :update do
       description "updates the external identifier"
+      primary? true
       accept [:type, :external_id, :owner_id, :instance_id]
+      argument :instance_id, :uuid
+      argument :owner_id, :string
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:owner_id, :owner, type: :append_and_remove)
     end
   end
 
@@ -129,7 +135,7 @@ defmodule Diffo.Provider.ExternalIdentifier do
   end
 
   preparations do
-    prepare build(load: [:owner_id], sort: [inserted_at: :desc])
+    prepare build(load: [:owner], sort: [inserted_at: :desc])
   end
 
   validations do

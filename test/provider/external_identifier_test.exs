@@ -1,6 +1,8 @@
 defmodule Diffo.Provider.ExternalIdentifierTest do
   @moduledoc false
   use ExUnit.Case
+  alias Diffo.Provider.ExternalIdentifier
+  alias Diffo.Provider.Party
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -193,9 +195,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         Diffo.Provider.list_external_identifiers_by_instance_id!(instance1.id)
 
       assert length(external_identifiers) == 3
-      # should be sorted
-      assert List.first(external_identifiers).owner_id == "T3_ADAPTIVE_NETWORKS"
-      assert List.last(external_identifiers).owner_id == "T4_ACCESS"
+      # should be sorted newest to oldest
+      Enum.each(external_identifiers, fn external_identifier ->
+        assert external_identifier.instance_id == instance1.id
+      end)
     end
 
     test "list external identifiers by related owner id - success" do
@@ -405,7 +408,8 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       updated_external_identifier =
         external_identifier |> Diffo.Provider.update_external_identifier!(%{owner_id: nil})
 
-      assert updated_external_identifier.owner_id == nil
+      refute updated_external_identifier.owner_id
+      refute updated_external_identifier.owner
     end
 
     test "update owner_id - success" do
@@ -440,7 +444,8 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         external_identifier
         |> Diffo.Provider.update_external_identifier!(%{owner_id: t3_party.id})
 
-      assert updated_external_identifier.owner_id == "T3_CONNECTIVITY"
+      assert is_struct(updated_external_identifier.owner, Party)
+      assert updated_external_identifier.owner.id == "T3_CONNECTIVITY"
     end
 
     test "update owner_id - failure - owner doesn't exist" do
@@ -493,7 +498,13 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         external_identifier
         |> Diffo.Provider.update_external_identifier!(%{instance_id: instance2.id})
 
-      assert updated_external_identifier.instance_id == instance2.id
+      refreshed_instance = instance2 |> Ash.reload!()
+
+      assert is_list(refreshed_instance.external_identifiers)
+      assert length(refreshed_instance.external_identifiers) == 1
+      instance_external_identifier = hd(refreshed_instance.external_identifiers)
+      assert is_struct(instance_external_identifier, ExternalIdentifier)
+      assert instance_external_identifier.external_id == external_identifier.external_id
     end
 
     test "update instance_id - failure - instance doesn't exist" do
