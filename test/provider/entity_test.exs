@@ -1,6 +1,7 @@
 defmodule Diffo.Provider.EntityTest do
   @moduledoc false
   use ExUnit.Case
+  use Outstand
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -322,6 +323,28 @@ defmodule Diffo.Provider.EntityTest do
 
     assert encoding ==
              "{\"id\":\"COR000000123456\",\"name\":\"2025-01\",\"@referredType\":\"cost\",\"@type\":\"EntityRef\"}"
+  end
+
+  describe "Diffo.Provider outstanding Entities" do
+    test "resolve a general expected entity" do
+      entity =
+        Diffo.Provider.create_entity!(%{
+          id: "COR000000123456",
+          name: "2025-01",
+          href: "costManagement/v2/cost/COR000000123456",
+          type: :EntityRef,
+          referredType: :cost
+        })
+
+      expected_entity = %Diffo.Provider.Entity{
+        id: ~r/COR\d{12}/,
+        name: ~r/\d{4}-\d{2}/,
+        type: :EntityRef,
+        referredType: :cost
+      }
+
+      refute expected_entity >>> entity
+    end
   end
 
   describe "Diffo.Provider delete Entities" do

@@ -1,9 +1,9 @@
 defmodule Diffo.Provider.EntityRefTest do
   @moduledoc false
   use ExUnit.Case
+  use Outstand
   alias Diffo.Provider.Entity
   alias Diffo.Provider.EntityRef
-  alias Diffo.Provider.Instance
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -65,9 +65,9 @@ defmodule Diffo.Provider.EntityRefTest do
       entity_refs = Diffo.Provider.list_entity_refs!()
       assert length(entity_refs) == 3
       # should be sorted newest to oldest and enriched
-      check_entity_ref(hd(entity_refs), instance, entity3)
-      check_entity_ref(hd(tl(entity_refs)), instance, entity2)
-      check_entity_ref(List.last(entity_refs), instance, entity1)
+      check_entity_ref(hd(entity_refs), entity3)
+      check_entity_ref(hd(tl(entity_refs)), entity2)
+      check_entity_ref(List.last(entity_refs), entity1)
     end
 
     test "list entity refs by related instance - success" do
@@ -175,11 +175,12 @@ defmodule Diffo.Provider.EntityRefTest do
 
       assert length(entity_refs) == 1
 
-      check_entity_ref(hd(entity_refs), instance2, entity2)
+      check_entity_ref(hd(entity_refs), entity2)
     end
   end
 
   describe "Diffo.Provider create EntityRefs" do
+    @tag debug: true
     test "create a reportedOn role entity ref  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -198,43 +199,31 @@ defmodule Diffo.Provider.EntityRefTest do
           role: :reportedOn,
           entity_id: entity.id
         })
-        |> check_entity_ref(instance, entity)
 
       assert entity_ref.role == :reportedOn
+      check_entity_ref(entity_ref, entity)
 
       # re-read
       EntityRef
       |> Ash.read_one!()
-      |> check_entity_ref(instance, entity)
+      |> check_entity_ref(entity)
 
       # reload
       entity_ref
       |> Ash.reload!()
-      |> check_entity_ref(instance, entity)
+      |> check_entity_ref(entity)
     end
   end
 
-  defp check_entity_ref(entity_ref, instance, entity) do
+  defp check_entity_ref(entity_ref, entity) do
     # check inputs
-    assert is_struct(instance, Instance)
     assert is_struct(entity_ref, EntityRef)
     assert is_struct(entity, Entity)
 
-    # check EntityRef enrichment
-    assert entity_ref.instance_id == instance.id
-    assert is_struct(entity_ref.instance, Instance)
-    assert entity_ref.instance.id == instance.id
+    # check EntityRef enrichment of Entity
     assert entity_ref.entity_id == entity.id
     assert is_struct(entity_ref.entity, Entity)
     assert entity_ref.entity.id == entity.id
-
-    # check EntityRef calculations
-    assert entity_ref.href == entity.href
-    assert entity_ref.name == entity.name
-    assert entity_ref.referredType == entity.referredType
-    assert entity_ref.type == entity.type
-
-    entity_ref
   end
 
   describe "Diffo.Provider update EntityRefs" do
@@ -408,60 +397,53 @@ defmodule Diffo.Provider.EntityRefTest do
 
   describe "Diffo.Provider outstanding EntityRefs" do
     use Outstand
-    @entity_id_only %Diffo.Provider.EntityRef{entity_id: "COR000000123456"}
-    @href_only %Diffo.Provider.EntityRef{href: "costManagement/v2/cost/COR000000123456"}
-    @name_only %Diffo.Provider.EntityRef{name: "2025-01"}
-    @role_only %Diffo.Provider.EntityRef{role: "expected"}
-    @referredType_only %Diffo.Provider.EntityRef{referredType: "cost"}
-    @type_only %Diffo.Provider.EntityRef{type: "EntityRef"}
-    @specific_cost %Diffo.Provider.EntityRef{
-      entity_id: "COR000000123456",
-      href: "costManagement/v2/cost/COR000000123456",
-      name: "2025-01",
-      role: "expected",
-      referredType: "cost",
-      type: "EntityRef"
+    @role_only %EntityRef{role: :expected}
+    @entity_only %EntityRef{entity: %Entity{
+        id: "COR000000123456",
+        href: "costManagement/v2/cost/COR000000123456",
+        name: "2025-01",
+        referredType: :cost,
+        type: :EntityRef}
     }
-    @generic_cost %Diffo.Provider.EntityRef{
-      entity_id: &__MODULE__.generic_cost_id/1,
-      href: nil,
-      name: &Outstand.any_bitstring/1,
-      role: {&Outstand.any_of/2, ["expected", "actual"]},
-      referredType: "cost",
-      type: nil
+    @id_only %EntityRef{entity: %Entity{id: "COR000000123456"}}
+    @href_only %EntityRef{entity: %Entity{href: "costManagement/v2/cost/COR000000123456"}}
+    @name_only %EntityRef{entity: %Entity{name: "2025-01"}}
+    @referredType_only %EntityRef{entity: %Entity{referredType: :cost}}
+    @type_only %EntityRef{entity: %Entity{type: :EntityRef}}
+    @specific_cost %EntityRef{
+      role: :expected,
+      entity: %Entity{
+        id: "COR000000123456",
+        href: "costManagement/v2/cost/COR000000123456",
+        name: "2025-01",
+        referredType: :cost,
+        type: :EntityRef
+      }
+
     }
-    @actual_cost %Diffo.Provider.EntityRef{
-      entity_id: "COR000000123456",
-      href: "costManagement/v2/cost/COR000000123456",
-      name: "2025-01",
-      role: "expected",
-      referredType: "cost",
-      type: "EntityRef"
+    @generic_cost %EntityRef{
+      role: {&Outstand.any_of/2, [:expected, :actual]},
+      entity: %Entity{
+        id: &__MODULE__.generic_cost_id/1,
+        href: nil,
+        name: &Outstand.any_bitstring/1,
+        referredType: :cost,
+        type: :EntityRef
+      }
+    }
+    @actual_cost %EntityRef{
+      role: :expected,
+      entity: %Entity{
+        id: "COR000000123456",
+        href: "costManagement/v2/cost/COR000000123456",
+        name: "2025-01",
+        referredType: :cost,
+        type: :EntityRef
+      }
     }
 
     gen_nothing_outstanding_test("specific nothing outstanding", @specific_cost, @actual_cost)
     gen_result_outstanding_test("specific cost result", @specific_cost, nil, @specific_cost)
-
-    gen_result_outstanding_test(
-      "specific entity_id result",
-      @specific_cost,
-      Map.delete(@actual_cost, :entity_id),
-      @entity_id_only
-    )
-
-    gen_result_outstanding_test(
-      "specific href result",
-      @specific_cost,
-      Map.delete(@actual_cost, :href),
-      @href_only
-    )
-
-    gen_result_outstanding_test(
-      "specific name result",
-      @specific_cost,
-      Map.delete(@actual_cost, :name),
-      @name_only
-    )
 
     gen_result_outstanding_test(
       "specific role result",
@@ -471,16 +453,44 @@ defmodule Diffo.Provider.EntityRefTest do
     )
 
     gen_result_outstanding_test(
+      "specific entity result",
+      @specific_cost,
+      Map.delete(@actual_cost, :entity),
+      @entity_only
+    )
+
+    gen_result_outstanding_test(
+      "specific id result",
+      @specific_cost,
+      update_in(@actual_cost.entity.id, fn _ -> nil end),
+      @id_only
+    )
+
+    gen_result_outstanding_test(
+      "specific href result",
+      @specific_cost,
+      update_in(@actual_cost.entity.href, fn _ -> nil end),
+      @href_only
+    )
+
+    gen_result_outstanding_test(
+      "specific name result",
+      @specific_cost,
+      update_in(@actual_cost.entity.name, fn _ -> nil end),
+      @name_only
+    )
+
+    gen_result_outstanding_test(
       "specific referredType result",
       @specific_cost,
-      Map.delete(@actual_cost, :referredType),
+      update_in(@actual_cost.entity.referredType, fn _ -> nil end),
       @referredType_only
     )
 
     gen_result_outstanding_test(
       "specific type result",
       @specific_cost,
-      Map.delete(@actual_cost, :type),
+      update_in(@actual_cost.entity.type, fn _ -> nil end),
       @type_only
     )
 
@@ -522,5 +532,10 @@ defmodule Diffo.Provider.EntityRefTest do
       true ->
         :generic_cost_id
     end
+  end
+
+  def update_map_value_in_map(map, map_key, value_key, value) do
+    updated_value_map = Map.fetch!(map, map_key) |> Map.put(value_key, value)
+    map |> Map.put(:map_key, updated_value_map)
   end
 end

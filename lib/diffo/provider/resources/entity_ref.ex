@@ -23,12 +23,21 @@ defmodule Diffo.Provider.EntityRef do
   end
 
   jason do
-    pick([:entity_id, :href, :name, :role, :referredType, :type])
-    rename(entity_id: :id, referredType: "@referredType", type: "@type")
+    pick([:role, :entity])
+    customize(fn result, _record ->
+      result
+      |> Diffo.Util.extract_suppress(:entity, :id, :id)
+      |> Diffo.Util.extract_suppress(:entity, :href, :href)
+      |> Diffo.Util.extract_suppress(:entity, :name, :name)
+      |> Diffo.Util.extract_suppress(:entity, :referredType, "@referredType")
+      |> Diffo.Util.extract_suppress(:entity, :type, "@type")
+      |> Diffo.Util.remove(:party)
+    end)
+    order([:id, :href, :name, :role, "@referredType", "@type"])
   end
 
   outstanding do
-    expect([:entity_id, :href, :name, :role, :referredType, :type])
+    expect([:role, :entity])
   end
 
   attributes do
@@ -74,7 +83,7 @@ defmodule Diffo.Provider.EntityRef do
 
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:entity_id, :entity, type: :append_and_remove)
-      change load [:href, :name, :referredType, :type]
+      change load [:entity]
     end
 
     read :list do
@@ -106,25 +115,7 @@ defmodule Diffo.Provider.EntityRef do
   end
 
   preparations do
-    prepare build(load: [:href, :name, :referredType, :type], sort: [inserted_at: :desc])
-  end
-
-  calculations do
-    calculate :href, :string, expr(entity.href) do
-      description "the href of the related entity instance"
-    end
-
-    calculate :name, :string, expr(entity.name) do
-      description "the name of the related entity instance"
-    end
-
-    calculate :referredType, :atom, expr(entity.referredType) do
-      description "the referredType of the related entity instance"
-    end
-
-    calculate :type, :atom, expr(entity.type) do
-      description "the type of the related entity instance"
-    end
+    prepare build(load: [:entity], sort: [inserted_at: :desc])
   end
 
   @doc """
