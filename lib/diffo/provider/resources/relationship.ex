@@ -20,24 +20,34 @@ defmodule Diffo.Provider.Relationship do
       {:characteristics, :CHARACTERISTIC_DEFINES_RELATIONSHIP, :incoming}
     ])
 
+    guard([
+      {:CHARACTERISTIC_DEFINES_RELATIONSHIP, :incoming, :Characteristic}
+    ])
+
     translate(id: :uuid)
   end
 
   jason do
-    pick([:type, :target, :characteristics])
+    pick([:alias, :type, :target, :characteristics])
 
     customize(fn result, _record ->
       target = Diffo.Util.get(result, :target)
-      reference = Diffo.Provider.Reference.reference(target)
 
-      relationship_characteristic_list_name =
-        Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(target.type)
+      if target do
+        reference = Diffo.Provider.Reference.reference(target)
 
-      result =
+        relationship_characteristic_list_name =
+          Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(target.type)
+
         result
         |> Diffo.Util.set(target.type, reference)
         |> Diffo.Util.suppress_rename(:characteristics, relationship_characteristic_list_name)
-        |> Diffo.Util.remove(:target)
+      else
+        result
+      end
+      |> Diffo.Util.suppress(:alias)
+      |> Diffo.Util.remove(:characteristic)
+      |> Diffo.Util.remove(:target)
     end)
 
     order([

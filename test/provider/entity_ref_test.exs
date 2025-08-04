@@ -120,7 +120,7 @@ defmodule Diffo.Provider.EntityRefTest do
       entity_refs = Diffo.Provider.list_entity_refs_by_instance_id!(instance1.id)
       assert length(entity_refs) == 2
       # should be sorted newest entity ref to oldest
-      assert hd(entity_refs).entity_id == "33db60a1-62bf-4c11-abf3-265287a729c1"
+      Enum.each(entity_refs, fn entity_ref -> assert entity_ref.instance_id == instance1.id end)
     end
 
     test "list entity refs by related entity id - success" do

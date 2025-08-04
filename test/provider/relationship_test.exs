@@ -25,24 +25,28 @@ defmodule Diffo.Provider.RelationshipTest do
       edge_instance = Diffo.Provider.create_instance!(%{specified_by: edge_specification.id})
 
       Diffo.Provider.create_relationship!(%{
+        alias: :aggregation_peer,
         type: :refersTo,
         source_id: access_instance.id,
         target_id: aggregation_instance.id
       })
 
       Diffo.Provider.create_relationship!(%{
+        alias: :access_peer,
         type: :refersTo,
         source_id: aggregation_instance.id,
         target_id: access_instance.id
       })
 
       Diffo.Provider.create_relationship!(%{
+        alias: :edge_peer,
         type: :refersTo,
         source_id: aggregation_instance.id,
         target_id: edge_instance.id
       })
 
       Diffo.Provider.create_relationship!(%{
+        alias: :aggregation_peer,
         type: :refersTo,
         source_id: edge_instance.id,
         target_id: aggregation_instance.id
@@ -50,9 +54,9 @@ defmodule Diffo.Provider.RelationshipTest do
 
       relationships = Diffo.Provider.list_relationships!()
       assert length(relationships) == 4
-      # should be sorted by target href
-      assert String.contains?(List.first(relationships).target_href, "access")
-      assert String.contains?(List.last(relationships).target_href, "edge")
+      # should be sorted by alias then type
+      assert Map.get(List.first(relationships), :alias) == :access_peer
+      assert Map.get(List.last(relationships), :alias) == :edge_peer
     end
 
     test "list service relationships from - success" do
@@ -187,14 +191,16 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: evpl1.id
         })
 
-      assert relationship1.source_id == evpl1.id
-      assert relationship1.target_id == evpl2.id
-      assert is_struct(relationship1.source, Ash.NotLoaded)
-      assert is_struct(relationship1.target, Diffo.Provider.Instance)
+      loaded_relationship1 = relationship1 |> Ash.load!([:source, :target])
+
+      assert loaded_relationship1.source_id == evpl1.id
+      assert loaded_relationship1.target_id == evpl2.id
+      assert is_struct(loaded_relationship1.source, Diffo.Provider.Instance)
+      assert is_struct(loaded_relationship1.target, Diffo.Provider.Instance)
 
       assert relationship2.source_id == evpl2.id
       assert relationship2.target_id == evpl1.id
-      assert is_struct(relationship2.source, Ash.NotLoaded)
+      assert is_struct(relationship2.source, Diffo.Provider.Instance)
       assert is_struct(relationship2.target, Diffo.Provider.Instance)
     end
 
@@ -228,14 +234,16 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: cable1.id
         })
 
+      loaded_relationship1 = relationship1 |> Ash.load!([:source, :target])
+
       assert relationship1.source_id == cable1.id
       assert relationship1.target_id == cable2.id
-      assert is_struct(relationship1.source, Ash.NotLoaded)
+      assert is_struct(relationship1.source, Diffo.Provider.Instance)
       assert is_struct(relationship1.target, Diffo.Provider.Instance)
 
       assert relationship2.source_id == cable2.id
       assert relationship2.target_id == cable1.id
-      assert is_struct(relationship2.source, Ash.NotLoaded)
+      assert is_struct(relationship2.source, Diffo.Provider.Instance)
       assert is_struct(relationship2.target, Diffo.Provider.Instance)
     end
 
@@ -408,10 +416,12 @@ defmodule Diffo.Provider.RelationshipTest do
 
       relationship |> Ash.reload!()
 
-      parent_service_relationships =
+      relationships =
         Diffo.Provider.list_service_relationships_from!(parent_instance.id)
 
-      encoding = Jason.encode!(parent_service_relationships)
+      loaded_relationships = Enum.into(relationships, [], &Ash.reload!(&1))
+
+      encoding = Jason.encode!(loaded_relationships)
 
       assert encoding ==
                ~s([{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}])
@@ -449,12 +459,12 @@ defmodule Diffo.Provider.RelationshipTest do
 
       _read_relationship = Diffo.Provider.get_relationship_by_id!(relationship.id)
 
-      parent_resource_relationships =
+      relationships =
         Diffo.Provider.list_resource_relationships_from!(service_instance.id)
 
-      reloaded_relationship = Ash.reload!(hd(parent_resource_relationships))
+      loaded_relationships = Enum.into(relationships, [], &Ash.reload!(&1))
 
-      encoding = Jason.encode!([reloaded_relationship])
+      encoding = Jason.encode!(loaded_relationships)
 
       assert encoding ==
                ~s([{\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{resource_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{resource_instance.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"primary\"}]}])
@@ -482,10 +492,12 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: service_instance.id
         })
 
-      child_service_relationships =
+      relationships =
         Diffo.Provider.list_service_relationships_from!(resource_instance.id)
 
-      encoding = Jason.encode!(child_service_relationships)
+      loaded_relationships = Enum.into(relationships, [], &Ash.reload!(&1))
+
+      encoding = Jason.encode!(loaded_relationships)
 
       assert encoding ==
                ~s([{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{service_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{service_instance.id}\"}}])
@@ -583,8 +595,12 @@ defmodule Diffo.Provider.RelationshipTest do
       {:error, error} = Diffo.Provider.delete_relationship(relationship)
       assert is_struct(error, Ash.Error.Invalid)
 
-      # now delete the relationship characteristic and we should be able to delete the relationship
-      :ok = Diffo.Provider.delete_characteristic(characteristic)
+      # now unrelate the relationship characteristic and we should be able to delete the relationship
+      # now unrelate the feature from the instance
+      Diffo.Provider.unrelate_relationship_characteristics!(relationship, %{
+        characteristics: [characteristic.id]
+      })
+
       :ok = Diffo.Provider.delete_relationship(relationship)
       {:error, _error} = Diffo.Provider.get_relationship_by_id(relationship.id)
     end
