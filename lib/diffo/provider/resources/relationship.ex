@@ -90,6 +90,7 @@ defmodule Diffo.Provider.Relationship do
     end
 
     has_many :characteristics, Diffo.Provider.Characteristic do
+      description "the relationship's collection of defining characteristics"
       public? true
     end
   end

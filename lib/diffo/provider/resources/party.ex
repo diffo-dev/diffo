@@ -85,11 +85,13 @@ defmodule Diffo.Provider.Party do
     end
 
     has_many :external_identifiers, Diffo.Provider.ExternalIdentifier do
+      description "the external identifiers owned by this party"
       destination_attribute :owner_id
       public? true
     end
 
     has_many :notes, Diffo.Provider.Note do
+      description "the notes authored by this party"
       destination_attribute :note_id
       public? true
     end
