@@ -535,7 +535,7 @@ defmodule Diffo.Provider.InstanceTest do
           characteristics: [forward_relationship_characteristic.id]
         })
 
-      #_reverse_relationship =
+      # _reverse_relationship =
       #  Diffo.Provider.create_relationship!(%{
       #    type: :providedTo,
       #    source_id: child_instance.id,
@@ -749,7 +749,7 @@ defmodule Diffo.Provider.InstanceTest do
           characteristics: [forward_relationship_characteristic.id]
         })
 
-      #_reverse_relationship =
+      # _reverse_relationship =
       #  Diffo.Provider.create_relationship!(%{
       #    type: :providedTo,
       #    source_id: child_instance.id,
@@ -906,12 +906,12 @@ defmodule Diffo.Provider.InstanceTest do
       child_instance =
         Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
-      #_reverse_relationship =
-        #Diffo.Provider.create_relationship!(%{
-          #type: :assignedTo,
-          #source_id: child_instance.id,
-          #target_id: parent_instance.id
-        #})
+      # _reverse_relationship =
+      # Diffo.Provider.create_relationship!(%{
+      # type: :assignedTo,
+      # source_id: child_instance.id,
+      # target_id: parent_instance.id
+      # })
 
       _forward_relationship =
         Diffo.Provider.create_relationship!(%{
@@ -929,8 +929,8 @@ defmodule Diffo.Provider.InstanceTest do
 
       _child_encoding = Jason.encode!(refreshed_child_instance) |> Diffo.Util.summarise_dates()
 
-      #assert child_encoding ==
-               ~s({\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\",\"category\":\"physical\",\"description\":\"Customer Access Network Resource\",\"resourceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/#{child_specification.id}\",\"name\":\"can\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\"}}]})
+      # assert child_encoding ==
+      ~s({\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\",\"category\":\"physical\",\"description\":\"Customer Access Network Resource\",\"resourceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/#{child_specification.id}\",\"name\":\"can\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\"}}]})
     end
 
     @tag bugged: true
@@ -981,7 +981,7 @@ defmodule Diffo.Provider.InstanceTest do
       child_instance =
         Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
-      #_reverse_relationship =
+      # _reverse_relationship =
       #  Diffo.Provider.create_relationship!(%{
       #    type: :assignedTo,
       #    source_id: child_instance.id,
@@ -1314,7 +1314,7 @@ defmodule Diffo.Provider.InstanceTest do
       child_instance =
         Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
-      #reverse_relationship =
+      # reverse_relationship =
       #  Diffo.Provider.create_relationship!(%{
       #    type: :assignedTo,
       #    source_id: child_instance.id,
@@ -1333,7 +1333,7 @@ defmodule Diffo.Provider.InstanceTest do
 
       # now delete the relationships and we should be able to delete the parent instance
       :ok = Diffo.Provider.delete_relationship(forward_relationship)
-      #:ok = Diffo.Provider.delete_relationship(reverse_relationship)
+      # :ok = Diffo.Provider.delete_relationship(reverse_relationship)
       :ok = Diffo.Provider.delete_instance(parent_instance)
     end
   end

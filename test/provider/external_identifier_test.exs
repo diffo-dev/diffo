@@ -495,7 +495,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       external_identifier
-        |> Diffo.Provider.update_external_identifier!(%{instance_id: instance2.id})
+      |> Diffo.Provider.update_external_identifier!(%{instance_id: instance2.id})
 
       refreshed_instance = instance2 |> Ash.reload!()
 

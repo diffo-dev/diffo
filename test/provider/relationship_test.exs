@@ -8,7 +8,7 @@ defmodule Diffo.Provider.RelationshipTest do
 
   setup do
     on_exit(fn ->
-      #AshNeo4j.Neo4jHelper.delete_all()
+      # AshNeo4j.Neo4jHelper.delete_all()
       :ok
     end)
   end
@@ -496,7 +496,7 @@ defmodule Diffo.Provider.RelationshipTest do
     use Outstand
 
     @tag bugged: true
-    #reverse relationship causes circular loading issues
+    # reverse relationship causes circular loading issues
     test "resolve expected relationships" do
       service_specification = Diffo.Provider.create_specification!(%{name: "adslAccess"})
 
@@ -519,7 +519,7 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: service_instance.id
         })
 
-      #is_assigned_relationship =
+      # is_assigned_relationship =
       #  Diffo.Provider.create_relationship!(%{
       #    type: :isAssigned,
       #    source_id: service_instance.id,
@@ -532,13 +532,13 @@ defmodule Diffo.Provider.RelationshipTest do
         characteristics: nil
       }
 
-      #expected_is_assigned_relationship = %Diffo.Provider.Relationship{
+      # expected_is_assigned_relationship = %Diffo.Provider.Relationship{
       #  type: :isAssigned,
       #  target: Diffo.Provider.Reference.reference(resource_instance),
       #  characteristics: nil
-      #}
+      # }
 
-      #refute expected_is_assigned_relationship --- is_assigned_relationship
+      # refute expected_is_assigned_relationship --- is_assigned_relationship
       refute expected_assigned_to_relationship --- assigned_to_relationship
     end
   end
