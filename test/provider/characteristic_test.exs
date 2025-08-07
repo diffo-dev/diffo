@@ -82,7 +82,7 @@ defmodule Diffo.Provider.CharacteristicTest do
     end
 
     @tag bugged: true
-    #circular loading issue
+    # circular loading issue
     test "create forward and reverse characteristic with same name on same relationship - success" do
       specification = Diffo.Provider.create_specification!(%{name: "evc"})
 
