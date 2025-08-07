@@ -344,7 +344,7 @@ defmodule Diffo.Provider.Instance do
       description "feasibilityChecks a service instance"
       require_atomic? false
       validate attribute_equals(:type, :service)
-      change transition_state(:feasibilityCheck)
+      change transition_state(:feasibilityChecked)
       change set_attribute(:service_operating_status, :pending)
     end
 
@@ -437,6 +437,7 @@ defmodule Diffo.Provider.Instance do
               load: [
                 :href,
                 :external_identifiers,
+                :specification_id,
                 :specification,
                 :process_statuses,
                 :forward_relationships,

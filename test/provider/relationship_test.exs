@@ -178,9 +178,10 @@ defmodule Diffo.Provider.RelationshipTest do
     end
   end
 
-  @tag bugged: true
-  # circular relationships
+
   describe "Diffo.Provider create Relationships" do
+    @tag bugged: true
+    # circular relationships
     test "create a mutual peer service relationship - success" do
       specification = Diffo.Provider.create_specification!(%{name: "accessEvc"})
       evpl1 = Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "evpl1"})
