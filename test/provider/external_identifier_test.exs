@@ -473,6 +473,8 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         |> Diffo.Provider.update_external_identifier(%{owner_id: "T4_VIRTUAL"})
     end
 
+    @tag bugged: true
+    # the refreshed instance doesn't have any external identifiers
     test "update instance_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})

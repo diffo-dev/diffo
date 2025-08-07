@@ -1,0 +1,153 @@
+
+
+# Diffo TMF Service and Resource Manager
+
+```elixir
+Mix.install(
+  [{:diffo, "~> 0.1"}],
+  consolidate_protocols: false
+)
+```
+
+## Overview
+
+Diffo is a Telecommunications Management Forum (TMF) Service and Resource Manager, built for autonomous networks.
+
+It is implemented using the [Ash Framework](https://www.ash-hq.org) leveraging core and community extensions including some created and maintained by [diffo-dev](https://github.com/diffo-dev/). As such it is highly customizable using Spark DSL and as necessary Elixir. 
+If you are not already familiar with Ash then please explore [Ash Get Started](https://hexdocs.pm/ash/get-started.html)
+
+In this livebook tutorial you will learn:
+
+* Specifying a minimal actual service
+* Advancing service state
+* Defining service Features and Characteristics
+* Relating a service with Places and Parties
+* Relating a service with other services and resources
+* Setting service expectations
+* Setting child service and resource expectations
+* Calculating the outstanding service
+
+## Installing Neo4j and Configuring Boltx
+
+Diffo uses the [Ash Neo4j DataLayer](https://github.com/diffo-dev/ash_neo4j), which requires Neo4j to be installed 
+
+While [Neo4j community edition](https://github.com/neo4j/neo4j) is open source and you can build from source it is likely that you'll use an installation.
+
+[AshNeo4j](https://github.com/diffo-dev/ash_neo4j) uses [neo4j](https://github.com/neo4j/neo4j) which must be installed and running. You can install latest major Neo4j versions from the community tab at [Neo4j Deployment Center](https://neo4j.com/deployment-center/?desktop-gdb), or use the [5.26.8 direct link](https://neo4j.com/download-thanks/?edition=community&release=5.26.8&flavour=rpm)
+
+When you install neo4j you'll typically have a default username and password. Take note of this and any other non-standard config.
+
+Update the configuration below as necessary and evaluate.
+
+```elixir
+config = [
+  uri: "bolt://localhost:7687",
+  auth: [username: "neo4j", password: "password"],
+  user_agent: "ashNeo4jLivebook/1",
+  pool_size: 15,
+  max_overflow: 3,
+  prefix: :default,
+  name: Bolt,
+  log: false,
+  log_hex: false
+]
+```
+
+Boltx needs a process in your supervision tree, this will start one with the config if not already running:
+
+```elixir
+AshNeo4j.BoltxHelper.start(config)
+```
+
+Now you should be able to verify that Neo4j is running:
+
+```elixir
+AshNeo4j.BoltxHelper.is_connected()
+```
+
+You can get all nodes related to other nodes the following query:
+
+```elixir
+AshNeo4j.Cypher.run("MATCH (n1)-[r]->(n2) RETURN r, n1, n2 LIMIT 25")
+```
+
+It is helpful to have a Neo4j browser open locally, typically:
+
+http://localhost:7474/browser/
+
+Once you connect and issue a query like the one above you'll be able to explore the results interactively.
+
+<!-- livebook:{"break_markdown":true} -->
+
+**OPTIONAL** If you want to clear your database you can evaluate:
+
+```elixir
+AshNeo4j.Neo4jHelper.delete_all()
+```
+
+## Implementing a Minimal Service
+
+The key resources we will use here are here are 
+```elixir Diffo.Provider.Instance
+``` and ```elixir Diffo.Provider.Specification ```. Logically a Specification instance SPECIFIES an Instance. 
+The specification has a uuid (which you can set so is consistent in catalog/dev/prod). Convention is to issue a new uuid for each major version. The specification supports actions for incrementing minor and patch versions, and calculates the version as v.<major>.<minor>.<patch>. It also calculates a specification href based on the specification type and the uuid.
+
+
+<!-- livebook:{"break_markdown":true} -->
+
+Firstly we require Ash.Query and set some aliases for convenience
+
+```elixir
+require Ash.Query
+alias Diffo.Provider
+alias Diffo.Provider.Specification
+alias Diffo.Provider.Instance
+```
+
+We can either create specification instances with Ash directly, or use the Diffo.Provider code interface.
+
+```elixir
+broadband_v1 = Provider.create_specification!(%{name: "broadband", patch_version: 1})
+nbn_ethernet_v1 = Provider.create_specification!(%{name: "nbnEthernet", type: :resourceSpecification})
+mobile_backup_v2 = Provider.create_specification!(%{name: "mobileBackup", major_version: 2, minor_version: 3})
+esim_v1 = Provider.create_specification!(%{name: "esim", type: :resourceSpecification})
+specifications = [broadband_v1, mobile_backup_v2, nbn_ethernet_v1, esim_v1]
+```
+
+Now we create some service instances using these specifications:
+
+We can also then create some service and resource instances
+
+```elixir
+broadband_0001 = Provider.create_instance!(%{name: "broadband_0001", specified_by: broadband_v1.id})
+mobile_backup_0001 = Provider.create_instance!(%{name: "mobileBackup_0001", specified_by: mobile_backup_v2.id})
+services = [broadband_0001, mobile_backup_0001]
+
+esim_0001 = Provider.create_instance!(%{name: "esim_0001", specified_by: esim_v1.id})
+nbn_ethernet_0001 = Provider.create_instance!(%{name: "nbnEthernet_0001", specified_by: nbn_ethernet_v1.id})
+resources = [esim_0001, nbn_ethernet_0001]
+```
+
+Look in your Neo4j browser you should see 4 specification nodes each SPECIFIES a single instance node. The nodes will have properties, but not properties that relate to relationships or calculations.
+
+Each Diffo.Provider resource supports Elixir Jason protocol, so we can simply encode the specifications, services or resources (try them all)
+
+```elixir
+Jason.encode!(specifications)
+```
+
+We'll now perform an action on a specification, updating it's minor version. We'd typically do this when we've enhanced the service in a back compatible way, perhaps by adding an optional feature.
+When we reload the specified service instance we should see that it has an incremented minor version in the middle of the version string (this resets the patch version)
+```elixir
+broadband_v1 = broadband_v1 |> Diffo.Provider.next_minor_specification!()
+broadband_0001 = Ash.reload!(broadband_0001)
+Jason.encode!(broadband_0001)
+```
+
+We won't relate the service and resource instances yet
+
+## What Next?
+
+In this tutorial you've used the Diffo to do create, relate and update some TMF Service and Resources, underpinned by open source Neo4j, Elixir and Ash technology.
+
+If you find Diffo useful please visit and star on [github](https://github.com/diffo-dev/diffo/). Feel free to join discussions and raise issues to discuss PR's.

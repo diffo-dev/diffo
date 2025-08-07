@@ -95,6 +95,7 @@ defmodule Diffo.Util do
     end
   end
 
+  @spec compare(any(), any()) :: :eq | :gt | :lt
   @doc """
   Compares two terms
   ## Examples
