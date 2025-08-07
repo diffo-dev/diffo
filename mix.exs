@@ -11,7 +11,7 @@ defmodule Diffo.MixProject do
       aliases: aliases(),
       elixirc_paths: elixirc_paths(Mix.env()),
       name: "Diffo",
-      source_url: "https://github.com/matt-beanland/diffo/",
+      source_url: "https://github.com/diffo-dev/diffo/",
       homepage_url: "http://diffo.dev/diffo/",
       docs: [
         main: "Diffo.Provider",
