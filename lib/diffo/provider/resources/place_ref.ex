@@ -85,8 +85,6 @@ defmodule Diffo.Provider.PlaceRef do
 
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:place_id, :place, type: :append_and_remove)
-
-      change load [:place]
     end
 
     read :list do

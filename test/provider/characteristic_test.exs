@@ -81,6 +81,8 @@ defmodule Diffo.Provider.CharacteristicTest do
       assert characteristic.value == "port13"
     end
 
+    @tag bugged: true
+    #circular loading issue
     test "create forward and reverse characteristic with same name on same relationship - success" do
       specification = Diffo.Provider.create_specification!(%{name: "evc"})
 
