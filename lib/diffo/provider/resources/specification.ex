@@ -174,13 +174,16 @@ defmodule Diffo.Provider.Specification do
 
     update :next_minor do
       description "increments the minor version and resets the patch version"
-      manual Diffo.Provider.IncrementMinorVersion
+      change increment :minor_version
+      change set_attribute :patch_version, 0
+      change load [:version, :href, :instance_type]
     end
 
     update :next_patch do
       transaction? false
       description "increments the patch version"
-      manual Diffo.Provider.IncrementPatchVersion
+      change increment :patch_version
+      change load [:version, :href, :instance_type]
     end
   end
 

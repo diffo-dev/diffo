@@ -266,8 +266,21 @@ defmodule Diffo.Provider.InstanceTest do
       updated_instance = instance |> Diffo.Provider.cancel_service!()
       assert updated_instance.service_state == :cancelled
       assert updated_instance.service_operating_status == :unknown
-      assert updated_instance.started_at == nil
-      assert updated_instance.stopped_at != nil
+      refute updated_instance.started_at
+      assert updated_instance.stopped_at
+    end
+
+    test "feasibilityCheck an initial service instance - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "initialFeasibilityChecked"})
+
+      updated_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        |> Diffo.Provider.feasibilityCheck_service!()
+
+      assert updated_instance.service_state == :feasibilityChecked
+      assert updated_instance.service_operating_status == :pending
+      refute updated_instance.started_at
+      refute updated_instance.stopped_at
     end
 
     test "activate an initial service instance - success" do
@@ -276,6 +289,20 @@ defmodule Diffo.Provider.InstanceTest do
       updated_instance =
         Diffo.Provider.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.activate_service!()
+
+      assert updated_instance.service_state == :active
+      assert updated_instance.service_operating_status == :starting
+      assert updated_instance.started_at
+      refute updated_instance.stopped_at
+    end
+
+    test "activate a feasibilityChecked service instance - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "feasibilityCheckedActive"})
+
+      updated_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        |> Diffo.Provider.feasibilityCheck_service!()
+        |> Diffo.Provider.activate_service!() |> IO.inspect
 
       assert updated_instance.service_state == :active
       assert updated_instance.service_operating_status == :starting
@@ -293,8 +320,8 @@ defmodule Diffo.Provider.InstanceTest do
 
       assert updated_instance.service_state == :terminated
       assert updated_instance.service_operating_status == :stopping
-      assert updated_instance.started_at != nil
-      assert updated_instance.stopped_at != nil
+      assert updated_instance.started_at
+      assert updated_instance.stopped_at
     end
 
     test "transition an active service instance running - success" do
@@ -307,8 +334,8 @@ defmodule Diffo.Provider.InstanceTest do
 
       assert updated_instance.service_state == :active
       assert updated_instance.service_operating_status == :running
-      assert updated_instance.started_at != nil
-      assert updated_instance.stopped_at == nil
+      assert updated_instance.started_at
+      refute updated_instance.stopped_at
     end
 
     test "transition an active service instance suspended - success" do
@@ -321,8 +348,8 @@ defmodule Diffo.Provider.InstanceTest do
 
       assert updated_instance.service_state == :suspended
       assert updated_instance.service_operating_status == :limited
-      assert updated_instance.started_at != nil
-      assert updated_instance.stopped_at == nil
+      assert updated_instance.started_at
+      refute updated_instance.stopped_at
     end
 
     test "transition an initial service terminated - failure" do
