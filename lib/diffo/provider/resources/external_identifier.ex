@@ -86,7 +86,6 @@ defmodule Diffo.Provider.ExternalIdentifier do
 
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:owner_id, :owner, type: :append_and_remove)
-      change load [:owner]
     end
 
     read :find_by_external_id do

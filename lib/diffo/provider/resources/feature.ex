@@ -9,7 +9,7 @@ defmodule Diffo.Provider.Feature do
     otp_app: :diffo,
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
-    extensions: [AshJason.Resource]
+    extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
     label(:Feature)
@@ -35,6 +35,10 @@ defmodule Diffo.Provider.Feature do
       result
       |> Diffo.Util.suppress_rename(:characteristics, :featureCharacteristic)
     end)
+  end
+
+  outstanding do
+    expect([:name, :isEnabled, :characteristics])
   end
 
   attributes do

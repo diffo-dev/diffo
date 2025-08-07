@@ -434,18 +434,18 @@ defmodule Diffo.Provider.Instance do
 
   preparations do
     prepare build(
-              # :parties
               load: [
                 :href,
                 :external_identifiers,
                 :specification,
                 :process_statuses,
-                # :forward_relationships,
+                :forward_relationships,
                 :entities,
                 :notes,
                 :features,
                 :characteristics,
-                :places
+                :places,
+                :parties
               ],
               sort: [inserted_at: :desc]
             )
@@ -549,26 +549,32 @@ defmodule Diffo.Provider.Instance do
   """
   def relationships(result) do
     if relationships = Diffo.Util.get(result, :forward_relationships) do
+      # sorting here as want to sort on the related instance hrefs, not the relationship
+      sorted_relationships = Enum.sort_by(relationships, &(&1.target.href), :asc)
       service_relationships =
-        relationships
-        |> Enum.filter(fn relationship -> relationship.target_type == :service end)
+        sorted_relationships
+        |> Enum.filter(
+          fn relationship -> relationship.target != nil && relationship.target.type == :service
+          end)
 
       resource_relationships =
-        relationships
-        |> Enum.filter(fn relationship -> relationship.target_type == :resource end)
+        sorted_relationships
+        |> Enum.filter(
+          fn relationship -> relationship.target != nil && relationship.target.type == :resource
+          end)
 
       supporting_services =
         service_relationships
-        |> Enum.filter(fn relationship -> relationship.alias != nil end)
+        |> Enum.filter(fn relationship -> relationship.alias != nil && relationship.target != nil end)
         |> Enum.into([], fn aliased ->
-          Diffo.Provider.Reference.reference(aliased, :target_href)
+          Diffo.Provider.Reference.reference(aliased.target, :href)
         end)
 
       supporting_resources =
         resource_relationships
-        |> Enum.filter(fn relationship -> relationship.alias != nil end)
+        |> Enum.filter(fn relationship -> relationship.alias != nil && relationship.target != nil end)
         |> Enum.into([], fn aliased ->
-          Diffo.Provider.Reference.reference(aliased, :target_href)
+          Diffo.Provider.Reference.reference(aliased.target, :href)
         end)
 
       result
@@ -713,4 +719,17 @@ defmodule Diffo.Provider.Instance do
       _ -> nil
     end
   end
+
+  @doc """
+  Compares two instances, by ascending href
+  ## Examples
+    iex> Diffo.Provider.Instance.compare(%{href: "a"}, %{href: "a"})
+    :eq
+    iex> Diffo.Provider.Instance.compare(%{href: "b"}, %{href: "a"})
+    :gt
+    iex> Diffo.Provider.Instance.compare(%{href: "a"}, %{href: "b"})
+    :lt
+
+  """
+  def compare(%{href: href0}, %{href: href1}), do: Diffo.Util.compare(href0, href1)
 end

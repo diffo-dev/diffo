@@ -86,8 +86,6 @@ defmodule Diffo.Provider.PartyRef do
 
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:party_id, :party, type: :append_and_remove)
-
-      change load [:party]
     end
 
     read :list do

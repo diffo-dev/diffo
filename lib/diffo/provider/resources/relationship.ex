@@ -217,17 +217,4 @@ defmodule Diffo.Provider.Relationship do
       _ -> nil
     end
   end
-
-  @doc """
-  Compares two relationship, by ascending target_href
-  ## Examples
-    iex> Diffo.Provider.Relationship.compare(%{target_href: "a"}, %{target_href: "a"})
-    :eq
-    iex> Diffo.Provider.Relationship.compare(%{target_href: "b"}, %{target_href: "a"})
-    :gt
-    iex> Diffo.Provider.Relationship.compare(%{target_href: "a"}, %{target_href: "b"})
-    :lt
-
-  """
-  def compare(%{target_href: href0}, %{target_href: href1}), do: Diffo.Util.compare(href0, href1)
 end
