@@ -274,7 +274,7 @@ defmodule Diffo.Provider.Instance do
   end
 
   actions do
-    defaults [:read, :destroy]
+    defaults [:destroy]
 
     create :create do
       description "creates a new instance of a service or resource according by specification id"
@@ -288,6 +288,11 @@ defmodule Diffo.Provider.Instance do
       change manage_relationship(:characteristics, type: :append)
       change load [:href]
       upsert? true
+    end
+
+    read :read do
+      description "read a service or resource instance"
+      primary? true
     end
 
     read :list do
@@ -437,7 +442,6 @@ defmodule Diffo.Provider.Instance do
               load: [
                 :href,
                 :external_identifiers,
-                :specification_id,
                 :specification,
                 :process_statuses,
                 :forward_relationships,

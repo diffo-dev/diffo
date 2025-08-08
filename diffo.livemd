@@ -18,14 +18,14 @@ If you are not already familiar with Ash then please explore [Ash Get Started](h
 
 In this livebook tutorial you will learn:
 
+* Installing Neo4j and Configuring Boltx
 * Implementing a Minimal Service
-* Add Parties and Places
+* Adding Initial Parties and Places
 * Advancing Service State
-* Defining service Features and Characteristics
+* Defining Service Features and Characteristics
 * Relating a Service with other Services and Resources
 * Setting Service Expectations
-* Setting Child Service and Resource expectations
-* Calculating the Outstanding Service
+* Resolving the Outstanding Service
 
 ## Installing Neo4j and Configuring Boltx
 
@@ -99,10 +99,15 @@ require Ash.Query
 alias Diffo.Provider
 alias Diffo.Provider.Specification
 alias Diffo.Provider.Instance
+alias Diffo.Provider.Feature
+alias Diffo.Provider.Characteristic
+alias Diffo.Provider.Reference
 alias Diffo.Provider.Party
 alias Diffo.Provider.PartyRef
 alias Diffo.Provider.Place
 alias Diffo.Provider.PartyRef
+import Jason, only: [encode: 2]
+use Outstand
 ```
 
 We can either create specification instances with Ash directly, or use the Diffo.Provider code interface.
@@ -173,7 +178,7 @@ parties = [individual, org]
 Jason.encode!(parties, pretty: true) |> IO.puts
 ```
 
-We'll then relate these parties to the service in their roles using PartyRef
+We'll then relate these parties to the service in their roles using PartyRef, which we'll also encode to json in the TMF way, where the PlaceRef references rather than embeds the Place.
 
 ```elixir
 site_contact = Diffo.Provider.create_party_ref!(%{instance_id: broadband_0001.id, role: :SiteContact, party_id: individual.id})
@@ -185,7 +190,7 @@ Jason.encode!(parties, pretty: true) |> IO.puts
 We'll also add a CustomerSite place where the service is to be delivered to the customer. Historically this is the Z-end.
 
 ```elixir
-z_end = Provider.create_place!(%{id: "LOC000000899353", name: :locationId, href: "place/nbnco/LOC000000899353",referredType: :GeographicAddress})
+z_end = Provider.create_place!(%{id: "1657363", name: :addressId, href: "place/telstra/1657363", referredType: :GeographicAddress})
 Jason.encode!(z_end, pretty: true) |> IO.puts
 ```
 
@@ -199,20 +204,48 @@ Jason.encode!(z_end, pretty: true) |> IO.puts
 Now we should be able to refresh the broadband service and see it's related parties and places.
 
 ```elixir
-refreshed_broadband = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
-Jason.encode!(refreshed_broadband, pretty: true) |> IO.puts
+broadband_0001 = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ```
 
+## Defining Service Features and Characteristics
+
+Services are defined by their Features and Characteristics. Service Features can be enabled or disabled, and can themselves be defined by their own Feature Characteristics, typically used as configuration of the feature. Service Characteristics are directly on the service and often contain a mix of configuration and status attributes.
+
+Generally when a service is being provisioned Feature and Characteristic attributes are injected/defaulted/derived, and while a service is being operated Characteristic attributes are 'live', reflecting aspects of the running services.
+
+We'll initially update our broadband service with some high level Features and Characteristics refecting the customer's intent, which we'll later use in feasibility checking the service.
+
+First we'll create a backup feature to indicate that we want mobile backup, and a device management feature to say we want our customer gateway remote managed.
+
+<!-- livebook:{"break_markdown":true} -->
+
+We'll create an e2e 'instance' characteristic to detail our bandwidth and latency requirements:
+
 ```elixir
-reloaded_broadband = broadband_0001 |> Ash.load!([:specification, :parties, :places])
-Jason.encode!(refreshed_broadband, pretty: true) |> IO.puts
+e2e = Provider.create_characteristic!(%{type: :instance, name: :e2e, value: %{bandwidth: %{downstream: 250, upstream: 25, units: :Mbps}}})
+broadband_0001 = broadband_0001 
+  |> Provider.relate_instance_characteristics!(%{characteristics: [e2e.id]})
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
+```
+
+We'll create mobile backup and device management features. The device management feature will also have a characteristic defining some required options:
+
+```elixir
+backup = Provider.create_feature!(%{name: :backup, isEnabled: true})
+options = Provider.create_characteristic!(%{type: :feature, name: :options, value: [:updates, :monitoring]})
+device_management = Provider.create_feature!(%{name: :deviceManagement, isEnabled: true, characteristics: [options.id]})
+broadband_0001 = broadband_0001 
+  |> Provider.relate_instance_features!(%{features: [backup.id, device_management.id]}) 
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
+
 ```
 
 ## Advancing Service State
 
 TMF638 Services implement a service state and also have an operating status. We create an actual service in the initial state, however generally when we do so we have an intention of advancing it towards a target state, such as operational. We may or may not pass through interim states, like feasibilityChecked, inactive. We also may not reach the target state, due to error, business rule or cancellation.
 
-Diffo uses the [AshStateMachine Extension](https://github.com/ash-project/ash_state_machine). By default we allow all TMF638 transactions, but these are customisable by manipulating the Instance DSL.
+Diffo uses the [AshStateMachine Extension](https://github.com/ash-project/ash_state_machine). By default we allow all TMF638 state transitions, but these are customisable by manipulating the Instance DSL.
 
 From the initial state we can cancel, activate, feasibilityCheck or reserve the service.
 From feasibilityChecked state we can cancel, activate or reserve the service.
@@ -221,15 +254,16 @@ From inactive or suspended state we can activate or terminate the service.
 No transitions are possible from terminated or cancelled.
 
 ```elixir
-broadband_0001
+broadband_0001 = Provider.get_instance_by_id!(broadband_0001.id)
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ```
 
 ```elixir
 broadband_0001 = broadband_0001 |> Provider.feasibilityCheck_service!()
-Jason.encode!(broadband_0001, pretty: true) |> IO.puts
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ```
 
-AshStateMachine allows the transition if we are already there, but will error on invalid transitions.
+AshStateMachine will error on invalid transitions.
 
 Lets try and terminate the feasibilityChecked service (this is not allowed, instead cancel)
 
@@ -238,9 +272,119 @@ Lets try and terminate the feasibilityChecked service (this is not allowed, inst
 error
 ```
 
-## Defining service Features and Characteristics
+## Relating a Service with other Services and Resources
 
-We won't relate the service and resource instances yet
+The power Diffo has to simply orchestration come through the relationships a parent Service has with other Services and Resources. We will relate the services and resource instances we made earlier with our broadband service.
+
+This is done with a Relationship resource, which links the source and target Instances. Relationship with source_id are stored on the source in the forward_relationships[] and be listed in TMF service serviceRelationship[] or resourceRelationship[] json accordingly.
+
+Each Relationship may have an alias, which must be unique for the source Instance. Alias's are important for reasoning about a Relationship independently of the target id, which intially may not be known or may change over the life of the composite service. The targets of aliased Relationships are considered TMF service supportingService[] or supportingResource[] accordingly.
+
+Let's create a 'parent->child' relationship of the broadband service to its mobileBackup service:
+
+```elixir
+relationship = Provider.create_relationship!(%{
+  alias: "backup", 
+  source_id: broadband_0001.id,
+  target_id: mobile_backup_0001.id,
+  type: :bestows
+})
+relationship |> Jason.encode!(pretty: true) |> IO.puts
+
+```
+
+Now when we refresh the broadband_0001 service it should have both a serviceRelationship[] and supportingService[]:
+
+```elixir
+broadband_0001 = Provider.get_instance_by_id!(broadband_0001.id)
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
+```
+
+## Setting Service Expectations
+
+We will set service expectations as goals. These can be generic goals for a particular stage of a service lifecycle (feasiblityChecked for example), or could be specific to a particular instance. Expectations can be high level, representing consumer or provider intent, and also can be low level, such as to how the service should be composed, configured and operated. The low level expectations can be derived from a combination of intent, policy, current expectations and current actual.
+
+We can write this in elixir as:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+expected = fun(intended, expected, actual)
+```
+
+We can construct expectations using the struct Ash generates for our resources. Expectations may include functions and/or concrete values. We need to maintain compatibility with our Ash Resource attribute types, which does limit our ability to validate/persist resources using Ash.
+
+We'll construct a simple set of expectations for our service:
+
+```elixir
+expected_specification = %{name: "broadband", major_version: 1}
+expected_features = [%{name: :backup, isEnabled: true}, %{name: :deviceManagement, isEnabled: true}]
+expected_characteristics = [
+    %{name: :e2e},
+    %{name: :technology, value: %{access: {&Outstand.one_of/2, [:nbnEthernet, :fixed4g, :fixed5g]}}}
+  ]
+expected_places = [
+  %{name: :addressId, role: :CustomerSite},
+  %{name: :locationId, role: :CustomerSite},
+  %{role: :AccessNNI},
+  %{role: :ServingArea}
+]
+expected_parties = [%{role: :Provider}, %{role: :Reseller}, %{role: :SiteOwner}]
+expected_instance = %{
+  id: &Diffo.Util.uuid4?/1,
+  specification: expected_specification, 
+  service_state: :feasibilityChecked, 
+  service_operating_status: :feasible, 
+  characteristics: expected_characteristics, 
+  places: expected_places,
+  parties: expected_parties}
+
+
+
+```
+
+The reason we set expectations is so that we can check whether our expectations are met (or exceeded) by the actuality. Unmet expectations represent 'outstanding' work. We'll calculate outstanding by comparing our expected_instance with the (actual) broadband_0001 service from the database:
+
+```elixir
+use Outstand
+outstanding = expected_instance --- broadband_0001
+```
+
+## Resolving the Outstanding Service
+
+We'll have a few things outstanding which we would normally find out during service qualification. We expect a technology Characteristic, a provider Party and some network Places relating to service hinterland and edge location.
+
+We recommend using outstanding to drive next task logic, so that the orchestration is directed by the difference engine. This could look like an address lookup (where we learn the provider) followed by a provider service qualification (where we learn the technology) and the related network places.
+
+```elixir
+nbn = Provider.create_party!(%{id: :nbn, name: "NBNCo", referredType: :Organization})
+provider = Provider.create_party_ref!(%{instance_id: broadband_0001.id, party_id: nbn.id, role: :Provider})
+provider_z_end = Provider.create_place!(%{id: "LOC000000899353", name: :locationId, href: "place/nbnco/LOC000000899353",referredType: :GeographicAddress})
+place_ref = Provider.create_place_ref(%{instance_id: broadband_0001.id, role: :CustomerSite, place_id: provider_z_end.id})
+csa =  = Provider.create_place!(%{id: "CSA200000000685", name: :poiId, href: "place/nbnco/CSA200000000685",referredType: :GeographicLocation})
+place_ref = Provider.create_place_ref(%{instance_id: broadband_0001.id, role: :ServingArea, place_id: csa.id})
+poi =  = Provider.create_place!(%{id: "2CAR", name: :poiId, href: "place/nbnco/2CAR",referredType: :GeographicSite})
+place_ref = Provider.create_place_ref(%{instance_id: broadband_0001.id, role: :AccessNNI, place_id: poi.id})
+
+
+```
+
+This should have resolved the Parties and Places in the outstanding service:
+
+```elixir
+outstanding = expected_instance --- broadband_0001
+```
+
+As an exercise create the technology characteristic to resolve the outstanding service by meeting the expectation:
+
+```elixir
+technology = Provider.create_characteristic!(%{name: :technology, value: %{access: :nbnEthernet}})
+Provider.relate_instance_characteristics!(%{characteristics: [technology.id]})
+
+broadband_0001 = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
+
+outstanding = expected_instance --- broadband_0001
+```
 
 ## What Next?
 
