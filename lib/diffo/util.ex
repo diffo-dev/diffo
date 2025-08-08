@@ -398,4 +398,20 @@ defmodule Diffo.Util do
       list
     end
   end
+
+  defimpl Jason.Encoder, for: Tuple do
+    def encode(tuple, _opts) when is_tuple(tuple) do
+      tuple
+      |> Tuple.to_list()
+      |> Jason.encode!()
+    end
+  end
+
+  defimpl Jason.Encoder, for: Function do
+    def encode(fun, _opts) when is_function(fun) do
+      fun
+      |> inspect
+      |> Jason.encode!()
+    end
+  end
 end

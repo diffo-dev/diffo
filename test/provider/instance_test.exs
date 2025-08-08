@@ -302,7 +302,7 @@ defmodule Diffo.Provider.InstanceTest do
       updated_instance =
         Diffo.Provider.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.feasibilityCheck_service!()
-        |> Diffo.Provider.activate_service!() |> IO.inspect
+        |> Diffo.Provider.activate_service!()
 
       assert updated_instance.service_state == :active
       assert updated_instance.service_operating_status == :starting

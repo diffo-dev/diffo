@@ -178,7 +178,6 @@ defmodule Diffo.Provider.RelationshipTest do
     end
   end
 
-
   describe "Diffo.Provider create Relationships" do
     @tag bugged: true
     # circular relationships

@@ -171,7 +171,7 @@ defmodule Diffo.Provider.SpecificationTest do
         |> Diffo.Provider.next_patch_specification!()
         |> Diffo.Provider.next_minor_specification!()
 
-       assert updated_specification.version == "v1.1.0"
+      assert updated_specification.version == "v1.1.0"
     end
 
     test "make a new patch on an minor version - success" do
