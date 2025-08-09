@@ -443,55 +443,55 @@ defmodule Diffo.Provider.EntityRefTest do
     }
 
     gen_nothing_outstanding_test("specific nothing outstanding", @specific_cost, @actual_cost)
-    gen_result_outstanding_test("specific cost result", @specific_cost, nil, @specific_cost)
+    gen_result_outstanding_test("specific cost result", @specific_cost, nil, Ash.Test.strip_metadata(@specific_cost))
 
     gen_result_outstanding_test(
       "specific role result",
       @specific_cost,
       Map.delete(@actual_cost, :role),
-      @role_only
+      Ash.Test.strip_metadata(@role_only)
     )
 
     gen_result_outstanding_test(
       "specific entity result",
       @specific_cost,
       Map.delete(@actual_cost, :entity),
-      @entity_only
+      Ash.Test.strip_metadata(@entity_only)
     )
 
     gen_result_outstanding_test(
       "specific id result",
       @specific_cost,
       update_in(@actual_cost.entity.id, fn _ -> nil end),
-      @id_only
+      Ash.Test.strip_metadata(@id_only)
     )
 
     gen_result_outstanding_test(
       "specific href result",
       @specific_cost,
       update_in(@actual_cost.entity.href, fn _ -> nil end),
-      @href_only
+      Ash.Test.strip_metadata(@href_only)
     )
 
     gen_result_outstanding_test(
       "specific name result",
       @specific_cost,
       update_in(@actual_cost.entity.name, fn _ -> nil end),
-      @name_only
+      Ash.Test.strip_metadata(@name_only)
     )
 
     gen_result_outstanding_test(
       "specific referredType result",
       @specific_cost,
       update_in(@actual_cost.entity.referredType, fn _ -> nil end),
-      @referredType_only
+      Ash.Test.strip_metadata(@referredType_only)
     )
 
     gen_result_outstanding_test(
       "specific type result",
       @specific_cost,
       update_in(@actual_cost.entity.type, fn _ -> nil end),
-      @type_only
+      Ash.Test.strip_metadata(@type_only)
     )
 
     gen_nothing_outstanding_test("generic nothing outstanding", @generic_cost, @actual_cost)

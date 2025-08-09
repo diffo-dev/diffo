@@ -626,28 +626,28 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       "specific external_identifier result",
       @specific_external_identifier,
       nil,
-      @specific_external_identifier
+      Ash.Test.strip_metadata(@specific_external_identifier)
     )
 
     gen_result_outstanding_test(
       "specific type result",
       @specific_external_identifier,
       Map.delete(@actual_external_identifier, :type),
-      @type_only
+      Ash.Test.strip_metadata(@type_only)
     )
 
     gen_result_outstanding_test(
       "specific external_id result",
       @specific_external_identifier,
       Map.delete(@actual_external_identifier, :external_id),
-      @external_id_only
+      Ash.Test.strip_metadata(@external_id_only)
     )
 
     gen_result_outstanding_test(
       "specific owner_id result",
       @specific_external_identifier,
       Map.delete(@actual_external_identifier, :owner_id),
-      @owner_id_only
+      Ash.Test.strip_metadata(@owner_id_only)
     )
 
     gen_nothing_outstanding_test(
