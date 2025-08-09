@@ -273,42 +273,42 @@ defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
       "specific process_status result",
       @specific_process_status,
       nil,
-      @specific_process_status
+      Ash.Test.strip_metadata(@specific_process_status)
     )
 
     gen_result_outstanding_test(
       "specific code result",
       @specific_process_status,
       Map.delete(@actual_process_status, :code),
-      @code_only
+      Ash.Test.strip_metadata(@code_only)
     )
 
     gen_result_outstanding_test(
       "specific severity result",
       @specific_process_status,
       Map.delete(@actual_process_status, :severity),
-      @severity_only
+      Ash.Test.strip_metadata(@severity_only)
     )
 
     gen_result_outstanding_test(
       "specific message result",
       @specific_process_status,
       Map.delete(@actual_process_status, :message),
-      @message_only
+      Ash.Test.strip_metadata(@message_only)
     )
 
     gen_result_outstanding_test(
       "specific parameterized_message result",
       @specific_process_status,
       Map.delete(@actual_process_status, :parameterized_message),
-      @parameterized_message_only
+      Ash.Test.strip_metadata(@parameterized_message_only)
     )
 
     gen_result_outstanding_test(
       "specific timestamp result",
       @specific_process_status,
       Map.delete(@actual_process_status, :timestamp),
-      @timestamp_only
+      Ash.Test.strip_metadata(@timestamp_only)
     )
 
     gen_nothing_outstanding_test(
