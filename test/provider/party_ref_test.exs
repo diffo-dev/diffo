@@ -47,9 +47,9 @@ defmodule Diffo.Provider.PartyRefTest do
 
       party_refs = Diffo.Provider.list_party_refs!()
       assert length(party_refs) == 2
-      # should be sorted
-      assert List.first(party_refs).party_id == "IND000000123456"
-      assert List.last(party_refs).party_id == "IND000000897353"
+      # should be sorted by role, then newest to oldest
+      assert List.first(party_refs).party_id == party2.id
+      assert List.last(party_refs).party_id == party1.id
     end
 
     test "list party refs by related instance - success" do

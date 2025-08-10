@@ -130,7 +130,7 @@ defmodule Diffo.Provider.PartyRef do
   preparations do
     prepare build(
               load: [:party],
-              sort: [role: :asc]
+              sort: [role: :asc, inserted_at: :desc]
             )
   end
 

@@ -3,7 +3,7 @@
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.1"}
+    {:diffo, github: "diffo-dev/diffo"}
   ],
   consolidate_protocols: false
 )
@@ -106,6 +106,7 @@ alias Diffo.Provider.Party
 alias Diffo.Provider.PartyRef
 alias Diffo.Provider.Place
 alias Diffo.Provider.PartyRef
+alias Diffo.Uuid
 import Jason, only: [encode: 2]
 use Outstand
 ```
@@ -197,8 +198,8 @@ Jason.encode!(z_end, pretty: true) |> IO.puts
 And we'll relate this place to our broadband service using a PlaceRef
 
 ```elixir
-place_ref = Diffo.Provider.create_place_ref(%{instance_id: broadband_0001.id, role: :CustomerSite, place_id: z_end.id})
-Jason.encode!(z_end, pretty: true) |> IO.puts
+z_end_place_ref = Diffo.Provider.create_place_ref(%{instance_id: broadband_0001.id, role: :CustomerSite, place_id: z_end.id})
+Jason.encode!(z_end_place_ref, pretty: true) |> IO.puts
 ```
 
 Now we should be able to refresh the broadband service and see it's related parties and places.
@@ -252,11 +253,6 @@ From feasibilityChecked state we can cancel, activate or reserve the service.
 From active state we can deactivate, suspend or terminate the service
 From inactive or suspended state we can activate or terminate the service.
 No transitions are possible from terminated or cancelled.
-
-```elixir
-broadband_0001 = Provider.get_instance_by_id!(broadband_0001.id)
-broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
-```
 
 ```elixir
 broadband_0001 = broadband_0001 |> Provider.feasibilityCheck_service!()
@@ -324,14 +320,14 @@ expected_characteristics = [
     %{name: :technology, value: %{access: {&Outstand.one_of/2, [:nbnEthernet, :fixed4g, :fixed5g]}}}
   ]
 expected_places = [
-  %{name: :addressId, role: :CustomerSite},
-  %{name: :locationId, role: :CustomerSite},
   %{role: :AccessNNI},
+  %{role: :CustomerSite, place: %{name: "addressId"}},
+  %{role: :CustomerSite, place: %{name: "locationId"}},
   %{role: :ServingArea}
 ]
 expected_parties = [%{role: :Provider}, %{role: :Reseller}, %{role: :SiteOwner}]
 expected_instance = %{
-  id: &Diffo.Util.uuid4?/1,
+  id: &Uuid.expect_uuid4/1,
   specification: expected_specification, 
   service_state: :feasibilityChecked, 
   service_operating_status: :feasible, 
@@ -358,13 +354,16 @@ We recommend using outstanding to drive next task logic, so that the orchestrati
 
 ```elixir
 nbn = Provider.create_party!(%{id: :nbn, name: "NBNCo", referredType: :Organization})
-provider = Provider.create_party_ref!(%{instance_id: broadband_0001.id, party_id: nbn.id, role: :Provider})
-provider_z_end = Provider.create_place!(%{id: "LOC000000899353", name: :locationId, href: "place/nbnco/LOC000000899353",referredType: :GeographicAddress})
-place_ref = Provider.create_place_ref(%{instance_id: broadband_0001.id, role: :CustomerSite, place_id: provider_z_end.id})
-csa =  = Provider.create_place!(%{id: "CSA200000000685", name: :poiId, href: "place/nbnco/CSA200000000685",referredType: :GeographicLocation})
-place_ref = Provider.create_place_ref(%{instance_id: broadband_0001.id, role: :ServingArea, place_id: csa.id})
-poi =  = Provider.create_place!(%{id: "2CAR", name: :poiId, href: "place/nbnco/2CAR",referredType: :GeographicSite})
-place_ref = Provider.create_place_ref(%{instance_id: broadband_0001.id, role: :AccessNNI, place_id: poi.id})
+nbn_party_ref = Provider.create_party_ref!(%{instance_id: broadband_0001.id, party_id: nbn.id, role: :Provider})
+provider_z_end = Provider.create_place!(%{id: "LOC000000899353", name: "locationId", href: "place/nbnco/LOC000000899353",referredType: :GeographicAddress})
+provider_z_end_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :CustomerSite, place_id: provider_z_end.id})
+csa = Provider.create_place!(%{id: "CSA200000000685", name: "csaId", href: "place/nbnco/CSA200000000685", referredType: :GeographicLocation})
+csa_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :ServingArea, place_id: csa.id})
+poi = Provider.create_place!(%{id: "2CAR", name: "poiId", href: "place/nbnco/2CAR",referredType: :GeographicSite})
+poi_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :AccessNNI, place_id: poi.id})
+
+places = Diffo.Provider.list_place_refs!()
+places |> Jason.encode!(pretty: true) |> IO.puts
 
 
 ```
@@ -378,12 +377,19 @@ outstanding = expected_instance --- broadband_0001
 As an exercise create the technology characteristic to resolve the outstanding service by meeting the expectation:
 
 ```elixir
-technology = Provider.create_characteristic!(%{name: :technology, value: %{access: :nbnEthernet}})
-Provider.relate_instance_characteristics!(%{characteristics: [technology.id]})
+technology = Provider.create_characteristic!(%{type: :instance, name: :technology, value: %{access: :nbnEthernet}})
+broadband_0001 |> Provider.relate_instance_characteristics!(%{characteristics: [technology.id]})
+
 
 broadband_0001 = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
 
 outstanding = expected_instance --- broadband_0001
+```
+
+```elixir
+expected_places |> IO.inspect
+places |> IO.inspect
+expected_places --- places
 ```
 
 ## What Next?
