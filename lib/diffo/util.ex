@@ -20,7 +20,8 @@ defmodule Diffo.Util do
   """
   def rename_ensure_not_empty(map, key, new_key) when is_map(map) do
     {value, map} = Map.pop(map, key)
-    if (value != [] and value != nil) do
+
+    if value != [] and value != nil do
       Map.put(map, new_key, value)
     else
       map
@@ -38,7 +39,7 @@ defmodule Diffo.Util do
 
   """
   def delete_if_empty(map, key) when is_map(map) do
-    if (key != nil) and Map.get(map, key) == [] do
+    if key != nil and Map.get(map, key) == [] do
       Map.delete(map, key)
     else
       map
@@ -59,7 +60,7 @@ defmodule Diffo.Util do
 
   """
   def put_not_empty(map, key, value) when is_map(map) do
-    if (key != nil) and (value != []) do
+    if key != nil and value != [] do
       Map.put(map, key, value)
     else
       map
@@ -83,10 +84,10 @@ defmodule Diffo.Util do
 
   """
   def ensure_not_nil(map, key, value) when is_map(map) do
-    if (key == nil) do
+    if key == nil do
       map
     else
-      if (value != nil) do
+      if value != nil do
         Map.put(map, key, value)
       else
         Map.delete(map, key)
@@ -94,6 +95,7 @@ defmodule Diffo.Util do
     end
   end
 
+  @spec compare(any(), any()) :: :eq | :gt | :lt
   @doc """
   Compares two terms
   ## Examples
@@ -185,6 +187,7 @@ defmodule Diffo.Util do
   """
   def datetime(summary) do
     now = DateTime.utc_now(:millisecond)
+
     case summary do
       :now -> now
       :future -> DateTime.shift(now, day: 1)
@@ -231,21 +234,20 @@ defmodule Diffo.Util do
   """
 
   def summarise_dates(payload) do
-   Regex.replace(~r/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}.\d{3}Z/, payload,
-      fn iso8601 ->
-        case DateTime.from_iso8601(iso8601) do
-          {:ok, datetime, 0} -> Diffo.Util.summarise(datetime)
-          {:error, error} -> error
-        end
-        |> Atom.to_string()
-      end)
+    Regex.replace(~r/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}.\d{3}Z/, payload, fn iso8601 ->
+      case DateTime.from_iso8601(iso8601) do
+        {:ok, datetime, 0} -> Diffo.Util.summarise(datetime)
+        {:error, error} -> error
+      end
+      |> Atom.to_string()
+    end)
   end
 
   @doc """
   Convert a dateime to iso8601, with millisecond resolution
   """
   def to_iso8601(datetime) do
-    if (datetime == nil) do
+    if datetime == nil do
       nil
     else
       DateTime.to_iso8601(DateTime.truncate(datetime, :millisecond))
@@ -286,7 +288,7 @@ defmodule Diffo.Util do
     [a: 1]
   """
   def set(list, tuple_key, tuple_value) when is_list(list) do
-    if (tuple_value == nil) or (tuple_value == []) do
+    if tuple_value == nil or tuple_value == [] do
       List.keydelete(list, tuple_key, 0)
     else
       List.keystore(list, tuple_key, 0, {tuple_key, tuple_value})
@@ -325,6 +327,7 @@ defmodule Diffo.Util do
   """
   def suppress(list, tuple_key) when is_list(list) do
     value = get(list, tuple_key)
+
     case value do
       [] -> List.keydelete(list, tuple_key, 0)
       nil -> List.keydelete(list, tuple_key, 0)
@@ -340,7 +343,14 @@ defmodule Diffo.Util do
     [a: 1, c: 2, d: 3]
     iex> Diffo.Util.rename(list, :c, :e)
     [a: 1, b: 2, d: 3]
+    iex> Diffo.Util.rename(list, :b, nil)
+    [a: 1, d: 3]
+
   """
+  def rename(list, tuple_key, nil) when is_list(list) do
+    list |> List.keydelete(tuple_key, 0)
+  end
+
   def rename(list, tuple_key, new_tuple_key) when is_list(list) do
     value = get(list, tuple_key)
     list |> List.keyreplace(tuple_key, 0, {new_tuple_key, value})
@@ -356,9 +366,52 @@ defmodule Diffo.Util do
     iex> list = [a: [1], b: [1], c: nil]
     iex> Diffo.Util.suppress_rename(list, :a, :d)
     [d: [1], b: [1], c: nil]
+    iex> Diffo.Util.suppress_rename(list, :a, nil)
+    [b: [1], c: nil]
 
   """
   def suppress_rename(list, tuple_key, new_tuple_key) when is_list(list) do
     suppress(list, tuple_key) |> rename(tuple_key, new_tuple_key)
+  end
+
+  @doc """
+  Extracts value from map in list of tuples, and sets if not nil
+    ## Examples
+    iex> duration = Duration.new!(month: 1)
+    iex> list = [duration: duration]
+    iex> result = Diffo.Util.extract_suppress(list, :duration, :month, :months)
+    iex> List.last(result)
+    {:months, 1}
+  """
+  def extract_suppress(list, tuple_key, map_key, new_tuple_key) when is_list(list) do
+    tuple_value = get(list, tuple_key)
+
+    if tuple_value != nil do
+      extracted_value = Map.get(tuple_value, map_key, nil)
+
+      if extracted_value != nil do
+        List.keystore(list, new_tuple_key, 0, {new_tuple_key, extracted_value})
+      else
+        list
+      end
+    else
+      list
+    end
+  end
+
+  defimpl Jason.Encoder, for: Tuple do
+    def encode(tuple, _opts) when is_tuple(tuple) do
+      tuple
+      |> Tuple.to_list()
+      |> Jason.encode!()
+    end
+  end
+
+  defimpl Jason.Encoder, for: Function do
+    def encode(fun, _opts) when is_function(fun) do
+      fun
+      |> inspect
+      |> Jason.encode!()
+    end
   end
 end

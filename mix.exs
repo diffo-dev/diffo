@@ -11,7 +11,7 @@ defmodule Diffo.MixProject do
       aliases: aliases(),
       elixirc_paths: elixirc_paths(Mix.env()),
       name: "Diffo",
-      source_url: "https://github.com/matt-beanland/diffo/",
+      source_url: "https://github.com/diffo-dev/diffo/",
       homepage_url: "http://diffo.dev/diffo/",
       docs: [
         main: "Diffo.Provider",
@@ -21,7 +21,9 @@ defmodule Diffo.MixProject do
             <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
             <script>mermaid.initialize({startOnLoad: true})</script>
             """
-          _ -> ""
+
+          _ ->
+            ""
         end
       ]
     ]
@@ -35,21 +37,38 @@ defmodule Diffo.MixProject do
     ]
   end
 
+  defp ash_neo4j_version(default_version) do
+    case System.get_env("ASH_NEO4J_VERSION") do
+      nil -> default_version
+      "local" -> [path: "../ash_neo4j"]
+      "dev" -> [git: "https://github.com/diffo-dev/ash_neo4j"]
+      version -> "~> #{version}"
+    end
+  end
+
+  defp ash_version(default_version) do
+    case System.get_env("ASH_VERSION") do
+      nil -> default_version
+      "local" -> [path: "../ash"]
+      "main" -> [git: "https://github.com/ash-project/ash.git"]
+      version -> "~> #{version}"
+    end
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:simple_sat, "~> 0.1.3"},
+      {:outstanding, "~> 0.2.3"},
+      {:ash_outstanding, "~> 0.2.1"},
+      {:ash_jason, "~> 2.0"},
       {:ash_state_machine, "~> 0.2.7"},
-      {:ash_jason, "~> 2.0"}, #{:ash_jason, git: "https://github.com/vonagam/ash_jason", branch: "master"}
-      {:spark, ">= 2.1.21 and < 3.0.0"},
-      {:ash_postgres, "~> 2.0"},
-      {:ash, ">= 3.4.60 and < 4.0.0-0"},
-      {:igniter, "~> 0.3"},
-      # {:phoenix, "~> 1.7.14"},
+      {:ash_neo4j, ash_neo4j_version("~> 0.2.4")},
+      {:boltx, "~> 0.0.6"},
+      {:ash, ash_version("~> 3.5")},
+      {:spark, "~> 2.2.65"},
       {:uuid, "~> 1.1"},
-      {:ex_doc, "~> 0.36"},
-      # {:aja, "~>0.7"},
-      {:untangle, "~> 0.3"}
+      {:igniter, "~> 0.5", only: [:dev, :test]},
+      {:ex_doc, "~> 0.37", only: [:dev, :test], runtime: false}
     ]
   end
 

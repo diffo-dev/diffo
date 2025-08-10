@@ -20,4 +20,5 @@ defmodule DiffoTest do
   doctest Diffo.Provider.Note
   doctest Diffo.Provider.EntityRef
   doctest Diffo.Provider.Entity
+  doctest Diffo.Provider.Outstanding
 end
