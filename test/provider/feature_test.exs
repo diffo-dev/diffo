@@ -1,80 +1,253 @@
 defmodule Diffo.Provider.FeatureTest do
   @moduledoc false
   use ExUnit.Case
-  use Diffo.DataCase, async: true
+
+  setup_all do
+    AshNeo4j.BoltxHelper.start()
+  end
+
+  setup do
+    on_exit(fn ->
+      AshNeo4j.Neo4jHelper.delete_all()
+    end)
+  end
 
   describe "Diffo.Provider read Features" do
     test "list features - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "broadband"})
-      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :mobileBackup})
-      Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :restriction, isEnabled: false})
+      Diffo.Provider.create_feature!(%{name: :mobileBackup})
+
+      Diffo.Provider.create_feature!(%{
+        name: :restriction,
+        isEnabled: false
+      })
+
       instance_features = Diffo.Provider.list_features!()
       assert length(instance_features) == 2
       # should be sorted
       assert List.first(instance_features).name == :mobileBackup
       assert List.last(instance_features).name == :restriction
     end
-
-    test "list instance features - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "broadband"})
-      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      other_instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :mobileBackup})
-      Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :restriction, isEnabled: false})
-      Diffo.Provider.create_feature!(%{instance_id: other_instance.id, name: :mobileBackup})
-      instance_features = Diffo.Provider.list_features_by_related_id!(instance.id)
-      assert length(instance_features) == 2
-      # should be sorted
-      assert List.first(instance_features).name == :mobileBackup
-      assert List.last(instance_features).name == :restriction
-    end
   end
 
-  describe "Diffo.Provider create Characteristics" do
+  describe "Diffo.Provider create Features" do
     test "create instance feature - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "broadband"})
-      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :mobileBackup})
+      feature = Diffo.Provider.create_feature!(%{name: :mobileBackup})
       assert feature.name == :mobileBackup
       assert feature.isEnabled == true
     end
 
-    test "create duplicate feature on same instance - failure" do
-      specification = Diffo.Provider.create_specification!(%{name: "evc"})
-      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      _first_feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :autoNegotiate})
-      {:error, _error} = Diffo.Provider.create_feature(%{instance_id: instance.id, name: :autoNegotiate})
+    test "create feature with different characteristic - success" do
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :encapsulation,
+          value: :qinq,
+          type: :feature
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :evpl,
+          type: :feature
+        })
+
+      Diffo.Provider.create_feature!(%{
+        name: :restriction,
+        characteristics: [first_characteristic.id, second_characteristic.id]
+      })
+    end
+
+    test "create feature with duplicate characteristic - failure" do
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :fraudHeavy,
+          type: :feature
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :fraudLight,
+          type: :feature
+        })
+
+      {:error, _} =
+        Diffo.Provider.create_feature(%{
+          name: :restriction,
+          characteristics: [first_characteristic.id, second_characteristic.id]
+        })
     end
   end
 
   describe "Diffo.Provider updated Features" do
     test "update feature isEnabled - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "broadband"})
-      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :restriction, isEnabled: false})
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :restriction,
+          isEnabled: false
+        })
+
       assert feature.isEnabled == false
       updated_feature = feature |> Diffo.Provider.update_feature!(%{isEnabled: true})
       assert updated_feature.isEnabled == true
+    end
+
+    test "update feature add characteristic - success" do
+      device_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :device,
+          value: :epic1000a,
+          type: :feature
+        })
+
+      connection_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :connection,
+          value: :foreign,
+          type: :feature
+        })
+
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :management,
+          characteristics: [device_characteristic.id]
+        })
+
+      _updated_feature =
+        feature
+        |> Diffo.Provider.relate_feature_characteristics!(%{
+          characteristics: [connection_characteristic.id]
+        })
+    end
+
+    test "update feature with duplicate characteristic - failure" do
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :fraudHeavy,
+          type: :feature
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :fraudLight,
+          type: :feature
+        })
+
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :restriction,
+          characteristics: [first_characteristic.id]
+        })
+
+      {:error, _updated_feature} =
+        feature
+        |> Diffo.Provider.relate_feature_characteristics(%{
+          characteristics: [second_characteristic.id]
+        })
     end
   end
 
   describe "Diffo.Provider encode Features" do
     test "encode json feature with sorted characteristics - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
-      instance = Diffo.Provider.create_instance!(%{specification_id: specification.id})
-      feature = Diffo.Provider.create_feature!(%{instance_id: instance.id, name: :management})
-      _characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :device, value: :epic1000a, type: :feature})
-      _characteristic = Diffo.Provider.create_characteristic!(%{feature_id: feature.id, name: :connection, value: :foreign, type: :feature})
-      loaded_feature = Diffo.Provider.get_feature_by_id!(feature.id)
-      encoding = Jason.encode!(loaded_feature)
-      assert encoding == "{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"connection\",\"value\":\"foreign\"},{\"name\":\"device\",\"value\":\"epic1000a\"}]}"
+      device_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :device,
+          value: :epic1000a,
+          type: :feature
+        })
+
+      connection_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :connection,
+          value: :foreign,
+          type: :feature
+        })
+
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :management,
+          characteristics: [connection_characteristic.id, device_characteristic.id]
+        })
+
+      encoding = Jason.encode!(feature)
+
+      assert encoding ==
+               "{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"connection\",\"value\":\"foreign\"},{\"name\":\"device\",\"value\":\"epic1000a\"}]}"
     end
   end
 
+  describe "Diffo.Provider outstanding Features" do
+    use Outstand
+    @dynamicLineManagementEnabled %Diffo.Provider.Feature{name: :dynamicLineManagement, isEnabled: true}
+    @dynamicLineManagementDisabled %Diffo.Provider.Feature{name: :dynamicLineManagement, isEnabled: false}
+    @dynamicLineManagementEnabledSpeed %Diffo.Provider.Feature{name: :dynamicLineManagement, isEnabled: false, characteristics:
+      [
+        %Diffo.Provider.Characteristic{name: :optimiseFor, value: :speed}
+      ]}
+
+    @dynamicLineManagementEnabledStable %Diffo.Provider.Feature{name: :dynamicLineManagement, isEnabled: false, characteristics:
+      [
+        %Diffo.Provider.Characteristic{name: :optimiseFor, value: :stable}
+      ]}
+    @name_only %Diffo.Provider.Feature{name: :dynamicLineManagement}
+    @isEnabled_only %Diffo.Provider.Feature{isEnabled: true}
+    @isDisabled_only %Diffo.Provider.Feature{isEnabled: false}
+    @speed_only %Diffo.Provider.Feature{characteristics:
+      [
+        %Diffo.Provider.Characteristic{value: :speed}
+      ]}
+
+    gen_nothing_outstanding_test("specific nothing outstanding", @dynamicLineManagementEnabled, @dynamicLineManagementEnabled)
+    gen_result_outstanding_test("specific name and isEnabled result", @dynamicLineManagementEnabled, nil, Ash.Test.strip_metadata(@dynamicLineManagementEnabled))
+    gen_result_outstanding_test("specific name result", @dynamicLineManagementEnabled, @isEnabled_only, Ash.Test.strip_metadata(@name_only))
+    gen_result_outstanding_test("specific isEnabled result", @dynamicLineManagementDisabled, @name_only, Ash.Test.strip_metadata(@isDisabled_only))
+
+    gen_result_outstanding_test(
+      "feature characteristic outstanding",
+      @dynamicLineManagementEnabledSpeed,
+      @dynamicLineManagementEnabledStable,
+      Ash.Test.strip_metadata(@speed_only)
+    )
+  end
+
   describe "Diffo.Provider delete Features" do
-    test "bulk delete" do
-      Diffo.Provider.delete_feature!(Diffo.Provider.list_features!())
+    test "delete feature with related characteristic - success" do
+      characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :device,
+          value: :epic1000a,
+          type: :feature
+        })
+
+      feature =
+        Diffo.Provider.create_feature!(%{name: :management, characteristics: [characteristic.id]})
+
+      :ok = Diffo.Provider.delete_feature(feature)
+      {:error, _error} = Diffo.Provider.get_feature_by_id(feature.id)
+      Diffo.Provider.get_characteristic_by_id!(characteristic.id)
+    end
+
+    test "delete feature with related instance - failure, related instance" do
+      feature = Diffo.Provider.create_feature!(%{name: :management})
+
+      specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
+
+      instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id, features: [feature.id]})
+
+      {:error, error} = Diffo.Provider.delete_feature(feature)
+      assert is_struct(error, Ash.Error.Invalid)
+
+      # now unrelate the feature from the instance
+      Diffo.Provider.unrelate_instance_features!(instance, %{
+        features: [feature.id]
+      })
+
+      :ok = Diffo.Provider.delete_feature!(feature)
+      {:error, _error} = Diffo.Provider.get_feature_by_id(feature.id)
     end
   end
 end
