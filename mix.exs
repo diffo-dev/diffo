@@ -1,31 +1,27 @@
 defmodule Diffo.MixProject do
+  @moduledoc false
   use Mix.Project
+
+  @version "0.1.0"
+  @name "Diffo"
+  @description "TMF Service and Resource Manager with a difference"
+  @github_url "https://github.com/diffo-dev/diffo"
 
   def project do
     [
       app: :diffo,
-      version: "0.1.0",
+      version: @version,
+      name: @name,
+      description: @description,
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
+      package: package(),
       deps: deps(),
       aliases: aliases(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      name: "Diffo",
       source_url: "https://github.com/diffo-dev/diffo/",
       homepage_url: "http://diffo.dev/diffo/",
-      docs: [
-        main: "Diffo.Provider",
-        before_closing_body_tag: fn
-          :html ->
-            """
-            <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-            <script>mermaid.initialize({startOnLoad: true})</script>
-            """
-
-          _ ->
-            ""
-        end
-      ]
+      docs: docs()
     ]
   end
 
@@ -53,6 +49,31 @@ defmodule Diffo.MixProject do
       "main" -> [git: "https://github.com/ash-project/ash.git"]
       version -> "~> #{version}"
     end
+  end
+
+  def docs do
+    [
+      homepage_url: @github_url,
+      source_url: @github_url,
+      source_ref: "v#{@version}",
+      main: "readme",
+      logo: "logos/diffo.jpg",
+      extras: [
+        "README.md": [title: "Guide"],
+        "LICENSE.md": [title: "License"]
+      ]
+    ]
+  end
+
+  defp package do
+    [
+      name: :diffo,
+      licenses: ["MIT"],
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE* documentation),
+      links: %{
+        GitHub: @github_url
+      }
+    ]
   end
 
   # Run "mix help deps" to learn about dependencies.

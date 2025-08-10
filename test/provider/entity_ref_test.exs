@@ -443,7 +443,13 @@ defmodule Diffo.Provider.EntityRefTest do
     }
 
     gen_nothing_outstanding_test("specific nothing outstanding", @specific_cost, @actual_cost)
-    gen_result_outstanding_test("specific cost result", @specific_cost, nil, Ash.Test.strip_metadata(@specific_cost))
+
+    gen_result_outstanding_test(
+      "specific cost result",
+      @specific_cost,
+      nil,
+      Ash.Test.strip_metadata(@specific_cost)
+    )
 
     gen_result_outstanding_test(
       "specific role result",
