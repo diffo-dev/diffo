@@ -3,7 +3,7 @@
 ```elixir
 Mix.install(
   [
-    {:diffo, github: "diffo-dev/diffo"}
+    {:diffo, github: "diffo-dev/diffo", branch: "7-livebook"}
   ],
   consolidate_protocols: false
 )
@@ -321,11 +321,11 @@ expected_characteristics = [
   ]
 expected_places = [
   %{role: :AccessNNI},
-  %{role: :CustomerSite, place: %{name: "addressId"}},
   %{role: :CustomerSite, place: %{name: "locationId"}},
+  %{role: :CustomerSite, place: %{name: "addressId"}},
   %{role: :ServingArea}
 ]
-expected_parties = [%{role: :Provider}, %{role: :Reseller}, %{role: :SiteOwner}]
+expected_parties = [%{role: :Provider}, %{role: :Reseller}, %{role: :SiteContact}]
 expected_instance = %{
   id: &Uuid.expect_uuid4/1,
   specification: expected_specification, 
@@ -386,10 +386,21 @@ broadband_0001 = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
 outstanding = expected_instance --- broadband_0001
 ```
 
+Now we've actually done everything and the service is feasible. We've already advanced the service state but we'll set the service_operating_status to :feasibile.
+
 ```elixir
-expected_places |> IO.inspect
-places |> IO.inspect
-expected_places --- places
+broadband_0001 = broadband_0001 |> Diffo.Provider.status_instance(%{service_operating_status: :feasible})
+```
+
+Now we'll fire an event to signal the service is feasible:
+
+```elixir
+event = Diffo.Provider.fire_instance_event(%{type: :serviceOperatingStatusChange})
+event |> Jason.encode!(pretty: true) |> IO.puts
+```
+
+```elixir
+You can see in the database that the event has been fired by the service.
 ```
 
 ## What Next?
