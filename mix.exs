@@ -58,7 +58,6 @@ defmodule Diffo.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:outstanding, "~> 0.2.3"},
       {:ash_outstanding, "~> 0.2.1"},
       {:ash_jason, "~> 2.0"},
       {:ash_state_machine, "~> 0.2.7"},

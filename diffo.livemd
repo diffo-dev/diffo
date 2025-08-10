@@ -3,7 +3,7 @@
 ```elixir
 Mix.install(
   [
-    {:diffo, path: "/Users/beanlanda/git/diffo"}
+    {:diffo, "~> 0.1"}
   ],
   consolidate_protocols: false
 )
