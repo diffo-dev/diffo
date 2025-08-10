@@ -26,6 +26,8 @@ defmodule Diffo.Provider.Service do
   def service_operating_statuses() do
     [
       :pending,
+      :feasible,
+      :not_feasible,
       :configured,
       :starting,
       :running,
