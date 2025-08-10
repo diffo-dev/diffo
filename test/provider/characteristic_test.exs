@@ -214,13 +214,37 @@ defmodule Diffo.Provider.CharacteristicTest do
     @port_range %Diffo.Provider.Characteristic{name: "port", value: 1..4}
 
     gen_nothing_outstanding_test("specific nothing outstanding", @port1, @port1)
-    gen_result_outstanding_test("specific name and value result", @port1, nil, Ash.Test.strip_metadata(@port1))
-    gen_result_outstanding_test("specific name result", @port1, @pair1, Ash.Test.strip_metadata(@name_only))
-    gen_result_outstanding_test("specific value result", @port1, @port3, Ash.Test.strip_metadata(@value_only))
+
+    gen_result_outstanding_test(
+      "specific name and value result",
+      @port1,
+      nil,
+      Ash.Test.strip_metadata(@port1)
+    )
+
+    gen_result_outstanding_test(
+      "specific name result",
+      @port1,
+      @pair1,
+      Ash.Test.strip_metadata(@name_only)
+    )
+
+    gen_result_outstanding_test(
+      "specific value result",
+      @port1,
+      @port3,
+      Ash.Test.strip_metadata(@value_only)
+    )
 
     gen_nothing_outstanding_test("port range nothing outstanding, port1", @port_range, @port1)
     gen_nothing_outstanding_test("port range nothing outstanding, port3", @port_range, @port3)
-    gen_result_outstanding_test("port range name result, pair1", @port_range, @pair1, Ash.Test.strip_metadata(@name_only))
+
+    gen_result_outstanding_test(
+      "port range name result, pair1",
+      @port_range,
+      @pair1,
+      Ash.Test.strip_metadata(@name_only)
+    )
 
     gen_result_outstanding_test(
       "port range value result, port5",

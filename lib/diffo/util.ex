@@ -379,9 +379,9 @@ defmodule Diffo.Util do
     ## Examples
     iex> duration = Duration.new!(month: 1)
     iex> list = [duration: duration]
-    iex> result = Diffo.Util.extract_suppress(list, :duration, :month, :months)
-    iex> List.last(result)
-    {:months, 1}
+    iex> tl(Diffo.Util.extract_suppress(list, :duration, :month, :months))
+    [months: 1]
+
   """
   def extract_suppress(list, tuple_key, map_key, new_tuple_key) when is_list(list) do
     tuple_value = get(list, tuple_key)
