@@ -176,10 +176,10 @@ defmodule Diffo.Provider.Instance do
 
     attribute :service_state, :atom do
       allow_nil? false
-      default Diffo.Provider.Service.default_service_state
+      default Diffo.Provider.Service.default_service_state()
       public? true
 
-      constraints one_of: Diffo.Provider.Service.service_states
+      constraints one_of: Diffo.Provider.Service.service_states()
     end
 
     attribute :service_operating_status, :atom do
@@ -187,7 +187,7 @@ defmodule Diffo.Provider.Instance do
       allow_nil? true
       public? true
       default nil
-      constraints one_of: Diffo.Provider.Service.service_operating_statuses
+      constraints one_of: Diffo.Provider.Service.service_operating_statuses()
     end
 
     create_timestamp :inserted_at
@@ -342,7 +342,15 @@ defmodule Diffo.Provider.Instance do
       accept [:service_operating_status]
       validate attribute_equals(:type, :service)
       change transition_state(:feasibilityChecked)
-      validate argument_in(:service_operating_status, [nil, :initial, :pending, :unknown, :feasible, :not_feasible])
+
+      validate argument_in(:service_operating_status, [
+                 nil,
+                 :initial,
+                 :pending,
+                 :unknown,
+                 :feasible,
+                 :not_feasible
+               ])
     end
 
     update :reserve do
