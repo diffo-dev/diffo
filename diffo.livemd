@@ -21,11 +21,11 @@ In this livebook tutorial you will learn:
 * Installing Neo4j and Configuring Boltx
 * Implementing a Minimal Service
 * Adding Initial Parties and Places
-* Advancing Service State
 * Defining Service Features and Characteristics
-* Relating a Service with other Services and Resources
 * Setting Service Expectations
 * Resolving the Outstanding Service
+* Advancing Service State
+* Relating a Service with other Services and Resources
 
 ## Installing Neo4j and Configuring Boltx
 
@@ -242,60 +242,6 @@ broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 
 ```
 
-## Advancing Service State
-
-TMF638 Services implement a service state and also have an operating status. We create an actual service in the initial state, however generally when we do so we have an intention of advancing it towards a target state, such as operational. We may or may not pass through interim states, like feasibilityChecked, inactive. We also may not reach the target state, due to error, business rule or cancellation.
-
-Diffo uses the [AshStateMachine Extension](https://github.com/ash-project/ash_state_machine). By default we allow all TMF638 state transitions, but these are customisable by manipulating the Instance DSL.
-
-From the initial state we can cancel, activate, feasibilityCheck or reserve the service.
-From feasibilityChecked state we can cancel, activate or reserve the service.
-From active state we can deactivate, suspend or terminate the service
-From inactive or suspended state we can activate or terminate the service.
-No transitions are possible from terminated or cancelled.
-
-```elixir
-broadband_0001 = broadband_0001 |> Provider.feasibilityCheck_service!()
-broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
-```
-
-AshStateMachine will error on invalid transitions.
-
-Lets try and terminate the feasibilityChecked service (this is not allowed, instead cancel)
-
-```elixir
-{:error, error} = broadband_0001 |> Provider.terminate_service()
-error
-```
-
-## Relating a Service with other Services and Resources
-
-The power Diffo has to simply orchestration come through the relationships a parent Service has with other Services and Resources. We will relate the services and resource instances we made earlier with our broadband service.
-
-This is done with a Relationship resource, which links the source and target Instances. Relationship with source_id are stored on the source in the forward_relationships[] and be listed in TMF service serviceRelationship[] or resourceRelationship[] json accordingly.
-
-Each Relationship may have an alias, which must be unique for the source Instance. Alias's are important for reasoning about a Relationship independently of the target id, which intially may not be known or may change over the life of the composite service. The targets of aliased Relationships are considered TMF service supportingService[] or supportingResource[] accordingly.
-
-Let's create a 'parent->child' relationship of the broadband service to its mobileBackup service:
-
-```elixir
-relationship = Provider.create_relationship!(%{
-  alias: "backup", 
-  source_id: broadband_0001.id,
-  target_id: mobile_backup_0001.id,
-  type: :bestows
-})
-relationship |> Jason.encode!(pretty: true) |> IO.puts
-
-```
-
-Now when we refresh the broadband_0001 service it should have both a serviceRelationship[] and supportingService[]:
-
-```elixir
-broadband_0001 = Provider.get_instance_by_id!(broadband_0001.id)
-broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
-```
-
 ## Setting Service Expectations
 
 We will set service expectations as goals. These can be generic goals for a particular stage of a service lifecycle (feasiblityChecked for example), or could be specific to a particular instance. Expectations can be high level, representing consumer or provider intent, and also can be low level, such as to how the service should be composed, configured and operated. The low level expectations can be derived from a combination of intent, policy, current expectations and current actual.
@@ -310,7 +256,7 @@ expected = fun(intended, expected, actual)
 
 We can construct expectations using the struct Ash generates for our resources. Expectations may include functions and/or concrete values. We need to maintain compatibility with our Ash Resource attribute types, which does limit our ability to validate/persist resources using Ash.
 
-We'll construct a simple set of expectations for our service:
+We'll construct a simple set of expectations for a feasible service:
 
 ```elixir
 expected_specification = %{name: "broadband", major_version: 1}
@@ -329,12 +275,11 @@ expected_parties = [%{role: :Provider}, %{role: :Reseller}, %{role: :SiteContact
 expected_instance = %{
   id: &Uuid.expect_uuid4/1,
   specification: expected_specification, 
-  service_state: :feasibilityChecked, 
+  service_state: :feasibilityChecked,
   service_operating_status: :feasible, 
   characteristics: expected_characteristics, 
   places: expected_places,
   parties: expected_parties}
-
 
 
 ```
@@ -386,21 +331,94 @@ broadband_0001 = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
 outstanding = expected_instance --- broadband_0001
 ```
 
-Now we've actually done everything and the service is feasible. We've already advanced the service state but we'll set the service_operating_status to :feasibile.
+Now we've actually done everything and the service is feasible. We've already advanced the service state but we'll set the service_operating_status to :feasible.
 
 ```elixir
 broadband_0001 = broadband_0001 |> Diffo.Provider.status_instance(%{service_operating_status: :feasible})
 ```
 
-Now we'll fire an event to signal the service is feasible:
+## Advancing Service State
+
+TMF638 Services implement a service_state and also have an service_operating_status. The service we created earlier was in the :initial service state.
+
+Diffo uses the [AshStateMachine Extension](https://github.com/ash-project/ash_state_machine). By default we allow all TMF638 state transitions, but these are customisable by manipulating the Instance DSL.
+
+From the initial state we can cancel, activate, feasibilityCheck or reserve the service.
+From feasibilityChecked state we can cancel, activate or reserve the service.
+From active state we can deactivate, suspend or terminate the service
+From inactive or suspended state we can activate or terminate the service.
+No transitions are possible from terminated or cancelled.
+
+Given that our feasibilityCheck above was complete we want to set the :feasibilityChecked service_state, and because it was successful we'll set the :feasible service_operating_status:
 
 ```elixir
-event = Diffo.Provider.fire_instance_event(%{type: :serviceOperatingStatusChange})
-event |> Jason.encode!(pretty: true) |> IO.puts
+broadband_0001 = broadband_0001 |> Provider.feasibilityCheck_service!(%{service_operating_status: :feasible})
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ```
 
+This should have resolved the last part of the outstanding service:
+
 ```elixir
-You can see in the database that the event has been fired by the service.
+broadband_0001 = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
+
+outstanding = expected_instance --- broadband_0001
+```
+
+AshStateMachine will also error on invalid transitions.
+
+Lets try and terminate the feasibilityChecked service (this is not allowed, instead cancel)
+
+```elixir
+{:error, error} = broadband_0001 |> Provider.terminate_service()
+error
+```
+
+## Relating a Service with other Services and Resources
+
+The power Diffo has to simplify orchestration comes through combination of the outstanding protocol and the relationships a parent Service has with other Services and Resources. We will relate the services and resource instances we made earlier with our broadband service.
+
+This is done with a Relationship resource, which links the source and target Instances. Relationship with source_id are stored on the source in the forward_relationships[] and be listed in TMF service serviceRelationship[] or resourceRelationship[] json accordingly.
+
+Each Relationship may have an alias, which must be unique for the source Instance. Alias's are important for reasoning about a Relationship independently of the target id, which intially may not be known or may change over the life of the composite service. The targets of aliased Relationships are considered TMF service supportingService[] or supportingResource[] accordingly.
+
+If we went on to activate our broadband service, we'd create/acquire child services and resources, then configure and manage them over the life of the service. Both the composition and the orchestration can be dynamic.
+
+Let's create a 'parent->child' relationship of the broadband service to its mobileBackup service:
+
+```elixir
+relationship = Provider.create_relationship!(%{
+  alias: "backup", 
+  source_id: broadband_0001.id,
+  target_id: mobile_backup_0001.id,
+  type: :bestows
+})
+relationship |> Jason.encode!(pretty: true) |> IO.puts
+
+```
+
+Now when we refresh the broadband_0001 service it should have both a serviceRelationship[] and supportingService[]:
+
+```elixir
+broadband_0001 = Provider.get_instance_by_id!(broadband_0001.id)
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
+```
+
+We'll now relate sim resource with the mobile backup service
+```elixir
+relationship = Provider.create_relationship!(%{
+  alias: "sim", 
+  source_id: mobile_backup_0001.id,
+  target_id: esim_0001.id,
+  type: :isAssigned
+})
+relationship |> Jason.encode!(pretty: true) |> IO.puts
+```
+
+Now when we refresh the mobile_backup_0001 service it should have both a resourceRelationship[] and supportingResource[]:
+
+```elixir
+mobile_backup_0001 = Provider.get_instance_by_id!(mobile_backup_0001.id)
+mobile_backup_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ```
 
 ## What Next?
