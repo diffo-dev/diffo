@@ -176,27 +176,18 @@ defmodule Diffo.Provider.Instance do
 
     attribute :service_state, :atom do
       allow_nil? false
-      default :initial
+      default Diffo.Provider.Service.default_service_state
       public? true
 
-      constraints one_of: [
-                    :initial,
-                    :cancelled,
-                    :feasibilityChecked,
-                    :reserved,
-                    :active,
-                    :inactive,
-                    :suspended,
-                    :terminated
-                  ]
+      constraints one_of: Diffo.Provider.Service.service_states
     end
 
     attribute :service_operating_status, :atom do
       description "the service operating status, if this instance is a service"
       allow_nil? true
       public? true
-      default Diffo.Provider.Service.default_service_operating_status()
-      constraints one_of: Diffo.Provider.Service.service_operating_statuses()
+      default nil
+      constraints one_of: Diffo.Provider.Service.service_operating_statuses
     end
 
     create_timestamp :inserted_at
@@ -348,9 +339,10 @@ defmodule Diffo.Provider.Instance do
     update :feasibilityCheck do
       description "feasibilityChecks a service instance"
       require_atomic? false
+      accept [:service_operating_status]
       validate attribute_equals(:type, :service)
       change transition_state(:feasibilityChecked)
-      change set_attribute(:service_operating_status, :pending)
+      validate argument_in(:service_operating_status, [nil, :initial, :pending, :unknown, :feasible, :not_feasible])
     end
 
     update :reserve do
