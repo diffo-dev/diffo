@@ -379,6 +379,7 @@ defmodule Diffo.Provider.InstanceTest do
         Diffo.Provider.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.feasibilityCheck_service!()
         |> Diffo.Provider.status_service!(%{service_operating_status: :feasible})
+
       assert updated_instance.service_state == :feasibilityChecked
       assert updated_instance.service_operating_status == :feasible
     end
