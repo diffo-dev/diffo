@@ -56,7 +56,7 @@ Contributions are welcome, please start with either a [discussion](https://githu
 
 ## Acknowledgements
 
-Thanks to [Telstra](https://www.telstra.com.au/) for supporting innovation in orchestration and inventory shared-tech which resulted in the award winning difference engine [2024 TMF Excellence Award in Autonomous Networks](https://www.tmforum.org/about/awards-and-recognition/excellence-awards/winners-2024/) powering three network service entities enabling outstanding produce experience [2025 TMF Excellence Award in Customer Experience](https://www.tmforum.org/about/awards-and-recognition/excellence-awards/winners-2025/) and inspiring both this open source and internal shared-tech.
+Thanks to [Telstra](https://www.telstra.com.au/) for supporting innovation in orchestration and inventory shared-tech which resulted in the award winning difference engine [2024 TMF Excellence Award in Autonomous Networks](https://www.tmforum.org/about/awards-and-recognition/excellence-awards/winners-2024/) powering three network service entities enabling outstanding product experience [2025 TMF Excellence Award in Customer Experience](https://www.tmforum.org/about/awards-and-recognition/excellence-awards/winners-2025/) and inspiring both this open source and internal shared-tech.
 
 Thanks to the [Ash Core](https://github.com/ash-project) for [ash](https://github.com/ash-project/ash) 🚀
 
