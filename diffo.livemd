@@ -3,7 +3,7 @@
 ```elixir
 Mix.install(
   [
-    {:diffo, github: "diffo-dev/diffo", branch: "7-livebook"}
+    {:diffo, "~> 0.1"}
   ],
   consolidate_protocols: false
 )
@@ -43,7 +43,7 @@ Update the configuration below as necessary and evaluate.
 config = [
   uri: "bolt://localhost:7687",
   auth: [username: "neo4j", password: "password"],
-  user_agent: "ashNeo4jLivebook/1",
+  user_agent: "diffoLivebook/1",
   pool_size: 15,
   max_overflow: 3,
   prefix: :default,
@@ -131,8 +131,8 @@ broadband_0001 = Provider.create_instance!(%{name: "broadband_0001", specified_b
 mobile_backup_0001 = Provider.create_instance!(%{name: "mobileBackup_0001", specified_by: mobile_backup_v2.id})
 services = [broadband_0001, mobile_backup_0001]
 
-esim_0001 = Provider.create_instance!(%{name: "esim_0001", specified_by: esim_v1.id})
-nbn_ethernet_0001 = Provider.create_instance!(%{name: "nbnEthernet_0001", specified_by: nbn_ethernet_v1.id})
+esim_0001 = Provider.create_instance!(%{name: "esim_0001", type: :resource, specified_by: esim_v1.id})
+nbn_ethernet_0001 = Provider.create_instance!(%{name: "nbnEthernet_0001", type: :resource, specified_by: nbn_ethernet_v1.id})
 resources = [esim_0001, nbn_ethernet_0001]
 ```
 
@@ -287,7 +287,8 @@ expected_instance = %{
 The reason we set expectations is so that we can check whether our expectations are met (or exceeded) by the actuality. Unmet expectations represent 'outstanding' work. We'll calculate outstanding by comparing our expected_instance with the (actual) broadband_0001 service from the database:
 
 ```elixir
-use Outstand
+broadband_0001 = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 outstanding = expected_instance --- broadband_0001
 ```
 
@@ -316,10 +317,12 @@ places |> Jason.encode!(pretty: true) |> IO.puts
 This should have resolved the Parties and Places in the outstanding service:
 
 ```elixir
+broadband_0001 = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 outstanding = expected_instance --- broadband_0001
 ```
 
-As an exercise create the technology characteristic to resolve the outstanding service by meeting the expectation:
+We create and add the technology characteristic to the actual service. This should resolve the characteristic expectation.
 
 ```elixir
 technology = Provider.create_characteristic!(%{type: :instance, name: :technology, value: %{access: :nbnEthernet}})
@@ -331,11 +334,7 @@ broadband_0001 = Diffo.Provider.get_instance_by_id!(broadband_0001.id)
 outstanding = expected_instance --- broadband_0001
 ```
 
-Now we've actually done everything and the service is feasible. We've already advanced the service state but we'll set the service_operating_status to :feasible.
-
-```elixir
-broadband_0001 = broadband_0001 |> Diffo.Provider.status_instance(%{service_operating_status: :feasible})
-```
+We simply need to advance the services state to end the feasiblity
 
 ## Advancing Service State
 
@@ -404,9 +403,10 @@ broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ```
 
 We'll now relate sim resource with the mobile backup service
+
 ```elixir
 relationship = Provider.create_relationship!(%{
-  alias: "sim", 
+  alias: :sim, 
   source_id: mobile_backup_0001.id,
   target_id: esim_0001.id,
   type: :isAssigned
@@ -419,6 +419,24 @@ Now when we refresh the mobile_backup_0001 service it should have both a resourc
 ```elixir
 mobile_backup_0001 = Provider.get_instance_by_id!(mobile_backup_0001.id)
 mobile_backup_0001 |> Jason.encode!(pretty: true) |> IO.puts
+```
+
+We'll also add the nbnEthernet resource directly to the broadband service:
+
+```elixir
+relationship = Provider.create_relationship!(%{
+  alias: :access, 
+  source_id: broadband_0001.id,
+  target_id: nbn_ethernet_0001.id,
+  type: :isAssigned
+})
+relationship |> Jason.encode!(pretty: true) |> IO.puts
+
+```
+
+```elixir
+broadband_0001 = Provider.get_instance_by_id!(broadband_0001.id)
+broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ```
 
 ## What Next?
