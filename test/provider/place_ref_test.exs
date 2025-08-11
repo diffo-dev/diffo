@@ -47,9 +47,9 @@ defmodule Diffo.Provider.PlaceRefTest do
 
       place_refs = Diffo.Provider.list_place_refs!()
       assert length(place_refs) == 2
-      # should be sorted
-      assert List.first(place_refs).place_id == "LOC000000123456"
-      assert List.last(place_refs).place_id == "LOC000000897353"
+      # should be sorted by role, then newest to oldest
+      assert List.first(place_refs).place_id == place2.id
+      assert List.last(place_refs).place_id == place1.id
     end
 
     test "list place refs by related instance - success" do

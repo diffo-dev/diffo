@@ -584,7 +584,13 @@ defmodule Diffo.Provider.NoteTest do
     }
 
     gen_nothing_outstanding_test("specific nothing outstanding", @specific_note, @actual_note)
-    gen_result_outstanding_test("specific note result", @specific_note, nil, Ash.Test.strip_metadata(@specific_note))
+
+    gen_result_outstanding_test(
+      "specific note result",
+      @specific_note,
+      nil,
+      Ash.Test.strip_metadata(@specific_note)
+    )
 
     gen_result_outstanding_test(
       "specific text result",

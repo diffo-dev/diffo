@@ -181,29 +181,65 @@ defmodule Diffo.Provider.FeatureTest do
 
   describe "Diffo.Provider outstanding Features" do
     use Outstand
-    @dynamicLineManagementEnabled %Diffo.Provider.Feature{name: :dynamicLineManagement, isEnabled: true}
-    @dynamicLineManagementDisabled %Diffo.Provider.Feature{name: :dynamicLineManagement, isEnabled: false}
-    @dynamicLineManagementEnabledSpeed %Diffo.Provider.Feature{name: :dynamicLineManagement, isEnabled: false, characteristics:
-      [
-        %Diffo.Provider.Characteristic{name: :optimiseFor, value: :speed}
-      ]}
 
-    @dynamicLineManagementEnabledStable %Diffo.Provider.Feature{name: :dynamicLineManagement, isEnabled: false, characteristics:
-      [
+    @dynamicLineManagementEnabled %Diffo.Provider.Feature{
+      name: :dynamicLineManagement,
+      isEnabled: true
+    }
+    @dynamicLineManagementDisabled %Diffo.Provider.Feature{
+      name: :dynamicLineManagement,
+      isEnabled: false
+    }
+    @dynamicLineManagementEnabledSpeed %Diffo.Provider.Feature{
+      name: :dynamicLineManagement,
+      isEnabled: false,
+      characteristics: [
+        %Diffo.Provider.Characteristic{name: :optimiseFor, value: :speed}
+      ]
+    }
+
+    @dynamicLineManagementEnabledStable %Diffo.Provider.Feature{
+      name: :dynamicLineManagement,
+      isEnabled: false,
+      characteristics: [
         %Diffo.Provider.Characteristic{name: :optimiseFor, value: :stable}
-      ]}
+      ]
+    }
     @name_only %Diffo.Provider.Feature{name: :dynamicLineManagement}
     @isEnabled_only %Diffo.Provider.Feature{isEnabled: true}
     @isDisabled_only %Diffo.Provider.Feature{isEnabled: false}
-    @speed_only %Diffo.Provider.Feature{characteristics:
-      [
+    @speed_only %Diffo.Provider.Feature{
+      characteristics: [
         %Diffo.Provider.Characteristic{value: :speed}
-      ]}
+      ]
+    }
 
-    gen_nothing_outstanding_test("specific nothing outstanding", @dynamicLineManagementEnabled, @dynamicLineManagementEnabled)
-    gen_result_outstanding_test("specific name and isEnabled result", @dynamicLineManagementEnabled, nil, Ash.Test.strip_metadata(@dynamicLineManagementEnabled))
-    gen_result_outstanding_test("specific name result", @dynamicLineManagementEnabled, @isEnabled_only, Ash.Test.strip_metadata(@name_only))
-    gen_result_outstanding_test("specific isEnabled result", @dynamicLineManagementDisabled, @name_only, Ash.Test.strip_metadata(@isDisabled_only))
+    gen_nothing_outstanding_test(
+      "specific nothing outstanding",
+      @dynamicLineManagementEnabled,
+      @dynamicLineManagementEnabled
+    )
+
+    gen_result_outstanding_test(
+      "specific name and isEnabled result",
+      @dynamicLineManagementEnabled,
+      nil,
+      Ash.Test.strip_metadata(@dynamicLineManagementEnabled)
+    )
+
+    gen_result_outstanding_test(
+      "specific name result",
+      @dynamicLineManagementEnabled,
+      @isEnabled_only,
+      Ash.Test.strip_metadata(@name_only)
+    )
+
+    gen_result_outstanding_test(
+      "specific isEnabled result",
+      @dynamicLineManagementDisabled,
+      @name_only,
+      Ash.Test.strip_metadata(@isDisabled_only)
+    )
 
     gen_result_outstanding_test(
       "feature characteristic outstanding",

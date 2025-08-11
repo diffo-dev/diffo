@@ -73,7 +73,7 @@ defmodule Diffo.Provider.InstanceTest do
       assert Diffo.Uuid.uuid4?(instance.id) == true
       assert instance.type == :service
       assert instance.service_state == :initial
-      assert instance.service_operating_status == :unknown
+      refute instance.service_operating_status
       assert instance.specification.id == specification.id
       assert instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
     end
@@ -92,7 +92,7 @@ defmodule Diffo.Provider.InstanceTest do
       assert instance.id == uuid
       assert instance.type == :service
       assert instance.service_state == :initial
-      assert instance.service_operating_status == :unknown
+      refute instance.service_operating_status
       assert instance.specification.id == specification.id
       assert instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
     end
@@ -278,7 +278,20 @@ defmodule Diffo.Provider.InstanceTest do
         |> Diffo.Provider.feasibilityCheck_service!()
 
       assert updated_instance.service_state == :feasibilityChecked
-      assert updated_instance.service_operating_status == :pending
+      assert updated_instance.service_operating_status == nil
+      refute updated_instance.started_at
+      refute updated_instance.stopped_at
+    end
+
+    test "feasibilityCheck an initial service instance, feasible - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "initialFeasibilityChecked"})
+
+      updated_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        |> Diffo.Provider.feasibilityCheck_service!(%{service_operating_status: :feasible})
+
+      assert updated_instance.service_state == :feasibilityChecked
+      assert updated_instance.service_operating_status == :feasible
       refute updated_instance.started_at
       refute updated_instance.stopped_at
     end
@@ -330,7 +343,7 @@ defmodule Diffo.Provider.InstanceTest do
       updated_instance =
         Diffo.Provider.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.activate_service!()
-        |> Diffo.Provider.status_instance!(%{service_operating_status: :running})
+        |> Diffo.Provider.status_service!(%{service_operating_status: :running})
 
       assert updated_instance.service_state == :active
       assert updated_instance.service_operating_status == :running
@@ -357,6 +370,18 @@ defmodule Diffo.Provider.InstanceTest do
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
       assert instance.service_state == :initial
       {:error, _error} = instance |> Diffo.Provider.terminate_service()
+    end
+
+    test "status a feasibilityChecked service feasible - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "feasibilityCheckedFeasible"})
+
+      updated_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        |> Diffo.Provider.feasibilityCheck_service!()
+        |> Diffo.Provider.status_service!(%{service_operating_status: :feasible})
+
+      assert updated_instance.service_state == :feasibilityChecked
+      assert updated_instance.service_operating_status == :feasible
     end
 
     test "update a service instance name - success" do
@@ -705,13 +730,13 @@ defmodule Diffo.Provider.InstanceTest do
       parent_encoding = Jason.encode!(loaded_instance) |> Diffo.Util.summarise_dates()
 
       assert parent_encoding ==
-               ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"Site Connection Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"siteId\",\"id\":\"ANS020000023234\",\"owner\":\"T3_ADAPTIVE_NETWORKS\"}],\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}],\"feature\":[{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}],\"serviceCharacteristic\":[{\"name\":\"device\",\"value\":\"managed\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],"relatedParty\":[{\"id\":\"T3_ADAPTIVE_NETWORKS\",\"href\":\"entity/internal/T3_ADAPTIVE_NETWORKS\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
+               ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"Site Connection Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"siteId\",\"id\":\"ANS020000023234\",\"owner\":\"T3_ADAPTIVE_NETWORKS\"}],\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}],\"feature\":[{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}],\"serviceCharacteristic\":[{\"name\":\"device\",\"value\":\"managed\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],"relatedParty\":[{\"id\":\"T3_ADAPTIVE_NETWORKS\",\"href\":\"entity/internal/T3_ADAPTIVE_NETWORKS\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
 
       refreshed_child_instance = Diffo.Provider.get_instance_by_id!(child_instance.id)
       child_encoding = Jason.encode!(refreshed_child_instance) |> Diffo.Util.summarise_dates()
 
       assert child_encoding ==
-               ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"connectionId\",\"id\":\"EVC010000873982\",\"owner\":\"T3_CONNECTIVITY\"},{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_CPE\"}],\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"processStatus\":[{\"code\":\"CPEDEV-1002\",\"severity\":\"WARN\",\"message\":\"device unmanagable\",\"timeStamp\":\"now\"},{\"code\":\"CPEDEV-1001\",\"severity\":\"INFO\",\"message\":\"device discovered\",\"timeStamp\":\"now\"}],\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\"}}],\"relatedEntity\":[{\"id\":\"COR000000123456\",\"name\":\"2025-01\",\"role\":\"expected\",\"@referredType\":\"cost\",\"@type\":\"EntityRef\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T4_CPE\",\"href\":\"entity/internal/T4_CPE\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
+               ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"connectionId\",\"id\":\"EVC010000873982\",\"owner\":\"T3_CONNECTIVITY\"},{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_CPE\"}],\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"processStatus\":[{\"code\":\"CPEDEV-1002\",\"severity\":\"WARN\",\"message\":\"device unmanagable\",\"timeStamp\":\"now\"},{\"code\":\"CPEDEV-1001\",\"severity\":\"INFO\",\"message\":\"device discovered\",\"timeStamp\":\"now\"}],\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\"}}],\"relatedEntity\":[{\"id\":\"COR000000123456\",\"name\":\"2025-01\",\"role\":\"expected\",\"@referredType\":\"cost\",\"@type\":\"EntityRef\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T4_CPE\",\"href\":\"entity/internal/T4_CPE\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
     end
 
     @tag bugged: true
@@ -877,12 +902,12 @@ defmodule Diffo.Provider.InstanceTest do
       parent_encoding = Jason.encode!(refreshed_parent_instance) |> Diffo.Util.summarise_dates()
 
       assert parent_encoding ==
-               ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"Site Connection Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"siteId\",\"id\":\"ANS020000023234\",\"owner\":\"T3_ADAPTIVE_NETWORKS\"}],\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}],\"supportingService\":[{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"}],\"feature\":[{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}],\"serviceCharacteristic\":[{\"name\":\"device\",\"value\":\"managed\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_ADAPTIVE_NETWORKS\",\"href\":\"entity/internal/T3_ADAPTIVE_NETWORKS\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
+               ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"Site Connection Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"siteId\",\"id\":\"ANS020000023234\",\"owner\":\"T3_ADAPTIVE_NETWORKS\"}],\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]}],\"supportingService\":[{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"}],\"feature\":[{\"name\":\"management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"device\",\"value\":\"epic1000a\"}]}],\"serviceCharacteristic\":[{\"name\":\"device\",\"value\":\"managed\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_ADAPTIVE_NETWORKS\",\"href\":\"entity/internal/T3_ADAPTIVE_NETWORKS\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
 
       child_encoding = Jason.encode!(refreshed_child_instance) |> Diffo.Util.summarise_dates()
 
       assert child_encoding ==
-               ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"connectionId\",\"id\":\"EVC010000873982\",\"owner\":\"T3_CONNECTIVITY\"},{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_CPE\"}],\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\"}}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T4_CPE\",\"href\":\"entity/internal/T4_CPE\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
+               ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"connectionId\",\"id\":\"EVC010000873982\",\"owner\":\"T3_CONNECTIVITY\"},{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_CPE\"}],\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{parent_instance.id}\"}}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T4_CPE\",\"href\":\"entity/internal/T4_CPE\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
     end
 
     @tag bugged: true
@@ -952,7 +977,7 @@ defmodule Diffo.Provider.InstanceTest do
       parent_encoding = Jason.encode!(refreshed_parent_instance) |> Diffo.Util.summarise_dates()
 
       assert parent_encoding ==
-               ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"ADSL Access Service\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"adslAccess\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"resourceRelationship\":[{\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\"}}],\"feature\":[{\"name\":\"dynamicLineManagement\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"goal\",\"value\":\"stability\"}]}],\"serviceCharacteristic\":[{\"name\":\"dslam",\"value\":\"QDONC1001\"}]})
+               ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"ADSL Access Service\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"adslAccess\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"resourceRelationship\":[{\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\"}}],\"feature\":[{\"name\":\"dynamicLineManagement\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"goal\",\"value\":\"stability\"}]}],\"serviceCharacteristic\":[{\"name\":\"dslam",\"value\":\"QDONC1001\"}]})
 
       _child_encoding = Jason.encode!(refreshed_child_instance) |> Diffo.Util.summarise_dates()
 
@@ -1028,7 +1053,7 @@ defmodule Diffo.Provider.InstanceTest do
       parent_encoding = Jason.encode!(refreshed_parent_instance) |> Diffo.Util.summarise_dates()
 
       assert parent_encoding ==
-               ~s({\"id\":\"#{parent_instance.id}\","href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"ADSL Access Service\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"adslAccess\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"resourceRelationship\":[{\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\"}}],\"supportingResource\":[{\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\"}],\"feature\":[{\"name\":\"dynamicLineManagement\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"goal\",\"value\":\"stability\"}]}],\"serviceCharacteristic\":[{\"name\":\"dslam",\"value\":\"QDONC1001\"}]})
+               ~s({\"id\":\"#{parent_instance.id}\","href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\",\"category\":\"connectivity\",\"description\":\"ADSL Access Service\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"adslAccess\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"resourceRelationship\":[{\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\"}}],\"supportingResource\":[{\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\"}],\"feature\":[{\"name\":\"dynamicLineManagement\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"goal\",\"value\":\"stability\"}]}],\"serviceCharacteristic\":[{\"name\":\"dslam",\"value\":\"QDONC1001\"}]})
 
       child_encoding = Jason.encode!(refreshed_child_instance) |> Diffo.Util.summarise_dates()
 
@@ -1077,7 +1102,7 @@ defmodule Diffo.Provider.InstanceTest do
       parent_encoding = Jason.encode!(refreshed_parent_instance) |> Diffo.Util.summarise_dates()
 
       assert parent_encoding ==
-               ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/broadband/#{parent_instance.id}\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"broadband\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{aggregation_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/aggregation/#{aggregation_instance.id}\"}},{\"type\":\"bestows\",\"service\":{\"id\":\"#{edge_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/edge/#{edge_instance.id}\"}},{\"type\":\"bestows\",\"service\":{\"id\":\"#{access_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/fibreAccess/#{access_instance.id}\"}}],\"supportingService\":[{\"id\":\"#{aggregation_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/aggregation/#{aggregation_instance.id}\"},{\"id\":\"#{edge_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/edge/#{edge_instance.id}\"},{\"id\":\"#{access_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/fibreAccess/#{access_instance.id}\"}]})
+               ~s({\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/broadband/#{parent_instance.id}\",\"serviceSpecification\":{\"id\":\"#{parent_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{parent_specification.id}\",\"name\":\"broadband\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"serviceRelationship\":[{\"type\":\"bestows\",\"service\":{\"id\":\"#{aggregation_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/aggregation/#{aggregation_instance.id}\"}},{\"type\":\"bestows\",\"service\":{\"id\":\"#{edge_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/edge/#{edge_instance.id}\"}},{\"type\":\"bestows\",\"service\":{\"id\":\"#{access_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/fibreAccess/#{access_instance.id}\"}}],\"supportingService\":[{\"id\":\"#{aggregation_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/aggregation/#{aggregation_instance.id}\"},{\"id\":\"#{edge_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/edge/#{edge_instance.id}\"},{\"id\":\"#{access_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/fibreAccess/#{access_instance.id}\"}]})
     end
 
     test "encode sorts features - success" do
@@ -1095,7 +1120,7 @@ defmodule Diffo.Provider.InstanceTest do
       encoding = Jason.encode!(instance) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"feature\":[{\"name\":\"management\",\"isEnabled\":true},{\"name\":\"optimisation\",\"isEnabled\":true},{\"name\":\"security\",\"isEnabled\":true}]})
+               ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"feature\":[{\"name\":\"management\",\"isEnabled\":true},{\"name\":\"optimisation\",\"isEnabled\":true},{\"name\":\"security\",\"isEnabled\":true}]})
     end
 
     test "encode sorts characteristics within features - success" do
@@ -1140,7 +1165,7 @@ defmodule Diffo.Provider.InstanceTest do
       encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"feature\":[{\"name\":\"automations\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"management\",\"value\":true},{\"name\":\"optimisation\",\"value\":true},{\"name\":\"security\",\"value\":true}]}]})
+               ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"feature\":[{\"name\":\"automations\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"management\",\"value\":true},{\"name\":\"optimisation\",\"value\":true},{\"name\":\"security\",\"value\":true}]}]})
     end
 
     test "encode sorts characteristics - success" do
@@ -1183,7 +1208,7 @@ defmodule Diffo.Provider.InstanceTest do
       encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"operatingStatus\":\"unknown\",\"serviceCharacteristic\":[{\"name\":\"management\",\"value\":true},{\"name\":\"optimisation\",\"value\":true},{\"name\":\"security\",\"value\":true}]})
+               ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"serviceCharacteristic\":[{\"name\":\"management\",\"value\":true},{\"name\":\"optimisation\",\"value\":true},{\"name\":\"security\",\"value\":true}]})
     end
 
     test "encode cancelled service - success" do

@@ -118,7 +118,7 @@ defmodule Diffo.Provider.PlaceRef do
   preparations do
     prepare build(
               load: [:place],
-              sort: [role: :asc]
+              sort: [role: :asc, inserted_at: :desc]
             )
   end
 
