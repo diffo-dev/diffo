@@ -12,20 +12,14 @@ defmodule Diffo.Provider.Feature do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:Feature)
-
     relate([
-      {:instance, :FEATURE_DEFINES_INSTANCE, :outgoing},
-      {:characteristics, :CHARACTERISTIC_DEFINES_FEATURE, :incoming}
+      {:instance, :DEFINES, :outgoing, :Instance},
+      {:characteristics, :DEFINES, :incoming, :Characteristic}
     ])
 
     guard([
-      {:FEATURE_DEFINES_INSTANCE, :outgoing, :Instance}
+      {:DEFINES, :outgoing, :Instance}
     ])
-
-    translate(id: :uuid)
-
-    skip([:instance_id])
   end
 
   jason do

@@ -14,13 +14,9 @@ defmodule Diffo.Provider.Specification do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:Specification)
-
-    relate([
-      {:instances, :SPECIFIES, :outgoing}
+     relate([
+      {:instances, :SPECIFIES, :outgoing, :Instance}
     ])
-
-    translate(id: :uuid)
   end
 
   jason do
