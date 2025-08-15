@@ -12,12 +12,10 @@ defmodule Diffo.Provider.Characteristic do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:Characteristic)
-
     relate([
-      {:instance, :CHARACTERISTIC_DEFINES_INSTANCE, :outgoing},
-      {:feature, :CHARACTERISTIC_DEFINES_FEATURE, :outgoing},
-      {:relationship, :CHARACTERISTIC_DEFINES_RELATIONSHIP, :outgoing}
+      {:instance, :CHARACTERISTIC_DEFINES_INSTANCE, :outgoing, :Instance},
+      {:feature, :CHARACTERISTIC_DEFINES_FEATURE, :outgoing, :Feature},
+      {:relationship, :CHARACTERISTIC_DEFINES_RELATIONSHIP, :outgoing, :Relationship}
     ])
 
     guard([
@@ -25,10 +23,6 @@ defmodule Diffo.Provider.Characteristic do
       {:CHARACTERISTIC_DEFINES_FEATURE, :outgoing, :Feature},
       {:CHARACTERISTIC_DEFINES_RELATIONSHIP, :outgoing, :Relationship}
     ])
-
-    translate(id: :uuid)
-
-    skip([:instance_id, :feature_id, :relationship_id])
   end
 
   jason do

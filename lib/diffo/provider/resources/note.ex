@@ -12,14 +12,10 @@ defmodule Diffo.Provider.Note do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:Note)
-
     relate([
-      {:instance, :ANNOTATES, :outgoing},
-      {:author, :AUTHORS, :incoming}
+      {:instance, :ANNOTATES, :outgoing, :Instance},
+      {:author, :AUTHORS, :incoming, :Party}
     ])
-
-    translate(id: :uuid)
   end
 
   jason do

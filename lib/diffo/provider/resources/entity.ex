@@ -12,10 +12,8 @@ defmodule Diffo.Provider.Entity do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:Entity)
-
     relate([
-      {:entity_refs, :RELATED_HOW_ENTITY, :incoming}
+      {:entity_refs, :RELATED_HOW_ENTITY, :incoming, :EntityRef}
     ])
 
     translate(id: :uuid)
