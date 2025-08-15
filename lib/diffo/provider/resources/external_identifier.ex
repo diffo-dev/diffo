@@ -12,14 +12,10 @@ defmodule Diffo.Provider.ExternalIdentifier do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:ExternalIdentifier)
-
     relate([
-      {:instance, :REFERENCES, :incoming},
-      {:owner, :OWNS, :incoming}
+      {:instance, :REFERENCES, :incoming, :Instance},
+      {:owner, :OWNS, :incoming, :Party}
     ])
-
-    translate(id: :uuid)
   end
 
   jason do

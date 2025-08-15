@@ -12,13 +12,9 @@ defmodule Diffo.Provider.Place do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:Place)
-
     relate([
-      {:place_refs, :RELATED_HOW_PLACE, :incoming}
+      {:place_refs, :RELATED_HOW_PLACE, :incoming, :PlaceRef}
     ])
-
-    translate(id: :uuid)
   end
 
   jason do

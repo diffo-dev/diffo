@@ -12,14 +12,10 @@ defmodule Diffo.Provider.PartyRef do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:PartyRef)
-
-    relate([
-      {:instance, :RELATES_HOW_PARTY, :incoming},
-      {:party, :RELATED_HOW_PARTY, :outgoing}
+     relate([
+      {:instance, :RELATES_HOW_PARTY, :incoming, :Instance},
+      {:party, :RELATED_HOW_PARTY, :outgoing, :Party}
     ])
-
-    translate(id: :uuid)
   end
 
   jason do
