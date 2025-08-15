@@ -15,11 +15,11 @@ defmodule Diffo.Provider.Relationship do
     relate([
       {:source, :RELATES_HOW, :incoming, :Instance},
       {:target, :RELATED_HOW, :outgoing, :Instance},
-      {:characteristics, :CHARACTERISTIC_DEFINES_RELATIONSHIP, :incoming, :Characteristic}
+      {:characteristics, :DEFINES, :incoming, :Characteristic}
     ])
 
     guard([
-      {:CHARACTERISTIC_DEFINES_RELATIONSHIP, :incoming, :Characteristic}
+      {:DEFINES, :incoming, :Characteristic}
     ])
   end
 

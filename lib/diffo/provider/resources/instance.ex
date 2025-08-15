@@ -18,12 +18,12 @@ defmodule Diffo.Provider.Instance do
       {:process_statuses, :STATUSES, :incoming, :ProcessStatus},
       {:forward_relationships, :RELATES_HOW, :outgoing, :Relationship},
       {:reverse_relationships, :RELATED_HOW, :incoming, :Relationship},
-      {:features, :FEATURE_DEFINES_INSTANCE, :incoming, :Feature},
-      {:characteristics, :CHARACTERISTIC_DEFINES_INSTANCE, :incoming, :Characteristic},
+      {:features, :DEFINES, :incoming, :Feature},
+      {:characteristics, :DEFINES, :incoming, :Characteristic},
       {:entities, :RELATES_HOW_ENTITY, :outgoing, :EntityRef},
       {:notes, :ANNOTATES, :incoming, :Note},
-      {:places, :RELATES_HOW_PLACE, :outgoing, :PlaceRef},
-      {:parties, :RELATES_HOW_PARTY, :outgoing, :PartyRef}
+      {:places, :LOCATES, :outgoing, :PlaceRef},
+      {:parties, :INVOLVES, :outgoing, :PartyRef}
     ])
   end
 
