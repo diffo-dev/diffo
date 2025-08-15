@@ -12,13 +12,9 @@ defmodule Diffo.Provider.ProcessStatus do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:ProcessStatus)
-
     relate([
-      {:instance, :STATUSES, :outgoing}
+      {:instance, :STATUSES, :outgoing, :Instance}
     ])
-
-    translate(id: :uuid)
   end
 
   jason do

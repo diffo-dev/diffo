@@ -12,24 +12,19 @@ defmodule Diffo.Provider.Instance do
     extensions: [AshOutstanding.Resource, AshJason.Resource, AshStateMachine]
 
   neo4j do
-    label(:Instance)
-
     relate([
-      {:external_identifiers, :REFERENCES, :outgoing},
-      {:specification, :SPECIFIES, :incoming},
-      {:process_statuses, :STATUSES, :incoming},
-      {:forward_relationships, :RELATES_HOW, :outgoing},
-      {:reverse_relationships, :RELATED_HOW, :incoming},
-      {:features, :FEATURE_DEFINES_INSTANCE, :incoming},
-      {:characteristics, :CHARACTERISTIC_DEFINES_INSTANCE, :incoming},
-      {:entities, :RELATES_HOW_ENTITY, :outgoing},
-      {:notes, :ANNOTATES, :incoming},
-      {:places, :RELATES_HOW_PLACE, :outgoing},
-      {:parties, :RELATES_HOW_PARTY, :outgoing}
+      {:external_identifiers, :REFERENCES, :outgoing, :ExternalIdentifier},
+      {:specification, :SPECIFIES, :incoming, :Specification},
+      {:process_statuses, :STATUSES, :incoming, :ProcessStatus},
+      {:forward_relationships, :RELATES_HOW, :outgoing, :Relationship},
+      {:reverse_relationships, :RELATED_HOW, :incoming, :Relationship},
+      {:features, :DEFINES, :incoming, :Feature},
+      {:characteristics, :DEFINES, :incoming, :Characteristic},
+      {:entities, :RELATES_HOW_ENTITY, :outgoing, :EntityRef},
+      {:notes, :ANNOTATES, :incoming, :Note},
+      {:places, :LOCATES, :outgoing, :PlaceRef},
+      {:parties, :INVOLVES, :outgoing, :PartyRef}
     ])
-
-    translate(id: :uuid)
-    skip([:specification_id])
   end
 
   jason do

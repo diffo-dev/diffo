@@ -12,19 +12,15 @@ defmodule Diffo.Provider.Party do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-    label(:Party)
-
     relate([
-      {:party_refs, :RELATED_HOW_PARTY, :incoming},
-      {:external_identifiers, :OWNS, :outgoing},
-      {:notes, :AUTHORS, :outgoing}
+      {:party_refs, :RELATED_HOW_PARTY, :incoming, :PartyRef},
+      {:external_identifiers, :OWNS, :outgoing, :ExternalIdentifier},
+      {:notes, :AUTHORS, :outgoing, :Note}
     ])
 
     guard([
       {:OWNS, :outgoing, :ExternalIdentifier}
     ])
-
-    translate(id: :partyId)
   end
 
   jason do
