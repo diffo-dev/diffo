@@ -14,8 +14,8 @@ defmodule Diffo.Provider.Specification do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-     relate([
-      {:instances, :SPECIFIES, :outgoing, :Instance}
+     guard([
+      {:SPECIFIES, :outgoing, :Instance}
     ])
   end
 
@@ -98,14 +98,6 @@ defmodule Diffo.Provider.Specification do
     create_timestamp :inserted_at
 
     update_timestamp :updated_at
-  end
-
-  relationships do
-    has_many :instances, Diffo.Provider.Instance do
-      description "instances specified by this specification"
-      destination_attribute :specification_id
-      public? false
-    end
   end
 
   actions do
