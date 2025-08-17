@@ -33,10 +33,16 @@ defmodule Diffo.Provider.Reference do
     %Diffo.Provider.Reference{id: Diffo.Uuid.trailing_uuid4(href), href: href}
   end
 
-  defimpl Jason.Encoder, for: Diffo.Provider.Reference do
+  defimpl Jason.Encoder do
     def encode(reference, _opts) do
       Jason.OrderedObject.new(id: reference.id, href: reference.href)
       |> Jason.encode!()
+    end
+  end
+
+  defimpl String.Chars do
+    def to_string(struct) do
+      inspect(struct)
     end
   end
 
