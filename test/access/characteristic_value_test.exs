@@ -13,7 +13,7 @@ defmodule Diffo.Access.CharacteristicValueTest do
 
   setup do
     on_exit(fn ->
-      :ok #AshNeo4j.Neo4jHelper.delete_all()
+      AshNeo4j.Neo4jHelper.delete_all()
     end)
   end
 
