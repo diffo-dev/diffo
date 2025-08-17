@@ -12,7 +12,7 @@ defmodule Diffo.Provider.PartyRef do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-     relate([
+    relate([
       {:instance, :INVOLVES, :incoming, :Instance},
       {:party, :RELATED_HOW_PARTY, :outgoing, :Party}
     ])
