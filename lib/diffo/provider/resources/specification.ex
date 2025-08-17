@@ -14,7 +14,7 @@ defmodule Diffo.Provider.Specification do
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
   neo4j do
-     guard([
+    guard([
       {:SPECIFIES, :outgoing, :Instance}
     ])
   end
