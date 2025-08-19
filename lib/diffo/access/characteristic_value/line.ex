@@ -1,5 +1,5 @@
 defmodule Diffo.Access.Line do
-  use Ash.TypedStruct
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do
     field(:port, :integer,
@@ -21,11 +21,8 @@ defmodule Diffo.Access.Line do
     field(:profile, :string, description: "the line port profile")
   end
 
-  defimpl Jason.Encoder do
-    def encode(%{port: port, slot: slot, standard: standard, profile: profile}, _opts) do
-      Jason.OrderedObject.new(port: port, slot: slot, standard: standard, profile: profile)
-      |> Jason.encode!()
-    end
+  jason do
+    pick([:port, :slot, :standard, :profile])
   end
 
   defimpl String.Chars do

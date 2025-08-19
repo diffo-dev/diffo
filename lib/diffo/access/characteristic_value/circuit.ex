@@ -1,5 +1,5 @@
 defmodule Diffo.Access.Circuit do
-  use Ash.TypedStruct
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
   alias Diffo.Access.BandwidthProfile
 
   typed_struct do
@@ -32,20 +32,8 @@ defmodule Diffo.Access.Circuit do
     )
   end
 
-  defimpl Jason.Encoder do
-    def encode(
-          %{circuit_id: circuit_id, cvlan_id: cvlan_id, vci: vci, encapsulation: encapsulation, bandwidth_profile: bandwidth_profile},
-          _opts
-        ) do
-      Jason.OrderedObject.new(
-        circuit_id: circuit_id,
-        cvlan_id: cvlan_id,
-        vci: vci,
-        encapsulation: encapsulation,
-        bandwidth_profile: bandwidth_profile
-      )
-      |> Jason.encode!()
-    end
+  jason do
+    pick([:circuit_id, :cvlan_id, :vci, :encapsulation, :bandwidth_profile])
   end
 
   defimpl String.Chars do
