@@ -1,5 +1,5 @@
 defmodule Diffo.Access.Dslam do
-  use Ash.TypedStruct
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do
     field(:name, :string,
@@ -22,11 +22,8 @@ defmodule Diffo.Access.Dslam do
     )
   end
 
-  defimpl Jason.Encoder do
-    def encode(%{name: name, family: family, model: model, technology: technology}, _opts) do
-      Jason.OrderedObject.new(name: name, family: family, model: model, technology: technology)
-      |> Jason.encode!()
-    end
+  jason do
+    pick([:name, :family, :model, :technology])
   end
 
   defimpl String.Chars do

@@ -1,5 +1,5 @@
 defmodule Diffo.Access.BandwidthProfile do
-  use Ash.TypedStruct
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do
     field(:downstream, :integer,
@@ -19,11 +19,8 @@ defmodule Diffo.Access.BandwidthProfile do
     )
   end
 
-  defimpl Jason.Encoder do
-    def encode(%{downstream: downstream, upstream: upstream, units: units}, _opts) do
-      Jason.OrderedObject.new(downstream: downstream, upstream: upstream, units: units)
-      |> Jason.encode!()
-    end
+  jason do
+    pick([:downstream, :upstream, :units])
   end
 
   defimpl String.Chars do

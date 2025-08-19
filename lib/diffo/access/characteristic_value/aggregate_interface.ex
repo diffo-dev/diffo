@@ -1,5 +1,5 @@
 defmodule Diffo.Access.AggregateInterface do
-  use Ash.TypedStruct
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do
     field(:name, :string, description: "the name of the aggregate interface")
@@ -34,28 +34,8 @@ defmodule Diffo.Access.AggregateInterface do
     )
   end
 
-  defimpl Jason.Encoder do
-    def encode(
-          %{
-            name: name,
-            physical_interface: physical_interface,
-            physical_layer: physical_layer,
-            link_layer: link_layer,
-            svlan_id: svlan_id,
-            vpi: vpi
-          },
-          _opts
-        ) do
-      Jason.OrderedObject.new(
-        name: name,
-        physical_interface: physical_interface,
-        physical_layer: physical_layer,
-        link_layer: link_layer,
-        svlan_id: svlan_id,
-        vpi: vpi
-      )
-      |> Jason.encode!()
-    end
+  jason do
+    pick([:name, :physical_interface, :physical_layer, :link_layer, :svlan_id, :vpi])
   end
 
   defimpl String.Chars do
