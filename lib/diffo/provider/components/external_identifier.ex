@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.ExternalIdentifier do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
-  Copyright Matt Beanland beanland@live.com.au
 
   ExternalIdentifier - Ash Resource for a TMF ExternalIdentifier
   """
@@ -10,6 +9,11 @@ defmodule Diffo.Provider.ExternalIdentifier do
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
+
+  resource do
+    description "An Ash Resource for a TMF External Identifier"
+    plural_name :external_identifiers
+  end
 
   neo4j do
     relate([

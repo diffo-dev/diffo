@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.Party do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
-  Copyright Matt Beanland beanland@live.com.au
 
   Party - Ash Resource for a TMF Party
   """
@@ -10,6 +9,11 @@ defmodule Diffo.Provider.Party do
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
+
+  resource do
+    description "An Ash Resource for a TMF Party"
+    plural_name :parties
+  end
 
   neo4j do
     relate([

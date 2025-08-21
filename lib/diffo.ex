@@ -1,7 +1,7 @@
 defmodule Diffo do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
-  Copyright Matt Beanland beanland@live.com.au
+
 
   Diffo - Application entry point
   """

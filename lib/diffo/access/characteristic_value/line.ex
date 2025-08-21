@@ -1,4 +1,9 @@
 defmodule Diffo.Access.Line do
+  @moduledoc """
+  Diffo - TMF Service and Resource Management with a difference
+
+  Line - AshTyped Struct for Line Characteristic Value
+  """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do

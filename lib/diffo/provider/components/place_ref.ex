@@ -1,15 +1,19 @@
 defmodule Diffo.Provider.PlaceRef do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
-  Copyright Matt Beanland beanland@live.com.au
 
-  PlaceRef - Ash Resource for a TMF PlaceRef
+  PlaceRef - Ash Resource for a TMF Place Reference
   """
   use Ash.Resource,
     otp_app: :diffo,
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
+
+  resource do
+    description "An Ash Resource for a TMF Place Reference"
+    plural_name :placeRefs
+  end
 
   neo4j do
     relate([

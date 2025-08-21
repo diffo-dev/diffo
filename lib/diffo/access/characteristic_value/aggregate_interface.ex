@@ -1,4 +1,9 @@
 defmodule Diffo.Access.AggregateInterface do
+  @moduledoc """
+  Diffo - TMF Service and Resource Management with a difference
+
+  AggregateInterface - AshTyped Struct for AggregateInterface Characteristic Value
+  """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do

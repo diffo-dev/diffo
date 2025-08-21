@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.Note do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
-  Copyright Matt Beanland beanland@live.com.au
 
   Note - Ash Resource for a TMF Note
   """
@@ -10,6 +9,11 @@ defmodule Diffo.Provider.Note do
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
+
+  resource do
+    description "An Ash Resource for a TMF Note"
+    plural_name :notes
+  end
 
   neo4j do
     relate([

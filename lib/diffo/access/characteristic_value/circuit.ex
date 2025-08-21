@@ -1,5 +1,11 @@
 defmodule Diffo.Access.Circuit do
+  @moduledoc """
+  Diffo - TMF Service and Resource Management with a difference
+
+  Circuit - AshTyped Struct for Circuit Characteristic Value
+  """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+
   alias Diffo.Access.BandwidthProfile
 
   typed_struct do
