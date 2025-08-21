@@ -27,7 +27,6 @@ defmodule Diffo.Access.CharacteristicValueTest do
   @profile "adsl2Plus24M1IntM"
 
   describe "Diffo.Access create Characteristics" do
-    @tag debug: true
     test "create characteristics" do
       dslam_value =
         Dslam.new!(%{name: @dslam, model: @model})

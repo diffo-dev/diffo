@@ -7,7 +7,11 @@ defmodule Diffo.Access do
   use Ash.Domain,
     otp_app: :diffo
 
+  alias Diffo.Access.DslAccess.Instance, as: DslAccess
+
   resources do
-    resource Diffo.Access.DslAccess.Instance
+    resource DslAccess do
+      define :qualify_dsl, action: :qualify
+    end
   end
 end

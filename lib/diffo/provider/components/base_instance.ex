@@ -209,9 +209,7 @@ defmodule Diffo.Provider.BaseInstance do
 
     belongs_to :specification, Diffo.Provider.Specification do
       description "the specification which specifies this instance"
-      allow_nil? false
       public? true
-      attribute_writable? true
     end
 
     has_many :process_statuses, Diffo.Provider.ProcessStatus do

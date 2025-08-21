@@ -11,9 +11,10 @@ defmodule Diffo.Provider.Instance.Extension do
       specification do
         id "da9b207a-26c3-451d-8abd-0640c6349979"
         name "DSL Access Service"
+        type :serviceSpecification
         major_version 1
         description "An access network service connecting a subscriber premises to an access NNI via DSL"
-        category :network_service
+        category "Network Service"
       end
       """
     ],
@@ -32,6 +33,13 @@ defmodule Diffo.Provider.Instance.Extension do
         """,
         required: true
       ],
+        type: [
+        type: :atom,
+        doc: """
+        The type of the specification.
+        """,
+        default: :serviceSpecification
+      ],
       major_version: [
         type: :integer,
         doc: """
@@ -46,7 +54,7 @@ defmodule Diffo.Provider.Instance.Extension do
         """
       ],
       category: [
-        type: :atom,
+        type: :string,
         doc: """
         The category the specified service or resource belongs to.
         """
