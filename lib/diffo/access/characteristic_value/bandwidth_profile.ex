@@ -1,4 +1,9 @@
 defmodule Diffo.Access.BandwidthProfile do
+  @moduledoc """
+  Diffo - TMF Service and Resource Management with a difference
+
+  BandwidthProfile - AshTyped Struct for BandwidthProfile
+  """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do

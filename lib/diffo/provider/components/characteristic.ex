@@ -1,7 +1,6 @@
 defmodule Diffo.Provider.Characteristic do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
-  Copyright Matt Beanland beanland@live.com.au
 
   Characteristic - Ash Resource for a TMF Characteristic
   """
@@ -10,6 +9,11 @@ defmodule Diffo.Provider.Characteristic do
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
+
+  resource do
+    description "An Ash Resource for a TMF Characteristic"
+    plural_name :characteristics
+  end
 
   neo4j do
     relate([

@@ -1,9 +1,8 @@
-defmodule Diffo.Provider.Place do
+defmodule Diffo.Provider.Entity do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
-  Copyright Matt Beanland beanland@live.com.au
 
-  Place - Ash Resource for a TMF Place
+  Entity - Ash Resource for a TMF Entity
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -11,10 +10,17 @@ defmodule Diffo.Provider.Place do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
+  resource do
+    description "An Ash Resource for a TMF Entity"
+    plural_name :entities
+  end
+
   neo4j do
     relate([
-      {:place_refs, :LOCATES, :incoming, :PlaceRef}
+      {:entity_refs, :RELATED_HOW_ENTITY, :incoming, :EntityRef}
     ])
+
+    translate(id: :uuid)
   end
 
   jason do
@@ -23,43 +29,41 @@ defmodule Diffo.Provider.Place do
   end
 
   outstanding do
-    expect([:id, :name, :referredType, :type])
+    expect([:id, :href, :name, :referredType, :type])
   end
 
   attributes do
     attribute :id, :string do
-      description "the unique id of the place"
+      description "the unique id of the entity"
       primary_key? true
       allow_nil? false
       public? true
     end
 
     attribute :href, :string do
-      description "the href of the place"
+      description "the href of the entity"
       allow_nil? true
       public? true
     end
 
     attribute :name, :string do
-      description "the name of the place"
+      description "the name of the entity"
       allow_nil? true
       public? true
       constraints match: ~r/^[a-zA-Z0-9\s._-]+$/
     end
 
     attribute :type, :atom do
-      description "the type of the place"
+      description "the type of the entity"
       allow_nil? false
       public? true
-      default :PlaceRef
-      constraints one_of: [:PlaceRef, :GeographicSite, :GeographicLocation, :GeographicAddress]
+      default :EntityRef
     end
 
     attribute :referredType, :atom do
-      description "the type of the place"
+      description "the type of the entity"
       allow_nil? true
       public? true
-      constraints one_of: [:GeographicSite, :GeographicLocation, :GeographicAddress]
     end
 
     create_timestamp :inserted_at
@@ -68,9 +72,9 @@ defmodule Diffo.Provider.Place do
   end
 
   relationships do
-    has_many :place_refs, Diffo.Provider.PlaceRef do
-      description "the place refs relating this place to instances"
-      destination_attribute :place_id
+    has_many :entity_refs, Diffo.Provider.EntityRef do
+      description "the entity ref which links this entity to a relating instance"
+      # destination_attribute :entity_id
       public? true
     end
   end
@@ -79,45 +83,45 @@ defmodule Diffo.Provider.Place do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a place"
+      description "creates a entity"
       accept [:id, :href, :name, :type, :referredType]
       upsert? true
     end
 
     read :find_by_id do
-      description "finds place by id"
+      description "finds entity by id"
       get? false
 
       argument :query, :ci_string do
-        description "Return only places with id's including the given value."
+        description "Return only entities with id including the given value."
       end
 
       filter expr(contains(id, ^arg(:query)))
     end
 
     read :find_by_name do
-      description "finds place by name"
+      description "finds entity by name"
       get? false
 
       argument :query, :ci_string do
-        description "Return only places with names including the given value."
+        description "Return only entities with names including the given value."
       end
 
       filter expr(contains(name, ^arg(:query)))
     end
 
     read :list do
-      description "lists all places"
+      description "lists all parties"
     end
 
     update :update do
-      description "updates the place"
+      description "updates the entity"
       accept [:href, :name, :type, :referredType]
     end
   end
 
   preparations do
-    prepare build(sort: [id: :asc, name: :asc])
+    prepare build(sort: [id: :asc])
   end
 
   validations do
@@ -125,25 +129,25 @@ defmodule Diffo.Provider.Place do
       where [present(:id), present(:href)]
     end
 
-    validate attribute_equals(:type, :PlaceRef) do
+    validate attribute_equals(:type, :EntityRef) do
       where present(:referredType)
-      message "when referredType is present, type must be PlaceRef"
+      message "when referredType is present, type must be EntityRef"
     end
 
-    validate attribute_does_not_equal(:type, :PlaceRef) do
+    validate attribute_does_not_equal(:type, :EntityRef) do
       where absent(:referredType)
-      message "when referredType is absent, type must be not be PlaceRef"
+      message "when referredType is absent, type must be not be EntityRef"
     end
   end
 
   @doc """
-  Compares two place, by ascending id
+  Compares two entity, by ascending id
   ## Examples
-    iex> Diffo.Provider.Place.compare(%{id: "a"}, %{id: "a"})
+    iex> Diffo.Provider.Entity.compare(%{id: "a"}, %{id: "a"})
     :eq
-    iex> Diffo.Provider.Place.compare(%{id: "b"}, %{id: "a"})
+    iex> Diffo.Provider.Entity.compare(%{id: "b"}, %{id: "a"})
     :gt
-    iex> Diffo.Provider.Place.compare(%{id: "a"}, %{id: "b"})
+    iex> Diffo.Provider.Entity.compare(%{id: "a"}, %{id: "b"})
     :lt
 
   """

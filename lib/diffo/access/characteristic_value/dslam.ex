@@ -1,4 +1,9 @@
 defmodule Diffo.Access.Dslam do
+  @moduledoc """
+  Diffo - TMF Service and Resource Management with a difference
+
+  Dslam - AshTyped Struct for Dslam Characteristic Value
+  """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do
