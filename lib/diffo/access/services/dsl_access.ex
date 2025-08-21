@@ -4,7 +4,14 @@ defmodule Diffo.Access.DslAccess.Instance do
 
   DslAccess.Instance - DSL Access Service Instance
   """
+  require Logger
+
   alias Diffo.Provider.BaseInstance
+  alias Diffo.Provider.Instance
+  alias Diffo.Provider.Instance.Extension.Specification
+  #alias Diffo.Provider.Party
+  #alias Diffo.Provider.Place
+
   use Ash.Resource,
     fragments: [BaseInstance],
     domain: Diffo.Access
@@ -18,7 +25,7 @@ defmodule Diffo.Access.DslAccess.Instance do
     id "da9b207a-26c3-451d-8abd-0640c6349979"
     name "dslAccess"
     description "A DSL Access Network Service connecting a subscriber premises to an NNI"
-    category :network_service
+    category "Network Service"
   end
 
 # features do
@@ -37,7 +44,34 @@ defmodule Diffo.Access.DslAccess.Instance do
 #   characteristic :line, Diffo.Access.Line
 # end
 
+  actions do
+    create :qualify do
+      description "creates a new DSL Access service instance for qualification"
+      argument :places, {:array, :struct}
+      argument :parties, {:array, :struct}
+      argument :specified_by, :uuid, public?: false
+
+      change manage_relationship(:specified_by, :specification, type: :append)
+
+      # todo find/create specification using introspection
+      # relate parties and places using
+
+      change before_action fn changeset, _context ->
+        Specification.set_specified_by_argument(changeset)
+      end
+
+      change after_action fn changeset, result, _context ->
+        Specification.specify_instance(changeset, result)
+        # todo relate parties and places
+      end
+
+
+      change load [:href]
+      upsert? false
+    end
+  end
+
   def init() do
-    Diffo.Provider.Instance.init(__MODULE__)
+    Instance.init(__MODULE__)
   end
 end

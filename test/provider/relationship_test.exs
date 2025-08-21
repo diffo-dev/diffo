@@ -8,8 +8,7 @@ defmodule Diffo.Provider.RelationshipTest do
 
   setup do
     on_exit(fn ->
-      # AshNeo4j.Neo4jHelper.delete_all()
-      :ok
+      AshNeo4j.Neo4jHelper.delete_all()
     end)
   end
 
