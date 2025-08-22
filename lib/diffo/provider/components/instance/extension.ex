@@ -126,9 +126,9 @@ defmodule Diffo.Provider.Instance.Extension do
         type: :boolean
       ]
     ],
-    entities: [
-      @characteristics
-    ]
+    #entities: [
+    #  @characteristics
+    #]
   }
 
   @features %Spark.Dsl.Section{
@@ -136,12 +136,23 @@ defmodule Diffo.Provider.Instance.Extension do
     describe: """
       Configuration for Instance Features.
     """,
+    examples: [
+      """
+      features do
+        feature :dynamic_line_management do
+          is_enabled? true
+          characteristics do
+            characteristic :constraints, Diffo.Access.Constraints
+          end
+        end
+      end
+      """
+    ],
     entities: [
       @feature
     ]
   }
 
   use Spark.Dsl.Extension,
-    sections: [@specification, @characteristics] #@features
-      #transformers: [Diffo.Provider.InstanceStructure.Transformer]
+    sections: [@specification, @characteristics, @features]
 end

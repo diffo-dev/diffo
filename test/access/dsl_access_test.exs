@@ -49,7 +49,14 @@ defmodule Diffo.Access.DslAccessTest do
       assert is_struct(dsl_access.specification, Diffo.Provider.Specification)
       assert AshNeo4j.Neo4jHelper.nodes_relate_how?(:Instance, %{uuid: dsl_access.id}, :Specification, %{uuid: dsl_access.specification_id}, :SPECIFIES, :incoming)
 
-      # todo check features resource enrichment and node relationships
+      # check features resource enrichment and node relationships
+      assert is_list(dsl_access.features)
+      assert length(dsl_access.features) == 1
+      Enum.each(dsl_access.features, fn feature ->
+        assert is_struct(feature, Diffo.Provider.Feature)
+        assert AshNeo4j.Neo4jHelper.nodes_relate_how?(:Instance, %{uuid: dsl_access.id}, :Feature, %{uuid: feature.id}, :DEFINES, :incoming)
+        # todo check feature characteristics
+      end)
 
       # check characteristic resource enrichment and node relationships
       assert is_list(dsl_access.characteristics)
