@@ -13,8 +13,8 @@ defmodule Diffo.Provider.Relationship do
 
   neo4j do
     relate([
-      {:source, :RELATES_HOW, :incoming, :Instance},
-      {:target, :RELATED_HOW, :outgoing, :Instance},
+      {:source, :RELATES, :incoming, :Instance},
+      {:target, :RELATES, :outgoing, :Instance},
       {:characteristics, :DEFINES, :incoming, :Characteristic}
     ])
 

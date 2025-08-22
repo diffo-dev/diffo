@@ -8,9 +8,9 @@ defmodule Diffo.Access.DslAccess.Instance do
 
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance
-  alias Diffo.Provider.Instance.Extension.Specification
-  #alias Diffo.Provider.Party
-  #alias Diffo.Provider.Place
+  alias Diffo.Provider.Instance.Specification
+  alias Diffo.Provider.Instance.Party
+  alias Diffo.Provider.Instance.Place
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -57,14 +57,16 @@ defmodule Diffo.Access.DslAccess.Instance do
       # relate parties and places using
 
       change before_action fn changeset, _context ->
-        Specification.set_specified_by_argument(changeset)
+        changeset
+        |> Specification.set_specified_by_argument()
       end
 
       change after_action fn changeset, result, _context ->
-        Specification.specify_instance(changeset, result)
-        # todo relate parties and places
+        with {:ok, with_specification} <- Specification.specify_instance(result, changeset),
+             {:ok, with_parties} <- Party.involve_parties(with_specification, changeset),
+             {:ok, with_places} <- Place.locating_places(with_parties, changeset),
+            do: {:ok, with_places}
       end
-
 
       change load [:href]
       upsert? false

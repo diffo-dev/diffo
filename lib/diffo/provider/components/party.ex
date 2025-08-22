@@ -16,8 +16,9 @@ defmodule Diffo.Provider.Party do
   end
 
   neo4j do
+    translate id: :key
     relate([
-      {:party_refs, :RELATED_HOW_PARTY, :incoming, :PartyRef},
+      {:party_refs, :INVOLVES, :incoming, :PartyRef},
       {:external_identifiers, :OWNS, :outgoing, :ExternalIdentifier},
       {:notes, :AUTHORS, :outgoing, :Note}
     ])

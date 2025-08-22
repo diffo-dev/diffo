@@ -1,4 +1,4 @@
-defmodule Diffo.Provider.Instance.Extension.Specification do
+defmodule Diffo.Provider.Instance.Specification do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
@@ -45,7 +45,7 @@ defmodule Diffo.Provider.Instance.Extension.Specification do
   @doc """
   Ensures the specified_by specification is related to the Extended Instance
   """
-  def specify_instance(changeset, result) when is_struct(changeset, Ash.Changeset) and is_struct(result) do
+  def specify_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     specified_by = Ash.Changeset.get_argument(changeset, :specified_by)
     instance = struct(Instance, Map.from_struct(result)) |> IO.inspect(label: :instance)
     case Provider.specify_instance(instance, %{specified_by: specified_by}) do
