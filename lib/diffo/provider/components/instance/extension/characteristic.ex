@@ -26,27 +26,23 @@ defmodule Diffo.Provider.Instance.Characteristic do
         Logger.error("couldn't create require characteristics")
         changeset
       _ ->
-        characteristic_ids = Enum.map(characteristics, &Map.get(&1, :id)) |> IO.inspect(label: :characteristic_ids)
+        characteristic_ids = Enum.map(characteristics, &Map.get(&1, :id))
         Ash.Changeset.force_set_argument(changeset, :characteristics, characteristic_ids)
     end
   end
 
-  @spec create_characteristics(atom(), atom()) :: any()
   @doc """
   Creates the Characteristics from a Extended Instance's module
   """
   def create_characteristics(module, type) when is_atom(module) and is_atom(type)do
-    IO.inspect(module, label: :module)
-    characteristics = Info.characteristics(module) |> IO.inspect(label: :characteristics)
+    characteristics = Info.characteristics(module)
     Enum.reduce_while(characteristics, [],
       fn %{name: name, value_type: value_type}, acc ->
-        value = struct(value_type) |> IO.inspect(label: :value)
+        value = struct(value_type)
         case Provider.create_characteristic(%{name: name, type: type, value: value}) do
           {:ok, result} ->
-            IO.inspect(result, label: :create_characteristic_result)
             {:cont, [result | acc]}
-          {:error, error} ->
-            IO.inspect(error, label: :error)
+          {:error, _error} ->
             {:halt, []}
         end
       end)
@@ -57,7 +53,7 @@ defmodule Diffo.Provider.Instance.Characteristic do
   """
   def define_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     characteristics = Ash.Changeset.get_argument(changeset, :characteristics)
-    instance = struct(Instance, Map.from_struct(result)) |> IO.inspect(label: :instance)
+    instance = struct(Instance, Map.from_struct(result))
     Provider.relate_instance_characteristics(instance, %{characteristics: characteristics})
   end
 

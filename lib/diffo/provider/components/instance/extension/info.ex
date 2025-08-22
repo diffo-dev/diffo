@@ -1,3 +1,3 @@
   defmodule Diffo.Provider.Instance.Extension.Info do
-    use Spark.InfoGenerator, extension: Diffo.Provider.Instance.Extension, sections: [:specification, :characteristics]
+    use Spark.InfoGenerator, extension: Diffo.Provider.Instance.Extension, sections: [:specification, :characteristics, :features]
   end
