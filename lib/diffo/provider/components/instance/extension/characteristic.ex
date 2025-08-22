@@ -5,10 +5,61 @@ defmodule Diffo.Provider.Instance.Characteristic do
   Characteristic for Instance Extension
   """
 
+  require Logger
+
+  alias Diffo.Provider
+  alias Diffo.Provider.Instance
+  alias Diffo.Provider.Instance.Extension.Info
+
   @doc """
   Struct for a Characteristic
   """
-  defstruct [:name, :type, :value_type]
+  defstruct [:name, :value_type]
+
+  @doc """
+  Sets the Extended Instances characteristics argument in the changeset, creating the characteristics
+  """
+  def set_characteristics_argument(changeset) when is_struct(changeset, Ash.Changeset) do
+    %module{} = changeset.data
+    case characteristics = create_characteristics(module, :instance) do
+      [] ->
+        Logger.error("couldn't create require characteristics")
+        changeset
+      _ ->
+        characteristic_ids = Enum.map(characteristics, &Map.get(&1, :id)) |> IO.inspect(label: :characteristic_ids)
+        Ash.Changeset.force_set_argument(changeset, :characteristics, characteristic_ids)
+    end
+  end
+
+  @spec create_characteristics(atom(), atom()) :: any()
+  @doc """
+  Creates the Characteristics from a Extended Instance's module
+  """
+  def create_characteristics(module, type) when is_atom(module) and is_atom(type)do
+    IO.inspect(module, label: :module)
+    characteristics = Info.characteristics(module) |> IO.inspect(label: :characteristics)
+    Enum.reduce_while(characteristics, [],
+      fn %{name: name, value_type: value_type}, acc ->
+        value = struct(value_type) |> IO.inspect(label: :value)
+        case Provider.create_characteristic(%{name: name, type: type, value: value}) do
+          {:ok, result} ->
+            IO.inspect(result, label: :create_characteristic_result)
+            {:cont, [result | acc]}
+          {:error, error} ->
+            IO.inspect(error, label: :error)
+            {:halt, []}
+        end
+      end)
+  end
+
+  @doc """
+  Ensures the characteristics define the Extended Instance
+  """
+  def define_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+    characteristics = Ash.Changeset.get_argument(changeset, :characteristics)
+    instance = struct(Instance, Map.from_struct(result)) |> IO.inspect(label: :instance)
+    Provider.relate_instance_characteristics(instance, %{characteristics: characteristics})
+  end
 
   defimpl String.Chars do
     def to_string(struct) do

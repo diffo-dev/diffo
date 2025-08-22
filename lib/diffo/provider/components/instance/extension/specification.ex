@@ -16,7 +16,7 @@ defmodule Diffo.Provider.Instance.Specification do
   defstruct [:id, :name, :type, :major_version, :category]
 
   @doc """
-  Sets the specified_by argument in the changeset, ensuring the specification exists
+  Sets the specified_by argument in the changeset, ensuring the Extended Instance's specification exists
   """
   def set_specified_by_argument(changeset) when is_struct(changeset, Ash.Changeset) do
     %module{} = changeset.data
@@ -51,8 +51,8 @@ defmodule Diffo.Provider.Instance.Specification do
     case Provider.specify_instance(instance, %{specified_by: specified_by}) do
       {:ok, specification} ->
         {:ok, result |> Map.put(:specification, specification) |> Map.put(:specification_id, specified_by)}
-      {:error, _error} ->
-        {:error, "couldn't relate specification"}
+      {:error, error} ->
+        {:error, error}
     end
   end
 

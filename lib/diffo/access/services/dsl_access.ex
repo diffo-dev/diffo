@@ -4,11 +4,11 @@ defmodule Diffo.Access.DslAccess.Instance do
 
   DslAccess.Instance - DSL Access Service Instance
   """
-  require Logger
 
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance
   alias Diffo.Provider.Instance.Specification
+  alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Provider.Instance.Party
   alias Diffo.Provider.Instance.Place
 
@@ -37,12 +37,12 @@ defmodule Diffo.Access.DslAccess.Instance do
 #   end
 # end
 
-# characteristics do
-#   characteristic :dslam, Diffo.Access.Dslam
-#   characteristic :aggregate_interface, Diffo.Access.AggregateInterface
-#   characteristic :circuit, Diffo.Access.Circuit
-#   characteristic :line, Diffo.Access.Line
-# end
+  characteristics do
+    characteristic :dslam, Diffo.Access.Dslam
+    characteristic :aggregate_interface, Diffo.Access.AggregateInterface
+    characteristic :circuit, Diffo.Access.Circuit
+    characteristic :line, Diffo.Access.Line
+  end
 
   actions do
     create :qualify do
@@ -50,21 +50,22 @@ defmodule Diffo.Access.DslAccess.Instance do
       argument :places, {:array, :struct}
       argument :parties, {:array, :struct}
       argument :specified_by, :uuid, public?: false
+      argument :characteristics, {:array, :uuid}, public?: false
 
-      change manage_relationship(:specified_by, :specification, type: :append)
-
-      # todo find/create specification using introspection
-      # relate parties and places using
+      #change manage_relationship(:specified_by, :specification, type: :append)
+      #change manage_relationship(:characteristics, :characteristics, type: :append)
 
       change before_action fn changeset, _context ->
         changeset
         |> Specification.set_specified_by_argument()
+        |> Characteristic.set_characteristics_argument()
       end
 
       change after_action fn changeset, result, _context ->
         with {:ok, with_specification} <- Specification.specify_instance(result, changeset),
-             {:ok, with_parties} <- Party.involve_parties(with_specification, changeset),
-             {:ok, with_places} <- Place.locating_places(with_parties, changeset),
+             {:ok, with_characteristics} <- Characteristic.define_instance(with_specification, changeset),
+             {:ok, with_parties} <- Party.involve_instance(with_characteristics, changeset),
+             {:ok, with_places} <- Place.locate_instance(with_parties, changeset),
             do: {:ok, with_places}
       end
 

@@ -15,9 +15,9 @@ defmodule Diffo.Provider.Instance.Place do
   @doc """
   Ensures the places locate the Extended Instance
   """
-  def locating_places(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+  def locate_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     places = Ash.Changeset.get_argument(changeset, :places)
-    place_refs = Enum.reduce(places, [],
+    place_refs = Enum.reduce_while(places, [],
       fn %{id: id, role: role}, acc ->
         case Provider.create_place_ref(%{instance_id: result.id, place_id: id, role: role}) do
           {:ok, place_ref} ->

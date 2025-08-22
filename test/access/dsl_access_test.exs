@@ -49,6 +49,16 @@ defmodule Diffo.Access.DslAccessTest do
       assert is_struct(dsl_access.specification, Diffo.Provider.Specification)
       assert AshNeo4j.Neo4jHelper.nodes_relate_how?(:Instance, %{uuid: dsl_access.id}, :Specification, %{uuid: dsl_access.specification_id}, :SPECIFIES, :incoming)
 
+      # todo check features resource enrichment and node relationships
+
+      # check characteristic resource enrichment and node relationships
+      assert is_list(dsl_access.characteristics)
+      assert length(dsl_access.characteristics) == 4
+      Enum.each(dsl_access.characteristics, fn characteristic ->
+        assert is_struct(characteristic, Diffo.Provider.Characteristic)
+        assert AshNeo4j.Neo4jHelper.nodes_relate_how?(:Instance, %{uuid: dsl_access.id}, :Characteristic, %{uuid: characteristic.id}, :DEFINES, :incoming)
+      end)
+
       # check parties resource enrichment and node relationships
       assert is_list(dsl_access.parties)
       assert length(dsl_access.parties) == 2
@@ -70,10 +80,6 @@ defmodule Diffo.Access.DslAccessTest do
         assert AshNeo4j.Neo4jHelper.nodes_relate_how?(:Instance, %{uuid: dsl_access.id}, :PlaceRef, %{uuid: place_ref.id}, :LOCATES, :incoming)
         assert AshNeo4j.Neo4jHelper.nodes_relate_how?(:PlaceRef, %{uuid: place_ref.id}, :Place, %{key: place_ref.place_id}, :LOCATES, :incoming)
       end)
-
-      # todo check features resource enrichment and node relationships
-
-      # todo check characteristic resource enrichment and node relationships
     end
   end
 end

@@ -65,7 +65,7 @@ defmodule Diffo.Provider.Instance.Extension do
   @characteristic %Spark.Dsl.Entity{
     name: :characteristic,
     describe: "Adds a Characteristic",
-    target: Diffo.Provider.CharacteristicSpecification,
+    target: Diffo.Provider.Instance.Characteristic,
     args: [:name, :value_type],
     schema: [
       name: [
@@ -89,8 +89,18 @@ defmodule Diffo.Provider.Instance.Extension do
     describe: """
       List of Characteristics.
     """,
+    examples: [
+      """
+      characteristics do
+        characteristic :dslam, Diffo.Access.Dslam
+        characteristic :aggregate_interface, Diffo.Access.AggregateInterface
+        characteristic :circuit, Diffo.Access.Circuit
+        characteristic :line, Diffo.Access.Line
+      end
+      """
+    ],
     entities: [
-      characteristic: @characteristic
+      @characteristic
     ]
   }
 
@@ -99,7 +109,7 @@ defmodule Diffo.Provider.Instance.Extension do
     describe: """
       Adds a Feature
     """,
-    target: Diffo.Provider.FeatureSpecification,
+    target: Diffo.Provider.Instance.Feature,
     args: [:name],
     schema: [
       name: [
@@ -117,7 +127,7 @@ defmodule Diffo.Provider.Instance.Extension do
       ]
     ],
     entities: [
-      characteristics: @characteristics
+      @characteristics
     ]
   }
 
@@ -127,11 +137,11 @@ defmodule Diffo.Provider.Instance.Extension do
       Configuration for Instance Features.
     """,
     entities: [
-      feature: @feature
+      @feature
     ]
   }
 
   use Spark.Dsl.Extension,
-    sections: [@specification] #@characteristics, @features
+    sections: [@specification, @characteristics] #@features
       #transformers: [Diffo.Provider.InstanceStructure.Transformer]
 end
