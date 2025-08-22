@@ -19,13 +19,13 @@ defmodule Diffo.Provider.BaseInstance do
       {:external_identifiers, :REFERENCES, :outgoing, :ExternalIdentifier},
       {:specification, :SPECIFIES, :incoming, :Specification},
       {:process_statuses, :STATUSES, :incoming, :ProcessStatus},
-      {:forward_relationships, :RELATES_HOW, :outgoing, :Relationship},
-      {:reverse_relationships, :RELATED_HOW, :incoming, :Relationship},
+      {:forward_relationships, :RELATES, :outgoing, :Relationship},
+      {:reverse_relationships, :RELATES, :incoming, :Relationship},
       {:features, :DEFINES, :incoming, :Feature},
       {:characteristics, :DEFINES, :incoming, :Characteristic},
-      {:entities, :RELATES_HOW_ENTITY, :outgoing, :EntityRef},
+      {:entities, :RELATES, :outgoing, :EntityRef},
       {:notes, :ANNOTATES, :incoming, :Note},
-      {:places, :LOCATES, :outgoing, :PlaceRef},
+      {:places, :LOCATES, :incoming, :PlaceRef},
       {:parties, :INVOLVES, :outgoing, :PartyRef}
     ])
   end

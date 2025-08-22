@@ -17,8 +17,8 @@ defmodule Diffo.Provider.EntityRef do
 
   neo4j do
     relate([
-      {:instance, :RELATES_HOW_ENTITY, :incoming, :Instance},
-      {:entity, :RELATED_HOW_ENTITY, :outgoing, :Entity}
+      {:instance, :RELATES, :incoming, :Instance},
+      {:entity, :RELATES, :outgoing, :Entity}
     ])
   end
 

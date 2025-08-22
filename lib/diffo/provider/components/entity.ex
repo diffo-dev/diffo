@@ -17,7 +17,7 @@ defmodule Diffo.Provider.Entity do
 
   neo4j do
     relate([
-      {:entity_refs, :RELATED_HOW_ENTITY, :incoming, :EntityRef}
+      {:entity_refs, :RELATES, :incoming, :EntityRef}
     ])
 
     translate(id: :uuid)

@@ -16,8 +16,9 @@ defmodule Diffo.Provider.Place do
   end
 
   neo4j do
+    translate id: :key
     relate([
-      {:place_refs, :LOCATES, :incoming, :PlaceRef}
+      {:place_refs, :LOCATES, :outgoing, :PlaceRef}
     ])
   end
 
