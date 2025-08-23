@@ -10,11 +10,6 @@ defmodule Diffo.Provider.Feature do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  resource do
-    description "An Ash Resource for a TMF Feature"
-    plural_name :features
-  end
-
   neo4j do
     relate([
       {:instance, :HAS, :incoming, :Instance},
@@ -121,6 +116,11 @@ defmodule Diffo.Provider.Feature do
       argument :characteristics, {:array, :uuid}
       change manage_relationship(:characteristics, type: :remove)
     end
+  end
+
+  resource do
+    description "An Ash Resource for a TMF Feature"
+    plural_name :features
   end
 
   identities do

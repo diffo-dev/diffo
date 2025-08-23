@@ -9,7 +9,12 @@ defmodule Diffo.Provider.BaseInstance do
     otp_app: :diffo,
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
-    extensions: [AshOutstanding.Resource, AshJason.Resource, AshStateMachine, Diffo.Provider.Instance.Extension]
+    extensions: [
+      AshOutstanding.Resource,
+      AshJason.Resource,
+      AshStateMachine,
+      Diffo.Provider.Instance.Extension
+    ]
 
   alias Diffo.Util, as: Util
   alias Diffo.Provider.Instance.Util, as: Instance

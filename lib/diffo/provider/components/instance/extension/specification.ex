@@ -20,9 +20,11 @@ defmodule Diffo.Provider.Instance.Specification do
   """
   def set_specified_by_argument(changeset) when is_struct(changeset, Ash.Changeset) do
     %module{} = changeset.data
+    # ensure the specification exists
     case upsert_specification(module) do
       {:ok, specification} ->
         Ash.Changeset.force_set_argument(changeset, :specified_by, specification.id)
+
       {:error, _error} ->
         Logger.error("couldn't find/create required specification")
     end
@@ -33,10 +35,12 @@ defmodule Diffo.Provider.Instance.Specification do
   """
   def upsert_specification(module) when is_atom(module) do
     options = Info.specification_options(module)
-    specification = struct(__MODULE__,  options)
+    specification = struct(__MODULE__, options)
+
     case Provider.create_specification(Map.from_struct(specification)) do
       {:ok, _result} ->
         {:ok, specification}
+
       {:error, error} ->
         {:error, error}
     end
@@ -45,12 +49,18 @@ defmodule Diffo.Provider.Instance.Specification do
   @doc """
   Relates a specification to the Extended Instance
   """
-  def relate_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+  def relate_instance(result, changeset)
+      when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     specified_by = Ash.Changeset.get_argument(changeset, :specified_by)
     instance = struct(Instance, Map.from_struct(result))
+
     case Provider.specify_instance(instance, %{specified_by: specified_by}) do
       {:ok, specification} ->
-        {:ok, result |> Map.put(:specification, specification) |> Map.put(:specification_id, specified_by)}
+        {:ok,
+         result
+         |> Map.put(:specification, specification)
+         |> Map.put(:specification_id, specified_by)}
+
       {:error, error} ->
         {:error, error}
     end

@@ -10,13 +10,9 @@ defmodule Diffo.Provider.Party do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  resource do
-    description "An Ash Resource for a TMF Party"
-    plural_name :parties
-  end
-
   neo4j do
-    translate id: :key
+    translate(id: :key)
+
     relate([
       {:party_refs, :INVOLVED_WITH, :incoming, :PartyRef},
       {:external_identifiers, :OWNS, :outgoing, :ExternalIdentifier},
@@ -137,6 +133,11 @@ defmodule Diffo.Provider.Party do
       description "updates the party"
       accept [:href, :name, :type, :referredType]
     end
+  end
+
+  resource do
+    description "An Ash Resource for a TMF Party"
+    plural_name :parties
   end
 
   preparations do

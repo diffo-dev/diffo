@@ -87,7 +87,7 @@ AshNeo4j.Neo4jHelper.delete_all()
 
 ## Implementing a Minimal Service
 
-The key resources we will use here are here are Diffo.Provider.Instance and Diffo.Provider.Specification. Logically a Specification instance SPECIFIES an Instance. 
+The key resources we will use here are here are Diffo.Provider.Instance and Diffo.Provider.Specification. Logically an Instance relates SPECIFIED_BY to a Specification. 
 The specification has a uuid (which you can set so is consistent in catalog/dev/prod). Convention is to issue a new uuid for each major version. The specification supports actions for incrementing minor and patch versions, and calculates the version as v.<major>.<minor>.<patch>. It also calculates a specification href based on the specification type and the uuid.
 
 <!-- livebook:{"break_markdown":true} -->
@@ -136,7 +136,7 @@ nbn_ethernet_0001 = Provider.create_instance!(%{name: "nbnEthernet_0001", type: 
 resources = [esim_0001, nbn_ethernet_0001]
 ```
 
-Look in your Neo4j browser you should see 4 specification nodes each SPECIFIES a single instance node. The nodes will have properties, but not properties that relate to relationships or calculations.
+Look in your Neo4j browser you should see 4 (:Instance)-[:SPECIFIED_BY]->(:Specification). The nodes will have properties, but not properties that relate to relationships or calculations. With graph we don't want or need foreign keys.
 
 Each Diffo.Provider resource supports Elixir Jason protocol, so we can simply encode the specifications, services or resources (try them all), even while they are in collections:
 
