@@ -33,7 +33,7 @@ defmodule Diffo.Provider.Instance.Extension do
         """,
         required: true
       ],
-        type: [
+      type: [
         type: :atom,
         doc: """
         The type of the specification.
@@ -58,7 +58,7 @@ defmodule Diffo.Provider.Instance.Extension do
         doc: """
         The category the specified service or resource belongs to.
         """
-      ],
+      ]
     ]
   }
 
@@ -73,7 +73,7 @@ defmodule Diffo.Provider.Instance.Extension do
           The name of the characteristic, an atom
         """,
         type: :atom,
-        required: true,
+        required: true
       ],
       value_type: [
         doc: """
@@ -113,7 +113,7 @@ defmodule Diffo.Provider.Instance.Extension do
           The name of the feature, an atom
         """,
         type: :atom,
-        required: true,
+        required: true
       ],
       is_enabled?: [
         doc: """

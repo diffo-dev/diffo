@@ -10,11 +10,6 @@ defmodule Diffo.Provider.PartyRef do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  resource do
-    description "An Ash Resource for a TMF Party Reference"
-    plural_name :partyRefs
-  end
-
   neo4j do
     relate([
       {:instance, :INVOLVED_WITH, :incoming, :Instance},
@@ -119,6 +114,11 @@ defmodule Diffo.Provider.PartyRef do
       description "updates the party ref role"
       accept [:role]
     end
+  end
+
+  resource do
+    description "An Ash Resource for a TMF Party Reference"
+    plural_name :partyRefs
   end
 
   identities do

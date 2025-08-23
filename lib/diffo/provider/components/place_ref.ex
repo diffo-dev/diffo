@@ -10,11 +10,6 @@ defmodule Diffo.Provider.PlaceRef do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  resource do
-    description "An Ash Resource for a TMF Place Reference"
-    plural_name :placeRefs
-  end
-
   neo4j do
     relate([
       {:instance, :LOCATED_BY, :incoming, :Instance},
@@ -107,6 +102,11 @@ defmodule Diffo.Provider.PlaceRef do
       description "updates the place ref role"
       accept [:role]
     end
+  end
+
+  resource do
+    description "An Ash Resource for a TMF Place Reference"
+    plural_name :placeRefs
   end
 
   identities do

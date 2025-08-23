@@ -21,10 +21,12 @@ defmodule Diffo.Provider.Instance.Characteristic do
   """
   def set_characteristics_argument(changeset) when is_struct(changeset, Ash.Changeset) do
     %module{} = changeset.data
+
     case characteristics = create_characteristics(module, :instance) do
       [] ->
         Logger.error("couldn't create require characteristics")
         changeset
+
       _ ->
         characteristic_ids = Enum.map(characteristics, &Map.get(&1, :id))
         Ash.Changeset.force_set_argument(changeset, :characteristics, characteristic_ids)
@@ -34,24 +36,27 @@ defmodule Diffo.Provider.Instance.Characteristic do
   @doc """
   Creates the Characteristics from a Extended Instance's module
   """
-  def create_characteristics(module, type) when is_atom(module) and is_atom(type)do
+  def create_characteristics(module, type) when is_atom(module) and is_atom(type) do
     characteristics = Info.characteristics(module)
-    Enum.reduce_while(characteristics, [],
-      fn %{name: name, value_type: value_type}, acc ->
-        value = struct(value_type)
-        case Provider.create_characteristic(%{name: name, type: type, value: value}) do
-          {:ok, result} ->
-            {:cont, [result | acc]}
-          {:error, _error} ->
-            {:halt, []}
-        end
-      end)
+
+    Enum.reduce_while(characteristics, [], fn %{name: name, value_type: value_type}, acc ->
+      value = struct(value_type)
+
+      case Provider.create_characteristic(%{name: name, type: type, value: value}) do
+        {:ok, result} ->
+          {:cont, [result | acc]}
+
+        {:error, _error} ->
+          {:halt, []}
+      end
+    end)
   end
 
   @doc """
   Relates the characteristics in the changeset with the Extended Instance
   """
-  def relate_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+  def relate_instance(result, changeset)
+      when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     characteristics = Ash.Changeset.get_argument(changeset, :characteristics)
     instance = struct(Instance, Map.from_struct(result))
     Provider.relate_instance_characteristics(instance, %{characteristics: characteristics})

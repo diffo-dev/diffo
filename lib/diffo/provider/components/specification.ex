@@ -12,11 +12,6 @@ defmodule Diffo.Provider.Specification do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  resource do
-    description "An Ash Resource for a TMF Service or Resource Specification"
-    plural_name :specifications
-  end
-
   neo4j do
     guard([
       {:SPECIFIED_BY, :incoming, :Instance}
@@ -177,6 +172,11 @@ defmodule Diffo.Provider.Specification do
       change increment(:patch_version)
       change load [:version, :href, :instance_type]
     end
+  end
+
+  resource do
+    description "An Ash Resource for a TMF Service or Resource Specification"
+    plural_name :specifications
   end
 
   identities do

@@ -10,13 +10,9 @@ defmodule Diffo.Provider.Place do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  resource do
-    description "An Ash Resource for a TMF Place"
-    plural_name :places
-  end
-
   neo4j do
-    translate id: :key
+    translate(id: :key)
+
     relate([
       {:place_refs, :LOCATED_BY, :incoming, :PlaceRef}
     ])
@@ -119,6 +115,11 @@ defmodule Diffo.Provider.Place do
       description "updates the place"
       accept [:href, :name, :type, :referredType]
     end
+  end
+
+  resource do
+    description "An Ash Resource for a TMF Place"
+    plural_name :places
   end
 
   preparations do

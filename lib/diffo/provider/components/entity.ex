@@ -10,11 +10,6 @@ defmodule Diffo.Provider.Entity do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  resource do
-    description "An Ash Resource for a TMF Entity"
-    plural_name :entities
-  end
-
   neo4j do
     relate([
       {:entity_refs, :RELATES, :incoming, :EntityRef}
@@ -118,6 +113,11 @@ defmodule Diffo.Provider.Entity do
       description "updates the entity"
       accept [:href, :name, :type, :referredType]
     end
+  end
+
+  resource do
+    description "An Ash Resource for a TMF Entity"
+    plural_name :entities
   end
 
   preparations do

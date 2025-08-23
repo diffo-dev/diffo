@@ -21,9 +21,9 @@ defmodule AshJason.TypedStruct do
         """,
         type: {:or, [@tuples_list, @tuples_map]},
         as: :input,
-        required: true,
-      ],
-    ],
+        required: true
+      ]
+    ]
   }
 
   @rename %Spark.Dsl.Entity{
@@ -41,9 +41,9 @@ defmodule AshJason.TypedStruct do
         """,
         type: {:or, [@tuples_list, @tuples_map, {:fun, [:any], :any}]},
         as: :input,
-        required: true,
-      ],
-    ],
+        required: true
+      ]
+    ]
   }
 
   @order %Spark.Dsl.Entity{
@@ -61,9 +61,9 @@ defmodule AshJason.TypedStruct do
         """,
         type: {:or, [:boolean, {:fun, [{:list, :any}], {:list, :any}}, {:list, :any}]},
         as: :input,
-        required: true,
-      ],
-    ],
+        required: true
+      ]
+    ]
   }
 
   @customize %Spark.Dsl.Entity{
@@ -81,9 +81,9 @@ defmodule AshJason.TypedStruct do
         """,
         type: {:fun, [@tuples_list, :map], @tuples_list},
         as: :input,
-        required: true,
-      ],
-    ],
+        required: true
+      ]
+    ]
   }
 
   @jason %Spark.Dsl.Section{
@@ -107,40 +107,40 @@ defmodule AshJason.TypedStruct do
                     Whenever to pick private fields.
                   """,
                   type: :boolean,
-                  default: false,
+                  default: false
                 ],
                 sensitive?: [
                   doc: """
                     Whenever to pick sensitive fields.
                   """,
                   type: :boolean,
-                  default: false,
+                  default: false
                 ],
                 include: [
                   doc: """
                     Keys to pick. In addition to fields.
                   """,
-                  type: {:list, :atom},
+                  type: {:list, :atom}
                 ],
                 exclude: [
                   doc: """
                     Keys not to pick.
                   """,
-                  type: {:list, :atom},
-                ],
-              ]},
-           ]},
-      ],
+                  type: {:list, :atom}
+                ]
+              ]}
+           ]}
+      ]
     ],
     entities: [
       @merge,
       @rename,
       @order,
-      @customize,
-    ],
+      @customize
+    ]
   }
 
   use Spark.Dsl.Extension,
     sections: [@jason],
-      transformers: [AshJason.TypedStruct.Transformer]
+    transformers: [AshJason.TypedStruct.Transformer]
 end

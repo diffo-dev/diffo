@@ -43,9 +43,12 @@ defmodule Diffo.Access.CharacteristicValueTest do
       assert encoding ==
                ~s({\"name\":\"dslam\",\"value\":{\"name\":\"#{@dslam}\",\"family\":\"ISAM",\"model\":\"#{@model}\",\"technology\":\"eth\"}})
 
-
       aggregate_interface_value =
-        AggregateInterface.new!(%{name: "F DONC BOXH 010J", physical_interface: "1000BASE-LX", svlan_id: @svlan_id})
+        AggregateInterface.new!(%{
+          name: "F DONC BOXH 010J",
+          physical_interface: "1000BASE-LX",
+          svlan_id: @svlan_id
+        })
 
       aggregate_interface =
         Diffo.Provider.create_characteristic!(%{
@@ -63,7 +66,11 @@ defmodule Diffo.Access.CharacteristicValueTest do
                ~s({\"downstream\":24,\"upstream\":1,\"units\":\"Mbps\"})
 
       {:ok, circuit_value} =
-        Circuit.new(%{circuit_id: @circuit_id, cvlan_id: @cvlan_id, bandwidth_profile: bandwidth_profile})
+        Circuit.new(%{
+          circuit_id: @circuit_id,
+          cvlan_id: @cvlan_id,
+          bandwidth_profile: bandwidth_profile
+        })
 
       circuit =
         Diffo.Provider.create_characteristic!(%{
@@ -87,6 +94,6 @@ defmodule Diffo.Access.CharacteristicValueTest do
 
       assert Jason.encode!(line) ==
                ~s({\"name\":\"line\",\"value\":{\"port\":5,\"slot\":3,\"standard\":"\ADSL2plus\",\"profile\":\"#{@profile}\"}})
-      end
+    end
   end
 end

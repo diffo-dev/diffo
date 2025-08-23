@@ -5,6 +5,7 @@ defmodule Diffo.Provider.Instance do
   Instance - Ash Resource for a TMF Service or Resource Instance
   """
   alias Diffo.Provider.BaseInstance
+
   use Ash.Resource,
     fragments: [BaseInstance],
     domain: Diffo.Provider

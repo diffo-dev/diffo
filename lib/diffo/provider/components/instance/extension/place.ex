@@ -15,22 +15,27 @@ defmodule Diffo.Provider.Instance.Place do
   @doc """
   Relates the places in the changeset with the Extended Instance by creating place_ref
   """
-  def relate_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+  def relate_instance(result, changeset)
+      when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     places = Ash.Changeset.get_argument(changeset, :places)
-    place_refs = Enum.reduce_while(places, [],
-      fn %{id: id, role: role}, acc ->
+
+    place_refs =
+      Enum.reduce_while(places, [], fn %{id: id, role: role}, acc ->
         case Provider.create_place_ref(%{instance_id: result.id, place_id: id, role: role}) do
           {:ok, place_ref} ->
             {:cont, [place_ref | acc]}
+
           {:error, _error} ->
             {:halt, []}
         end
       end)
+
     case place_refs do
       [] ->
         {:error, "couldn't relate places"}
+
       _ ->
-        #sorted = Ash.Sort.runtime_sort(place_refs, [role: :asc, inserted_at: :desc])
+        # sorted = Ash.Sort.runtime_sort(place_refs, [role: :asc, inserted_at: :desc])
         {:ok, result |> Map.put(:places, place_refs)}
     end
   end

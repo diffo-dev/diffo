@@ -10,11 +10,6 @@ defmodule Diffo.Provider.Note do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  resource do
-    description "An Ash Resource for a TMF Note"
-    plural_name :notes
-  end
-
   neo4j do
     relate([
       {:instance, :ANNOTATES, :outgoing, :Instance},
@@ -133,6 +128,11 @@ defmodule Diffo.Provider.Note do
       change manage_relationship(:author_id, :author, type: :append_and_remove)
       change set_attribute(:timestamp, &DateTime.utc_now/0)
     end
+  end
+
+  resource do
+    description "An Ash Resource for a TMF Note"
+    plural_name :notes
   end
 
   identities do

@@ -10,11 +10,6 @@ defmodule Diffo.Provider.ExternalIdentifier do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  resource do
-    description "An Ash Resource for a TMF External Identifier"
-    plural_name :external_identifiers
-  end
-
   neo4j do
     relate([
       {:instance, :REFERENCES, :incoming, :Instance},
@@ -125,6 +120,11 @@ defmodule Diffo.Provider.ExternalIdentifier do
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
       change manage_relationship(:owner_id, :owner, type: :append_and_remove)
     end
+  end
+
+  resource do
+    description "An Ash Resource for a TMF External Identifier"
+    plural_name :external_identifiers
   end
 
   identities do
