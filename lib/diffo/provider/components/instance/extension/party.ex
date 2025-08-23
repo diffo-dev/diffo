@@ -13,9 +13,9 @@ defmodule Diffo.Provider.Instance.Party do
   defstruct [:id, :role]
 
   @doc """
-  Ensures the parties involve the Extended Instance
+  Relates the parties in the changeset with the Extended Instance by creating party_ref
   """
-  def involve_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+  def relate_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     parties = Ash.Changeset.get_argument(changeset, :parties)
     party_refs = Enum.reduce_while(parties, [],
       fn %{id: id, role: role}, acc ->

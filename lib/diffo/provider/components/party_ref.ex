@@ -17,8 +17,8 @@ defmodule Diffo.Provider.PartyRef do
 
   neo4j do
     relate([
-      {:instance, :INVOLVES, :incoming, :Instance},
-      {:party, :INVOLVES, :outgoing, :Party}
+      {:instance, :INVOLVED_WITH, :incoming, :Instance},
+      {:party, :INVOLVED_WITH, :outgoing, :Party}
     ])
   end
 

@@ -43,11 +43,11 @@ defmodule Diffo.Provider.Instance.Specification do
   end
 
   @doc """
-  Ensures the specified_by specification is related to the Extended Instance
+  Relates a specification to the Extended Instance
   """
-  def specify_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+  def relate_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     specified_by = Ash.Changeset.get_argument(changeset, :specified_by)
-    instance = struct(Instance, Map.from_struct(result)) |> IO.inspect(label: :instance)
+    instance = struct(Instance, Map.from_struct(result))
     case Provider.specify_instance(instance, %{specified_by: specified_by}) do
       {:ok, specification} ->
         {:ok, result |> Map.put(:specification, specification) |> Map.put(:specification_id, specified_by)}

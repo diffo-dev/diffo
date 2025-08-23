@@ -6,7 +6,6 @@ defmodule Diffo.Access.DslAccess.Instance do
   """
 
   alias Diffo.Provider.BaseInstance
-  alias Diffo.Provider.Instance
   alias Diffo.Provider.Instance.Specification
   alias Diffo.Provider.Instance.Feature
   alias Diffo.Provider.Instance.Characteristic
@@ -32,11 +31,9 @@ defmodule Diffo.Access.DslAccess.Instance do
   features do
     feature :dynamic_line_management do
       is_enabled? true
-#     characteristics do
-#       characteristic :constraints, Diffo.Access.Constraints
-#     end
-   end
- end
+      characteristic :constraints, Diffo.Access.Constraints
+    end
+  end
 
   characteristics do
     characteristic :dslam, Diffo.Access.Dslam
@@ -66,20 +63,16 @@ defmodule Diffo.Access.DslAccess.Instance do
       end
 
       change after_action fn changeset, result, _context ->
-        with {:ok, with_specification} <- Specification.specify_instance(result, changeset),
-             {:ok, with_features} <- Feature.define_instance(with_specification, changeset),
-             {:ok, with_characteristics} <- Characteristic.define_instance(with_features, changeset),
-             {:ok, with_parties} <- Party.involve_instance(with_characteristics, changeset),
-             {:ok, with_places} <- Place.locate_instance(with_parties, changeset),
+        with {:ok, with_specification} <- Specification.relate_instance(result, changeset),
+             {:ok, with_features} <- Feature.relate_instance(with_specification, changeset),
+             {:ok, with_characteristics} <- Characteristic.relate_instance(with_features, changeset),
+             {:ok, with_parties} <- Party.relate_instance(with_characteristics, changeset),
+             {:ok, with_places} <- Place.relate_instance(with_parties, changeset),
             do: {:ok, with_places}
       end
 
       change load [:href]
       upsert? false
     end
-  end
-
-  def init() do
-    Instance.init(__MODULE__)
   end
 end
