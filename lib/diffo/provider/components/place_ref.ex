@@ -17,8 +17,8 @@ defmodule Diffo.Provider.PlaceRef do
 
   neo4j do
     relate([
-      {:instance, :LOCATES, :outgoing, :Instance},
-      {:place, :LOCATES, :incoming, :Place}
+      {:instance, :LOCATED_BY, :incoming, :Instance},
+      {:place, :LOCATED_BY, :outgoing, :Place}
     ])
   end
 

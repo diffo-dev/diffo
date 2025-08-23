@@ -86,9 +86,7 @@ defmodule Diffo.Provider.Instance.Extension do
 
   @characteristics %Spark.Dsl.Section{
     name: :characteristics,
-    describe: """
-      List of Characteristics.
-    """,
+    describe: "List of Instance Characteristics",
     examples: [
       """
       characteristics do
@@ -106,9 +104,7 @@ defmodule Diffo.Provider.Instance.Extension do
 
   @feature %Spark.Dsl.Entity{
     name: :feature,
-    describe: """
-      Adds a Feature
-    """,
+    describe: "Adds a Feature",
     target: Diffo.Provider.Instance.Feature,
     args: [:name],
     schema: [
@@ -126,16 +122,14 @@ defmodule Diffo.Provider.Instance.Extension do
         type: :boolean
       ]
     ],
-    #entities: [
-    #  @characteristics
-    #]
+    entities: [
+      characteristics: [@characteristic]
+    ]
   }
 
   @features %Spark.Dsl.Section{
     name: :features,
-    describe: """
-      Configuration for Instance Features.
-    """,
+    describe: "Configuration for Instance Features",
     examples: [
       """
       features do
@@ -154,5 +148,5 @@ defmodule Diffo.Provider.Instance.Extension do
   }
 
   use Spark.Dsl.Extension,
-    sections: [@specification, @characteristics, @features]
+    sections: [@specification, @features, @characteristics]
 end

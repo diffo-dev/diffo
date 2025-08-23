@@ -17,12 +17,12 @@ defmodule Diffo.Provider.Feature do
 
   neo4j do
     relate([
-      {:instance, :DEFINES, :outgoing, :Instance},
-      {:characteristics, :DEFINES, :incoming, :Characteristic}
+      {:instance, :HAS, :incoming, :Instance},
+      {:characteristics, :HAS, :outgoing, :Characteristic}
     ])
 
     guard([
-      {:DEFINES, :outgoing, :Instance}
+      {:HAS, :incoming, :Instance}
     ])
   end
 

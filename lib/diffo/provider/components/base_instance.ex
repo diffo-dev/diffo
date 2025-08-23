@@ -17,16 +17,16 @@ defmodule Diffo.Provider.BaseInstance do
   neo4j do
     relate([
       {:external_identifiers, :REFERENCES, :outgoing, :ExternalIdentifier},
-      {:specification, :SPECIFIES, :incoming, :Specification},
+      {:specification, :SPECIFIED_BY, :outgoing, :Specification},
       {:process_statuses, :STATUSES, :incoming, :ProcessStatus},
       {:forward_relationships, :RELATES, :outgoing, :Relationship},
       {:reverse_relationships, :RELATES, :incoming, :Relationship},
-      {:features, :DEFINES, :incoming, :Feature},
-      {:characteristics, :DEFINES, :incoming, :Characteristic},
+      {:features, :HAS, :outgoing, :Feature},
+      {:characteristics, :HAS, :outgoing, :Characteristic},
       {:entities, :RELATES, :outgoing, :EntityRef},
       {:notes, :ANNOTATES, :incoming, :Note},
-      {:places, :LOCATES, :incoming, :PlaceRef},
-      {:parties, :INVOLVES, :outgoing, :PartyRef}
+      {:places, :LOCATED_BY, :outgoing, :PlaceRef},
+      {:parties, :INVOLVED_WITH, :outgoing, :PartyRef}
     ])
   end
 

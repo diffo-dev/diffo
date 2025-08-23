@@ -19,7 +19,7 @@ defmodule Diffo.Provider.Specification do
 
   neo4j do
     guard([
-      {:SPECIFIES, :outgoing, :Instance}
+      {:SPECIFIED_BY, :incoming, :Instance}
     ])
   end
 

@@ -49,9 +49,9 @@ defmodule Diffo.Provider.Instance.Characteristic do
   end
 
   @doc """
-  Ensures the characteristics define the Extended Instance
+  Relates the characteristics in the changeset with the Extended Instance
   """
-  def define_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+  def relate_instance(result, changeset) when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     characteristics = Ash.Changeset.get_argument(changeset, :characteristics)
     instance = struct(Instance, Map.from_struct(result))
     Provider.relate_instance_characteristics(instance, %{characteristics: characteristics})
