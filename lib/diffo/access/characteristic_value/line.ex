@@ -6,28 +6,25 @@ defmodule Diffo.Access.Line do
   """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
+  jason do
+    pick [:port, :slot, :standard, :profile]
+  end
+
   typed_struct do
-    field(:port, :integer,
+    field :port, :integer,
       constraints: [min: 0, max: 47],
       description: "the line port number"
-    )
 
-    field(:slot, :integer,
+    field :slot, :integer,
       constraints: [min: 0, max: 15],
       description: "the line port slot number"
-    )
 
-    field(:standard, :atom,
+    field :standard, :atom,
       constraints: [one_of: [:ADSL, :ADSL2plus, :VDSL]],
       default: :ADSL2plus,
       description: "the line port standard"
-    )
 
-    field(:profile, :string, description: "the line port profile")
-  end
-
-  jason do
-    pick([:port, :slot, :standard, :profile])
+    field :profile, :string, description: "the line port profile"
   end
 
   defimpl String.Chars do

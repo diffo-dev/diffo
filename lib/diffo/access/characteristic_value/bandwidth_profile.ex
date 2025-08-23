@@ -6,26 +6,23 @@ defmodule Diffo.Access.BandwidthProfile do
   """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
+  jason do
+    pick [:downstream, :upstream, :units]
+  end
+
   typed_struct do
-    field(:downstream, :integer,
+    field :downstream, :integer,
       constraints: [min: 0],
       description: "the bandwidth profile downstream rate"
-    )
 
-    field(:upstream, :integer,
+    field :upstream, :integer,
       constraints: [min: 0],
       description: "the bandwidth profile upstream rate"
-    )
 
-    field(:units, :atom,
+    field :units, :atom,
       default: :Mbps,
       constraints: [one_of: [:kbps, :Mbps]],
       description: "the bandwidth profile units"
-    )
-  end
-
-  jason do
-    pick([:downstream, :upstream, :units])
   end
 
   defimpl String.Chars do

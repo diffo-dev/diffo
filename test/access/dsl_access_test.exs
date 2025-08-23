@@ -12,11 +12,13 @@ defmodule Diffo.Access.DslAccessTest do
 
   setup do
     on_exit(fn ->
-      AshNeo4j.Neo4jHelper.delete_all()
+      # AshNeo4j.Neo4jHelper.delete_all()
+      :ok
     end)
   end
 
   describe "service qualification" do
+    @tag debug: true
     test "create an initial service for service qualification" do
       z_end =
         Provider.create_place!(%{

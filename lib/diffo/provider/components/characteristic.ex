@@ -10,26 +10,72 @@ defmodule Diffo.Provider.Characteristic do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
+  resource do
+    description "An Ash Resource for a TMF Characteristic"
+    plural_name :characteristics
+  end
+
   neo4j do
-    relate([
+    relate [
       {:instance, :HAS, :incoming, :Instance},
       {:feature, :HAS, :incoming, :Feature},
       {:relationship, :HAS, :incoming, :Relationship}
-    ])
+    ]
 
-    guard([
+    guard [
       {:HAS, :incoming, :Instance},
       {:HAS, :incoming, :Feature},
       {:HAS, :incoming, :Relationship}
-    ])
+    ]
   end
 
   jason do
-    pick([:name, :value])
+    pick [:name, :value]
   end
 
   outstanding do
-    expect([:name, :value])
+    expect [:name, :value]
+  end
+
+  actions do
+    defaults [:destroy]
+
+    create :create do
+      description "creates a characteristic"
+      accept [:name, :value, :type]
+    end
+
+    read :read do
+      primary? true
+    end
+
+    read :find_by_name do
+      description "finds characteristics by name"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only characteristics with names including the given value."
+      end
+
+      filter expr(contains(name, ^arg(:query)))
+    end
+
+    read :list do
+      description "lists all characteristics"
+    end
+
+    update :update do
+      primary? true
+      description "updates the characteristic value or instance, feature or relationship"
+      accept [:value]
+      argument :instance_id, :uuid
+      argument :feature_id, :uuid
+      argument :relationship_id, :uuid
+
+      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:feature_id, :feature, type: :append_and_remove)
+      change manage_relationship(:relationship_id, :relationship, type: :append_and_remove)
+    end
   end
 
   attributes do
@@ -80,52 +126,6 @@ defmodule Diffo.Provider.Characteristic do
       allow_nil? true
       public? true
     end
-  end
-
-  actions do
-    defaults [:destroy]
-
-    create :create do
-      description "creates a characteristic"
-      accept [:name, :value, :type]
-    end
-
-    read :read do
-      primary? true
-    end
-
-    read :find_by_name do
-      description "finds characteristics by name"
-      get? false
-
-      argument :query, :ci_string do
-        description "Return only characteristics with names including the given value."
-      end
-
-      filter expr(contains(name, ^arg(:query)))
-    end
-
-    read :list do
-      description "lists all characteristics"
-    end
-
-    update :update do
-      primary? true
-      description "updates the characteristic value or instance, feature or relationship"
-      accept [:value]
-      argument :instance_id, :uuid
-      argument :feature_id, :uuid
-      argument :relationship_id, :uuid
-
-      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
-      change manage_relationship(:feature_id, :feature, type: :append_and_remove)
-      change manage_relationship(:relationship_id, :relationship, type: :append_and_remove)
-    end
-  end
-
-  resource do
-    description "An Ash Resource for a TMF Characteristic"
-    plural_name :characteristics
   end
 
   identities do

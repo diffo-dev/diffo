@@ -10,27 +10,73 @@ defmodule Diffo.Provider.Party do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
-  neo4j do
-    translate(id: :key)
+  resource do
+    description "An Ash Resource for a TMF Party"
+    plural_name :parties
+  end
 
-    relate([
+  neo4j do
+    translate id: :key
+
+    relate [
       {:party_refs, :INVOLVED_WITH, :incoming, :PartyRef},
       {:external_identifiers, :OWNS, :outgoing, :ExternalIdentifier},
       {:notes, :AUTHORS, :outgoing, :Note}
-    ])
+    ]
 
-    guard([
+    guard [
       {:OWNS, :outgoing, :ExternalIdentifier}
-    ])
+    ]
   end
 
   jason do
-    pick([:id, :href, :name, :referredType, :type])
-    rename(referredType: "@referredType", type: "@type")
+    pick [:id, :href, :name, :referredType, :type]
+    rename referredType: "@referredType", type: "@type"
   end
 
   outstanding do
-    expect([:id, :name, :referredType, :type])
+    expect [:id, :name, :referredType, :type]
+  end
+
+  actions do
+    defaults [:read, :destroy]
+
+    create :create do
+      description "creates a party"
+      accept [:id, :href, :name, :type, :referredType]
+      upsert? true
+    end
+
+    read :find_by_id do
+      description "finds party by id"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only parties with id's including the given value."
+      end
+
+      filter expr(contains(id, ^arg(:query)))
+    end
+
+    read :find_by_name do
+      description "finds party by name"
+      get? false
+
+      argument :query, :ci_string do
+        description "Return only parties with names including the given value."
+      end
+
+      filter expr(contains(name, ^arg(:query)))
+    end
+
+    read :list do
+      description "lists all parties"
+    end
+
+    update :update do
+      description "updates the party"
+      accept [:href, :name, :type, :referredType]
+    end
   end
 
   attributes do
@@ -94,56 +140,6 @@ defmodule Diffo.Provider.Party do
     end
   end
 
-  actions do
-    defaults [:read, :destroy]
-
-    create :create do
-      description "creates a party"
-      accept [:id, :href, :name, :type, :referredType]
-      upsert? true
-    end
-
-    read :find_by_id do
-      description "finds party by id"
-      get? false
-
-      argument :query, :ci_string do
-        description "Return only parties with id's including the given value."
-      end
-
-      filter expr(contains(id, ^arg(:query)))
-    end
-
-    read :find_by_name do
-      description "finds party by name"
-      get? false
-
-      argument :query, :ci_string do
-        description "Return only parties with names including the given value."
-      end
-
-      filter expr(contains(name, ^arg(:query)))
-    end
-
-    read :list do
-      description "lists all parties"
-    end
-
-    update :update do
-      description "updates the party"
-      accept [:href, :name, :type, :referredType]
-    end
-  end
-
-  resource do
-    description "An Ash Resource for a TMF Party"
-    plural_name :parties
-  end
-
-  preparations do
-    prepare build(sort: [id: :asc, name: :asc])
-  end
-
   validations do
     validate {Diffo.Validations.HrefEndsWithId, id: :id, href: :href} do
       where [present(:id), present(:href)]
@@ -158,6 +154,10 @@ defmodule Diffo.Provider.Party do
       where absent(:referredType)
       message "when referredType is absent, type must be not be PartyRef"
     end
+  end
+
+  preparations do
+    prepare build(sort: [id: :asc, name: :asc])
   end
 
   @doc """
