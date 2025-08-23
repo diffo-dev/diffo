@@ -6,41 +6,36 @@ defmodule Diffo.Access.AggregateInterface do
   """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
-  typed_struct do
-    field(:name, :string, description: "the name of the aggregate interface")
+  jason do
+    pick [:name, :physical_interface, :physical_layer, :link_layer, :svlan_id, :vpi]
+  end
 
-    field(:physical_interface, :string,
+  typed_struct do
+    field :name, :string, description: "the name of the aggregate interface"
+
+    field :physical_interface, :string,
       constraints: [match: ~r/OC-3 LR(-2)?|1000BASE-(L|E|Z)X/],
       description: "the aggregate interface physical interface type"
-    )
 
-    field(:physical_layer, :atom,
+    field :physical_layer, :atom,
       constraints: [one_of: [:STM1, :GbE]],
       default: :GbE,
       description: "the aggregate interface physical layer standard"
-    )
 
-    field(:link_layer, :atom,
+    field :link_layer, :atom,
       constraints: [one_of: [:VP, :Q, :QinQ]],
       default: :QinQ,
       description: "the aggregate interface link layer standard"
-    )
 
-    field(:svlan_id, :integer,
+    field :svlan_id, :integer,
       constraints: [min: 0, max: 4095],
       default: 0,
       description: "the aggregate interface svlan_id"
-    )
 
-    field(:vpi, :integer,
+    field :vpi, :integer,
       constraints: [min: 0, max: 4095],
       default: 0,
       description: "the aggregate interface vpi"
-    )
-  end
-
-  jason do
-    pick([:name, :physical_interface, :physical_layer, :link_layer, :svlan_id, :vpi])
   end
 
   defimpl String.Chars do

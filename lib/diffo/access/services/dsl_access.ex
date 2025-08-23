@@ -16,6 +16,32 @@ defmodule Diffo.Access.DslAccess.Instance do
     fragments: [BaseInstance],
     domain: Diffo.Access
 
+  resource do
+    description "An Ash Resource representing a DSL Access Service"
+    plural_name :DslAccesses
+  end
+
+  specification do
+    id "da9b207a-26c3-451d-8abd-0640c6349979"
+    name "dslAccess"
+    description "A DSL Access Network Service connecting a subscriber premises to an NNI"
+    category "Network Service"
+  end
+
+  features do
+    feature :dynamic_line_management do
+      is_enabled? true
+      characteristic :constraints, Diffo.Access.Constraints
+    end
+  end
+
+  characteristics do
+    characteristic :dslam, Diffo.Access.Dslam
+    characteristic :aggregate_interface, Diffo.Access.AggregateInterface
+    characteristic :circuit, Diffo.Access.Circuit
+    characteristic :line, Diffo.Access.Line
+  end
+
   actions do
     create :qualify do
       description "creates a new DSL Access service instance for qualification"
@@ -46,31 +72,5 @@ defmodule Diffo.Access.DslAccess.Instance do
       change load [:href]
       upsert? false
     end
-  end
-
-  specification do
-    id("da9b207a-26c3-451d-8abd-0640c6349979")
-    name "dslAccess"
-    description "A DSL Access Network Service connecting a subscriber premises to an NNI"
-    category("Network Service")
-  end
-
-  features do
-    feature :dynamic_line_management do
-      is_enabled?(true)
-      characteristic(:constraints, Diffo.Access.Constraints)
-    end
-  end
-
-  characteristics do
-    characteristic(:dslam, Diffo.Access.Dslam)
-    characteristic(:aggregate_interface, Diffo.Access.AggregateInterface)
-    characteristic(:circuit, Diffo.Access.Circuit)
-    characteristic(:line, Diffo.Access.Line)
-  end
-
-  resource do
-    description "An Ash Resource representing a DSL Access Service"
-    plural_name :DslAccesses
   end
 end

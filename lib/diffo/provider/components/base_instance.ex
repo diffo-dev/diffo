@@ -20,7 +20,7 @@ defmodule Diffo.Provider.BaseInstance do
   alias Diffo.Provider.Instance.Util, as: Instance
 
   neo4j do
-    relate([
+    relate [
       {:external_identifiers, :REFERENCES, :outgoing, :ExternalIdentifier},
       {:specification, :SPECIFIED_BY, :outgoing, :Specification},
       {:process_statuses, :STATUSES, :incoming, :ProcessStatus},
@@ -32,11 +32,11 @@ defmodule Diffo.Provider.BaseInstance do
       {:notes, :ANNOTATES, :incoming, :Note},
       {:places, :LOCATED_BY, :outgoing, :PlaceRef},
       {:parties, :INVOLVED_WITH, :outgoing, :PartyRef}
-    ])
+    ]
   end
 
   jason do
-    pick([
+    pick [
       :id,
       :href,
       :name,
@@ -50,9 +50,9 @@ defmodule Diffo.Provider.BaseInstance do
       :places,
       :parties,
       :type
-    ])
+    ]
 
-    customize(fn result, record ->
+    customize fn result, record ->
       result
       |> Instance.category(record)
       |> Instance.description(record)
@@ -74,9 +74,9 @@ defmodule Diffo.Provider.BaseInstance do
       |> Util.suppress_rename(:notes, :note)
       |> Util.suppress_rename(:places, :place)
       |> Util.suppress_rename(:parties, :relatedParty)
-    end)
+    end
 
-    order([
+    order [
       :id,
       :href,
       :category,
@@ -109,39 +109,42 @@ defmodule Diffo.Provider.BaseInstance do
       :notes,
       :place,
       :relatedParty
-    ])
+    ]
   end
 
   outstanding do
-    expect([:specification, :type, :service_state, :service_operating_status])
+    expect [:specification, :type, :service_state, :service_operating_status]
 
     # expect [:type, :name, :external_identifiers, :specification, :service_state, :service_operating_status, :forward_relationships, :reverse_relationships, :features, :characteristics, :entities, :process_statuses, :places, :parties]
   end
 
   state_machine do
-    initial_states([:initial])
-    default_initial_state(:initial)
-    state_attribute(:service_state)
+    initial_states [:initial]
+    default_initial_state :initial
+    state_attribute :service_state
 
     transitions do
-      transition(
-        action: :cancel,
-        from: [:initial, :feasibilityChecked, :reserved],
-        to: :cancelled
-      )
+      transition action: :cancel,
+                 from: [:initial, :feasibilityChecked, :reserved],
+                 to: :cancelled
 
-      transition(action: :feasibilityCheck, from: :initial, to: :feasibilityChecked)
-      transition(action: :reserve, from: [:initial, :feasibilityChecked], to: :reserved)
-      transition(action: :deactivate, from: [:active, :reserved], to: [:inactive])
+      transition action: :feasibilityCheck, from: :initial, to: :feasibilityChecked
+      transition action: :reserve, from: [:initial, :feasibilityChecked], to: :reserved
+      transition action: :deactivate, from: [:active, :reserved], to: [:inactive]
 
-      transition(
-        action: :activate,
-        from: [:initial, :feasibilityChecked, :reserved, :inactive, :suspended, :terminated],
-        to: :active
-      )
+      transition action: :activate,
+                 from: [
+                   :initial,
+                   :feasibilityChecked,
+                   :reserved,
+                   :inactive,
+                   :suspended,
+                   :terminated
+                 ],
+                 to: :active
 
-      transition(action: :suspend, from: :active, to: :suspended)
-      transition(action: :terminate, from: [:active, :inactive, :suspended], to: :terminated)
+      transition action: :suspend, from: :active, to: :suspended
+      transition action: :terminate, from: [:active, :inactive, :suspended], to: :terminated
     end
   end
 
