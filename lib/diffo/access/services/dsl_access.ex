@@ -43,6 +43,12 @@ defmodule Diffo.Access.DslAccess.Instance do
     characteristic :line, Diffo.Access.Line
   end
 
+  state_machine do
+    transitions do
+      transition action: :qualify_result, from: :initial, to: :feasibilityChecked
+    end
+  end
+
   actions do
     create :qualify do
       description "creates a new DSL Access service instance for qualification"
@@ -73,6 +79,30 @@ defmodule Diffo.Access.DslAccess.Instance do
 
       change load [:href]
       upsert? false
+    end
+
+    update :qualify_result do
+      description "updates the DSL Access service with qualification result"
+      accept [:service_operating_status]
+      argument :places, {:array, :struct}
+      require_atomic? false
+
+      change transition_state(:feasibilityChecked)
+
+      validate argument_in(:service_operating_status, [
+                 nil,
+                 :initial,
+                 :pending,
+                 :unknown,
+                 :feasible,
+                 :not_feasible
+               ])
+
+      change after_action(fn changeset, result, _context ->
+               with {:ok, _with_place} <- Place.relate_instance(result, changeset),
+                    {:ok, dsl_access} <- Access.get_dsl_by_id(result.id),
+                    do: {:ok, dsl_access}
+             end)
     end
   end
 end
