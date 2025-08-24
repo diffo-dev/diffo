@@ -101,7 +101,6 @@ defmodule Diffo.Access.DslAccessTest do
                ~s({\"id\":\"#{dsl_access.id}",\"href\":\"serviceInventoryManagement/v4/service/dslAccess/#{dsl_access.id}\",\"category\":\"Network Service\",\"serviceSpecification\":{\"id\":\"da9b207a-26c3-451d-8abd-0640c6349979\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/da9b207a-26c3-451d-8abd-0640c6349979\",\"name\":\"dslAccess\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"feature\":[{\"name\":\"dynamic_line_management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"constraints\",\"value\":{}}]}],\"serviceCharacteristic\":[{\"name\":\"aggregate_interface\",\"value\":{\"physical_layer\":\"GbE\",\"link_layer\":\"QinQ\",\"svlan_id\":0,\"vpi\":0}},{\"name\":\"circuit\",\"value\":{\"cvlan_id\":0,\"vci\":0,\"encapsulation\":\"IPoE\"}},{\"name\":\"dslam\",\"value\":{\"family\":\"ISAM\",\"technology\":\"eth\"}},{\"name\":\"line\",\"value\":{\"standard\":\"ADSL2plus\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"IND000000897354\",\"name\":\"individualId\",\"role\":\"Customer\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"},{\"id\":\"ORG000000123456\",\"name\":\"organizationId\",\"role\":\"Reseller\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
     end
 
-    @tag debug: true
     test "advance service to feasibilityChecked" do
       initial_parties = create_initial_parties()
       initial_place = create_initial_place()
@@ -111,7 +110,10 @@ defmodule Diffo.Access.DslAccessTest do
       esa_place = create_esa_place()
 
       {:ok, dsl_access} =
-        Access.qualify_dsl_result(dsl_access, %{service_operating_status: :feasible, places: [esa_place]})
+        Access.qualify_dsl_result(dsl_access, %{
+          service_operating_status: :feasible,
+          places: [esa_place]
+        })
 
       # check the instance is a DslAccess
       assert is_struct(dsl_access, DslAccess)
@@ -125,6 +127,48 @@ defmodule Diffo.Access.DslAccessTest do
 
       assert encoding ==
                ~s({\"id\":\"#{dsl_access.id}",\"href\":\"serviceInventoryManagement/v4/service/dslAccess/#{dsl_access.id}\",\"category\":\"Network Service\",\"serviceSpecification\":{\"id\":\"da9b207a-26c3-451d-8abd-0640c6349979\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/da9b207a-26c3-451d-8abd-0640c6349979\",\"name\":\"dslAccess\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"feasibilityChecked\",\"operatingStatus\":\"feasible\",\"feature\":[{\"name\":\"dynamic_line_management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"constraints\",\"value\":{}}]}],\"serviceCharacteristic\":[{\"name\":\"aggregate_interface\",\"value\":{\"physical_layer\":\"GbE\",\"link_layer\":\"QinQ\",\"svlan_id\":0,\"vpi\":0}},{\"name\":\"circuit\",\"value\":{\"cvlan_id\":0,\"vci\":0,\"encapsulation\":\"IPoE\"}},{\"name\":\"dslam\",\"value\":{\"family\":\"ISAM\",\"technology\":\"eth\"}},{\"name\":\"line\",\"value\":{\"standard\":\"ADSL2plus\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC-0001\",\"href\":\"place/telstra/DONC-0001\",\"name\":\"esaId\",\"role\":\"ServingArea\",\"@referredType\":\"GeographicLocation\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"IND000000897354\",\"name\":\"individualId\",\"role\":\"Customer\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"},{\"id\":\"ORG000000123456\",\"name\":\"organizationId\",\"role\":\"Reseller\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
+    end
+  end
+
+  describe "service activation" do
+    @tag debug: true
+    test "design the service" do
+      initial_parties = create_initial_parties()
+      initial_place = create_initial_place()
+      {:ok, dsl_access} = Access.qualify_dsl(%{parties: initial_parties, places: [initial_place]})
+      esa_place = create_esa_place()
+
+      {:ok, dsl_access} =
+        Access.qualify_dsl_result(dsl_access, %{
+          service_operating_status: :feasible,
+          places: [esa_place]
+        })
+
+      # now we design the circuit, allocating the dslam, slot, port
+      # and we allocate the backhaul interface, svlan and cvlan, so can derive the cicuit id
+
+      updates = [
+        dslam: [name: QDONC0001, model: ISAM7330],
+        aggregate_interface: [name: "eth0", svlan_id: 3108],
+        circuit: [cvlan_id: 82],
+        line: [slot: 10, port: 5]
+      ]
+
+      {:ok, dsl_access} =
+        Access.design_dsl_result(dsl_access, %{characteristic_value_updates: updates})
+
+      # check the instance is a DslAccess
+      assert is_struct(dsl_access, DslAccess)
+
+      assert dsl_access.service_state == :reserved
+      assert dsl_access.service_operating_status == :feasible
+
+      check_places([initial_place | [esa_place]], dsl_access)
+
+      encoding = Jason.encode!(dsl_access) |> Diffo.Util.summarise_dates()
+
+      assert encoding ==
+               ~s({\"id\":\"#{dsl_access.id}",\"href\":\"serviceInventoryManagement/v4/service/dslAccess/#{dsl_access.id}\",\"category\":\"Network Service\",\"serviceSpecification\":{\"id\":\"da9b207a-26c3-451d-8abd-0640c6349979\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/da9b207a-26c3-451d-8abd-0640c6349979\",\"name\":\"dslAccess\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"reserved\",\"operatingStatus\":\"feasible\",\"feature\":[{\"name\":\"dynamic_line_management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"constraints\",\"value\":{}}]}],\"serviceCharacteristic\":[{\"name\":\"aggregate_interface\",\"value\":{\"name\":\"eth0\",\"physical_layer\":\"GbE\",\"link_layer\":\"QinQ\",\"svlan_id\":3108,\"vpi\":0}},{\"name\":\"circuit\",\"value\":{\"cvlan_id\":82,\"vci\":0,\"encapsulation\":\"IPoE\"}},{\"name\":\"dslam\",\"value\":{\"name\":\"QDONC0001\",\"family\":\"ISAM\",\"model\":\"ISAM7330\",\"technology\":\"eth\"}},{\"name\":\"line\",\"value\":{\"port\":5,\"slot\":10,\"standard\":\"ADSL2plus\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC-0001\",\"href\":\"place/telstra/DONC-0001\",\"name\":\"esaId\",\"role\":\"ServingArea\",\"@referredType\":\"GeographicLocation\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"IND000000897354\",\"name\":\"individualId\",\"role\":\"Customer\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"},{\"id\":\"ORG000000123456\",\"name\":\"organizationId\",\"role\":\"Reseller\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
     end
   end
 
@@ -172,7 +216,7 @@ defmodule Diffo.Access.DslAccessTest do
 
   defp check_places(expected_places, instance)
        when is_list(expected_places) and is_struct(instance) do
-    Enum.zip_reduce(expected_places, instance.places, [], fn expected_place,
+    Enum.zip_reduce(expected_places, instance.places, [], fn _expected_place,
                                                              actual_place_ref,
                                                              _acc ->
       assert is_struct(actual_place_ref, Diffo.Provider.PlaceRef)
@@ -201,7 +245,7 @@ defmodule Diffo.Access.DslAccessTest do
 
   defp check_parties(expected_parties, instance)
        when is_list(expected_parties) and is_struct(instance) do
-    Enum.zip_reduce(expected_parties, instance.parties, [], fn expected_party,
+    Enum.zip_reduce(expected_parties, instance.parties, [], fn _expected_party,
                                                                actual_party_ref,
                                                                _acc ->
       assert is_struct(actual_party_ref, Diffo.Provider.PartyRef)
