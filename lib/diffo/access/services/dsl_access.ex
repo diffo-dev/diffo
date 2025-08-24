@@ -11,10 +11,11 @@ defmodule Diffo.Access.DslAccess.Instance do
   alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Provider.Instance.Party
   alias Diffo.Provider.Instance.Place
+  alias Diffo.Access
 
   use Ash.Resource,
     fragments: [BaseInstance],
-    domain: Diffo.Access
+    domain: Access
 
   resource do
     description "An Ash Resource representing a DSL Access Service"
@@ -65,8 +66,9 @@ defmodule Diffo.Access.DslAccess.Instance do
                     {:ok, with_characteristics} <-
                       Characteristic.relate_instance(with_features, changeset),
                     {:ok, with_parties} <- Party.relate_instance(with_characteristics, changeset),
-                    {:ok, with_places} <- Place.relate_instance(with_parties, changeset),
-                    do: {:ok, with_places}
+                    {:ok, _with_places} <- Place.relate_instance(with_parties, changeset),
+                    {:ok, dsl_access} <- Access.get_dsl_by_id(result.id),
+                    do: {:ok, dsl_access}
              end)
 
       change load [:href]
