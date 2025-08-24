@@ -5,6 +5,7 @@ defmodule Diffo.Access.DslAccessTest do
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
   alias Diffo.Access
+  alias Diffo.Access.DslAccess.Instance, as: DslAccess
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -18,35 +19,14 @@ defmodule Diffo.Access.DslAccessTest do
   end
 
   describe "service qualification" do
-    @tag debug: true
     test "create an initial service for service qualification" do
-      z_end =
-        Provider.create_place!(%{
-          id: "1657363",
-          name: :addressId,
-          href: "place/telstra/1657363",
-          referredType: :GeographicAddress
-        })
-
-      places = [%Place{id: z_end.id, role: :CustomerSite}]
-
-      individual =
-        Provider.create_party!(%{
-          id: "IND000000897354",
-          name: :individualId,
-          referredType: :Individual
-        })
-
-      org =
-        Provider.create_party!(%{
-          id: "ORG000000123456",
-          name: :organizationId,
-          referredType: :Organization
-        })
-
-      parties = [%Party{id: individual.id, role: :Customer}, %Party{id: org.id, role: :Reseller}]
+      parties = create_initial_parties()
+      places = [create_initial_place()]
 
       {:ok, dsl_access} = Access.qualify_dsl(%{parties: parties, places: places})
+
+      # check the instance is a DslAccess
+      assert is_struct(dsl_access, DslAccess)
 
       # check specification resource enrichment and node relationship
       refute is_nil(dsl_access.specification_id)
@@ -112,66 +92,113 @@ defmodule Diffo.Access.DslAccessTest do
                )
       end)
 
-      # check parties resource enrichment and node relationships
-      assert is_list(dsl_access.parties)
-      assert length(dsl_access.parties) == 2
-
-      Enum.each(dsl_access.parties, fn party_ref ->
-        assert is_struct(party_ref, Diffo.Provider.PartyRef)
-        refute is_nil(party_ref.party_id)
-        assert is_struct(party_ref.party, Diffo.Provider.Party)
-
-        assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-                 :Instance,
-                 %{uuid: dsl_access.id},
-                 :PartyRef,
-                 %{uuid: party_ref.id},
-                 :INVOLVED_WITH,
-                 :outgoing
-               )
-
-        assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-                 :PartyRef,
-                 %{uuid: party_ref.id},
-                 :Party,
-                 %{key: party_ref.party_id},
-                 :INVOLVED_WITH,
-                 :outgoing
-               )
-      end)
-
-      # check places resource enrichment and node relationships
-      assert is_list(dsl_access.places)
-      assert length(dsl_access.places) == 1
-
-      Enum.each(dsl_access.places, fn place_ref ->
-        assert is_struct(place_ref, Diffo.Provider.PlaceRef)
-        refute is_nil(place_ref.place_id)
-        assert is_struct(place_ref.place, Diffo.Provider.Place)
-
-        assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-                 :Instance,
-                 %{uuid: dsl_access.id},
-                 :PlaceRef,
-                 %{uuid: place_ref.id},
-                 :LOCATED_BY,
-                 :outgoing
-               )
-
-        assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-                 :PlaceRef,
-                 %{uuid: place_ref.id},
-                 :Place,
-                 %{key: place_ref.place_id},
-                 :LOCATED_BY,
-                 :outgoing
-               )
-      end)
+      check_parties(parties, dsl_access)
+      check_places(places, dsl_access)
 
       encoding = Jason.encode!(dsl_access) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
                ~s({\"id\":\"#{dsl_access.id}",\"href\":\"serviceInventoryManagement/v4/service/dslAccess/#{dsl_access.id}\",\"category\":\"Network Service\",\"serviceSpecification\":{\"id\":\"da9b207a-26c3-451d-8abd-0640c6349979\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/da9b207a-26c3-451d-8abd-0640c6349979\",\"name\":\"dslAccess\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"feature\":[{\"name\":\"dynamic_line_management\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"constraints\",\"value\":{}}]}],\"serviceCharacteristic\":[{\"name\":\"aggregate_interface\",\"value\":{\"physical_layer\":\"GbE\",\"link_layer\":\"QinQ\",\"svlan_id\":0,\"vpi\":0}},{\"name\":\"circuit\",\"value\":{\"cvlan_id\":0,\"vci\":0,\"encapsulation\":\"IPoE\"}},{\"name\":\"dslam\",\"value\":{\"family\":\"ISAM\",\"technology\":\"eth\"}},{\"name\":\"line\",\"value\":{\"standard\":\"ADSL2plus\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"IND000000897354\",\"name\":\"individualId\",\"role\":\"Customer\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"},{\"id\":\"ORG000000123456\",\"name\":\"organizationId\",\"role\":\"Reseller\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
     end
+
+    @tag debug: true
+    test "advance service to feasibilityChecked" do
+      initial_parties = create_initial_parties()
+      initial_places = [create_initial_place()]
+
+      {:ok, dsl_access} = Access.qualify_dsl(%{parties: initial_parties, places: initial_places})
+
+      {:ok, dsl_access} = Access.qualify_dsl_result(dsl_access, %{service_operating_status: :feasible})
+      # check the instance is a DslAccess
+      assert is_struct(dsl_access, DslAccess)
+      assert dsl_access.service_state == :feasibilityChecked
+      assert dsl_access.service_operating_status == :feasible
+    end
+  end
+
+  defp create_initial_place do
+    z_end =
+      Provider.create_place!(%{
+        id: "1657363",
+        name: :addressId,
+        href: "place/telstra/1657363",
+        referredType: :GeographicAddress
+      })
+
+    %Place{id: z_end.id, role: :CustomerSite}
+  end
+
+  defp create_initial_parties do
+    individual =
+      Provider.create_party!(%{
+        id: "IND000000897354",
+        name: :individualId,
+        referredType: :Individual
+      })
+
+    org =
+      Provider.create_party!(%{
+        id: "ORG000000123456",
+        name: :organizationId,
+        referredType: :Organization
+      })
+
+    [%Party{id: individual.id, role: :Customer}, %Party{id: org.id, role: :Reseller}]
+  end
+
+  defp check_places(expected_places, instance)
+       when is_list(expected_places) and is_struct(instance) do
+    Enum.zip_reduce(expected_places, instance.places, [], fn expected_place, actual_place_ref,
+                                                             acc ->
+      assert is_struct(actual_place_ref, Diffo.Provider.PlaceRef)
+      refute is_nil(actual_place_ref.place_id)
+      assert is_struct(actual_place_ref.place, Diffo.Provider.Place)
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :PlaceRef,
+               %{uuid: actual_place_ref.id},
+               :LOCATED_BY,
+               :outgoing
+             )
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :PlaceRef,
+               %{uuid: actual_place_ref.id},
+               :Place,
+               %{key: actual_place_ref.place_id},
+               :LOCATED_BY,
+               :outgoing
+             )
+    end)
+  end
+
+  defp check_parties(expected_parties, instance)
+       when is_list(expected_parties) and is_struct(instance) do
+    Enum.zip_reduce(expected_parties, instance.parties, [], fn expected_party, actual_party_ref,
+                                                               acc ->
+      assert is_struct(actual_party_ref, Diffo.Provider.PartyRef)
+      refute is_nil(actual_party_ref.party_id)
+      assert is_struct(actual_party_ref.party, Diffo.Provider.Party)
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :PartyRef,
+               %{uuid: actual_party_ref.id},
+               :INVOLVED_WITH,
+               :outgoing
+             )
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :PartyRef,
+               %{uuid: actual_party_ref.id},
+               :Party,
+               %{key: actual_party_ref.party_id},
+               :INVOLVED_WITH,
+               :outgoing
+             )
+    end)
   end
 end

@@ -11,7 +11,9 @@ defmodule Diffo.Access do
 
   resources do
     resource DslAccess do
+      define :get_dsl_by_id, action: :read, get_by: :id
       define :qualify_dsl, action: :qualify
+      define :qualify_dsl_result, action: :feasibilityCheck
     end
   end
 end
