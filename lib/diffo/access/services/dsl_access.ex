@@ -46,6 +46,7 @@ defmodule Diffo.Access.DslAccess.Instance do
   state_machine do
     transitions do
       transition action: :qualify_result, from: :initial, to: :feasibilityChecked
+      transition action: :design_result, from: [:initial, :feasibilityChecked], to: :reserved
     end
   end
 
@@ -100,6 +101,19 @@ defmodule Diffo.Access.DslAccess.Instance do
 
       change after_action(fn changeset, result, _context ->
                with {:ok, _with_place} <- Place.relate_instance(result, changeset),
+                    {:ok, dsl_access} <- Access.get_dsl_by_id(result.id),
+                    do: {:ok, dsl_access}
+             end)
+    end
+
+    update :design_result do
+      description "updates the DSL Access service with the design"
+      argument :characteristic_value_updates, :term
+
+      change transition_state(:reserved)
+
+      change after_action(fn changeset, result, _context ->
+               with {:ok, _dslam} <- Characteristic.update_values(result, changeset),
                     {:ok, dsl_access} <- Access.get_dsl_by_id(result.id),
                     do: {:ok, dsl_access}
              end)

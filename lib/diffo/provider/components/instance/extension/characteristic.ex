@@ -62,6 +62,57 @@ defmodule Diffo.Provider.Instance.Characteristic do
     Provider.relate_instance_characteristics(instance, %{characteristics: characteristics})
   end
 
+  @doc """
+  Updates the characteristic values according to the changeset
+  """
+  def update_values(result, changeset)
+      when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+    characteristic_value_updates =
+      Ash.Changeset.get_argument(changeset, :characteristic_value_updates)
+
+    characteristic_updates =
+      Enum.reduce(characteristic_value_updates, [], fn {name, update}, acc ->
+        # find the named characteristic, perform updates to value
+        characteristic = Enum.find(changeset.data.characteristics, fn %{name: n} -> n == name end)
+
+        if characteristic do
+          cond do
+            is_list(update) ->
+              value =
+                Enum.reduce(update, characteristic.value, fn {field, val}, acc ->
+                  # merge update
+                  Map.merge(acc, %{field => val})
+                end)
+              [{characteristic, value} | acc]
+
+            true ->
+              # replace the value
+              [{characteristic, update} | acc]
+          end
+        else
+          Logger.warning("couldn't find characteristic #{name}")
+          acc
+        end
+      end)
+
+      characteristics = Enum.reduce_while(characteristic_updates, [], fn {characteristic, value}, acc ->
+          case Provider.update_characteristic(characteristic, %{value: value}) do
+            {:ok, characteristic} ->
+              {:cont, [characteristic | acc]}
+            {:error, _error} ->
+              {:halt, []}
+          end
+        end)
+
+    case characteristics do
+      [] ->
+        {:error, "couldn't update characteristics"}
+      _ ->
+        {:ok, Map.put(result, :characteristics, characteristics)}
+    end
+
+  end
+
   defimpl String.Chars do
     def to_string(struct) do
       inspect(struct)
