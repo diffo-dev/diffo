@@ -2,10 +2,15 @@ defmodule Diffo.Access.DslAccessTest do
   @moduledoc false
   use ExUnit.Case
   alias Diffo.Provider
+  alias Diffo.Provider.Specification
+  alias Diffo.Provider.Feature
+  alias Diffo.Provider.Characteristic
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
   alias Diffo.Access
-  alias Diffo.Access.DslAccess.Instance, as: DslAccess
+  alias Diffo.Access.DslAccess
+  alias Diffo.Support.PartiesTest
+  alias Diffo.Support.PlacesTest
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -13,8 +18,7 @@ defmodule Diffo.Access.DslAccessTest do
 
   setup do
     on_exit(fn ->
-      # AshNeo4j.Neo4jHelper.delete_all()
-      :ok
+      AshNeo4j.Neo4jHelper.delete_all()
     end)
   end
 
@@ -30,7 +34,7 @@ defmodule Diffo.Access.DslAccessTest do
 
       # check specification resource enrichment and node relationship
       refute is_nil(dsl_access.specification_id)
-      assert is_struct(dsl_access.specification, Diffo.Provider.Specification)
+      assert is_struct(dsl_access.specification, Specification)
 
       assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
                :Instance,
@@ -46,7 +50,7 @@ defmodule Diffo.Access.DslAccessTest do
       assert length(dsl_access.features) == 1
 
       Enum.each(dsl_access.features, fn feature ->
-        assert is_struct(feature, Diffo.Provider.Feature)
+        assert is_struct(feature, Feature)
 
         assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
                  :Instance,
@@ -62,7 +66,7 @@ defmodule Diffo.Access.DslAccessTest do
         assert length(feature.characteristics) == 1
 
         Enum.each(feature.characteristics, fn characteristic ->
-          assert is_struct(characteristic, Diffo.Provider.Characteristic)
+          assert is_struct(characteristic, Characteristic)
 
           assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
                    :Feature,
@@ -80,7 +84,7 @@ defmodule Diffo.Access.DslAccessTest do
       assert length(dsl_access.characteristics) == 4
 
       Enum.each(dsl_access.characteristics, fn characteristic ->
-        assert is_struct(characteristic, Diffo.Provider.Characteristic)
+        assert is_struct(characteristic, Characteristic)
 
         assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
                  :Instance,
@@ -92,8 +96,8 @@ defmodule Diffo.Access.DslAccessTest do
                )
       end)
 
-      check_parties(parties, dsl_access)
-      check_places(places, dsl_access)
+      PartiesTest.check_parties(parties, dsl_access)
+      PlacesTest.check_places(places, dsl_access)
 
       encoding = Jason.encode!(dsl_access) |> Diffo.Util.summarise_dates()
 
@@ -121,7 +125,7 @@ defmodule Diffo.Access.DslAccessTest do
       assert dsl_access.service_state == :feasibilityChecked
       assert dsl_access.service_operating_status == :feasible
 
-      check_places([initial_place | [esa_place]], dsl_access)
+      PlacesTest.check_places([initial_place | [esa_place]], dsl_access)
 
       encoding = Jason.encode!(dsl_access) |> Diffo.Util.summarise_dates()
 
@@ -163,7 +167,7 @@ defmodule Diffo.Access.DslAccessTest do
       assert dsl_access.service_state == :reserved
       assert dsl_access.service_operating_status == :feasible
 
-      check_places([initial_place | [esa_place]], dsl_access)
+      PlacesTest.check_places([initial_place | [esa_place]], dsl_access)
 
       encoding = Jason.encode!(dsl_access) |> Diffo.Util.summarise_dates()
 
@@ -214,61 +218,4 @@ defmodule Diffo.Access.DslAccessTest do
     [%Party{id: individual.id, role: :Customer}, %Party{id: org.id, role: :Reseller}]
   end
 
-  defp check_places(expected_places, instance)
-       when is_list(expected_places) and is_struct(instance) do
-    Enum.zip_reduce(expected_places, instance.places, [], fn _expected_place,
-                                                             actual_place_ref,
-                                                             _acc ->
-      assert is_struct(actual_place_ref, Diffo.Provider.PlaceRef)
-      refute is_nil(actual_place_ref.place_id)
-      assert is_struct(actual_place_ref.place, Diffo.Provider.Place)
-
-      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-               :Instance,
-               %{uuid: instance.id},
-               :PlaceRef,
-               %{uuid: actual_place_ref.id},
-               :LOCATED_BY,
-               :outgoing
-             )
-
-      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-               :PlaceRef,
-               %{uuid: actual_place_ref.id},
-               :Place,
-               %{key: actual_place_ref.place_id},
-               :LOCATED_BY,
-               :outgoing
-             )
-    end)
-  end
-
-  defp check_parties(expected_parties, instance)
-       when is_list(expected_parties) and is_struct(instance) do
-    Enum.zip_reduce(expected_parties, instance.parties, [], fn _expected_party,
-                                                               actual_party_ref,
-                                                               _acc ->
-      assert is_struct(actual_party_ref, Diffo.Provider.PartyRef)
-      refute is_nil(actual_party_ref.party_id)
-      assert is_struct(actual_party_ref.party, Diffo.Provider.Party)
-
-      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-               :Instance,
-               %{uuid: instance.id},
-               :PartyRef,
-               %{uuid: actual_party_ref.id},
-               :INVOLVED_WITH,
-               :outgoing
-             )
-
-      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-               :PartyRef,
-               %{uuid: actual_party_ref.id},
-               :Party,
-               %{key: actual_party_ref.party_id},
-               :INVOLVED_WITH,
-               :outgoing
-             )
-    end)
-  end
 end

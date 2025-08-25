@@ -33,6 +33,7 @@ defmodule Diffo.Provider.BaseInstance do
       {:places, :LOCATED_BY, :outgoing, :PlaceRef},
       {:parties, :INVOLVED_WITH, :outgoing, :PartyRef}
     ]
+    label :Instance
   end
 
   jason do
@@ -213,6 +214,7 @@ defmodule Diffo.Provider.BaseInstance do
     has_many :external_identifiers, Diffo.Provider.ExternalIdentifier do
       description "the instance's list of external identifiers"
       public? true
+      destination_attribute :instance_id
     end
 
     belongs_to :specification, Diffo.Provider.Specification do
@@ -223,6 +225,7 @@ defmodule Diffo.Provider.BaseInstance do
     has_many :process_statuses, Diffo.Provider.ProcessStatus do
       description "the instance's process status collection"
       public? true
+      destination_attribute :instance_id
     end
 
     has_many :forward_relationships, Diffo.Provider.Relationship do
@@ -240,31 +243,37 @@ defmodule Diffo.Provider.BaseInstance do
     has_many :features, Diffo.Provider.Feature do
       description "the instance's collection of defining features"
       public? true
+      destination_attribute :instance_id
     end
 
     has_many :characteristics, Diffo.Provider.Characteristic do
       description "the instance's collection of defining characteristics"
       public? true
+      destination_attribute :instance_id
     end
 
     has_many :entities, Diffo.Provider.EntityRef do
       description "the instance's collection of related entities"
       public? true
+      destination_attribute :instance_id
     end
 
     has_many :notes, Diffo.Provider.Note do
       description "the instance's collection of annotating notes"
       public? true
+      destination_attribute :instance_id
     end
 
     has_many :places, Diffo.Provider.PlaceRef do
       description "the instance's collection of related places"
       public? true
+      destination_attribute :instance_id
     end
 
     has_many :parties, Diffo.Provider.PartyRef do
       description "the instance's collection of related parties"
       public? true
+      destination_attribute :instance_id
     end
   end
 
