@@ -1,8 +1,8 @@
-defmodule Diffo.Access.DslAccess.Instance do
+defmodule Diffo.Access.DslAccess do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  DslAccess.Instance - DSL Access Service Instance
+  DslAccess - DSL Access Service Instance
   """
 
   alias Diffo.Provider.BaseInstance
@@ -53,6 +53,7 @@ defmodule Diffo.Access.DslAccess.Instance do
   actions do
     create :qualify do
       description "creates a new DSL Access service instance for qualification"
+      accept [:id, :name, :type, :which]
       argument :places, {:array, :struct}
       argument :parties, {:array, :struct}
       argument :specified_by, :uuid, public?: false
@@ -108,7 +109,7 @@ defmodule Diffo.Access.DslAccess.Instance do
 
     update :design_result do
       description "updates the DSL Access service with the design"
-      argument :characteristic_value_updates, :term
+      argument :characteristic_value_updates, {:array, :term}
 
       change transition_state(:reserved)
 
