@@ -1,8 +1,8 @@
-defmodule Diffo.Access.Card do
+defmodule Diffo.Access.Cable do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Card - Card Resource Instance
+  Cable - Cable Resource Instance
   """
 
   alias Diffo.Provider.BaseInstance
@@ -20,26 +20,26 @@ defmodule Diffo.Access.Card do
     domain: Access
 
   resource do
-    description "An Ash Resource representing a Card"
-    plural_name :Cards
+    description "An Ash Resource representing a Cable"
+    plural_name :Cables
   end
 
   specification do
-    id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
-    name "card"
+    id "ce0a567a-6abb-4862-9e33-851fd79fa595"
+    name "cable"
     type :resourceSpecification
-    description "A Card Resource Instance"
+    description "A Cable Resource Instance"
     category "Network Resource"
   end
 
   characteristics do
-    characteristic :card, Diffo.Access.CardValue
-    characteristic :ports, Diffo.Access.AssignableValue
+    characteristic :cable, Diffo.Access.CableValue
+    characteristic :pairs, Diffo.Access.AssignableValue
   end
 
   actions do
     create :build do
-      description "creates a new Card resource instance for build"
+      description "creates a new Cable resource instance for build"
       accept [:id, :name, :type, :which]
       argument :places, {:array, :struct}
       argument :parties, {:array, :struct}
@@ -64,8 +64,8 @@ defmodule Diffo.Access.Card do
                       Characteristic.relate_instance(with_features, changeset),
                     {:ok, with_parties} <- Party.relate_instance(with_characteristics, changeset),
                     {:ok, _with_places} <- Place.relate_instance(with_parties, changeset),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+                    {:ok, cable} <- Access.get_cable_by_id(result.id),
+                    do: {:ok, cable}
              end)
 
       change load [:href]
@@ -73,35 +73,35 @@ defmodule Diffo.Access.Card do
     end
 
     update :define do
-      description "defines the card"
+      description "defines the cable"
       argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
                with {:ok, _result} <- Characteristic.update_values(result, changeset),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+                    {:ok, cable} <- Access.get_cable_by_id(result.id),
+                    do: {:ok, cable}
              end)
     end
 
     update :relate do
-      description "relates the card with other instances"
+      description "relates the cable with other instances"
       argument :relationships, {:array, :struct}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, _card} <- Relationship.relate_instance(result, changeset),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+               with {:ok, _cable} <- Relationship.relate_instance(result, changeset),
+                    {:ok, cable} <- Access.get_cable_by_id(result.id),
+                    do: {:ok, cable}
              end)
     end
 
-    update :assign_port do
-      description "relates the card with an instance by assigning a port"
+    update :assign_pair do
+      description "relates the cable with an instance by assigning a pair"
       argument :assignment, :struct, constraints: [instance_of: Assignment]
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, _card} <- Assigner.assign(result, changeset, :ports, :port),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+               with {:ok, _cable} <- Assigner.assign(result, changeset, :pairs, :pair),
+                    {:ok, cable} <- Access.get_cable_by_id(result.id),
+                    do: {:ok, cable}
              end)
     end
   end
