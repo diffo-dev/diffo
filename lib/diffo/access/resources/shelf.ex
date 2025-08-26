@@ -13,6 +13,8 @@ defmodule Diffo.Access.Shelf do
   alias Diffo.Provider.Instance.Party
   alias Diffo.Provider.Instance.Place
   alias Diffo.Access
+  alias Diffo.Access.Assigner
+  alias Diffo.Access.Assignment
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -33,6 +35,7 @@ defmodule Diffo.Access.Shelf do
 
   characteristics do
     characteristic :shelf, Diffo.Access.ShelfValue
+    characteristic :slots, Diffo.Access.AssignableValue
   end
 
   actions do
@@ -45,7 +48,7 @@ defmodule Diffo.Access.Shelf do
       argument :characteristics, {:array, :uuid}, public?: false
       argument :features, {:array, :uuid}, public?: false
 
-      change set_attribute :type, :resource
+      change set_attribute(:type, :resource)
 
       change before_action(fn changeset, _context ->
                changeset
@@ -70,9 +73,20 @@ defmodule Diffo.Access.Shelf do
       upsert? false
     end
 
+    update :define do
+      description "defines the shelf"
+      argument :characteristic_value_updates, {:array, :term}
+
+      change after_action(fn changeset, result, _context ->
+               with {:ok, _result} <- Characteristic.update_values(result, changeset),
+                    {:ok, card} <- Access.get_shelf_by_id(result.id),
+                    do: {:ok, card}
+             end)
+    end
+
     update :relate do
       description "relates the shelf with cards"
-      argument :relate, {:array, :struct}
+      argument :relationships, {:array, :struct}
 
       change after_action(fn changeset, result, _context ->
                with {:ok, _shelf} <- Relationship.relate_instance(result, changeset),
@@ -80,6 +94,16 @@ defmodule Diffo.Access.Shelf do
                     do: {:ok, shelf}
              end)
     end
-  end
 
+    update :assign_slot do
+      description "relates the shelf with an instance by assigning a slot"
+      argument :assignment, :struct, constraints: [instance_of: Assignment]
+
+      change after_action(fn changeset, result, _context ->
+               with {:ok, _card} <- Assigner.assign(result, changeset, :slots, :slot),
+                    {:ok, card} <- Access.get_shelf_by_id(result.id),
+                    do: {:ok, card}
+             end)
+    end
+  end
 end

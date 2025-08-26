@@ -33,7 +33,8 @@ defmodule Diffo.Provider.BaseInstance do
       {:places, :LOCATED_BY, :outgoing, :PlaceRef},
       {:parties, :INVOLVED_WITH, :outgoing, :PartyRef}
     ]
-    label :Instance
+
+    label(:Instance)
   end
 
   jason do

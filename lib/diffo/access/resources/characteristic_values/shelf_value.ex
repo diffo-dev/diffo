@@ -11,16 +11,13 @@ defmodule Diffo.Access.ShelfValue do
   end
 
   typed_struct do
-    field :name, :string,
-      description: "the shelf name"
+    field :name, :string, description: "the shelf name"
 
-    field :family, :atom,
-      description: "the shelf family name"
+    field :family, :atom, description: "the shelf family name"
 
     field :model, :string, description: "the shelf model name"
 
-    field :technology, :atom,
-      description: "the shelf technology"
+    field :technology, :atom, description: "the shelf technology"
   end
 
   defimpl String.Chars do

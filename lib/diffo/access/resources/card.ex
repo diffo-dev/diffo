@@ -12,8 +12,8 @@ defmodule Diffo.Access.Card do
   alias Diffo.Provider.Instance.Party
   alias Diffo.Provider.Instance.Place
   alias Diffo.Access
+  alias Diffo.Access.Assigner
   alias Diffo.Access.Assignment
-  alias Diffo.Access.PortsValue
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -34,7 +34,7 @@ defmodule Diffo.Access.Card do
 
   characteristics do
     characteristic :card, Diffo.Access.CardValue
-    characteristic :ports, Diffo.Access.PortsValue
+    characteristic :ports, Diffo.Access.AssignableValue
   end
 
   actions do
@@ -46,6 +46,8 @@ defmodule Diffo.Access.Card do
       argument :specified_by, :uuid, public?: false
       argument :characteristics, {:array, :uuid}, public?: false
       argument :features, {:array, :uuid}, public?: false
+
+      change set_attribute(:type, :resource)
 
       change before_action(fn changeset, _context ->
                changeset
@@ -70,60 +72,26 @@ defmodule Diffo.Access.Card do
       upsert? false
     end
 
-    update :assign_port do
-      description "relates the card with instances using ports"
-      argument :assignment, :struct, constraints: [instance_of: Assignment]
+    update :define do
+      description "defines the card"
+      argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, _card} <- assign_port(result, changeset),
+               with {:ok, _result} <- Characteristic.update_values(result, changeset),
                     {:ok, card} <- Access.get_card_by_id(result.id),
                     do: {:ok, card}
              end)
     end
-  end
 
-  defp assign_port(changeset, result) when is_struct(changeset) and is_struct(result) do
-    assignment = Map.get(changeset.data, :assignment)
-    target_id = Map.get(assignment, :instance_id)
-    case Map.get(assignment, :operation, :auto_assign) do
-      :auto_assign ->
-        case PortsValue.next(result) do
-          {:ok, assigned} ->
-            relate_is_assigned(result, assigned, target_id)
-          {:error, error} ->
-            {:error, error}
-        end
-      :assign ->
-        case PortsValue.assignable?(result, assignment.id) do
-          true ->
-            relate_is_assigned(result, assignment.id, target_id)
-          false ->
-            {:error, "port #{assignment.id} is not assignable" }
-        end
-      :unassign ->
-        unrelate_is_assigned(result, assignment.id, target_id)
+    update :assign_port do
+      description "relates the card with an instance by assigning a port"
+      argument :assignment, :struct, constraints: [instance_of: Assignment]
+
+      change after_action(fn changeset, result, _context ->
+               with {:ok, _card} <- Assigner.assign(result, changeset, :ports, :port),
+                    {:ok, card} <- Access.get_card_by_id(result.id),
+                    do: {:ok, card}
+             end)
     end
-  end
-
-  defp relate_is_assigned(result, value, target_id) when is_struct(result) and is_integer(value) and is_bitstring(target_id) do
-    case Diffo.Provider.create_characteristic(%{name: :port, value: value, type: :relationship}) do
-      {:ok, characteristic} ->
-        case Diffo.Provider.create_relationship(%{type: :assigned_to, source_id: result.id, target_id: target_id,
-            characteristics: [characteristic.id]}) do
-          {:ok, _relationship} ->
-            # we haven't refreshed the result there will be a new forward_relationship
-            {:ok, result}
-          {:error, error} ->
-            {:error, error}
-        end
-      {:error, error} ->
-        {:error, error}
-    end
-  end
-
-  defp unrelate_is_assigned(result, value, target_id) when is_struct(result) and is_integer(value) and is_bitstring(target_id) do
-    # destroy characteristic
-    # destroy relationship
-    {:error, "not implemented"}
   end
 end

@@ -11,16 +11,13 @@ defmodule Diffo.Access.CardValue do
   end
 
   typed_struct do
-    field :name, :string,
-      description: "the card name"
+    field :name, :string, description: "the card name"
 
-    field :family, :atom,
-      description: "the card family name"
+    field :family, :atom, description: "the card family name"
 
     field :model, :string, description: "the card model name"
 
-    field :technology, :atom,
-      description: "the card technology"
+    field :technology, :atom, description: "the card technology"
   end
 
   defimpl String.Chars do
