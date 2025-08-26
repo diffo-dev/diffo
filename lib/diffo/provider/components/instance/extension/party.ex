@@ -19,24 +19,33 @@ defmodule Diffo.Provider.Instance.Party do
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     parties = Ash.Changeset.get_argument(changeset, :parties)
 
-    party_refs =
-      Enum.reduce_while(parties, [], fn %{id: id, role: role}, acc ->
-        case Provider.create_party_ref(%{instance_id: result.id, party_id: id, role: role}) do
-          {:ok, party_ref} ->
-            {:cont, [party_ref | acc]}
+    case parties do
+      nil ->
+        {:ok, result}
 
-          {:error, _error} ->
-            {:halt, []}
-        end
-      end)
-
-    case party_refs do
       [] ->
-        {:error, "couldn't relate parties"}
+        {:ok, result}
 
       _ ->
-        # sorted = Ash.Sort.runtime_sort(party_refs, [role: :asc, inserted_at: :desc])
-        {:ok, result |> Map.put(:parties, party_refs)}
+        party_refs =
+          Enum.reduce_while(parties, [], fn %{id: id, role: role}, acc ->
+            case Provider.create_party_ref(%{instance_id: result.id, party_id: id, role: role}) do
+              {:ok, party_ref} ->
+                {:cont, [party_ref | acc]}
+
+              {:error, _error} ->
+                {:halt, []}
+            end
+          end)
+
+        case party_refs do
+          [] ->
+            {:error, "couldn't relate parties"}
+
+          _ ->
+            # sorted = Ash.Sort.runtime_sort(party_refs, [role: :asc, inserted_at: :desc])
+            {:ok, result |> Map.put(:parties, party_refs)}
+        end
     end
   end
 end

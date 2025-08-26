@@ -174,7 +174,7 @@ defmodule Diffo.Provider.Relationship do
   preparations do
     prepare build(
               load: [:target, :characteristics],
-              sort: [alias: :asc, type: :asc]
+              sort: [alias: :asc, type: :asc, inserted_at: :asc]
             )
   end
 

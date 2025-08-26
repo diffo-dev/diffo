@@ -24,7 +24,6 @@ defmodule Diffo.Provider.Instance.Feature do
 
     case features = create_features(module) do
       [] ->
-        Logger.error("couldn't create require features")
         changeset
 
       _ ->

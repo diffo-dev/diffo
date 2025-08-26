@@ -1,14 +1,14 @@
-defmodule Diffo.Support.PartiesTest do
+defmodule Diffo.Test.Parties do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  PartiesTest - Test support for Parties
+  Parties - Test support for Parties
   """
 
   import ExUnit.Assertions
 
   def check_parties(expected_parties, instance)
-       when is_list(expected_parties) and is_struct(instance) do
+      when is_list(expected_parties) and is_struct(instance) do
     Enum.zip_reduce(expected_parties, instance.parties, [], fn _expected_party,
                                                                actual_party_ref,
                                                                _acc ->

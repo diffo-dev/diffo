@@ -9,8 +9,8 @@ defmodule Diffo.Access.DslAccessTest do
   alias Diffo.Provider.Instance.Party
   alias Diffo.Access
   alias Diffo.Access.DslAccess
-  alias Diffo.Support.PartiesTest
-  alias Diffo.Support.PlacesTest
+  alias Diffo.Test.Parties
+  alias Diffo.Test.Places
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -96,8 +96,8 @@ defmodule Diffo.Access.DslAccessTest do
                )
       end)
 
-      PartiesTest.check_parties(parties, dsl_access)
-      PlacesTest.check_places(places, dsl_access)
+      Parties.check_parties(parties, dsl_access)
+      Places.check_places(places, dsl_access)
 
       encoding = Jason.encode!(dsl_access) |> Diffo.Util.summarise_dates()
 
@@ -125,7 +125,7 @@ defmodule Diffo.Access.DslAccessTest do
       assert dsl_access.service_state == :feasibilityChecked
       assert dsl_access.service_operating_status == :feasible
 
-      PlacesTest.check_places([initial_place | [esa_place]], dsl_access)
+      Places.check_places([initial_place | [esa_place]], dsl_access)
 
       encoding = Jason.encode!(dsl_access) |> Diffo.Util.summarise_dates()
 
@@ -135,7 +135,6 @@ defmodule Diffo.Access.DslAccessTest do
   end
 
   describe "service activation" do
-    @tag debug: true
     test "design the service" do
       initial_parties = create_initial_parties()
       initial_place = create_initial_place()
@@ -167,7 +166,7 @@ defmodule Diffo.Access.DslAccessTest do
       assert dsl_access.service_state == :reserved
       assert dsl_access.service_operating_status == :feasible
 
-      PlacesTest.check_places([initial_place | [esa_place]], dsl_access)
+      Places.check_places([initial_place | [esa_place]], dsl_access)
 
       encoding = Jason.encode!(dsl_access) |> Diffo.Util.summarise_dates()
 
@@ -217,5 +216,4 @@ defmodule Diffo.Access.DslAccessTest do
 
     [%Party{id: individual.id, role: :Customer}, %Party{id: org.id, role: :Reseller}]
   end
-
 end

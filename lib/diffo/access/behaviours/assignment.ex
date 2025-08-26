@@ -7,19 +7,18 @@ defmodule Diffo.Access.Assignment do
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   jason do
-    pick [:id, :instance_id, :operation]
+    pick [:id, :assignee_id, :operation]
   end
 
   typed_struct do
     field :id, :integer,
       constraints: [min: 0],
-      description: "the id of the assigned thing"
+      description: "the id of the partial resource"
 
-    field :instance_id, :uuid,
-      description: "the consuming instance_id"
+    field :assignee_id, :uuid, description: "the id of the assignee Ash resource"
 
     field :operation, :atom,
-      description: "the operation the consumer is requesting",
+      description: "the operation the assignee is requesting",
       default: :assign,
       constraints: [one_of: [:assign, :unassign, :auto_assign]]
   end

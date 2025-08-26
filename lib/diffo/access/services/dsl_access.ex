@@ -114,7 +114,7 @@ defmodule Diffo.Access.DslAccess do
       change transition_state(:reserved)
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, _dslam} <- Characteristic.update_values(result, changeset),
+               with {:ok, _result} <- Characteristic.update_values(result, changeset),
                     {:ok, dsl_access} <- Access.get_dsl_by_id(result.id),
                     do: {:ok, dsl_access}
              end)
