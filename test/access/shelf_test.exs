@@ -99,7 +99,7 @@ defmodule Diffo.Access.ShelfTest do
     cards = create_common_cards()
 
 
-    {:ok, shelf} = Access.relate_cards(shelf, %{relationships: cards})
+    {:ok, shelf} = Access.relate_shelf(shelf, %{relationships: cards})
 
     encoding = Jason.encode!(shelf) |> Diffo.Util.summarise_dates()
 
