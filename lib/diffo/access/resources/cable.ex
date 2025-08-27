@@ -7,10 +7,11 @@ defmodule Diffo.Access.Cable do
 
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Specification
+  alias Diffo.Provider.Instance.Relationship
   alias Diffo.Provider.Instance.Feature
   alias Diffo.Provider.Instance.Characteristic
-  alias Diffo.Provider.Instance.Party
   alias Diffo.Provider.Instance.Place
+  alias Diffo.Provider.Instance.Party
   alias Diffo.Access
   alias Diffo.Access.Assigner
   alias Diffo.Access.Assignment
@@ -41,11 +42,12 @@ defmodule Diffo.Access.Cable do
     create :build do
       description "creates a new Cable resource instance for build"
       accept [:id, :name, :type, :which]
+      argument :specified_by, :uuid, public?: false
+      argument :relationships, {:array, :struct}
+      argument :features, {:array, :uuid}, public?: false
+      argument :characteristics, {:array, :uuid}, public?: false
       argument :places, {:array, :struct}
       argument :parties, {:array, :struct}
-      argument :specified_by, :uuid, public?: false
-      argument :characteristics, {:array, :uuid}, public?: false
-      argument :features, {:array, :uuid}, public?: false
 
       change set_attribute(:type, :resource)
 
@@ -58,12 +60,11 @@ defmodule Diffo.Access.Cable do
 
       change after_action(fn changeset, result, _context ->
                with {:ok, with_specification} <- Specification.relate_instance(result, changeset),
-                    {:ok, with_features} <-
-                      Feature.relate_instance(with_specification, changeset),
-                    {:ok, with_characteristics} <-
-                      Characteristic.relate_instance(with_features, changeset),
-                    {:ok, with_parties} <- Party.relate_instance(with_characteristics, changeset),
-                    {:ok, _with_places} <- Place.relate_instance(with_parties, changeset),
+                    {:ok, with_relationships} <- Relationship.relate_instance(with_specification, changeset),
+                    {:ok, with_features} <- Feature.relate_instance(with_relationships, changeset),
+                    {:ok, with_characteristics} <- Characteristic.relate_instance(with_features, changeset),
+                    {:ok, with_places} <- Place.relate_instance(with_characteristics, changeset),
+                    {:ok, _with_parties} <- Party.relate_instance(with_places, changeset),
                     {:ok, cable} <- Access.get_cable_by_id(result.id),
                     do: {:ok, cable}
              end)
