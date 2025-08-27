@@ -1,8 +1,8 @@
-defmodule Diffo.Access.Card do
+defmodule Diffo.Access.Path do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Card - Card Resource Instance
+  Path - Path Resource Instance
   """
 
   alias Diffo.Provider.BaseInstance
@@ -12,35 +12,33 @@ defmodule Diffo.Access.Card do
   alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
+
   alias Diffo.Access
-  alias Diffo.Access.Assigner
-  alias Diffo.Access.Assignment
 
   use Ash.Resource,
     fragments: [BaseInstance],
     domain: Access
 
   resource do
-    description "An Ash Resource representing a Card"
-    plural_name :Cards
+    description "An Ash Resource representing a Path"
+    plural_name :Paths
   end
 
   specification do
-    id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
-    name "card"
+    id "1d507914-8f76-48cb-aa0e-3a8f92951ab0"
+    name "path"
     type :resourceSpecification
-    description "A Card Resource Instance"
+    description "A Path Resource Instance"
     category "Network Resource"
   end
 
   characteristics do
-    characteristic :card, Diffo.Access.CardValue
-    characteristic :ports, Diffo.Access.AssignableValue
+    characteristic :path, Diffo.Access.PathValue
   end
 
   actions do
     create :build do
-      description "creates a new Card resource instance for build"
+      description "creates a new Path resource instance for build"
       accept [:id, :name, :type, :which]
       argument :specified_by, :uuid, public?: false
       argument :relationships, {:array, :struct}
@@ -65,8 +63,8 @@ defmodule Diffo.Access.Card do
                     {:ok, with_characteristics} <- Characteristic.relate_instance(with_features, changeset),
                     {:ok, with_places} <- Place.relate_instance(with_characteristics, changeset),
                     {:ok, _with_parties} <- Party.relate_instance(with_places, changeset),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+                    {:ok, path} <- Access.get_path_by_id(result.id),
+                    do: {:ok, path}
              end)
 
       change load [:href]
@@ -74,35 +72,24 @@ defmodule Diffo.Access.Card do
     end
 
     update :define do
-      description "defines the card"
+      description "defines the path"
       argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
                with {:ok, _result} <- Characteristic.update_values(result, changeset),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+                    {:ok, path} <- Access.get_path_by_id(result.id),
+                    do: {:ok, path}
              end)
     end
 
     update :relate do
-      description "relates the card with other instances"
+      description "relates the path with other instances"
       argument :relationships, {:array, :struct}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, _card} <- Relationship.relate_instance(result, changeset),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
-             end)
-    end
-
-    update :assign_port do
-      description "relates the card with an instance by assigning a port"
-      argument :assignment, :struct, constraints: [instance_of: Assignment]
-
-      change after_action(fn changeset, result, _context ->
-               with {:ok, _card} <- Assigner.assign(result, changeset, :ports, :port),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+               with {:ok, _path} <- Relationship.relate_instance(result, changeset),
+                    {:ok, path} <- Access.get_path_by_id(result.id),
+                    do: {:ok, path}
              end)
     end
   end

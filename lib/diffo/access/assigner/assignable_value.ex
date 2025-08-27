@@ -13,17 +13,17 @@ defmodule Diffo.Access.AssignableValue do
   typed_struct do
     field :first, :integer,
       description: "the first assignable thing",
-      default: 0,
+      default: 1,
       constraints: [min: 0]
 
     field :last, :integer,
       description: "the last assignable thing",
-      default: 0,
+      default: 1,
       constraints: [min: 0]
 
     field :free, :integer,
       description: "the number of free things",
-      default: 0,
+      default: 1,
       constraints: [min: 0]
 
     field :type, :string, description: "the type of the thing"

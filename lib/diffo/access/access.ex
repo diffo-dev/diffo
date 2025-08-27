@@ -11,6 +11,7 @@ defmodule Diffo.Access do
   alias Diffo.Access.Shelf
   alias Diffo.Access.Card
   alias Diffo.Access.Cable
+  alias Diffo.Access.Path
 
   resources do
     resource DslAccess do
@@ -43,5 +44,12 @@ defmodule Diffo.Access do
       define :relate_cable, action: :relate
       define :assign_pair, action: :assign_pair
      end
+
+    resource Path do
+      define :get_path_by_id, action: :read, get_by: :id
+      define :build_path, action: :build
+      define :define_path, action: :define
+      define :relate_path, action: :relate
+    end
   end
 end
