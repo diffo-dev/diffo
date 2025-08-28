@@ -11,11 +11,9 @@ defmodule Diffo.Access.IntegerUnit do
   end
 
   typed_struct do
-    field :amount, :integer,
-      description: "the amount"
+    field :amount, :integer, description: "the amount"
 
-    field :unit, :atom,
-      description: "the unit"
+    field :unit, :atom, description: "the unit"
   end
 
   defimpl String.Chars do

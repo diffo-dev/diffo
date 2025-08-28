@@ -59,7 +59,7 @@ defmodule Diffo.Access.CableTest do
       encoding = Jason.encode!(cable) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{cable.id}",\"href\":\"resourceInventoryManagement/v4/resource/cable/#{cable.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"ce0a567a-6abb-4862-9e33-851fd79fa595\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/ce0a567a-6abb-4862-9e33-851fd79fa595\",\"name\":\"cable\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"cable\",\"value\":{}},{\"name\":\"pairs\",\"value\":{\"first\":0,\"last\":0,\"free\":0,\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{cable.id}",\"href\":\"resourceInventoryManagement/v4/resource/cable/#{cable.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"ce0a567a-6abb-4862-9e33-851fd79fa595\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/ce0a567a-6abb-4862-9e33-851fd79fa595\",\"name\":\"cable\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"cable\",\"value\":{}},{\"name\":\"pairs\",\"value\":{\"first\":1,\"last\":1,\"free\":1,\"algorithm\":\"lowest\"}}]})
     end
 
     test "define cable" do

@@ -15,9 +15,13 @@ defmodule Diffo.Access.CableValue do
 
     field :pairs, :integer, description: "the number of pairs in the cable"
 
-    field :length, :struct, constraints: [instance_of: IntegerUnit], description: "the length of the cable"
+    field :length, :struct,
+      constraints: [instance_of: IntegerUnit],
+      description: "the length of the cable"
 
-    field :loss, :struct, constraints: [instance_of: FloatUnit], description: "the loss of the cable at 300kHz"
+    field :loss, :struct,
+      constraints: [instance_of: FloatUnit],
+      description: "the loss of the cable at 300kHz"
 
     field :technology, :atom, description: "the cable technology"
   end

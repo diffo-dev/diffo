@@ -18,10 +18,13 @@ defmodule Diffo.Test.Characteristics do
 
         cond do
           is_list(expected) ->
-            Enum.each(expected,
+            Enum.each(
+              expected,
               fn {field, expected_value} ->
                 assert expected_value --- Map.get(characteristic.value, field) == nil
-              end)
+              end
+            )
+
           true ->
             assert expected --- characteristic.value == nil
         end

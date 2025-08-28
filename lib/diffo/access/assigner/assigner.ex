@@ -11,7 +11,8 @@ defmodule Diffo.Access.Assigner do
   Assign a thing using the instance changeset assignment
   """
   def assign(result, changeset, things, thing)
-       when is_struct(result) and is_struct(changeset, Ash.Changeset) and is_atom(things) and is_atom(thing) do
+      when is_struct(result) and is_struct(changeset, Ash.Changeset) and is_atom(things) and
+             is_atom(thing) do
     assignment = Map.get(changeset.arguments, :assignment, %{})
     assignee_id = Map.get(assignment, :assignee_id)
 
@@ -46,7 +47,8 @@ defmodule Diffo.Access.Assigner do
   end
 
   defp relate_is_assigned(result, things, thing, value, assignee_id)
-       when is_struct(result) and is_atom(things) and is_atom(thing) and is_integer(value) and is_bitstring(assignee_id) do
+       when is_struct(result) and is_atom(things) and is_atom(thing) and is_integer(value) and
+              is_bitstring(assignee_id) do
     case Diffo.Provider.create_characteristic(%{name: thing, value: value, type: :relationship}) do
       {:ok, characteristic} ->
         case Diffo.Provider.create_relationship(%{
@@ -75,7 +77,8 @@ defmodule Diffo.Access.Assigner do
   end
 
   defp unrelate_is_assigned(result, things, value, assignee_id)
-       when is_struct(result) and is_atom(things) and is_integer(value) and is_bitstring(assignee_id) do
+       when is_struct(result) and is_atom(things) and is_integer(value) and
+              is_bitstring(assignee_id) do
     # destroy characteristic
     # destroy relationship
     {:error, "not implemented"}
@@ -108,7 +111,8 @@ defmodule Diffo.Access.Assigner do
     |> Enum.sort(Diffo.Access.Assignment)
   end
 
-  defp next(instance, things, thing) when is_struct(instance) and is_atom(things) and is_atom(thing) do
+  defp next(instance, things, thing)
+       when is_struct(instance) and is_atom(things) and is_atom(thing) do
     characteristic = Enum.find(instance.characteristics, fn %{name: name} -> name == things end)
     algorithm = Map.get(characteristic.value, :algorithm)
 
@@ -130,11 +134,12 @@ defmodule Diffo.Access.Assigner do
     end
   end
 
-  defp assignable?(instance, things, thing, value) when is_struct(instance) and is_atom(things) and is_atom(thing) and is_integer(value) do
+  defp assignable?(instance, things, thing, value)
+       when is_struct(instance) and is_atom(things) and is_atom(thing) and is_integer(value) do
     characteristic = Enum.find(instance.characteristics, fn %{name: name} -> name == things end)
     free = free(instance, thing, characteristic.value)
 
-    (value in free)
+    value in free
   end
 
   defp decrement_free(instance, things) when is_struct(instance) and is_atom(things) do
@@ -154,7 +159,8 @@ defmodule Diffo.Access.Assigner do
   end
 
   defp free(instance, thing, assignable_value)
-       when is_struct(instance) and is_atom(thing) and is_struct(assignable_value, AssignableValue) do
+       when is_struct(instance) and is_atom(thing) and
+              is_struct(assignable_value, AssignableValue) do
     assigned =
       assignments(instance, thing)
       |> Enum.into([], &Map.get(&1, :id))
@@ -162,6 +168,6 @@ defmodule Diffo.Access.Assigner do
     first = Map.get(assignable_value, :first)
     last = Map.get(assignable_value, :last)
 
-    (Enum.to_list(first..last) -- assigned)
+    Enum.to_list(first..last) -- assigned
   end
 end
