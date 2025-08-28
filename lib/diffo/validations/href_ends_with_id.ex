@@ -1,7 +1,7 @@
 defmodule Diffo.Validations.HrefEndsWithId do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
-  Copyright Matt Beanland beanland@live.com.au
+
 
   HrefEndsWithId - Ash Resource Validation checking href ends with id
   """

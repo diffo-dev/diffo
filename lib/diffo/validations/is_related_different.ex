@@ -1,7 +1,7 @@
 defmodule Diffo.Validations.IsRelatedDifferent do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
-  Copyright Matt Beanland beanland@live.com.au
+
 
   IsRelatedDifferent - Ash Resource Validation checking related Instance has different attribute value
   """
