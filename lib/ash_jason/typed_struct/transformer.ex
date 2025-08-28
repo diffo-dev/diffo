@@ -35,10 +35,17 @@ defmodule AshJason.TypedStruct.Transformer do
           keys
 
         options when is_map(options) ->
-          #fields = Ash.TypedStruct.Info.fields(dsl)
+          # fields = Ash.TypedStruct.Info.fields(dsl)
           fields = %{}
-          fields = if Map.get(options, :private?), do: fields, else: Enum.filter(fields, & &1.public?)
-          fields = if Map.get(options, :sensitive?), do: fields, else: Enum.reject(fields, &Map.get(&1, :sensitive?))
+
+          fields =
+            if Map.get(options, :private?), do: fields, else: Enum.filter(fields, & &1.public?)
+
+          fields =
+            if Map.get(options, :sensitive?),
+              do: fields,
+              else: Enum.reject(fields, &Map.get(&1, :sensitive?))
+
           keys = Enum.map(fields, & &1.name)
           keys = keys ++ Map.get(options, :include, [])
           keys = Enum.uniq(keys)
@@ -67,8 +74,9 @@ defmodule AshJason.TypedStruct.Transformer do
   def make_step(:merge, values) do
     quote bind_quoted: [values: Macro.escape(values)] do
       result =
-        for tuple <- values, {key, value} = tuple, reduce: result do result ->
-          List.keystore(result, key, 0, tuple)
+        for tuple <- values, {key, value} = tuple, reduce: result do
+          result ->
+            List.keystore(result, key, 0, tuple)
         end
     end
   end
@@ -112,7 +120,11 @@ defmodule AshJason.TypedStruct.Transformer do
 
   def make_step(:order, fun) when is_function(fun, 1) do
     quote bind_quoted: [fun: Macro.escape(fun)] do
-      result = result |> Enum.map(&elem(&1, 0)) |> fun.() |> Enum.map(&{&1, List.keyfind!(result, &1, 0) |> elem(1)})
+      result =
+        result
+        |> Enum.map(&elem(&1, 0))
+        |> fun.()
+        |> Enum.map(&{&1, List.keyfind!(result, &1, 0) |> elem(1)})
     end
   end
 

@@ -8,8 +8,7 @@ defmodule Diffo.Provider.RelationshipTest do
 
   setup do
     on_exit(fn ->
-      # AshNeo4j.Neo4jHelper.delete_all()
-      :ok
+      AshNeo4j.Neo4jHelper.delete_all()
     end)
   end
 
@@ -512,7 +511,7 @@ defmodule Diffo.Provider.RelationshipTest do
           type: :resource
         })
 
-      assigned_to_relationship =
+      assignedTo_relationship =
         Diffo.Provider.create_relationship!(%{
           type: :assignedTo,
           source_id: resource_instance.id,
@@ -526,7 +525,7 @@ defmodule Diffo.Provider.RelationshipTest do
       #    target_id: resource_instance.id
       #  })
 
-      expected_assigned_to_relationship = %Diffo.Provider.Relationship{
+      expected_assignedTo_relationship = %Diffo.Provider.Relationship{
         type: :assignedTo,
         target: Diffo.Provider.Reference.reference(service_instance),
         characteristics: nil
@@ -539,7 +538,7 @@ defmodule Diffo.Provider.RelationshipTest do
       # }
 
       # refute expected_is_assigned_relationship --- is_assigned_relationship
-      refute expected_assigned_to_relationship --- assigned_to_relationship
+      refute expected_assignedTo_relationship --- assignedTo_relationship
     end
   end
 
