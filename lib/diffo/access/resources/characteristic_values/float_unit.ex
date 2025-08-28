@@ -11,11 +11,9 @@ defmodule Diffo.Access.FloatUnit do
   end
 
   typed_struct do
-    field :amount, :float,
-      description: "the amount"
+    field :amount, :float, description: "the amount"
 
-    field :unit, :atom,
-      description: "the unit"
+    field :unit, :atom, description: "the unit"
   end
 
   defimpl String.Chars do

@@ -10,7 +10,6 @@ defmodule Diffo.Access.PathTest do
   alias Diffo.Access
   alias Diffo.Access.Path
   alias Diffo.Access.Assignment
-  alias Diffo.Test.Characteristics
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -24,9 +23,11 @@ defmodule Diffo.Access.PathTest do
 
   describe "build path" do
     test "create a path" do
-    places = [create_customer_place(), create_exchange_place(), create_esa_place()]
-    parties = [create_provider_party()]
-    {:ok, path} = Access.build_path(%{name: "82 Rathmullen - DONC", places: places, parties: parties})
+      places = [create_customer_place(), create_exchange_place(), create_esa_place()]
+      parties = [create_provider_party()]
+
+      {:ok, path} =
+        Access.build_path(%{name: "82 Rathmullen - DONC", places: places, parties: parties})
 
       # check the instance is a Path
       assert is_struct(path, Path)
@@ -74,7 +75,9 @@ defmodule Diffo.Access.PathTest do
   test "define path" do
     places = [create_customer_place(), create_exchange_place(), create_esa_place()]
     parties = [create_provider_party()]
-    {:ok, path} = Access.build_path(%{name: "82 Rathmullen - DONC", places: places, parties: parties})
+
+    {:ok, path} =
+      Access.build_path(%{name: "82 Rathmullen - DONC", places: places, parties: parties})
 
     updates = [
       path: [name: "82 Rathmullen - DONC", technology: :copper]
@@ -85,14 +88,16 @@ defmodule Diffo.Access.PathTest do
     encoding = Jason.encode!(path) |> Diffo.Util.summarise_dates()
 
     assert encoding ==
-              ~s({\"id\":\"#{path.id}",\"href\":\"resourceInventoryManagement/v4/resource/path/#{path.id}",\"category\":\"Network Resource\",\"name\":\"82 Rathmullen - DONC\",\"resourceSpecification\":{\"id\":\"1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"name\":\"path\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"path\",\"value\":{\"name\":\"82 Rathmullen - DONC\",\"sections\":0,\"technology\":\"copper\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC\",\"href\":\"place/telstra/DONC\",\"name\":\"exchangeId\",\"role\":\"NetworkSite\",\"@referredType\":\"GeographicSite\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC-0001\",\"href\":\"place/telstra/DONC-0001\",\"name\":\"esaId\",\"role\":\"ServingArea\",\"@referredType\":\"GeographicLocation\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"Access\",\"name\":\"organizationId\",\"role\":\"Provider\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
+             ~s({\"id\":\"#{path.id}",\"href\":\"resourceInventoryManagement/v4/resource/path/#{path.id}",\"category\":\"Network Resource\",\"name\":\"82 Rathmullen - DONC\",\"resourceSpecification\":{\"id\":\"1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"name\":\"path\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"path\",\"value\":{\"name\":\"82 Rathmullen - DONC\",\"sections\":0,\"technology\":\"copper\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC\",\"href\":\"place/telstra/DONC\",\"name\":\"exchangeId\",\"role\":\"NetworkSite\",\"@referredType\":\"GeographicSite\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC-0001\",\"href\":\"place/telstra/DONC-0001\",\"name\":\"esaId\",\"role\":\"ServingArea\",\"@referredType\":\"GeographicLocation\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"Access\",\"name\":\"organizationId\",\"role\":\"Provider\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
   end
 
   @tag debug: true
   test "relate cables and dslam" do
     places = [create_customer_place(), create_exchange_place(), create_esa_place()]
     parties = [create_provider_party()]
-    {:ok, path} = Access.build_path(%{name: "82 Rathmullen - DONC", places: places, parties: parties})
+
+    {:ok, path} =
+      Access.build_path(%{name: "82 Rathmullen - DONC", places: places, parties: parties})
 
     updates = [
       path: [name: "82 Rathmullen - DONC", technology: :copper]
@@ -103,35 +108,32 @@ defmodule Diffo.Access.PathTest do
     cables = create_cables(places)
 
     # now assign a pair from each cable
-    cables = Enum.into(cables, [],
-      fn cable ->
-        IO.inspect(cable, label: :cable)
-        Access.assign_pair!(cable, %{assignment: %Assignment{assignee_id: path.id, operation: :auto_assign}})
+    _cables =
+      Enum.into(cables, [], fn cable ->
+        Access.assign_pair!(cable, %{
+          assignment: %Assignment{assignee_id: path.id, operation: :auto_assign}
+        })
       end)
 
-    [tie, main, secondary, tertiary, lead_in] = cables
-
-    IO.inspect(tie, label: :tie)
-
     # now assign a port from a line card
-    line_card = create_dslam("QDONC-0001", tl(places), parties)
-    Access.assign_port!(line_card, %{assignment: %Assignment{assignee_id: path.id, operation: :auto_assign}})
+    [_dslam, line_card] = create_dslam_with_line_card("QDONC-0001", tl(places), parties)
 
-    # we should add the forward 'is_assigned' relationships, however this will cause infinite loops on loading.
-    Access.relate_path(path, relationships: [])
+    Access.assign_port!(line_card, %{
+      assignment: %Assignment{assignee_id: path.id, operation: :auto_assign}
+    })
 
-    # refresh the path - we don't show reverse relationships
-    {:ok, path} = Access.get_path_by_id(path.id)
-    IO.inspect(path, label: :path)
+    # refresh the path loading the reverse relationships explicitly, which should include
+    # relationships with cables assigning pairs
+    # relationship with line card assigning port
 
-    encoding = Jason.encode!(path) |> Diffo.Util.summarise_dates() |> IO.inspect()
+    {:ok, path} = Access.get_path_by_id(path.id, load: [:reverse_relationships])
+    assert length(path.reverse_relationships) == 6
 
-    # we should have a characteristic which summarises the sections, this would need to be derived from the reverse relationships
+    encoding = Jason.encode!(path) |> Diffo.Util.summarise_dates()
 
+    # the reverse relationships are not encoded to json
     assert encoding ==
              ~s({\"id\":\"#{path.id}",\"href\":\"resourceInventoryManagement/v4/resource/path/#{path.id}",\"category\":\"Network Resource\",\"name\":\"82 Rathmullen - DONC\",\"resourceSpecification\":{\"id\":\"1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"name\":\"path\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"path\",\"value\":{\"name\":\"82 Rathmullen - DONC\",\"sections\":0,\"technology\":\"copper\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC\",\"href\":\"place/telstra/DONC\",\"name\":\"exchangeId\",\"role\":\"NetworkSite\",\"@referredType\":\"GeographicSite\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC-0001\",\"href\":\"place/telstra/DONC-0001\",\"name\":\"esaId\",\"role\":\"ServingArea\",\"@referredType\":\"GeographicLocation\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"Access\",\"name\":\"organizationId\",\"role\":\"Provider\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
-
-    {:ok, path} = Ash.load(path, :reverse_relationships) |> IO.inspect(label: :reverse_relationships)
   end
 
   defp create_customer_place do
@@ -173,28 +175,52 @@ defmodule Diffo.Access.PathTest do
   defp create_cables(places) do
     [z_end, exchange, _esa] = places
     tie = create_cable("QDONC-0001 line card 1 tie cable", [], [])
-    main = create_cable("DONC-0001-001 Lawford St main cable", [%Relationship{id: tie.id, direction: :forward, type: :connectedTo}], [z_end])
-    secondary = create_cable("DONC-0001-005 North Rathmullen Quad cable", [%Relationship{id: main.id, direction: :forward, type: :connectedTo}], [])
-    tertiary = create_cable("DONC-0001-013 Rathmullen Quad East cable", [%Relationship{id: secondary.id, direction: :forward, type: :connectedTo}], [])
-    lead_in = create_cable("82 Rathmullen lead in", [%Relationship{id: tertiary.id, direction: :forward, type: :connectedTo}], [exchange])
+
+    main =
+      create_cable(
+        "DONC-0001-001 Lawford St main cable",
+        [%Relationship{id: tie.id, direction: :forward, type: :connectedTo}],
+        [z_end]
+      )
+
+    secondary =
+      create_cable(
+        "DONC-0001-005 North Rathmullen Quad cable",
+        [%Relationship{id: main.id, direction: :forward, type: :connectedTo}],
+        []
+      )
+
+    tertiary =
+      create_cable(
+        "DONC-0001-013 Rathmullen Quad East cable",
+        [%Relationship{id: secondary.id, direction: :forward, type: :connectedTo}],
+        []
+      )
+
+    lead_in =
+      create_cable(
+        "82 Rathmullen lead in",
+        [%Relationship{id: tertiary.id, direction: :forward, type: :connectedTo}],
+        [exchange]
+      )
+
     [tie, main, secondary, tertiary, lead_in]
   end
 
-  defp create_cable(name, relationships, places) when is_bitstring(name) and is_list(relationships) and is_list(places) do
+  defp create_cable(name, relationships, places)
+       when is_bitstring(name) and is_list(relationships) and is_list(places) do
     Access.build_cable!(%{name: "#{name}", places: places, relationships: relationships})
   end
 
-  defp create_dslam(name, places, parties) when is_bitstring(name) do
+  defp create_dslam_with_line_card(name, places, parties) when is_bitstring(name) do
     shelf = Access.build_shelf!(%{name: "#{name}", places: places, parties: parties})
-    card = create_line_card("line card")
-    Access.assign_slot!(shelf, %{assignment: card})
-  end
+    card = Access.build_card!(%{name: "#{name}"})
 
-  defp create_line_card(name) when is_bitstring(name) do
-    card =
-      Access.build_card!(%{name: "#{name}"})
+    Access.assign_slot!(shelf, %{
+      assignment: %Assignment{assignee_id: card.id, operation: :auto_assign}
+    })
 
-    %Assignment{assignee_id: card.id, operation: :auto_assign}
+    [shelf, card]
   end
 
   defp create_provider_party do

@@ -58,9 +58,12 @@ defmodule Diffo.Access.Path do
 
       change after_action(fn changeset, result, _context ->
                with {:ok, with_specification} <- Specification.relate_instance(result, changeset),
-                    {:ok, with_relationships} <- Relationship.relate_instance(with_specification, changeset),
-                    {:ok, with_features} <- Feature.relate_instance(with_relationships, changeset),
-                    {:ok, with_characteristics} <- Characteristic.relate_instance(with_features, changeset),
+                    {:ok, with_relationships} <-
+                      Relationship.relate_instance(with_specification, changeset),
+                    {:ok, with_features} <-
+                      Feature.relate_instance(with_relationships, changeset),
+                    {:ok, with_characteristics} <-
+                      Characteristic.relate_instance(with_features, changeset),
                     {:ok, with_places} <- Place.relate_instance(with_characteristics, changeset),
                     {:ok, _with_parties} <- Party.relate_instance(with_places, changeset),
                     {:ok, path} <- Access.get_path_by_id(result.id),

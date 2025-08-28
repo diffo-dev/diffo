@@ -43,7 +43,7 @@ defmodule Diffo.Access do
       define :define_cable, action: :define
       define :relate_cable, action: :relate
       define :assign_pair, action: :assign_pair
-     end
+    end
 
     resource Path do
       define :get_path_by_id, action: :read, get_by: :id
