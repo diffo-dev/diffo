@@ -13,8 +13,6 @@ defmodule Diffo.Provider.RelationshipTest do
   end
 
   describe "Diffo.Provider read Relationships" do
-    @tag bugged: true
-    # circular relationships
     test "list relationships - success" do
       access_specification = Diffo.Provider.create_specification!(%{name: "access"})
       aggregation_specification = Diffo.Provider.create_specification!(%{name: "aggregation"})
@@ -61,8 +59,6 @@ defmodule Diffo.Provider.RelationshipTest do
       assert Map.get(List.last(relationships), :alias) == :edge_peer
     end
 
-    @tag bugged: true
-    # circular relationships
     test "list service relationships from - success" do
       specification = Diffo.Provider.create_specification!(%{name: "accessEvc"})
       evpl1 = Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "evpl1"})
@@ -105,8 +101,6 @@ defmodule Diffo.Provider.RelationshipTest do
       assert Diffo.Provider.list_resource_relationships_from!(evpl2.id) == []
     end
 
-    @tag bugged: true
-    # circular relationships
     test "list resource relationships from - success" do
       specification =
         Diffo.Provider.create_specification!(%{name: "cable", type: :resourceSpecification})
@@ -178,8 +172,6 @@ defmodule Diffo.Provider.RelationshipTest do
   end
 
   describe "Diffo.Provider create Relationships" do
-    @tag bugged: true
-    # circular relationships
     test "create a mutual peer service relationship - success" do
       specification = Diffo.Provider.create_specification!(%{name: "accessEvc"})
       evpl1 = Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "evpl1"})
@@ -210,8 +202,6 @@ defmodule Diffo.Provider.RelationshipTest do
       assert is_struct(relationship2.target, Diffo.Provider.Instance)
     end
 
-    @tag bugged: true
-    # circular relationship issue
     test "create a mutual connects resource relationship - success" do
       resource_specification =
         Diffo.Provider.create_specification!(%{name: "cable", type: :resourceSpecification})
@@ -494,8 +484,6 @@ defmodule Diffo.Provider.RelationshipTest do
   describe "Diffo.Provider outstanding Relationships" do
     use Outstand
 
-    @tag bugged: true
-    # reverse relationship causes circular loading issues
     test "resolve expected relationships" do
       service_specification = Diffo.Provider.create_specification!(%{name: "adslAccess"})
 
@@ -518,12 +506,12 @@ defmodule Diffo.Provider.RelationshipTest do
           target_id: service_instance.id
         })
 
-      # is_assigned_relationship =
-      #  Diffo.Provider.create_relationship!(%{
-      #    type: :isAssigned,
-      #    source_id: service_instance.id,
-      #    target_id: resource_instance.id
-      #  })
+      is_assigned_relationship =
+        Diffo.Provider.create_relationship!(%{
+          type: :isAssigned,
+          source_id: service_instance.id,
+          target_id: resource_instance.id
+        })
 
       expected_assignedTo_relationship = %Diffo.Provider.Relationship{
         type: :assignedTo,
@@ -531,13 +519,13 @@ defmodule Diffo.Provider.RelationshipTest do
         characteristics: nil
       }
 
-      # expected_is_assigned_relationship = %Diffo.Provider.Relationship{
-      #  type: :isAssigned,
-      #  target: Diffo.Provider.Reference.reference(resource_instance),
-      #  characteristics: nil
-      # }
+      expected_is_assigned_relationship = %Diffo.Provider.Relationship{
+        type: :isAssigned,
+        target: Diffo.Provider.Reference.reference(resource_instance),
+        characteristics: nil
+      }
 
-      # refute expected_is_assigned_relationship --- is_assigned_relationship
+      refute expected_is_assigned_relationship --- is_assigned_relationship
       refute expected_assignedTo_relationship --- assignedTo_relationship
     end
   end

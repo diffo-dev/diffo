@@ -87,36 +87,36 @@ defmodule Diffo.Provider.Instance.Util do
   def relationships(result) do
     if relationships = Diffo.Util.get(result, :forward_relationships) do
       # sorting here as want to sort on the related instance hrefs, not the relationship
-      sorted_relationships = Enum.sort_by(relationships, & &1.target.href, :asc)
+      sorted_relationships = Enum.sort_by(relationships, & &1.target_href, :asc)
 
       service_relationships =
         sorted_relationships
         |> Enum.filter(fn relationship ->
-          relationship.target != nil && relationship.target.type == :service
+          relationship.target != nil && relationship.target_type == :service
         end)
 
       resource_relationships =
         sorted_relationships
         |> Enum.filter(fn relationship ->
-          relationship.target != nil && relationship.target.type == :resource
+          relationship.target != nil && relationship.target_type == :resource
         end)
 
       supporting_services =
         service_relationships
         |> Enum.filter(fn relationship ->
-          relationship.alias != nil && relationship.target != nil
+          relationship.alias != nil
         end)
         |> Enum.into([], fn aliased ->
-          Diffo.Provider.Reference.reference(aliased.target, :href)
+          %Diffo.Provider.Reference{id: aliased.alias, href: Map.get(aliased, :target_href)}
         end)
 
       supporting_resources =
         resource_relationships
         |> Enum.filter(fn relationship ->
-          relationship.alias != nil && relationship.target != nil
+          relationship.alias != nil
         end)
         |> Enum.into([], fn aliased ->
-          Diffo.Provider.Reference.reference(aliased.target, :href)
+          %Diffo.Provider.Reference{id: aliased.alias, href: Map.get(aliased, :target_href)}
         end)
 
       result
