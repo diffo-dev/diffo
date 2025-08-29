@@ -474,7 +474,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
     end
 
     @tag bugged: true
-    # the refreshed instance doesn't have any external identifiers
+    # update bug?
     test "update instance_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})

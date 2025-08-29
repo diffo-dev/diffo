@@ -35,8 +35,13 @@ defmodule Diffo.Provider.Reference do
 
   defimpl Jason.Encoder do
     def encode(reference, _opts) do
-      Jason.OrderedObject.new(id: reference.id, href: reference.href)
-      |> Jason.encode!()
+      case reference.href do
+        nil ->
+          Jason.encode!(%{id: reference.id})
+        _ ->
+          Jason.OrderedObject.new(id: reference.id, href: reference.href)
+          |> Jason.encode!()
+      end
     end
   end
 
