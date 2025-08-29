@@ -24,29 +24,22 @@ defmodule Diffo.Provider.Relationship do
   end
 
   jason do
-    pick [:alias, :type, :target, :characteristics]
+    pick [:alias, :type, :characteristics]
 
-    customize fn result, _record ->
-      target = Diffo.Util.get(result, :target)
+    customize fn result, record ->
+      target_type = Map.get(record, :target_type)
+      reference = %Diffo.Provider.Reference{id: record.target_id, href: Map.get(record, :target_href)}
 
-      if target do
-        reference = Diffo.Provider.Reference.reference(target)
+      list_name = Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(target_type)
 
-        relationship_characteristic_list_name =
-          Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(target.type)
-
-        result
-        |> Diffo.Util.set(target.type, reference)
-        |> Diffo.Util.suppress_rename(:characteristics, relationship_characteristic_list_name)
-      else
-        result
-      end
+      result
+      |> Diffo.Util.set(target_type, reference)
+      |> Diffo.Util.suppress_rename(:characteristics, list_name)
       |> Diffo.Util.suppress(:alias)
-      |> Diffo.Util.remove(:characteristic)
-      |> Diffo.Util.remove(:target)
     end
 
     order [
+      :alias,
       :type,
       :service,
       :resource,
@@ -73,7 +66,8 @@ defmodule Diffo.Provider.Relationship do
       change manage_relationship(:source_id, :source, type: :append)
       change manage_relationship(:target_id, :target, type: :append)
       change manage_relationship(:characteristics, type: :append)
-      change load [:target, :characteristics]
+      change Diffo.Changes.DetailRelationship
+      change load [:characteristics]
     end
 
     read :list do
@@ -128,6 +122,20 @@ defmodule Diffo.Provider.Relationship do
       public? true
     end
 
+    attribute :target_href, :string do
+      description "the target href"
+      allow_nil? true
+      writable? false
+      public? true
+    end
+
+    attribute :target_type, :atom do
+      description "the target type"
+      allow_nil? true
+      writable? false
+      public? true
+    end
+
     create_timestamp :inserted_at
 
     update_timestamp :updated_at
@@ -173,9 +181,9 @@ defmodule Diffo.Provider.Relationship do
 
   preparations do
     prepare build(
-              load: [:target, :characteristics],
+              load: [:characteristics],
               sort: [alias: :asc, type: :asc, inserted_at: :asc]
-            )
+    )
   end
 
   @doc """

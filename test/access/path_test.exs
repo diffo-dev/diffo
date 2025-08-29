@@ -91,7 +91,6 @@ defmodule Diffo.Access.PathTest do
              ~s({\"id\":\"#{path.id}",\"href\":\"resourceInventoryManagement/v4/resource/path/#{path.id}",\"category\":\"Network Resource\",\"name\":\"82 Rathmullen - DONC\",\"resourceSpecification\":{\"id\":\"1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"name\":\"path\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"path\",\"value\":{\"name\":\"82 Rathmullen - DONC\",\"sections\":0,\"technology\":\"copper\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC\",\"href\":\"place/telstra/DONC\",\"name\":\"exchangeId\",\"role\":\"NetworkSite\",\"@referredType\":\"GeographicSite\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC-0001\",\"href\":\"place/telstra/DONC-0001\",\"name\":\"esaId\",\"role\":\"ServingArea\",\"@referredType\":\"GeographicLocation\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"Access\",\"name\":\"organizationId\",\"role\":\"Provider\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
   end
 
-  @tag debug: true
   test "relate cables and dslam" do
     places = [create_customer_place(), create_exchange_place(), create_esa_place()]
     parties = [create_provider_party()]
