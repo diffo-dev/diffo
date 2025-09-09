@@ -3,7 +3,7 @@
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.1"}
+    {:diffo, "~> 0.1.1"}
   ],
   consolidate_protocols: false
 )
@@ -442,5 +442,6 @@ broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ## What Next?
 
 In this tutorial you've used Diffo to create, relate and update some TMF Service and Resources, simulating activities over the service and resource lifecycle, and you've learned how this functionality is underpinned by open source Neo4j, Ash Framework and Elixir.
+Diffo contain an example Access domain showing how to specialise the structure and behaviour of TMF Services and Resources.
 
 If you find Diffo useful please visit and star on [github](https://github.com/diffo-dev/diffo/). Feel free to join discussions and raise issues to discuss PR's.
