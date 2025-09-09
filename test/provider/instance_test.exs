@@ -1053,7 +1053,6 @@ defmodule Diffo.Provider.InstanceTest do
                ~s({\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{child_instance.id}\",\"category\":\"physical\",\"description\":\"Customer Access Network Resource\",\"resourceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/#{child_specification.id}\",\"name\":\"can\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{parent_instance.id}\"}}]})
     end
 
-    @tag debug: true
     test "encode sorts relationships - success" do
       parent_specification = Diffo.Provider.create_specification!(%{name: "broadband"})
       access_specification = Diffo.Provider.create_specification!(%{name: "fibreAccess"})
