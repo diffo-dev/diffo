@@ -28,7 +28,7 @@ by adding `diffo` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:diffo, "~> 0.1.0"}
+    {:diffo, "~> 0.1.1"}
   ]
 end
 ```
