@@ -86,17 +86,14 @@ defmodule Diffo.Provider.Instance.Util do
   """
   def relationships(result) do
     if relationships = Diffo.Util.get(result, :forward_relationships) do
-      # sorting here as want to sort on the related instance hrefs, not the relationship
-      sorted_relationships = Enum.sort_by(relationships, & &1.target_href, :asc)
-
       service_relationships =
-        sorted_relationships
+        relationships
         |> Enum.filter(fn relationship ->
           relationship.target != nil && relationship.target_type == :service
         end)
 
       resource_relationships =
-        sorted_relationships
+        relationships
         |> Enum.filter(fn relationship ->
           relationship.target != nil && relationship.target_type == :resource
         end)
