@@ -8,6 +8,7 @@ defmodule Diffo.Access.AggregateInterface do
 
   jason do
     pick [:name, :physical_interface, :physical_layer, :link_layer, :svlan_id, :vpi]
+    compact true
   end
 
   typed_struct do

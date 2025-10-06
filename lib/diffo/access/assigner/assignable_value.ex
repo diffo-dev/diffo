@@ -8,6 +8,7 @@ defmodule Diffo.Access.AssignableValue do
 
   jason do
     pick [:first, :last, :free, :type, :algorithm]
+    compact true
   end
 
   typed_struct do

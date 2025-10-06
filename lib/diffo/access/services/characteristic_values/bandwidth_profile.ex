@@ -8,6 +8,7 @@ defmodule Diffo.Access.BandwidthProfile do
 
   jason do
     pick [:downstream, :upstream, :units]
+    compact true
   end
 
   typed_struct do

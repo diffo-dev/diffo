@@ -54,6 +54,8 @@ defmodule Diffo.Provider.BaseInstance do
       :type
     ]
 
+    compact true
+
     customize fn result, record ->
       result
       |> Instance.category(record)
