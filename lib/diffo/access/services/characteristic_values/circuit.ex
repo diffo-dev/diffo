@@ -4,12 +4,17 @@ defmodule Diffo.Access.Circuit do
 
   Circuit - AshTyped Struct for Circuit Characteristic Value
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   alias Diffo.Access.BandwidthProfile
 
   jason do
     pick [:circuit_id, :cvlan_id, :vci, :encapsulation, :bandwidth_profile]
+    compact true
+  end
+
+  outstanding do
+    expect [:circuit_id]
   end
 
   typed_struct do

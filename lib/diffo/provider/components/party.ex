@@ -31,6 +31,7 @@ defmodule Diffo.Provider.Party do
 
   jason do
     pick [:id, :href, :name, :referredType, :type]
+    compact true
     rename referredType: "@referredType", type: "@type"
   end
 

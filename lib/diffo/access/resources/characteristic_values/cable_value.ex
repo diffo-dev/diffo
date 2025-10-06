@@ -4,10 +4,15 @@ defmodule Diffo.Access.CableValue do
 
   CableValue - AshTyped Struct for Cable Characteristic Value
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:name, :pairs, :length, :loss, :technology]
+    compact true
+  end
+
+  outstanding do
+    expect [:pairs, :loss]
   end
 
   typed_struct do

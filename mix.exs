@@ -1,3 +1,4 @@
+
 defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
@@ -80,8 +81,8 @@ defmodule Diffo.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash_outstanding, "~> 0.2.1"},
-      {:ash_jason, "~> 2.0"},
+      {:ash_outstanding, "~> 0.2.2"},
+      {:ash_jason, "~> 3.0"},
       {:ash_state_machine, "~> 0.2.7"},
       {:ash_neo4j, ash_neo4j_version("~> 0.2.10")},
       {:boltx, "~> 0.0.6"},

@@ -4,10 +4,15 @@ defmodule Diffo.Access.IntegerUnit do
 
   IntegerUnit - AshTyped Struct for Integer with Unit
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:amount, :unit]
+    compact true
+  end
+
+  outstanding do
+    expect [:amount, :unit]
   end
 
   typed_struct do
