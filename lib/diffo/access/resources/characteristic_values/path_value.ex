@@ -4,11 +4,15 @@ defmodule Diffo.Access.PathValue do
 
   PathValue - AshTyped Struct for Path Characteristic Value
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:name, :sections, :length, :loss, :technology]
     compact true
+  end
+
+  outstanding do
+    expect [:loss]
   end
 
   typed_struct do

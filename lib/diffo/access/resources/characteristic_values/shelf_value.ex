@@ -4,11 +4,15 @@ defmodule Diffo.Access.ShelfValue do
 
   ShelfValue - AshTyped Struct for Shelf Characteristic Value
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:name, :family, :model, :technology]
     compact true
+  end
+
+  outstanding do
+    expect [:name]
   end
 
   typed_struct do
