@@ -4,10 +4,15 @@ defmodule Diffo.Access.Constraints do
 
   Constraints - AshTyped Struct for Constraints Characteristic Value
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:max_latency, :min_profile]
+    compact true
+  end
+
+  outstanding do
+    expect [:max_latency, :min_profile]
   end
 
   typed_struct do

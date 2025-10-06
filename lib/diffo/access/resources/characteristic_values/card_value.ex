@@ -4,11 +4,17 @@ defmodule Diffo.Access.CardValue do
 
   CardValue - AshTyped Struct for Card Characteristic Value
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:name, :family, :model, :technology]
+    compact true
   end
+
+  outstanding do
+    expect [:name]
+  end
+
 
   typed_struct do
     field :name, :string, description: "the card name"

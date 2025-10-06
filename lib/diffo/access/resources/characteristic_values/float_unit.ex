@@ -4,10 +4,15 @@ defmodule Diffo.Access.FloatUnit do
 
   FloatUnit - AshTyped Struct for Float with Unit
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:amount, :unit]
+    compact true
+  end
+
+  outstanding do
+    expect [:amount, :unit]
   end
 
   typed_struct do

@@ -4,10 +4,15 @@ defmodule Diffo.Access.BandwidthProfile do
 
   BandwidthProfile - AshTyped Struct for BandwidthProfile
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:downstream, :upstream, :units]
+    compact true
+  end
+
+  outstanding do
+    expect [:downstream, :upstream, :units]
   end
 
   typed_struct do
