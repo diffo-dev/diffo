@@ -8,6 +8,7 @@ defmodule Diffo.Access.CableValue do
 
   jason do
     pick [:name, :pairs, :length, :loss, :technology]
+    compact true
   end
 
   typed_struct do

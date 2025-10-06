@@ -8,6 +8,7 @@ defmodule Diffo.Access.CardValue do
 
   jason do
     pick [:name, :family, :model, :technology]
+    compact true
   end
 
   typed_struct do

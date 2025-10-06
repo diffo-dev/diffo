@@ -10,6 +10,7 @@ defmodule Diffo.Access.Circuit do
 
   jason do
     pick [:circuit_id, :cvlan_id, :vci, :encapsulation, :bandwidth_profile]
+    compact true
   end
 
   typed_struct do

@@ -8,6 +8,7 @@ defmodule Diffo.Access.PathValue do
 
   jason do
     pick [:name, :sections, :length, :loss, :technology]
+    compact true
   end
 
   typed_struct do

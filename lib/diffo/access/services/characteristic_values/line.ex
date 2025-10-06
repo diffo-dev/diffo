@@ -8,6 +8,7 @@ defmodule Diffo.Access.Line do
 
   jason do
     pick [:port, :slot, :standard, :profile]
+    compact true
   end
 
   typed_struct do

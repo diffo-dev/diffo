@@ -8,6 +8,7 @@ defmodule Diffo.Access.Constraints do
 
   jason do
     pick [:max_latency, :min_profile]
+    compact true
   end
 
   typed_struct do
