@@ -4,12 +4,17 @@ defmodule Diffo.Access.AggregateInterface do
 
   AggregateInterface - AshTyped Struct for AggregateInterface Characteristic Value
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:name, :physical_interface, :physical_layer, :link_layer, :svlan_id, :vpi]
     compact true
   end
+
+  outstanding do
+    expect [:name]
+  end
+
 
   typed_struct do
     field :name, :string, description: "the name of the aggregate interface"

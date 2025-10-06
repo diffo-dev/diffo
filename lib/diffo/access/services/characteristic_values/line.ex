@@ -4,11 +4,15 @@ defmodule Diffo.Access.Line do
 
   Line - AshTyped Struct for Line Characteristic Value
   """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
     pick [:port, :slot, :standard, :profile]
     compact true
+  end
+
+  outstanding do
+    expect [:port, :slot, :profile]
   end
 
   typed_struct do
