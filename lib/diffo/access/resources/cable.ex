@@ -13,8 +13,8 @@ defmodule Diffo.Access.Cable do
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
   alias Diffo.Access
-  alias Diffo.Access.Assigner
-  alias Diffo.Access.Assignment
+  alias Diffo.Provider.Assigner
+  alias Diffo.Provider.Assignment
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -35,7 +35,7 @@ defmodule Diffo.Access.Cable do
 
   characteristics do
     characteristic :cable, Diffo.Access.CableValue
-    characteristic :pairs, Diffo.Access.AssignableValue
+    characteristic :pairs, Diffo.Provider.AssignableValue
   end
 
   actions do

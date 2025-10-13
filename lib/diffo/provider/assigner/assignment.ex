@@ -1,4 +1,4 @@
-defmodule Diffo.Access.Assignment do
+defmodule Diffo.Provider.Assignment do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 

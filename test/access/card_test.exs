@@ -5,7 +5,7 @@ defmodule Diffo.Access.CardTest do
   alias Diffo.Provider.Characteristic
   alias Diffo.Access
   alias Diffo.Access.Card
-  alias Diffo.Access.Assignment
+  alias Diffo.Provider.Assignment
   alias Diffo.Test.Characteristics
 
   setup_all do

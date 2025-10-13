@@ -5,7 +5,7 @@ defmodule Diffo.Access.CableTest do
   alias Diffo.Provider.Characteristic
   alias Diffo.Access
   alias Diffo.Access.Cable
-  alias Diffo.Access.Assignment
+  alias Diffo.Provider.Assignment
   alias Diffo.Access.IntegerUnit
   alias Diffo.Test.Characteristics
 

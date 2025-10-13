@@ -9,7 +9,7 @@ defmodule Diffo.Access.PathTest do
   alias Diffo.Provider.Instance.Relationship
   alias Diffo.Access
   alias Diffo.Access.Path
-  alias Diffo.Access.Assignment
+  alias Diffo.Provider.Assignment
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
