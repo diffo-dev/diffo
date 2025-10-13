@@ -91,6 +91,7 @@ defmodule Diffo.Access.PathTest do
              ~s({\"id\":\"#{path.id}",\"href\":\"resourceInventoryManagement/v4/resource/path/#{path.id}",\"category\":\"Network Resource\",\"name\":\"82 Rathmullen - DONC\",\"resourceSpecification\":{\"id\":\"1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"name\":\"path\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"path\",\"value\":{\"name\":\"82 Rathmullen - DONC\",\"sections\":0,\"technology\":\"copper\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC\",\"href\":\"place/telstra/DONC\",\"name\":\"exchangeId\",\"role\":\"NetworkSite\",\"@referredType\":\"GeographicSite\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC-0001\",\"href\":\"place/telstra/DONC-0001\",\"name\":\"esaId\",\"role\":\"ServingArea\",\"@referredType\":\"GeographicLocation\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"Access\",\"name\":\"organizationId\",\"role\":\"Provider\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
   end
 
+  @tag debug: true
   test "relate cables and dslam" do
     places = [create_customer_place(), create_exchange_place(), create_esa_place()]
     parties = [create_provider_party()]
@@ -115,7 +116,7 @@ defmodule Diffo.Access.PathTest do
       end)
 
     # now assign a port from a line card
-    [_dslam, line_card] = create_dslam_with_line_card("QDONC-0001", tl(places), parties)
+    [_dslam, line_card] = create_dslam_with_line_cards("QDONC-0001", 1..4, tl(places), parties)
 
     Access.assign_port!(line_card, %{
       assignment: %Assignment{assignee_id: path.id, operation: :auto_assign}
@@ -133,6 +134,11 @@ defmodule Diffo.Access.PathTest do
     # the reverse relationships are not encoded to json
     assert encoding ==
              ~s({\"id\":\"#{path.id}",\"href\":\"resourceInventoryManagement/v4/resource/path/#{path.id}",\"category\":\"Network Resource\",\"name\":\"82 Rathmullen - DONC\",\"resourceSpecification\":{\"id\":\"1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/1d507914-8f76-48cb-aa0e-3a8f92951ab0\",\"name\":\"path\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"path\",\"value\":{\"name\":\"82 Rathmullen - DONC\",\"sections\":0,\"technology\":\"copper\"}}],\"place\":[{\"id\":\"1657363\",\"href\":\"place/telstra/1657363\",\"name\":\"addressId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC\",\"href\":\"place/telstra/DONC\",\"name\":\"exchangeId\",\"role\":\"NetworkSite\",\"@referredType\":\"GeographicSite\",\"@type\":\"PlaceRef\"},{\"id\":\"DONC-0001\",\"href\":\"place/telstra/DONC-0001\",\"name\":\"esaId\",\"role\":\"ServingArea\",\"@referredType\":\"GeographicLocation\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"Access\",\"name\":\"organizationId\",\"role\":\"Provider\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
+
+    loaded_path = path |> Ash.load!(:shelf)
+    IO.inspect(loaded_path.shelf, label: :shelf)
+
+    Process.sleep(30000)
   end
 
   defp create_customer_place do
@@ -211,15 +217,29 @@ defmodule Diffo.Access.PathTest do
     Access.build_cable!(%{name: "#{name}", places: places, relationships: relationships})
   end
 
-  defp create_dslam_with_line_card(name, places, parties) when is_bitstring(name) do
+  defp create_dslam_with_line_cards(name, range, places, parties) when is_bitstring(name) do
     shelf = Access.build_shelf!(%{name: "#{name}", places: places, parties: parties})
-    card = Access.build_card!(%{name: "#{name}"})
 
-    Access.assign_slot!(shelf, %{
-      assignment: %Assignment{assignee_id: card.id, operation: :auto_assign}
-    })
+    updates = [
+      shelf: [name: "QDONC-1001", family: :ISAM, model: "ISAM7330", technology: :DSLAM],
+      slots: [first: 1, last: 10, free: 10, type: "LineCard"]
+    ]
 
-    [shelf, card]
+    {:ok, shelf} = Access.define_shelf(shelf, %{characteristic_value_updates: updates})
+
+    cards =
+      range
+      |> Enum.into([], fn i ->
+        card = Access.build_card!(%{name: "#{name}-lineCard#{i}"})
+
+        Access.assign_slot!(shelf, %{
+          assignment: %Assignment{assignee_id: card.id, operation: :auto_assign}
+        })
+
+        card
+      end)
+
+    [shelf, hd(cards)]
   end
 
   defp create_provider_party do

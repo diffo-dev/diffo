@@ -1,4 +1,3 @@
-
 defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project

@@ -131,6 +131,55 @@ defmodule Diffo.Provider.Instance.Util do
   end
 
   @doc """
+  Assists in encoding characteristics
+  """
+  def characteristics(result) do
+    if characteristics() = Diffo.Util.get(result, :characteristics) do
+      service_relationships =
+        relationships
+        |> Enum.filter(fn relationship ->
+          relationship.target != nil && relationship.target_type == :service
+        end)
+
+      resource_relationships =
+        relationships
+        |> Enum.filter(fn relationship ->
+          relationship.target != nil && relationship.target_type == :resource
+        end)
+
+      supporting_services =
+        service_relationships
+        |> Enum.filter(fn relationship ->
+          relationship.alias != nil
+        end)
+        |> Enum.into([], fn aliased ->
+          %Diffo.Provider.Reference{id: aliased.alias, href: Map.get(aliased, :target_href)}
+        end)
+
+      supporting_resources =
+        resource_relationships
+        |> Enum.filter(fn relationship ->
+          relationship.alias != nil
+        end)
+        |> Enum.into([], fn aliased ->
+          %Diffo.Provider.Reference{id: aliased.alias, href: Map.get(aliased, :target_href)}
+        end)
+
+      result
+      |> Diffo.Util.remove(:forward_relationships)
+      |> Diffo.Util.remove(:reverse_relationships)
+      |> Diffo.Util.set(:serviceRelationship, service_relationships)
+      |> Diffo.Util.set(:resourceRelationship, resource_relationships)
+      |> Diffo.Util.set(:supportingService, supporting_services)
+      |> Diffo.Util.set(:supportingResource, supporting_resources)
+    else
+      result
+      |> Diffo.Util.remove(:forward_relationships)
+      |> Diffo.Util.remove(:reverse_relationships)
+    end
+  end
+
+  @doc """
   Derives the type prefix from the specification type
   ## Examples
     iex> Diffo.Provider.Instance.derive_type(:serviceSpecification)

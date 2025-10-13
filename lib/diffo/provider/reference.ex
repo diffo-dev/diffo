@@ -38,6 +38,7 @@ defmodule Diffo.Provider.Reference do
       case reference.href do
         nil ->
           Jason.encode!(%{id: reference.id})
+
         _ ->
           Jason.OrderedObject.new(id: reference.id, href: reference.href)
           |> Jason.encode!()

@@ -78,6 +78,20 @@ defmodule Diffo.Provider do
       define :delete_characteristic, action: :destroy
     end
 
+    resource Diffo.Provider.CharacteristicRef do
+      define :create_characteristic_ref, action: :create
+      define :get_characteristic_ref_by_id, action: :read, get_by: :id
+      define :list_characteristic_refs, action: :list
+      define :list_characteristic_refs_by_characteristic_id, action: :list_characteristic_refs_by_characteristic_id, args: [:characteristic_id]
+
+      define :list_characteristic_refs_by_instance_id,
+        action: :list_characteristic_refs_by_instance_id,
+        args: [:instance_id]
+
+      define :update_characteristic_ref, action: :update
+      define :delete_characteristic_ref, action: :destroy
+    end
+
     resource Diffo.Provider.Feature do
       define :create_feature, action: :create
       define :get_feature_by_id, action: :read, get_by: :id

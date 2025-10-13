@@ -6,6 +6,7 @@ locals_without_parens = [
   characteristic: 2,
   pick: 1,
   rename: 1,
+  compact: 1,
   field: 3,
   expect: 1,
   relate: 1,

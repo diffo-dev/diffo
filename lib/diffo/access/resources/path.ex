@@ -34,6 +34,7 @@ defmodule Diffo.Access.Path do
 
   characteristics do
     characteristic :path, Diffo.Access.PathValue
+    # shared :dslam, alias: :dslam, name: :shelf
   end
 
   actions do
@@ -95,5 +96,11 @@ defmodule Diffo.Access.Path do
                     do: {:ok, path}
              end)
     end
+  end
+
+  calculations do
+    calculate :shelf,
+              :term,
+              Diffo.Access.SharedShelfCharacteristic
   end
 end

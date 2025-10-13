@@ -15,7 +15,6 @@ defmodule Diffo.Access.AggregateInterface do
     expect [:name]
   end
 
-
   typed_struct do
     field :name, :string, description: "the name of the aggregate interface"
 

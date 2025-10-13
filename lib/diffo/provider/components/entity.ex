@@ -19,8 +19,6 @@ defmodule Diffo.Provider.Entity do
     relate [
       {:entity_refs, :RELATES, :incoming, :EntityRef}
     ]
-
-    translate id: :uuid
   end
 
   jason do
@@ -115,8 +113,7 @@ defmodule Diffo.Provider.Entity do
 
   relationships do
     has_many :entity_refs, Diffo.Provider.EntityRef do
-      description "the entity ref which links this entity to a relating instance"
-      # destination_attribute :entity_id
+      description "the entity refs relating this entity to instances"
       public? true
     end
   end

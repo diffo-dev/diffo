@@ -19,7 +19,8 @@ defmodule Diffo.Provider.Characteristic do
     relate [
       {:instance, :HAS, :incoming, :Instance},
       {:feature, :HAS, :incoming, :Feature},
-      {:relationship, :HAS, :incoming, :Relationship}
+      {:relationship, :HAS, :incoming, :Relationship},
+      {:characteristic_refs, :RELATES, :incoming, :CharacteristicRef}
     ]
 
     guard [
@@ -124,6 +125,11 @@ defmodule Diffo.Provider.Characteristic do
     belongs_to :relationship, Diffo.Provider.Relationship do
       description "the relationship the characteristic defines"
       allow_nil? true
+      public? true
+    end
+
+    has_many :characteristic_refs, Diffo.Provider.CharacteristicRef do
+      description "the characteristic refs relating this characteristic to instances"
       public? true
     end
   end

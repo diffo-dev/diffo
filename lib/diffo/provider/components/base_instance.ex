@@ -27,6 +27,7 @@ defmodule Diffo.Provider.BaseInstance do
       {:forward_relationships, :RELATES, :outgoing, :Relationship},
       {:reverse_relationships, :RELATES, :incoming, :Relationship},
       {:features, :HAS, :outgoing, :Feature},
+      {:related_characteristics, :RELATES, :outgoing, :Characteristic},
       {:characteristics, :HAS, :outgoing, :Characteristic},
       {:entities, :RELATES, :outgoing, :EntityRef},
       {:notes, :ANNOTATES, :incoming, :Note},
@@ -249,6 +250,12 @@ defmodule Diffo.Provider.BaseInstance do
       destination_attribute :instance_id
     end
 
+    has_many :related_characteristics, Diffo.Provider.CharacteristicRef do
+      description "the instance's collection of related characteristics"
+      public? true
+      destination_attribute :instance_id
+    end
+
     has_many :characteristics, Diffo.Provider.Characteristic do
       description "the instance's collection of defining characteristics"
       public? true
@@ -419,25 +426,25 @@ defmodule Diffo.Provider.BaseInstance do
     end
 
     update :relate_features do
-      description "relates features to the instance"
+      description "relates defining features to the instance"
       argument :features, {:array, :uuid}
       change manage_relationship(:features, type: :append)
     end
 
     update :unrelate_features do
-      description "unrelates features from the instance"
+      description "unrelates defining features from the instance"
       argument :features, {:array, :uuid}
       change manage_relationship(:features, type: :remove)
     end
 
     update :relate_characteristics do
-      description "relates characteristics to the instance"
+      description "relates defining characteristics to the instance"
       argument :characteristics, {:array, :uuid}
       change manage_relationship(:characteristics, type: :append)
     end
 
     update :unrelate_characteristics do
-      description "unrelates characteristics from the instance"
+      description "unrelates defining characteristics from the instance"
       argument :characteristics, {:array, :uuid}
       change manage_relationship(:characteristics, type: :remove)
     end
@@ -464,6 +471,7 @@ defmodule Diffo.Provider.BaseInstance do
                 :entities,
                 :notes,
                 :features,
+                :related_characteristics,
                 :characteristics,
                 :places,
                 :parties
