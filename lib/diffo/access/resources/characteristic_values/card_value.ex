@@ -15,7 +15,6 @@ defmodule Diffo.Access.CardValue do
     expect [:name]
   end
 
-
   typed_struct do
     field :name, :string, description: "the card name"
 

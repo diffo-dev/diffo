@@ -1,28 +1,28 @@
-
 defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
 
   @version "0.1.1"
-  @name "Diffo"
+  @name :diffo
   @description "TMF Service and Resource Manager with a difference"
   @github_url "https://github.com/diffo-dev/diffo"
 
   def project do
     [
-      app: :diffo,
+      app: @name,
       version: @version,
       name: @name,
       description: @description,
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       package: package(),
-      deps: deps(),
-      aliases: aliases(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      source_url: "https://github.com/diffo-dev/diffo/",
+      source_url: @github_url,
       homepage_url: "http://diffo.dev/diffo/",
-      docs: docs()
+      # hex.pm stuff
+      deps: deps(),
+      docs: [main: "readme", extras: ["README.md"]],
+      aliases: aliases()
     ]
   end
 
@@ -61,16 +61,20 @@ defmodule Diffo.MixProject do
       logo: "logos/diffo.jpg",
       extras: [
         "README.md": [title: "Guide"],
-        "LICENSE.md": [title: "License"]
+        "LICENSE.md": [title: "License"],
+        "documentation/dsls/DSL-Diffo.Provider.Instance.md": [
+          title: "DSL: Diffo Provider Instance Extension",
+          search_data: Spark.Docs.search_data_for(Diffo.Provider.Instance.Extension)
+        ]
       ]
     ]
   end
 
   defp package do
     [
-      name: :diffo,
+      name: @name,
       licenses: ["MIT"],
-      files: ~w(lib .formatter.exs mix.exs README* LICENSE*),
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE* CHANGELOG* documentation),
       links: %{
         "GitHub" => @github_url,
         "Author's home page" => "https://www.diffo.dev"
@@ -95,7 +99,16 @@ defmodule Diffo.MixProject do
   end
 
   defp aliases() do
-    [test: ["ash.setup --quiet", "test"], setup: "ash.setup"]
+    [
+      test: ["ash.setup --quiet", "test"],
+      setup: "ash.setup",
+      docs: ["spark.cheat_sheets", "docs", "spark.replace_doc_links"],
+      "spark.cheat_sheets": "spark.cheat_sheets --extensions Diffo.Provider.Instance.Extension",
+      "spark.formatter": [
+        "spark.formatter --extensions Diffo.Provider.Instance.Extension",
+        "format .formatter.exs"
+      ]
+    ]
   end
 
   defp elixirc_paths(:test), do: elixirc_paths(:dev) ++ ["test/support"]
