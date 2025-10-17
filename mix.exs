@@ -2,7 +2,7 @@ defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
 
-  @version "0.1.1"
+  @version "0.1.2"
   @name :diffo
   @description "TMF Service and Resource Manager with a difference"
   @github_url "https://github.com/diffo-dev/diffo"

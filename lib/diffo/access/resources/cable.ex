@@ -12,9 +12,9 @@ defmodule Diffo.Access.Cable do
   alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
-  alias Diffo.Access
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
+  alias Diffo.Access
 
   use Ash.Resource,
     fragments: [BaseInstance],

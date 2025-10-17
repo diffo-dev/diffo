@@ -28,7 +28,7 @@ by adding `diffo` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:diffo, "~> 0.1.1"}
+    {:diffo, "~> 0.1.2"}
   ]
 end
 ```
@@ -39,8 +39,9 @@ You should need [Neo4j](https://github.com/neo4j/neo4j) available. We recommend 
 
 To get started you need a running instance of [Livebook](https://livebook.dev/)
 
-[![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fdiffo%2Ddev%2Fdiffo%2Fblob%2Fdev%2Fdiffo.livemd)
+[![Introductory Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fdiffo%2Ddev%2Fdiffo%2Fblob%2Fdev%2Fdiffo.livemd)
 
+[![Buiding your Domain Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fdiffo%2Ddev%2Fdiffo%2Fblob%2Fdev%2Fdiffo.livemd)
 
 ## Future Work
 

@@ -12,7 +12,6 @@ defmodule Diffo.Access.Path do
   alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
-
   alias Diffo.Access
 
   use Ash.Resource,
