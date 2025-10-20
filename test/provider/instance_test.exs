@@ -147,8 +147,45 @@ defmodule Diffo.Provider.InstanceTest do
     #  assert loaded_instance.specified_instance.type == :resource
     # end
 
+    test "create named service instances - success - no names" do
+      specification =
+        Diffo.Provider.create_specification!(%{
+          name: "fibreAccess",
+          description: "Fibre Access Service",
+          category: "connectivity"
+        })
+
+      {:ok, _result} = Diffo.Provider.create_instance(%{specified_by: specification.id})
+      {:ok, _result} = Diffo.Provider.create_instance(%{specified_by: specification.id})
+    end
+
+    test "create named service instances - success - different names" do
+      specification =
+        Diffo.Provider.create_specification!(%{
+          name: "fibreAccess",
+          description: "Fibre Access Service",
+          category: "connectivity"
+        })
+
+      {:ok, _result} = Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
+      {:ok, _result} = Diffo.Provider.create_instance(%{name: "fibreAccess 2", specified_by: specification.id})
+    end
+
+    test "create named service instances - failure - duplicate names" do
+      specification =
+        Diffo.Provider.create_specification!(%{
+          name: "fibreAccess",
+          description: "Fibre Access Service",
+          category: "connectivity"
+        })
+
+      {:ok, _result} = Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
+
+      {:error, _message} = Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
+    end
+
     test "create a service instance - failure - specification_id invalid" do
-      {:error, _specification} = Diffo.Provider.create_instance(%{specified_by: UUID.uuid4()})
+      {:error, _message} = Diffo.Provider.create_instance(%{specified_by: UUID.uuid4()})
     end
 
     test "create a service instance - failure - type not correct" do
@@ -159,7 +196,7 @@ defmodule Diffo.Provider.InstanceTest do
           category: "connectivity"
         })
 
-      {:error, _specification} =
+      {:error, _} =
         Diffo.Provider.create_instance(%{
           specified_by: specification.id,
           type: :serviceSpecification
