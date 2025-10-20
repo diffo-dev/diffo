@@ -1,4 +1,15 @@
+<!--
+SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+
+SPDX-License-Identifier: MIT
+-->
+
 # Diffo
+
+[![Module Version](https://img.shields.io/hexpm/v/diffo)](https://hex.pm/packages/diffo)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen)](https://hexdocs.pm/diffo/)
+[![License](https://img.shields.io/hexpm/l/diffo)](https://github.com/diffo-dev/diffo/blob/master/LICENSES/MIT.md)
+[![REUSE status](https://api.reuse.software/badge/github.com/diffo-dev/diffo)](https://api.reuse.software/info/github.com/diffo-dev/diffo)
 
 Diffo is a Telecommunications Management Forum (TMF) Service and Resource Manager, built for autonomous networks.
 
@@ -28,7 +39,7 @@ by adding `diffo` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:diffo, "~> 0.1.1"}
+    {:diffo, "~> 0.1.2"}
   ]
 end
 ```

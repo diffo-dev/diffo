@@ -1,3 +1,9 @@
+<!-- 
+SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+
+SPDX-License-Identifier: MIT
+-->
+
 ---
 name: Bug report
 about: Create a report to help us improve

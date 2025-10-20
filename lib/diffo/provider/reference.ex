@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Provider.Reference do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
@@ -38,6 +42,7 @@ defmodule Diffo.Provider.Reference do
       case reference.href do
         nil ->
           Jason.encode!(%{id: reference.id})
+
         _ ->
           Jason.OrderedObject.new(id: reference.id, href: reference.href)
           |> Jason.encode!()
