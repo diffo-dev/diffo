@@ -20,12 +20,15 @@ defmodule Diffo.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       package: package(),
-      deps: deps(),
-      aliases: aliases(),
-      elixirc_paths: elixirc_paths(Mix.env()),
+      # ex_doc
       source_url: "https://github.com/diffo-dev/diffo/",
       homepage_url: "http://diffo.dev/diffo/",
-      docs: docs()
+      docs: [main: "readme", extras: ["README.md"]],
+      elixirc_paths: elixirc_paths(Mix.env()),
+      # hex.pm stuff
+      deps: deps(),
+      docs: &docs/0,
+      aliases: aliases()
     ]
   end
 
@@ -64,7 +67,11 @@ defmodule Diffo.MixProject do
       logo: "logos/diffo.jpg",
       extras: [
         "README.md": [title: "Guide"],
-        "LICENSES/MIT.md": [title: "License"]
+        "LICENSES/MIT.md": [title: "License"],
+        "documentation/dsls/DSL-Diffo.Provider.Instance.Extension.md": [
+          title: "DSL: Diffo.Provider.Instance.Extension",
+          search_data: Spark.Docs.search_data_for(Diffo.Provider.Instance.Extension)
+        ]
       ]
     ]
   end
@@ -97,7 +104,20 @@ defmodule Diffo.MixProject do
   end
 
   defp aliases() do
-    [test: ["ash.setup --quiet", "test"], setup: "ash.setup"]
+    [
+      test: ["ash.setup --quiet", "test"],
+      setup: "ash.setup",
+      docs: [
+        "spark.cheat_sheets",
+        "docs",
+        "spark.replace_doc_links"
+      ],
+      "spark.cheat_sheets": "spark.cheat_sheets --extensions Diffo.Provider.Instance.Extension",
+      "spark.formatter": [
+        "spark.formatter --extensions Diffo.Provider.Instance.Extension",
+        "format .formatter.exs"
+      ]
+    ]
   end
 
   defp elixirc_paths(:test), do: elixirc_paths(:dev) ++ ["test/support"]
