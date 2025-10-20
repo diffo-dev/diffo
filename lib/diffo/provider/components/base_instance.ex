@@ -457,6 +457,13 @@ defmodule Diffo.Provider.BaseInstance do
     define :read
   end
 
+  identities do
+    identity :unique_name_per_type, [:name] do
+      message "instance name must be unique"
+      pre_check? true
+    end
+  end
+
   preparations do
     prepare build(
               load: [
