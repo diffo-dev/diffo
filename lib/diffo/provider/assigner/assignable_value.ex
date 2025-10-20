@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Access.AssignableValue do
+defmodule Diffo.Provider.AssignableValue do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
