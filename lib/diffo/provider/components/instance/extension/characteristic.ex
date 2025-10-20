@@ -18,7 +18,7 @@ defmodule Diffo.Provider.Instance.Characteristic do
   @doc """
   Struct for a Characteristic
   """
-  defstruct [:name, :value_type]
+  defstruct [:name, :value_type, __spark_metadata__: nil]
 
   @doc """
   Sets the Extended Instances characteristics argument in the changeset, creating the characteristics
