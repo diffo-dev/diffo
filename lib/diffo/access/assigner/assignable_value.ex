@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Access.AssignableValue do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
@@ -8,7 +12,7 @@ defmodule Diffo.Access.AssignableValue do
 
   jason do
     pick [:first, :last, :free, :type, :algorithm]
-    compact true
+    compact(true)
   end
 
   typed_struct do

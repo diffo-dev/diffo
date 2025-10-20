@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Provider.InstanceTest do
   @moduledoc false
   use ExUnit.Case
@@ -585,12 +589,12 @@ defmodule Diffo.Provider.InstanceTest do
           characteristics: [forward_relationship_characteristic.id]
         })
 
-       _reverse_relationship =
+      _reverse_relationship =
         Diffo.Provider.create_relationship!(%{
           type: :providedTo,
           source_id: child_instance.id,
           target_id: parent_instance.id
-       })
+        })
 
       place =
         Diffo.Provider.create_place!(%{
@@ -797,7 +801,7 @@ defmodule Diffo.Provider.InstanceTest do
           characteristics: [forward_relationship_characteristic.id]
         })
 
-       _reverse_relationship =
+      _reverse_relationship =
         Diffo.Provider.create_relationship!(%{
           type: :providedTo,
           source_id: child_instance.id,
@@ -1025,7 +1029,7 @@ defmodule Diffo.Provider.InstanceTest do
       child_instance =
         Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
-       _reverse_relationship =
+      _reverse_relationship =
         Diffo.Provider.create_relationship!(%{
           type: :assignedTo,
           source_id: child_instance.id,
@@ -1358,7 +1362,7 @@ defmodule Diffo.Provider.InstanceTest do
       child_instance =
         Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
-       reverse_relationship =
+      reverse_relationship =
         Diffo.Provider.create_relationship!(%{
           type: :assignedTo,
           source_id: child_instance.id,

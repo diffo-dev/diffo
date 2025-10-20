@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Provider.Party do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
@@ -31,7 +35,7 @@ defmodule Diffo.Provider.Party do
 
   jason do
     pick [:id, :href, :name, :referredType, :type]
-    compact true
+    compact(true)
     rename referredType: "@referredType", type: "@type"
   end
 

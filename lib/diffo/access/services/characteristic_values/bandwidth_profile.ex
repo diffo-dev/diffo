@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Access.BandwidthProfile do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
@@ -8,7 +12,7 @@ defmodule Diffo.Access.BandwidthProfile do
 
   jason do
     pick [:downstream, :upstream, :units]
-    compact true
+    compact(true)
   end
 
   outstanding do

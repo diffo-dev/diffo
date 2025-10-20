@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Access.AggregateInterface do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
@@ -8,13 +12,12 @@ defmodule Diffo.Access.AggregateInterface do
 
   jason do
     pick [:name, :physical_interface, :physical_layer, :link_layer, :svlan_id, :vpi]
-    compact true
+    compact(true)
   end
 
   outstanding do
     expect [:name]
   end
-
 
   typed_struct do
     field :name, :string, description: "the name of the aggregate interface"
