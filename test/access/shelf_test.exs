@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Access.ShelfTest do
   @moduledoc false
   use ExUnit.Case
@@ -111,7 +115,7 @@ defmodule Diffo.Access.ShelfTest do
 
     [card0, card1, card2, card3] = cards
 
-    #resource relationships are sorted in the create order of the relationships
+    # resource relationships are sorted in the create order of the relationships
     assert encoding ==
              ~s({\"id\":\"#{shelf.id}",\"href\":\"resourceInventoryManagement/v4/resource/shelf/#{shelf.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"ef016d85-9dbd-429c-84da-1df56cc7dda5\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/ef016d85-9dbd-429c-84da-1df56cc7dda5\",\"name\":\"shelf\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"contains\",\"resource\":{\"id\":\"#{card0.id}\",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card0.id}\"}},{\"type\":\"contains\",\"resource\":{\"id\":\"#{card1.id}\",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card1.id}\"}},{\"type\":\"contains\",\"resource\":{\"id\":\"#{card2.id}\",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card2.id}\"}},{\"type\":\"contains\",\"resource\":{\"id\":\"#{card3.id}\",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card3.id}\"}}],\"resourceCharacteristic\":[{\"name\":\"shelf\",\"value\":{\"name\":\"QDONC-1001\",\"family\":\"ISAM\",\"model\":\"ISAM7330\",\"technology\":\"DSLAM\"}},{\"name\":\"slots\",\"value\":{\"first\":1,\"last\":10,\"free\":10,\"type\":\"LineCard\",\"algorithm\":\"lowest\"}}],\"place\":[{\"id\":\"DONC-0001\",\"href\":\"place/telstra/DONC-0001\",\"name\":\"esaId\",\"role\":\"ServingArea\",\"@referredType\":\"GeographicLocation\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"Access\",\"name\":\"organizationId\",\"role\":\"Provider\",\"@referredType\":\"Organization\",\"@type\":\"PartyRef\"}]})
   end

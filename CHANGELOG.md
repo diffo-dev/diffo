@@ -1,3 +1,9 @@
+<!-- 
+SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+
+SPDX-License-Identifier: MIT
+-->
+
 # Change Log
 
 All notable changes to this project will be documented in this file.
@@ -19,4 +25,8 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 * customise instance via specification
 * improve relationships to avoid circular loads
 
+## [v0.1.1](https://github.com/diffo-dev/diffo/compare/v0.1.1...v0.1.2) (2025-10-20)
 
+### Features
+
+* REUSE compliant

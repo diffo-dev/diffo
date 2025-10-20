@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Provider.CharacteristicTest do
   @moduledoc false
   use ExUnit.Case
@@ -80,7 +84,6 @@ defmodule Diffo.Provider.CharacteristicTest do
       assert characteristic.name == :port
       assert characteristic.value == "port13"
     end
-
 
     test "create forward and reverse characteristic with same name on same relationship - success" do
       specification = Diffo.Provider.create_specification!(%{name: "evc"})

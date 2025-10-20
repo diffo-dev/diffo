@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Access.CardValue do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
@@ -8,13 +12,12 @@ defmodule Diffo.Access.CardValue do
 
   jason do
     pick [:name, :family, :model, :technology]
-    compact true
+    compact(true)
   end
 
   outstanding do
     expect [:name]
   end
-
 
   typed_struct do
     field :name, :string, description: "the card name"
