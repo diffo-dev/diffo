@@ -11,6 +11,10 @@ defmodule Diffo.Provider do
   use Ash.Domain,
     otp_app: :diffo
 
+  domain do
+    description "Extensible Ash Resources and API related to Providing TMF Services and Resources"
+  end
+
   resources do
     resource Diffo.Provider.Specification do
       define :create_specification, action: :create

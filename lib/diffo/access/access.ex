@@ -17,6 +17,10 @@ defmodule Diffo.Access do
   alias Diffo.Access.Cable
   alias Diffo.Access.Path
 
+  domain do
+    description "An example showing how TMF Services and Resources for a fictional Access domain can be extended from the Provider domain"
+  end
+
   resources do
     resource DslAccess do
       define :get_dsl_by_id, action: :read, get_by: :id
