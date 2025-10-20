@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+#
+# SPDX-License-Identifier: MIT
+
 defmodule Diffo.Provider.BaseInstance do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
@@ -54,7 +58,7 @@ defmodule Diffo.Provider.BaseInstance do
       :type
     ]
 
-    compact true
+    compact(true)
 
     customize fn result, record ->
       result
