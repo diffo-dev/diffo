@@ -167,8 +167,11 @@ defmodule Diffo.Provider.InstanceTest do
           category: "connectivity"
         })
 
-      {:ok, _result} = Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
-      {:ok, _result} = Diffo.Provider.create_instance(%{name: "fibreAccess 2", specified_by: specification.id})
+      {:ok, _result} =
+        Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
+
+      {:ok, _result} =
+        Diffo.Provider.create_instance(%{name: "fibreAccess 2", specified_by: specification.id})
     end
 
     test "create named service instances - failure - duplicate names" do
@@ -179,9 +182,11 @@ defmodule Diffo.Provider.InstanceTest do
           category: "connectivity"
         })
 
-      {:ok, _result} = Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
+      {:ok, _result} =
+        Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
 
-      {:error, _message} = Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
+      {:error, _message} =
+        Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
     end
 
     test "create a service instance - failure - specification_id invalid" do
