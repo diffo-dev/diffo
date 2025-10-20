@@ -7,9 +7,9 @@ defmodule Diffo.Access.CableTest do
   use ExUnit.Case
   alias Diffo.Provider.Specification
   alias Diffo.Provider.Characteristic
+  alias Diffo.Provider.Assignment
   alias Diffo.Access
   alias Diffo.Access.Cable
-  alias Diffo.Access.Assignment
   alias Diffo.Access.IntegerUnit
   alias Diffo.Test.Characteristics
 

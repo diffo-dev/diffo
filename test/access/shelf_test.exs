@@ -11,9 +11,9 @@ defmodule Diffo.Access.ShelfTest do
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
   alias Diffo.Provider.Instance.Relationship
+  alias Diffo.Provider.Assignment
   alias Diffo.Access
   alias Diffo.Access.Shelf
-  alias Diffo.Access.Assignment
   alias Diffo.Test.Characteristics
 
   setup_all do

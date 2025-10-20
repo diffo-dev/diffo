@@ -2,14 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Access.Assigner do
+defmodule Diffo.Provider.Assigner do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
   Assigner - Helper to perform Assignment maintaining AssignableValue
   """
 
-  alias Diffo.Access.AssignableValue
+  alias Diffo.Provider.AssignableValue
 
   @doc """
   Assign a thing using the instance changeset assignment
@@ -101,7 +101,10 @@ defmodule Diffo.Access.Assigner do
 
           if characteristic do
             assignment =
-              struct(Diffo.Access.Assignment, %{id: characteristic.value, instance_id: target_id})
+              struct(Diffo.Provider.Assignment, %{
+                id: characteristic.value,
+                instance_id: target_id
+              })
 
             [assignment | acc]
           else
@@ -112,7 +115,7 @@ defmodule Diffo.Access.Assigner do
           acc
       end
     end)
-    |> Enum.sort(Diffo.Access.Assignment)
+    |> Enum.sort(Diffo.Provider.Assignment)
   end
 
   defp next(instance, things, thing)
