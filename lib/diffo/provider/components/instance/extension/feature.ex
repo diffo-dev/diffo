@@ -18,7 +18,7 @@ defmodule Diffo.Provider.Instance.Feature do
   @doc """
   Struct for a Feature
   """
-  defstruct [:name, :is_enabled?, :characteristics]
+  defstruct [:name, :is_enabled?, :characteristics, __spark_metadata__: nil]
 
   @doc """
   Sets the Extended Instances features argument in the changeset, creating the features and feature characteristics

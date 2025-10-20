@@ -16,9 +16,10 @@ defmodule Diffo.Access.Card do
   alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
+  alias Diffo.Provider.Assigner
+  alias Diffo.Provider.Assignment
+
   alias Diffo.Access
-  alias Diffo.Access.Assigner
-  alias Diffo.Access.Assignment
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -39,7 +40,7 @@ defmodule Diffo.Access.Card do
 
   characteristics do
     characteristic :card, Diffo.Access.CardValue
-    characteristic :ports, Diffo.Access.AssignableValue
+    characteristic :ports, Diffo.Provider.AssignableValue
   end
 
   actions do
