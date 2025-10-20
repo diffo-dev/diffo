@@ -16,9 +16,10 @@ defmodule Diffo.Access.Shelf do
   alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
+  alias Diffo.Provider.Assigner
+  alias Diffo.Provider.Assignment
+
   alias Diffo.Access
-  alias Diffo.Access.Assigner
-  alias Diffo.Access.Assignment
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -39,7 +40,7 @@ defmodule Diffo.Access.Shelf do
 
   characteristics do
     characteristic :shelf, Diffo.Access.ShelfValue
-    characteristic :slots, Diffo.Access.AssignableValue
+    characteristic :slots, Diffo.Provider.AssignableValue
   end
 
   actions do
