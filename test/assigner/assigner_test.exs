@@ -2,15 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Access.CardTest do
+defmodule Diffo.Test.AssignerTest do
   @moduledoc false
   use ExUnit.Case
   alias Diffo.Provider.Specification
   alias Diffo.Provider.Characteristic
-  alias Diffo.Access
-  alias Diffo.Access.Card
   alias Diffo.Provider.Assignment
+
   alias Diffo.Test.Characteristics
+  alias Diffo.Test.Domain
+  alias Diffo.Test.Card
 
   setup_all do
     AshNeo4j.BoltxHelper.start()
@@ -24,7 +25,7 @@ defmodule Diffo.Access.CardTest do
 
   describe "build card" do
     test "create a card" do
-      {:ok, card} = Access.build_card(%{})
+      {:ok, card} = Domain.build_card(%{})
 
       # check the instance is a Card
       assert is_struct(card, Card)
@@ -66,14 +67,14 @@ defmodule Diffo.Access.CardTest do
     end
 
     test "define card" do
-      {:ok, card} = Access.build_card(%{})
+      {:ok, card} = Domain.build_card(%{})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
         ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
       ]
 
-      {:ok, card} = Access.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
@@ -81,20 +82,20 @@ defmodule Diffo.Access.CardTest do
                ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
     end
 
-    test "auto assign port to service" do
-      {:ok, assignee} = Access.qualify_dsl()
+    test "auto assign port to resource" do
+      {:ok, assignee} = Domain.build_shelf()
 
-      {:ok, card} = Access.build_card(%{})
+      {:ok, card} = Domain.build_card(%{})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
         ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
       ]
 
-      {:ok, card} = Access.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
 
       {:ok, card} =
-        Access.assign_port(card, %{
+        Domain.assign_port(card, %{
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
@@ -103,28 +104,28 @@ defmodule Diffo.Access.CardTest do
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{assignee.id}\",\"href\":\"serviceInventoryManagement/v4/service/dslAccess/#{assignee.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":47,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/shelf/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":47,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
     end
 
-    test "auto assign two ports to same service" do
-      {:ok, assignee} = Access.qualify_dsl()
+    test "auto assign two ports to same resource" do
+      {:ok, assignee} = Domain.build_shelf()
 
-      {:ok, card} = Access.build_card(%{})
+      {:ok, card} = Domain.build_card(%{})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
         ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
       ]
 
-      {:ok, card} = Access.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
 
       {:ok, card} =
-        Access.assign_port(card, %{
+        Domain.assign_port(card, %{
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
       {:ok, card} =
-        Access.assign_port(card, %{
+        Domain.assign_port(card, %{
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
@@ -133,28 +134,28 @@ defmodule Diffo.Access.CardTest do
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{assignee.id}\",\"href\":\"serviceInventoryManagement/v4/service/dslAccess/#{assignee.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]},{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{assignee.id}\",\"href\":\"serviceInventoryManagement/v4/service/dslAccess/#{assignee.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":2}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":46,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/shelf/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]},{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/shelf/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":2}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":46,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
     end
 
     test "specific assignment rejects duplicate request" do
-      {:ok, assignee} = Access.qualify_dsl()
+      {:ok, assignee} = Domain.build_shelf()
 
-      {:ok, card} = Access.build_card(%{})
+      {:ok, card} = Domain.build_card(%{})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
         ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
       ]
 
-      {:ok, card} = Access.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
 
       {:ok, card} =
-        Access.assign_port(card, %{
+        Domain.assign_port(card, %{
           assignment: %Assignment{id: 5, assignee_id: assignee.id, operation: :assign}
         })
 
       {:error, _error} =
-        Access.assign_port(card, %{
+        Domain.assign_port(card, %{
           assignment: %Assignment{id: 5, assignee_id: assignee.id, operation: :assign}
         })
 
@@ -163,7 +164,7 @@ defmodule Diffo.Access.CardTest do
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{assignee.id}\",\"href\":\"serviceInventoryManagement/v4/service/dslAccess/#{assignee.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":5}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":47,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/shelf/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":5}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":47,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
     end
   end
 end

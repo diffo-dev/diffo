@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Access.Dslam do
+defmodule Diffo.Test.ShelfValue do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Dslam - AshTyped Struct for Dslam Characteristic Value
+  ShelfValue - AshTyped Struct for Shelf Characteristic Value
   """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
@@ -20,21 +20,13 @@ defmodule Diffo.Access.Dslam do
   end
 
   typed_struct do
-    field :name, :string,
-      constraints: [match: ~r/Q[A-Z]{4}\d{4}/],
-      description: "the DSLAM name"
+    field :name, :string, description: "the shelf name"
 
-    field :family, :atom,
-      constraints: [one_of: [:ISAM, :AMX]],
-      default: :ISAM,
-      description: "the DSLAM family name"
+    field :family, :atom, description: "the shelf family name"
 
-    field :model, :string, description: "the DSLAM model name"
+    field :model, :string, description: "the shelf model name"
 
-    field :technology, :atom,
-      constraints: [one_of: [:eth, :atm]],
-      default: :eth,
-      description: "the DSLAM technology"
+    field :technology, :atom, description: "the shelf technology"
   end
 
   defimpl String.Chars do

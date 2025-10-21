@@ -2,27 +2,31 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Access.FloatUnit do
+defmodule Diffo.Test.CardValue do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  FloatUnit - AshTyped Struct for Float with Unit
+  CardValue - AshTyped Struct for Card Characteristic Value
   """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
   jason do
-    pick [:amount, :unit]
+    pick [:name, :family, :model, :technology]
     compact(true)
   end
 
   outstanding do
-    expect [:amount, :unit]
+    expect [:name]
   end
 
   typed_struct do
-    field :amount, :float, description: "the amount"
+    field :name, :string, description: "the card name"
 
-    field :unit, :atom, description: "the unit"
+    field :family, :atom, description: "the card family name"
+
+    field :model, :string, description: "the card model name"
+
+    field :technology, :atom, description: "the card technology"
   end
 
   defimpl String.Chars do

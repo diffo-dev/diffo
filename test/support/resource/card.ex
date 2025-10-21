@@ -2,28 +2,25 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Access.Card do
+defmodule Diffo.Test.Card do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
   Card - Card Resource Instance
   """
-
   alias Diffo.Provider.BaseInstance
-  alias Diffo.Provider.Instance.Specification
   alias Diffo.Provider.Instance.Relationship
-  alias Diffo.Provider.Instance.Feature
   alias Diffo.Provider.Instance.Characteristic
-  alias Diffo.Provider.Instance.Place
-  alias Diffo.Provider.Instance.Party
+  alias Diffo.Provider.Instance.ActionHelper
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
-
-  alias Diffo.Access
+  alias Diffo.Provider.AssignableValue
+  alias Diffo.Test.Domain
+  alias Diffo.Test.CardValue
 
   use Ash.Resource,
     fragments: [BaseInstance],
-    domain: Access
+    domain: Domain
 
   resource do
     description "An Ash Resource representing a Card"
@@ -39,8 +36,8 @@ defmodule Diffo.Access.Card do
   end
 
   characteristics do
-    characteristic :card, Diffo.Access.CardValue
-    characteristic :ports, Diffo.Provider.AssignableValue
+    characteristic :card, CardValue
+    characteristic :ports, AssignableValue
   end
 
   actions do
@@ -57,24 +54,11 @@ defmodule Diffo.Access.Card do
       change set_attribute(:type, :resource)
 
       change before_action(fn changeset, _context ->
-               changeset
-               |> Specification.set_specified_by_argument()
-               |> Feature.set_features_argument()
-               |> Characteristic.set_characteristics_argument()
+               ActionHelper.build_before(changeset)
              end)
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, with_specification} <- Specification.relate_instance(result, changeset),
-                    {:ok, with_relationships} <-
-                      Relationship.relate_instance(with_specification, changeset),
-                    {:ok, with_features} <-
-                      Feature.relate_instance(with_relationships, changeset),
-                    {:ok, with_characteristics} <-
-                      Characteristic.relate_instance(with_features, changeset),
-                    {:ok, with_places} <- Place.relate_instance(with_characteristics, changeset),
-                    {:ok, _with_parties} <- Party.relate_instance(with_places, changeset),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+               ActionHelper.build_after(changeset, result, Domain, :get_card_by_id)
              end)
 
       change load [:href]
@@ -86,9 +70,9 @@ defmodule Diffo.Access.Card do
       argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, _result} <- Characteristic.update_values(result, changeset),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+               with {:ok, result} <- Characteristic.update_values(result, changeset),
+                    {:ok, result} <- Domain.get_card_by_id(result.id),
+                    do: {:ok, result}
              end)
     end
 
@@ -97,9 +81,9 @@ defmodule Diffo.Access.Card do
       argument :relationships, {:array, :struct}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, _card} <- Relationship.relate_instance(result, changeset),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+               with {:ok, result} <- Relationship.relate_instance(result, changeset),
+                    {:ok, result} <- Domain.get_card_by_id(result.id),
+                    do: {:ok, result}
              end)
     end
 
@@ -108,9 +92,9 @@ defmodule Diffo.Access.Card do
       argument :assignment, :struct, constraints: [instance_of: Assignment]
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, _card} <- Assigner.assign(result, changeset, :ports, :port),
-                    {:ok, card} <- Access.get_card_by_id(result.id),
-                    do: {:ok, card}
+               with {:ok, result} <- Assigner.assign(result, changeset, :ports, :port),
+                    {:ok, result} <- Domain.get_card_by_id(result.id),
+                    do: {:ok, result}
              end)
     end
   end
