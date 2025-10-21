@@ -36,5 +36,5 @@ config :spark,
     ]
   ]
 
-config :diffo, ash_domains: [Diffo.Provider, Diffo.Access]
+config :diffo, ash_domains: [Diffo.Provider]
 import_config "#{config_env()}.exs"
