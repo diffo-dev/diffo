@@ -9,8 +9,7 @@ SPDX-License-Identifier: MIT
 ```elixir
 Mix.install(
   [
-    #{:diffo, "~> 0.1.2"}
-    {:diffo, github: "diffo-dev/diffo", branch: "29-livebook-for-provider-instance-extension"}
+    {:diffo, "~> 0.1.2"}
   ],
   consolidate_protocols: false
 )
