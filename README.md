@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen)](https://hexdocs.pm/diffo/)
 [![License](https://img.shields.io/hexpm/l/diffo)](https://github.com/diffo-dev/diffo/blob/master/LICENSES/MIT.md)
 [![REUSE status](https://api.reuse.software/badge/github.com/diffo-dev/diffo)](https://api.reuse.software/info/github.com/diffo-dev/diffo)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/diffo-dev/diffo)
 
 Diffo is a Telecommunications Management Forum (TMF) Service and Resource Manager, built for autonomous networks.
 
