@@ -20,7 +20,8 @@ locals_without_parens = [
   initial_states: 1,
   default_initial_state: 1,
   state_attribute: 1,
-  transition: 1
+  transition: 1,
+  compact: 1
 ]
 
 [
