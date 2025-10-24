@@ -215,5 +215,17 @@ defmodule Diffo.Provider do
       define :update_entity_ref, action: :update
       define :delete_entity_ref, action: :destroy
     end
+
+    resource Diffo.Provider.Event do
+      define :create_event, action: :create
+      define :get_event_by_id, action: :read, get_by: :id
+      define :list_events, action: :list
+
+      define :list_events_by_instance_id,
+        action: :list_events_by_instance_id,
+        args: [:instance_id]
+
+      define :delete_event, action: :destroy
+    end
   end
 end
