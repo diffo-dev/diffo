@@ -402,6 +402,20 @@ defmodule Diffo.Util do
     end
   end
 
+  @doc """
+  Nest values from list of tuples into a list, with a new tuple key
+    ## Examples
+    iex> list = [state: :up, weeks: 1, days: 5]
+    iex> Diffo.Util.nest(list, [:weeks, :days], :duration)
+    iex>
+    [state: :up, duration: [weeks: 1, days: 5]]
+
+  """
+  def nest(list, tuple_keys, new_tuple_key) when is_list(list) and is_list(tuple_keys) do
+    {nested_list, remainder_list} = Enum.split_with(list, fn {tuple_key, _} -> tuple_key in tuple_keys end)
+    set(remainder_list, new_tuple_key, nested_list)
+  end
+
   defimpl Jason.Encoder, for: Tuple do
     def encode(tuple, _opts) when is_tuple(tuple) do
       tuple
