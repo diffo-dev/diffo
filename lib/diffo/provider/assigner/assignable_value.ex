@@ -12,7 +12,7 @@ defmodule Diffo.Provider.AssignableValue do
 
   jason do
     pick [:first, :last, :free, :type, :algorithm]
-    compact(true)
+    compact true
   end
 
   typed_struct do

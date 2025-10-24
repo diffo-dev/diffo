@@ -58,7 +58,7 @@ defmodule Diffo.Provider.BaseInstance do
       :type
     ]
 
-    compact(true)
+    compact true
 
     customize fn result, record ->
       result
