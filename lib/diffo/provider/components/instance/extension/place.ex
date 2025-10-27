@@ -47,7 +47,7 @@ defmodule Diffo.Provider.Instance.Place do
             {:error, "couldn't relate places"}
 
           _ ->
-            # sorted = Ash.Sort.runtime_sort(place_refs, [role: :asc, inserted_at: :desc])
+            # sorted = Ash.Sort.runtime_sort(place_refs, [role: :asc, created_at: :desc])
             {:ok, result |> Map.put(:places, place_refs)}
         end
     end

@@ -204,7 +204,7 @@ defmodule Diffo.Provider.BaseInstance do
       constraints one_of: Diffo.Provider.Service.service_operating_statuses()
     end
 
-    create_timestamp :inserted_at
+    create_timestamp :created_at
 
     update_timestamp :updated_at
 
@@ -479,7 +479,7 @@ defmodule Diffo.Provider.BaseInstance do
                 :places,
                 :parties
               ],
-              sort: [inserted_at: :desc]
+              sort: [created_at: :desc]
             )
   end
 

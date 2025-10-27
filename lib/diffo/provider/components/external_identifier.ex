@@ -111,7 +111,7 @@ defmodule Diffo.Provider.ExternalIdentifier do
       public? true
     end
 
-    create_timestamp :inserted_at
+    create_timestamp :created_at
 
     update_timestamp :updated_at
   end
@@ -144,20 +144,20 @@ defmodule Diffo.Provider.ExternalIdentifier do
   end
 
   preparations do
-    prepare build(load: [:owner], sort: [inserted_at: :desc])
+    prepare build(load: [:owner], sort: [created_at: :desc])
   end
 
   @doc """
   Compares two external identifier, by most recent insertion order
   ## Examples
-    iex> Diffo.Provider.ExternalIdentifier.compare(%{inserted_at: "a"}, %{inserted_at: "a"})
+    iex> Diffo.Provider.ExternalIdentifier.compare(%{created_at: "a"}, %{created_at: "a"})
     :eq
-    iex> Diffo.Provider.ExternalIdentifier.compare(%{inserted_at: "b"}, %{inserted_at: "a"})
+    iex> Diffo.Provider.ExternalIdentifier.compare(%{created_at: "b"}, %{created_at: "a"})
     :gt
-    iex> Diffo.Provider.ExternalIdentifier.compare(%{inserted_at: "a"}, %{inserted_at: "b"})
+    iex> Diffo.Provider.ExternalIdentifier.compare(%{created_at: "a"}, %{created_at: "b"})
     :lt
 
   """
-  def compare(%{inserted_at: inserted_at0}, %{inserted_at: inserted_at1}),
-    do: Diffo.Util.compare(inserted_at0, inserted_at1)
+  def compare(%{created_at: created_at0}, %{created_at: created_at1}),
+    do: Diffo.Util.compare(created_at0, created_at1)
 end

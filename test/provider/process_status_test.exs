@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
+defmodule Diffo.Provider.ProcessStatusTest do
   @moduledoc false
   use ExUnit.Case
 
@@ -231,8 +231,6 @@ defmodule Diffo.Provider.ProcessStatus.ProcessStatus do
                "{\"code\":\"NBNACC-1003\",\"severity\":\"WARN\",\"message\":\"nbnProductOrder cancelled\",\"parameterizedMessage\":{\"reason\":\"cancelled due to force majeure\"},\"timeStamp\":\"now\"}"
     end
   end
-
-  [:code, :severity, :message, :parameterized_message, :timestamp]
 
   describe "Diffo.Provider outstanding ProcessStatus" do
     use Outstand

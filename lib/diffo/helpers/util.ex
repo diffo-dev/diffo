@@ -412,8 +412,26 @@ defmodule Diffo.Util do
 
   """
   def nest(list, tuple_keys, new_tuple_key) when is_list(list) and is_list(tuple_keys) do
-    {nested_list, remainder_list} = Enum.split_with(list, fn {tuple_key, _} -> tuple_key in tuple_keys end)
+    {nested_list, remainder_list} =
+      Enum.split_with(list, fn {tuple_key, _} -> tuple_key in tuple_keys end)
+
     set(remainder_list, new_tuple_key, nested_list)
+  end
+
+  @doc """
+  Nest values from list of tuples into a map, with a new tuple key
+    ## Examples
+    iex> list = [state: :up, weeks: 1, days: 5]
+    iex> Diffo.Util.nest_as_map(list, [:weeks, :days], :duration)
+    iex>
+    [state: :up, duration: %{weeks: 1, days: 5}]
+
+  """
+  def nest_as_map(list, tuple_keys, new_tuple_key) when is_list(list) and is_list(tuple_keys) do
+    {nested_list, remainder_list} =
+      Enum.split_with(list, fn {tuple_key, _} -> tuple_key in tuple_keys end)
+
+    set(remainder_list, new_tuple_key, Map.new(nested_list))
   end
 
   defimpl Jason.Encoder, for: Tuple do

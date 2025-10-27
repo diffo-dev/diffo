@@ -14,6 +14,11 @@ defmodule Diffo.Provider.ProcessStatus do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
+  resource do
+    description "An Ash Resource for a TMF Process Status"
+    plural_name :processStatuses
+  end
+
   code_interface do
     define :create
     define :update
