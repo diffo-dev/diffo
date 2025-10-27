@@ -105,7 +105,7 @@ defmodule Diffo.Provider.PartyRef do
       public? true
     end
 
-    create_timestamp :inserted_at
+    create_timestamp :created_at
 
     update_timestamp :updated_at
   end
@@ -134,7 +134,7 @@ defmodule Diffo.Provider.PartyRef do
   preparations do
     prepare build(
               load: [:party],
-              sort: [role: :asc, inserted_at: :desc]
+              sort: [role: :asc, created_at: :desc]
             )
   end
 

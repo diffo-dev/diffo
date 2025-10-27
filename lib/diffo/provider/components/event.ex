@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.Event do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
+  Diffo - TMF Service and Reource Management with a difference
 
   Event - Ash Resource for a TMF Event
   """
@@ -21,28 +21,34 @@ defmodule Diffo.Provider.Event do
     plural_name :events
   end
 
+  code_interface do
+    define :create
+    define :destroy
+  end
+
   neo4j do
     relate [
-      {:instance, :FIRED, :incoming, :Instance},
-      #{:earlier_event, :AFTER, :outgoing, :Event}
+      {:instance, :FIRED, :incoming, :Instance}
+      # {:earlier_event, :AFTER, :outgoing, :Event}
     ]
   end
 
   jason do
-    rename id: :eventId, inserted_at: :eventTime, type: :eventType
+    pick [:id, :created_at, :type, :instance]
+    rename id: :eventId, created_at: :eventTime, type: :eventType
 
     customize fn result, record ->
       result
-      |> Event.time(record)
-      |> Util.rename(:instance, record.type)
-      |> Util.nest([record.type], :event)
+      |> __MODULE__.time(record)
+      |> Util.rename(:instance, record.instance_type)
+      |> Util.nest_as_map([record.instance_type], :event)
     end
 
     order [:eventId, :eventTime, :eventType, :event]
   end
 
   outstanding do
-    expect [:eventType, :eventTime, :event]
+    expect [:type, :created_at, :instance_id, :instance]
   end
 
   actions do
@@ -52,11 +58,11 @@ defmodule Diffo.Provider.Event do
       description "creates an event, fired by an instance"
       accept [:type]
       argument :instance_id, :uuid
-      argument :earlier_event_id, :uuid
+      # argument :earlier_event_id, :uuid
 
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
-      #change manage_relationship(:earlier_event_id, :earlier_event, type: :append_and_remove)
-      change load [:instance_type]
+      # change manage_relationship(:earlier_event_id, :earlier_event, type: :append_and_remove)
+      change load [:instance_type, :instance]
     end
 
     read :list do
@@ -80,9 +86,20 @@ defmodule Diffo.Provider.Event do
       description "the type of the event"
       allow_nil? false
       public? true
+
+      constraints one_of: [
+                    :serviceCreateEvent,
+                    :serviceStateChangeEvent,
+                    :serviceAttributeValueChangeEvent,
+                    :serviceDeleteEvent,
+                    :resourceCreateEvent,
+                    :resourceStateChangeEvent,
+                    :resourceAttributeValueChangeEvent,
+                    :resourceDeleteEvent
+                  ]
     end
 
-    create_timestamp :inserted_at
+    create_timestamp :created_at
 
     update_timestamp :updated_at
   end
@@ -94,11 +111,11 @@ defmodule Diffo.Provider.Event do
       public? true
     end
 
-    #has_one :earlier_event, Diffo.Provider.Event do
+    # has_one :earlier_event, Diffo.Provider.Event do
     #  description "the earlier event, if any"
     #  allow_nil? true
     #  public? true
-    #end
+    # end
   end
 
   calculations do
@@ -110,9 +127,10 @@ defmodule Diffo.Provider.Event do
   end
 
   preparations do
-    prepare build(load: [:instance_type], sort: [inserted_at: :desc])
+    prepare build(load: [:instance_type, :instance], sort: [created_at: :desc])
   end
 
+  @spec time([tuple()], any()) :: [tuple()]
   @doc """
   Assists in encoding event time
   """
@@ -120,7 +138,7 @@ defmodule Diffo.Provider.Event do
     result
     |> Diffo.Util.set(
       :eventTime,
-      Diffo.Util.to_iso8601(record.inserted_at)
+      Diffo.Util.to_iso8601(record.created_at)
     )
   end
 
