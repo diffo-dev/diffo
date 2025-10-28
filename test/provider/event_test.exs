@@ -12,7 +12,7 @@ defmodule Diffo.Provider.EventTest do
 
   setup do
     on_exit(fn ->
-      AshNeo4j.Neo4jHelper.delete_nodes(:Event)
+      AshNeo4j.Neo4jHelper.delete_all()
     end)
   end
 
@@ -29,6 +29,101 @@ defmodule Diffo.Provider.EventTest do
 
       assert event.type == :serviceCreateEvent
       assert event.instance_type == :service
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :Event,
+               %{uuid: event.id},
+               :FIRED,
+               :outgoing
+             )
+    end
+
+    test "create multiple events (no chaining) - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+
+      event_1 =
+        Diffo.Provider.Event.create!(%{
+          instance_id: instance.id,
+          type: :serviceCreateEvent
+        })
+
+      event_2 =
+        Diffo.Provider.Event.create!(%{
+          instance_id: instance.id,
+          type: :serviceStateChangeEvent
+        })
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :Event,
+               %{uuid: event_1.id},
+               :FIRED,
+               :outgoing
+             )
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :Event,
+               %{uuid: event_2.id},
+               :FIRED,
+               :outgoing
+             )
+    end
+
+    test "create event and chain it before previous event - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+
+      event_1 =
+        Diffo.Provider.Event.create!(%{
+          instance_id: instance.id,
+          type: :serviceCreateEvent
+        })
+
+      event_2 =
+        Diffo.Provider.Event.create!(%{
+          instance_id: instance.id,
+          type: :serviceStateChangeEvent
+        })
+
+      event_1 =
+        event_1
+        |> Diffo.Provider.Event.chain!(%{
+          instance_id: instance.id,
+          head_id: event_2.id
+        })
+
+      refute AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :Event,
+               %{uuid: event_1.id},
+               :FIRED,
+               :outgoing
+             )
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :Event,
+               %{uuid: event_2.id},
+               :FIRED,
+               :outgoing
+             )
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Event,
+               %{uuid: event_2.id},
+               :Event,
+               %{uuid: event_1.id},
+               :AFTER,
+               :outgoing
+             )
     end
   end
 
