@@ -23,13 +23,15 @@ defmodule Diffo.Provider.Event do
 
   code_interface do
     define :create
+    define :chain
     define :destroy
   end
 
   neo4j do
     relate [
-      {:instance, :FIRED, :incoming, :Instance}
-      # {:earlier_event, :AFTER, :outgoing, :Event}
+      {:instance, :FIRED, :incoming, :Instance},
+      {:head, :AFTER, :incoming, :Event},
+      {:tail, :AFTER, :outgoing, :Event}
     ]
   end
 
@@ -58,11 +60,19 @@ defmodule Diffo.Provider.Event do
       description "creates an event, fired by an instance"
       accept [:type]
       argument :instance_id, :uuid
-      # argument :earlier_event_id, :uuid
 
-      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
-      # change manage_relationship(:earlier_event_id, :earlier_event, type: :append_and_remove)
+      # ideally capture the id of the event last fired by the instance, if any, and call before on it to bump it down the chain
+      change manage_relationship(:instance_id, :instance, type: :append)
       change load [:instance_type, :instance]
+    end
+
+    update :chain do
+      description "chains the event from the head event"
+      primary? true
+      argument :head_id, :uuid
+      argument :instance_id, :uuid
+      change manage_relationship(:instance_id, :instance, type: :remove)
+      change manage_relationship(:head_id, :head, type: :append)
     end
 
     read :list do
@@ -107,14 +117,24 @@ defmodule Diffo.Provider.Event do
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
       description "the instance which fired the event"
-      allow_nil? false
+      allow_nil? true
       public? true
     end
 
-    # has_one :earlier_event, Diffo.Provider.Event do
-    #  description "the earlier event, if any"
-    #  allow_nil? true
-    #  public? true
+    belongs_to :head, Diffo.Provider.Event,
+      allow_nil?: true,
+      public?: true,
+      source_attribute: :head_id
+
+    belongs_to :tail, Diffo.Provider.Event,
+      allow_nil?: true,
+      public?: true,
+      source_attribute: :tail_id
+  end
+
+  validations do
+    # validate present [:instance_id, :head_id], at_most: 1 do
+    #  message "event cannot be related to both instance and head event"
     # end
   end
 

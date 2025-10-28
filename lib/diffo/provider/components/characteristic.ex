@@ -149,6 +149,12 @@ defmodule Diffo.Provider.Characteristic do
     end
   end
 
+  validations do
+    validate present([:instance_id, :feature_id, :relationship_id], at_most: 1) do
+      message "characteristic must be related to at most one of an instance, feature or relationship"
+    end
+  end
+
   preparations do
     prepare build(sort: [name: :asc])
   end
