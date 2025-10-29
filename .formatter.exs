@@ -21,7 +21,8 @@ locals_without_parens = [
   default_initial_state: 1,
   state_attribute: 1,
   transition: 1,
-  compact: 1
+  compact: 1,
+  label: 1
 ]
 
 [
