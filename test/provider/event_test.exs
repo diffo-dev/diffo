@@ -12,23 +12,23 @@ defmodule Diffo.Provider.EventTest do
 
   setup do
     on_exit(fn ->
-      AshNeo4j.Neo4jHelper.delete_all()
+      :ok #AshNeo4j.Neo4jHelper.delete_all()
     end)
   end
 
   describe "Diffo.Provider.Event create" do
-    test "create an event - success" do
+    test "fire an event - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
-      event =
-        Diffo.Provider.Event.create!(%{
-          instance_id: instance.id,
-          type: :serviceCreateEvent
-        })
+      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+      assert instance.event
+      event = instance.event
 
       assert event.type == :serviceCreateEvent
-      assert event.instance_type == :service
+      assert event.firing_type == :service
+      assert event.firing_id == instance.id
+      assert event.firing_snapshot
 
       assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
                :Instance,
@@ -40,63 +40,18 @@ defmodule Diffo.Provider.EventTest do
              )
     end
 
-    test "create multiple events (no chaining) - success" do
+    @tag debug: true
+    test "fired events are chained - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
-      event_1 =
-        Diffo.Provider.Event.create!(%{
-          instance_id: instance.id,
-          type: :serviceCreateEvent
-        })
+      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+      event_1 = instance.event
 
-      event_2 =
-        Diffo.Provider.Event.create!(%{
-          instance_id: instance.id,
-          type: :serviceStateChangeEvent
-        })
+      instance = Diffo.Provider.activate_service!(instance)
 
-      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-               :Instance,
-               %{uuid: instance.id},
-               :Event,
-               %{uuid: event_1.id},
-               :FIRED,
-               :outgoing
-             )
-
-      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
-               :Instance,
-               %{uuid: instance.id},
-               :Event,
-               %{uuid: event_2.id},
-               :FIRED,
-               :outgoing
-             )
-    end
-
-    test "create event and chain it before previous event - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-
-      event_1 =
-        Diffo.Provider.Event.create!(%{
-          instance_id: instance.id,
-          type: :serviceCreateEvent
-        })
-
-      event_2 =
-        Diffo.Provider.Event.create!(%{
-          instance_id: instance.id,
-          type: :serviceStateChangeEvent
-        })
-
-      event_1 =
-        event_1
-        |> Diffo.Provider.Event.chain!(%{
-          instance_id: instance.id,
-          head_id: event_2.id
-        })
+      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceStateChangeEvent}})
+      event_2 = instance.event
 
       refute AshNeo4j.Neo4jHelper.nodes_relate_how?(
                :Instance,
@@ -132,11 +87,9 @@ defmodule Diffo.Provider.EventTest do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
-      event =
-        Diffo.Provider.Event.create!(%{
-          instance_id: instance.id,
-          type: :serviceCreateEvent
-        })
+      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+      assert instance.event
+      event = instance.event
 
       encoding = Jason.encode!(event) |> Diffo.Util.summarise_dates()
 
@@ -148,32 +101,38 @@ defmodule Diffo.Provider.EventTest do
   describe "Diffo.Provider outstanding Event" do
     use Outstand
     @now DateTime.utc_now()
+    @instance_id UUID.uuid4()
+    @instance %Diffo.Provider.Instance{service_state: :active}
+    @firing_type :service
+    @firing_snapshot Jason.encode(!@instnace)
+
     @type_only %Diffo.Provider.Event{type: :serviceCreateEvent}
     @time_only %Diffo.Provider.Event{created_at: @now}
-    @uuid UUID.uuid4()
-    @instance_id_only %Diffo.Provider.Event{instance_id: @uuid}
-    @instance_only %Diffo.Provider.Event{
-      instance: %Diffo.Provider.Instance{service_state: :active}
-    }
+    @instance_id_only %Diffo.Provider.Event{instance_id: @instance_id}
+    @firing_type_only %Diffo.Provider.Event{firing_type: @firing_type}
+    @firing_snapshot_only %Diffo.Provider.Event{firing_snapshot: @firing_snapshot}
     @specific_event %Diffo.Provider.Event{
       type: :serviceCreateEvent,
       created_at: @now,
-      instance_id: @uuid,
-      instance: %Diffo.Provider.Instance{service_state: :active}
+      instance_id: @instance_id,
+      firing_type: @firing_type,
+      firing_snapshot: @firing_snapshot
     }
 
     @generic_event %Diffo.Provider.Event{
       type: &__MODULE__.service_event_type/1,
       created_at: nil,
       instance_id: nil,
-      instance_type: :service,
-      instance: nil
+      firing_type: :service,
+      firing_snapshot: nil
     }
+
     @actual_event %Diffo.Provider.Event{
       type: :serviceCreateEvent,
       created_at: @now,
-      instance_id: @uuid,
-      instance: %Diffo.Provider.Instance{id: @uuid, service_state: :active}
+      instance_id: @instance_id,
+      firing_type: @firing_type,
+      firing_snapshot: @firing_snapshot
     }
 
     gen_nothing_outstanding_test(
@@ -211,10 +170,17 @@ defmodule Diffo.Provider.EventTest do
     )
 
     gen_result_outstanding_test(
-      "specific instance.service_state result",
+      "specific firing_type result",
       @specific_event,
-      Kernel.update_in(@actual_event.instance.service_state, fn _ -> nil end),
-      Ash.Test.strip_metadata(@instance_only)
+      Map.put(@actual_event, :firing_type, nil),
+      Ash.Test.strip_metadata(@firing_type_only)
+    )
+
+    gen_result_outstanding_test(
+      "specific firing_snapshot result",
+      @specific_event,
+      Map.put(@actual_event, :firing_snapshot, nil),
+      Ash.Test.strip_metadata(@firing_snapshot_only)
     )
 
     gen_nothing_outstanding_test(
@@ -229,11 +195,8 @@ defmodule Diffo.Provider.EventTest do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
-      event =
-        Diffo.Provider.Event.create!(%{
-          instance_id: instance.id,
-          type: :serviceCreateEvent
-        })
+      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+      event = instance.event
 
       :ok = Diffo.Provider.delete_event(event)
       {:error, _error} = Diffo.Provider.get_event_by_id(event.id)
