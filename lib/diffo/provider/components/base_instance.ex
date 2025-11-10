@@ -461,11 +461,12 @@ defmodule Diffo.Provider.BaseInstance do
 
     update :fire_event do
       description "fires an event, maintaining the event chain"
+
       argument :event, :map do
         allow_nil? false
       end
-      # TODO custom change?
-      # we want to inject the firing_type, firing_snapshot, earlier_id into the created event
+
+      change Diffo.Changes.DetailEvent
       change manage_relationship(:event, type: :create)
       change load [:event]
     end
