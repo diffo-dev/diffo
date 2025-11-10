@@ -15,6 +15,11 @@ defmodule Diffo.Provider.Relationship do
     data_layer: AshNeo4j.DataLayer,
     extensions: [AshOutstanding.Resource, AshJason.Resource]
 
+  resource do
+    description "An Ash Resource for a TMF Service or Resource Relationship"
+    plural_name :relationships
+  end
+
   neo4j do
     relate [
       {:source, :RELATES, :incoming, :Instance},
@@ -145,7 +150,7 @@ defmodule Diffo.Provider.Relationship do
       public? true
     end
 
-    create_timestamp :inserted_at
+    create_timestamp :created_at
 
     update_timestamp :updated_at
   end
@@ -191,7 +196,7 @@ defmodule Diffo.Provider.Relationship do
   preparations do
     prepare build(
               load: [:characteristics],
-              sort: [alias: :asc, type: :asc, inserted_at: :asc]
+              sort: [alias: :asc, type: :asc, created_at: :asc]
             )
   end
 

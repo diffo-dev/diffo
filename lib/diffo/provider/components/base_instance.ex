@@ -34,11 +34,12 @@ defmodule Diffo.Provider.BaseInstance do
       {:characteristics, :HAS, :outgoing, :Characteristic},
       {:entities, :RELATES, :outgoing, :EntityRef},
       {:notes, :ANNOTATES, :incoming, :Note},
+      {:event, :FIRED, :outgoing, :Event},
       {:places, :LOCATED_BY, :outgoing, :PlaceRef},
       {:parties, :INVOLVED_WITH, :outgoing, :PartyRef}
     ]
 
-    label(:Instance)
+    label :Instance
   end
 
   jason do
@@ -58,7 +59,7 @@ defmodule Diffo.Provider.BaseInstance do
       :type
     ]
 
-    compact(true)
+    compact true
 
     customize fn result, record ->
       result
@@ -204,7 +205,7 @@ defmodule Diffo.Provider.BaseInstance do
       constraints one_of: Diffo.Provider.Service.service_operating_statuses()
     end
 
-    create_timestamp :inserted_at
+    create_timestamp :created_at
 
     update_timestamp :updated_at
 
@@ -267,6 +268,12 @@ defmodule Diffo.Provider.BaseInstance do
 
     has_many :notes, Diffo.Provider.Note do
       description "the instance's collection of annotating notes"
+      public? true
+      destination_attribute :instance_id
+    end
+
+    has_one :event, Diffo.Provider.Event do
+      description "the most recently fired event"
       public? true
       destination_attribute :instance_id
     end
@@ -451,6 +458,18 @@ defmodule Diffo.Provider.BaseInstance do
       argument :note, :uuid
       change manage_relationship(:note, :notes, type: :append)
     end
+
+    update :fire_event do
+      description "fires an event, maintaining the event chain"
+
+      argument :event, :map do
+        allow_nil? false
+      end
+
+      change Diffo.Changes.DetailEvent
+      change manage_relationship(:event, type: :create)
+      change load [:event]
+    end
   end
 
   code_interface do
@@ -479,7 +498,7 @@ defmodule Diffo.Provider.BaseInstance do
                 :places,
                 :parties
               ],
-              sort: [inserted_at: :desc]
+              sort: [created_at: :desc]
             )
   end
 

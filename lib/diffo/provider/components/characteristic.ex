@@ -107,7 +107,7 @@ defmodule Diffo.Provider.Characteristic do
       constraints one_of: [:instance, :feature, :relationship]
     end
 
-    create_timestamp :inserted_at
+    create_timestamp :created_at
 
     update_timestamp :updated_at
   end
@@ -146,6 +146,12 @@ defmodule Diffo.Provider.Characteristic do
     identity :relationship_characteristic_uniqueness, [:relationship_id, :name] do
       message "relationship has duplicate characteristic"
       pre_check? true
+    end
+  end
+
+  validations do
+    validate present([:instance_id, :feature_id, :relationship_id], at_most: 1) do
+      message "characteristic must be related to at most one of an instance, feature or relationship"
     end
   end
 
