@@ -56,12 +56,14 @@ defmodule Diffo.Provider.Event do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates an event, fired by an instance"
-      primary? :true
+      description "creates an event, fired by an instance, optionally related to earlier event"
+      primary? true
       accept [:type, :firing_type, :firing_snapshot]
       argument :instance_id, :uuid
+      argument :earlier_id, :uuid
 
       change manage_relationship(:instance_id, :instance, type: :append)
+      change manage_relationship(:earlier_id, :earlier, type: :append_and_remove)
     end
 
     read :list do

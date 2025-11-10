@@ -7,12 +7,14 @@ defmodule Diffo.Provider.EventTest do
   use ExUnit.Case
 
   setup_all do
-    :ok #AshNeo4j.BoltxHelper.start()
+    # AshNeo4j.BoltxHelper.start()
+    :ok
   end
 
   setup do
     on_exit(fn ->
-      :ok #AshNeo4j.Neo4jHelper.delete_all()
+      # AshNeo4j.Neo4jHelper.delete_all()
+      :ok
     end)
   end
 
@@ -22,7 +24,13 @@ defmodule Diffo.Provider.EventTest do
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
       snapshot = Jason.encode!(instance)
 
-      event = Diffo.Provider.Event.create!(%{type: :serviceCreateEvent, firing_type: instance.type, firing_snapshot: snapshot, instance_id: instance.id})
+      event =
+        Diffo.Provider.Event.create!(%{
+          type: :serviceCreateEvent,
+          firing_type: instance.type,
+          firing_snapshot: snapshot,
+          instance_id: instance.id
+        })
 
       assert event.instance_id == instance.id
       assert event.type == :serviceCreateEvent
@@ -38,6 +46,60 @@ defmodule Diffo.Provider.EventTest do
                :outgoing
              )
     end
+
+    test "events created with code interface can be chained - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      snapshot = Jason.encode!(instance)
+
+      event_1 =
+        Diffo.Provider.Event.create!(%{
+          type: :serviceCreateEvent,
+          firing_type: instance.type,
+          firing_snapshot: snapshot,
+          instance_id: instance.id
+        })
+
+      activated_instance = Diffo.Provider.activate_service!(instance)
+      refreshed_instance = Diffo.Provider.get_instance_by_id!(activated_instance.id)
+      snapshot = Jason.encode!(refreshed_instance)
+
+      event_2 =
+        Diffo.Provider.Event.create!(%{
+          type: :serviceStateChangeEvent,
+          firing_type: instance.type,
+          firing_snapshot: snapshot,
+          instance_id: instance.id,
+          earlier_id: event_1.id
+        })
+
+      refute AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :Event,
+               %{uuid: event_1.id},
+               :FIRED,
+               :outgoing
+             )
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :Event,
+               %{uuid: event_2.id},
+               :FIRED,
+               :outgoing
+             )
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Event,
+               %{uuid: event_2.id},
+               :Event,
+               %{uuid: event_1.id},
+               :AFTER,
+               :outgoing
+             )
+    end
   end
 
   describe "Diffo.Provider.Event encode" do
@@ -45,7 +107,14 @@ defmodule Diffo.Provider.EventTest do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
       snapshot = Jason.encode!(instance)
-      event = Diffo.Provider.Event.create!(%{type: :serviceCreateEvent, firing_type: instance.type, firing_snapshot: snapshot, instance_id: instance.id})
+
+      event =
+        Diffo.Provider.Event.create!(%{
+          type: :serviceCreateEvent,
+          firing_type: instance.type,
+          firing_snapshot: snapshot,
+          instance_id: instance.id
+        })
 
       encoding = Jason.encode!(event) |> Diffo.Util.summarise_dates()
 
@@ -59,7 +128,9 @@ defmodule Diffo.Provider.EventTest do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
-      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+      instance =
+        Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+
       assert instance.event
       event = instance.event
 
@@ -78,16 +149,21 @@ defmodule Diffo.Provider.EventTest do
              )
     end
 
-    test "fired events are chained - success" do
+    @tag debug: true
+    test "fired instance events are chained - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
-      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+      instance =
+        Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+
       event_1 = instance.event
 
       instance = Diffo.Provider.activate_service!(instance)
 
-      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceStateChangeEvent}})
+      instance =
+        Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceStateChangeEvent}})
+
       event_2 = instance.event
 
       refute AshNeo4j.Neo4jHelper.nodes_relate_how?(
@@ -216,7 +292,9 @@ defmodule Diffo.Provider.EventTest do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
-      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+      instance =
+        Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
+
       event = instance.event
 
       :ok = Diffo.Provider.delete_event(event)
