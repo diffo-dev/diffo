@@ -29,7 +29,7 @@ defmodule Diffo.Provider.Place do
 
   jason do
     pick [:id, :href, :name, :referredType, :type]
-    compact(true)
+    compact true
     rename referredType: "@referredType", type: "@type"
   end
 
@@ -114,7 +114,7 @@ defmodule Diffo.Provider.Place do
       constraints one_of: [:GeographicSite, :GeographicLocation, :GeographicAddress]
     end
 
-    create_timestamp :inserted_at
+    create_timestamp :created_at
 
     update_timestamp :updated_at
   end

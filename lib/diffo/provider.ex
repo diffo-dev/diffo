@@ -55,6 +55,7 @@ defmodule Diffo.Provider do
       define :relate_instance_characteristics, action: :relate_characteristics
       define :unrelate_instance_characteristics, action: :unrelate_characteristics
       define :annotate_instance, action: :annotate
+      define :fire_instance_event, action: :fire_event
       define :delete_instance, action: :destroy
     end
 
@@ -214,6 +215,17 @@ defmodule Diffo.Provider do
 
       define :update_entity_ref, action: :update
       define :delete_entity_ref, action: :destroy
+    end
+
+    resource Diffo.Provider.Event do
+      define :get_event_by_id, action: :read, get_by: :id
+      define :list_events, action: :list
+
+      define :list_events_by_instance_id,
+        action: :list_events_by_instance_id,
+        args: [:instance_id]
+
+      define :delete_event, action: :destroy
     end
   end
 end

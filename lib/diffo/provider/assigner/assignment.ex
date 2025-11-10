@@ -12,7 +12,7 @@ defmodule Diffo.Provider.Assignment do
 
   jason do
     pick [:id, :assignee_id, :operation]
-    compact(true)
+    compact true
   end
 
   typed_struct do

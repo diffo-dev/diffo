@@ -54,7 +54,7 @@ defmodule Diffo.Provider.Instance.Util do
     result
     |> Diffo.Util.set(
       derive_create_date_name(record.type),
-      Diffo.Util.to_iso8601(record.inserted_at)
+      Diffo.Util.to_iso8601(record.created_at)
     )
     |> Diffo.Util.set(
       derive_start_date_name(record.type),

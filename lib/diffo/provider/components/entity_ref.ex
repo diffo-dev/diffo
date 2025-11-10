@@ -94,7 +94,7 @@ defmodule Diffo.Provider.EntityRef do
       public? true
     end
 
-    create_timestamp :inserted_at
+    create_timestamp :created_at
 
     update_timestamp :updated_at
   end
@@ -121,7 +121,7 @@ defmodule Diffo.Provider.EntityRef do
   end
 
   preparations do
-    prepare build(load: [:entity], sort: [inserted_at: :desc])
+    prepare build(load: [:entity], sort: [created_at: :desc])
   end
 
   @doc """

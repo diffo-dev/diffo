@@ -47,7 +47,7 @@ defmodule Diffo.Provider.Instance.Party do
             {:error, "couldn't relate parties"}
 
           _ ->
-            # sorted = Ash.Sort.runtime_sort(party_refs, [role: :asc, inserted_at: :desc])
+            # sorted = Ash.Sort.runtime_sort(party_refs, [role: :asc, created_at: :desc])
             {:ok, result |> Map.put(:parties, party_refs)}
         end
     end

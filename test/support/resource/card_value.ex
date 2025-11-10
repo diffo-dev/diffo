@@ -12,7 +12,7 @@ defmodule Diffo.Test.CardValue do
 
   jason do
     pick [:name, :family, :model, :technology]
-    compact(true)
+    compact true
   end
 
   outstanding do
