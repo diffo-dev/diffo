@@ -7,7 +7,7 @@ defmodule Diffo.Provider.EventTest do
   use ExUnit.Case
 
   setup_all do
-    AshNeo4j.BoltxHelper.start()
+    :ok #AshNeo4j.BoltxHelper.start()
   end
 
   setup do
@@ -17,7 +17,45 @@ defmodule Diffo.Provider.EventTest do
   end
 
   describe "Diffo.Provider.Event create" do
-    test "fire an event - success" do
+    test "create an event using Event code interface - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      snapshot = Jason.encode!(instance)
+
+      event = Diffo.Provider.Event.create!(%{type: :serviceCreateEvent, firing_type: instance.type, firing_snapshot: snapshot, instance_id: instance.id})
+
+      assert event.instance_id == instance.id
+      assert event.type == :serviceCreateEvent
+      assert event.firing_type == :service
+      assert event.firing_snapshot
+
+      assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
+               :Instance,
+               %{uuid: instance.id},
+               :Event,
+               %{uuid: event.id},
+               :FIRED,
+               :outgoing
+             )
+    end
+  end
+
+  describe "Diffo.Provider.Event encode" do
+    test "encode json with service instance - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
+      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      snapshot = Jason.encode!(instance)
+      event = Diffo.Provider.Event.create!(%{type: :serviceCreateEvent, firing_type: instance.type, firing_snapshot: snapshot, instance_id: instance.id})
+
+      encoding = Jason.encode!(event) |> Diffo.Util.summarise_dates()
+
+      assert encoding ==
+               ~s({\"eventId\":\"#{event.id}\",\"eventTime\":\"now\",\"eventType\":\"serviceCreateEvent\",\"event\":{\"service\":{\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/nbnAccess/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"nbnAccess\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\"}}})
+    end
+  end
+
+  describe "Diffo.Provider.Event provider API" do
+    test "fire an instance event - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
@@ -25,9 +63,9 @@ defmodule Diffo.Provider.EventTest do
       assert instance.event
       event = instance.event
 
+      assert event.instance_id == instance.id
       assert event.type == :serviceCreateEvent
       assert event.firing_type == :service
-      assert event.firing_id == instance.id
       assert event.firing_snapshot
 
       assert AshNeo4j.Neo4jHelper.nodes_relate_how?(
@@ -40,7 +78,6 @@ defmodule Diffo.Provider.EventTest do
              )
     end
 
-    @tag debug: true
     test "fired events are chained - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -82,29 +119,13 @@ defmodule Diffo.Provider.EventTest do
     end
   end
 
-  describe "Diffo.Provider.Event encode" do
-    test "encode json with service instance - success" do
-      specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-
-      instance = Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
-      assert instance.event
-      event = instance.event
-
-      encoding = Jason.encode!(event) |> Diffo.Util.summarise_dates()
-
-      assert encoding ==
-               ~s({\"eventId\":\"#{event.id}\",\"eventTime\":\"now\",\"eventType\":\"serviceCreateEvent\",\"event\":{\"service\":{\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/nbnAccess/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"nbnAccess\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\"}}})
-    end
-  end
-
   describe "Diffo.Provider outstanding Event" do
     use Outstand
     @now DateTime.utc_now()
     @instance_id UUID.uuid4()
     @instance %Diffo.Provider.Instance{service_state: :active}
     @firing_type :service
-    @firing_snapshot Jason.encode(!@instnace)
+    @firing_snapshot Jason.encode(!@instance)
 
     @type_only %Diffo.Provider.Event{type: :serviceCreateEvent}
     @time_only %Diffo.Provider.Event{created_at: @now}

@@ -22,6 +22,7 @@ defmodule Diffo.Provider.Event do
   end
 
   code_interface do
+    define :create
     define :destroy
   end
 
@@ -39,6 +40,7 @@ defmodule Diffo.Provider.Event do
     customize fn result, record ->
       result
       |> __MODULE__.time(record)
+      |> Util.fragment(:firing_snapshot)
       |> Util.rename(:firing_snapshot, record.firing_type)
       |> Util.nest_as_map([record.firing_type], :event)
     end
@@ -58,6 +60,8 @@ defmodule Diffo.Provider.Event do
       primary? :true
       accept [:type, :firing_type, :firing_snapshot]
       argument :instance_id, :uuid
+
+      change manage_relationship(:instance_id, :instance, type: :append)
     end
 
     read :list do

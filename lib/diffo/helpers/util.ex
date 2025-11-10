@@ -407,7 +407,6 @@ defmodule Diffo.Util do
     ## Examples
     iex> list = [state: :up, weeks: 1, days: 5]
     iex> Diffo.Util.nest(list, [:weeks, :days], :duration)
-    iex>
     [state: :up, duration: [weeks: 1, days: 5]]
 
   """
@@ -423,7 +422,6 @@ defmodule Diffo.Util do
     ## Examples
     iex> list = [state: :up, weeks: 1, days: 5]
     iex> Diffo.Util.nest_as_map(list, [:weeks, :days], :duration)
-    iex>
     [state: :up, duration: %{weeks: 1, days: 5}]
 
   """
@@ -432,6 +430,22 @@ defmodule Diffo.Util do
       Enum.split_with(list, fn {tuple_key, _} -> tuple_key in tuple_keys end)
 
     set(remainder_list, new_tuple_key, Map.new(nested_list))
+  end
+
+  @doc """
+  Encapsulate a tuple value as a Jason Fragment
+    ## Examples
+    iex> list = [state: :initial, service: Jason.encode!(%{state: :initial})]
+    iex> list = Diffo.Util.fragment(list, :service)
+    iex> {:service, %name{}} = List.keyfind(list, :service, 0)
+    iex> name
+    Jason.Fragment
+
+  """
+  def fragment(list, tuple_key) when is_list(list) do
+    tuple_value = get(list, tuple_key)
+    value = Jason.Fragment.new(tuple_value)
+    list |> List.keystore(tuple_key, 0, {tuple_key, value})
   end
 
   defimpl Jason.Encoder, for: Tuple do
