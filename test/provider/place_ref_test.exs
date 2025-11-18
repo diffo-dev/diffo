@@ -113,6 +113,74 @@ defmodule Diffo.Provider.PlaceRefTest do
       assert List.last(place_refs).role == :ServingArea
     end
 
+    test "list place refs by related party id - success" do
+      party1 =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897353",
+          name: :individualId,
+          referredType: :Individual
+        })
+
+      party2 =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897354",
+          name: :individualId,
+          referredType: :Individual
+        })
+
+      party3 =
+        Diffo.Provider.create_party!(%{
+          id: "ORG000163435034",
+          name: :organizationId,
+          referredType: :Organization
+        })
+
+      place1 =
+        Diffo.Provider.create_place!(%{
+          id: "LOC000000123456",
+          name: :locationId,
+          referredType: :GeographicAddress
+        })
+
+      place2 =
+        Diffo.Provider.create_place!(%{
+          id: "LOC000000897353",
+          name: :locationId,
+          referredType: :GeographicAddress
+        })
+
+      Diffo.Provider.create_place_ref!(%{
+        party_id: party1.id,
+        role: :Residence,
+        place_id: place1.id
+      })
+
+      Diffo.Provider.create_place_ref!(%{
+        party_id: party2.id,
+        role: :Residence,
+        place_id: place1.id
+      })
+
+      Diffo.Provider.create_place_ref!(%{
+        party_id: party2.id,
+        role: :Office,
+        place_id: place2.id
+      })
+
+      Diffo.Provider.create_place_ref!(%{
+        party_id: party3.id,
+        role: :Office,
+        place_id: place2.id
+      })
+
+      place_refs =
+        Diffo.Provider.list_place_refs_by_place_id!(place2.id)
+
+      assert length(place_refs) == 2
+      # should be sorted newest to oldest
+      Enum.each(place_refs, fn place_ref -> assert place_ref.place_id == place2.id end)
+    end
+
     test "list place refs by related place id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -169,6 +237,61 @@ defmodule Diffo.Provider.PlaceRefTest do
       assert length(place_refs) == 2
       # should be sorted newest to oldest
       Enum.each(place_refs, fn place_ref -> assert place_ref.place_id == place3.id end)
+    end
+
+    test "list place refs by source place id - success" do
+      place1 =
+        Diffo.Provider.create_place!(%{
+          id: "3NBA",
+          href: "place/nbnco/3NBA",
+          name: :poiId,
+          type: :GeographicSite
+        })
+
+      place2 =
+        Diffo.Provider.create_place!(%{
+          id: "CSA000000124343",
+          name: :csaId,
+          type: :GeographicLocation
+        })
+
+      place3 =
+        Diffo.Provider.create_place!(%{
+          id: "LOC000000897353",
+          name: :locationId,
+          type: :GeographicAddress
+        })
+
+      place4 =
+        Diffo.Provider.create_place!(%{
+          id: "LOC000000897354",
+          name: :locationId,
+          type: :GeographicAddress
+        })
+
+      Diffo.Provider.create_place_ref!(%{
+        source_place_id: place2.id,
+        role: :NetworkNetworkInterface,
+        place_id: place1.id
+      })
+
+      Diffo.Provider.create_place_ref!(%{
+        source_place_id: place2.id,
+        role: :UserNetworkInterface,
+        place_id: place3.id
+      })
+
+      Diffo.Provider.create_place_ref!(%{
+        source_place_id: place2.id,
+        role: :UserNetworkInterface,
+        place_id: place4.id
+      })
+
+      place_refs = Diffo.Provider.list_place_refs_by_source_place_id!(place2.id)
+      assert length(place_refs) == 3
+      # should be sorted by role
+      assert List.first(place_refs).role == :NetworkNetworkInterface
+      assert List.last(place_refs).role == :UserNetworkInterface
     end
   end
 
@@ -419,6 +542,60 @@ defmodule Diffo.Provider.PlaceRefTest do
         Diffo.Provider.create_place_ref!(%{
           instance_id: instance.id,
           role: :CustomerSite,
+          place_id: place.id
+        })
+
+      :ok = Diffo.Provider.delete_place_ref(place_ref)
+      {:error, _error} = Diffo.Provider.get_place_ref_by_id(place_ref.id)
+    end
+
+    test "delete place_ref with related party - success" do
+      party =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897353",
+          name: :individualId,
+          href: "party/internal/IND000000897353",
+          referredType: :Individual
+        })
+
+      place =
+        Diffo.Provider.create_place!(%{
+        id: "LOC000000897353",
+        name: :locationId,
+        referredType: :GeographicAddress
+      })
+
+      place_ref =
+        Diffo.Provider.create_place_ref!(%{
+          party_id: party.id,
+          role: :Residence,
+          place_id: place.id
+        })
+
+      :ok = Diffo.Provider.delete_place_ref(place_ref)
+      {:error, _error} = Diffo.Provider.get_place_ref_by_id(place_ref.id)
+    end
+
+    test "delete place_ref with related source place - success" do
+      source_place =
+        Diffo.Provider.create_place!(%{
+          id: "3NBA",
+          href: "place/nbnco/3NBA",
+          name: :poiId,
+          type: :GeographicSite
+        })
+
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "CSA000000124343",
+          name: :csaId,
+          type: :GeographicLocation
+        })
+
+      place_ref =
+        Diffo.Provider.create_place_ref!(%{
+          source_place_id: source_place.id,
+          role: :ServingArea,
           place_id: place.id
         })
 
