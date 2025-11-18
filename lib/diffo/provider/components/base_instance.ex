@@ -35,8 +35,8 @@ defmodule Diffo.Provider.BaseInstance do
       {:entities, :RELATES, :outgoing, :EntityRef},
       {:notes, :ANNOTATES, :incoming, :Note},
       {:event, :FIRED, :outgoing, :Event},
-      {:places, :LOCATED_BY, :outgoing, :PlaceRef},
-      {:parties, :INVOLVED_WITH, :outgoing, :PartyRef}
+      {:places, :RELATES, :outgoing, :PlaceRef},
+      {:parties, :RELATES, :outgoing, :PartyRef}
     ]
 
     label :Instance
