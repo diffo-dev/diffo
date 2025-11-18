@@ -560,10 +560,10 @@ defmodule Diffo.Provider.PartyRefTest do
     test "delete party_ref with related place - success" do
       place =
         Diffo.Provider.create_place!(%{
-        id: "LOC000000897353",
-        name: :locationId,
-        referredType: :GeographicAddress
-      })
+          id: "LOC000000897353",
+          name: :locationId,
+          referredType: :GeographicAddress
+        })
 
       party =
         Diffo.Provider.create_party!(%{
