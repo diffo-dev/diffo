@@ -13,8 +13,7 @@ defmodule Diffo.Provider.EventTest do
 
   setup do
     on_exit(fn ->
-      # AshNeo4j.Neo4jHelper.delete_all()
-      :ok
+      AshNeo4j.Neo4jHelper.delete_all()
     end)
   end
 
@@ -149,7 +148,6 @@ defmodule Diffo.Provider.EventTest do
              )
     end
 
-    @tag debug: true
     test "fired instance events are chained - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
