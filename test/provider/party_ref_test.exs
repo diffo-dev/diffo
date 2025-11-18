@@ -39,13 +39,13 @@ defmodule Diffo.Provider.PartyRefTest do
 
       Diffo.Provider.create_party_ref!(%{
         instance_id: instance.id,
-        role: :Organization,
+        role: :PrimaryContact,
         party_id: party1.id
       })
 
       Diffo.Provider.create_party_ref!(%{
         instance_id: instance.id,
-        role: :Organization,
+        role: :PrimaryContact,
         party_id: party2.id
       })
 
@@ -119,6 +119,79 @@ defmodule Diffo.Provider.PartyRefTest do
       assert List.last(party_refs).role == :SiteOwner
     end
 
+    test "list party refs by related place - success" do
+      place1 =
+        Diffo.Provider.create_place!(%{
+          id: "LOC000000123456",
+          name: :locationId,
+          referredType: :GeographicAddress
+        })
+
+      place2 =
+        Diffo.Provider.create_place!(%{
+          id: "LOC000000897353",
+          name: :locationId,
+          referredType: :GeographicAddress
+        })
+
+      party1 =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897353",
+          name: :individualId,
+          referredType: :Individual
+        })
+
+      party2 =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897354",
+          name: :individualId,
+          referredType: :Individual
+        })
+
+      party3 =
+        Diffo.Provider.create_party!(%{
+          id: "ORG000163435034",
+          name: :organizationId,
+          referredType: :Organization
+        })
+
+      Diffo.Provider.create_party_ref!(%{
+        place_id: place1.id,
+        role: :Visitor,
+        party_id: party1.id
+      })
+
+      Diffo.Provider.create_party_ref!(%{
+        place_id: place1.id,
+        role: :Visitor,
+        party_id: party2.id
+      })
+
+      Diffo.Provider.create_party_ref!(%{
+        place_id: place1.id,
+        role: :Resident,
+        party_id: party3.id
+      })
+
+      Diffo.Provider.create_party_ref!(%{
+        place_id: place2.id,
+        role: :Resident,
+        party_id: party1.id
+      })
+
+      Diffo.Provider.create_party_ref!(%{
+        place_id: place2.id,
+        role: :Resident,
+        party_id: party2.id
+      })
+
+      party_refs = Diffo.Provider.list_party_refs_by_place_id!(place1.id)
+      assert length(party_refs) == 3
+      # should be sorted by role
+      assert List.first(party_refs).role == :Resident
+      assert List.last(party_refs).role == :Visitor
+    end
+
     test "list party refs by related party id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
@@ -181,6 +254,53 @@ defmodule Diffo.Provider.PartyRefTest do
       assert List.first(party_refs).role == :PrimaryContact
       assert List.last(party_refs).role == :SiteOwner
     end
+
+    test "list party refs by source party id - success" do
+      party1 =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897353",
+          name: :individualId,
+          referredType: :Individual
+        })
+
+      party2 =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897354",
+          name: :individualId,
+          referredType: :Individual
+        })
+
+      party3 =
+        Diffo.Provider.create_party!(%{
+          id: "ORG000000123456",
+          name: :organizationId,
+          referredType: :Organization
+        })
+
+      Diffo.Provider.create_party_ref!(%{
+        source_party_id: party3.id,
+        role: :Employee,
+        party_id: party1.id
+      })
+
+      Diffo.Provider.create_party_ref!(%{
+        source_party_id: party3.id,
+        role: :Contractor,
+        party_id: party2.id
+      })
+
+      Diffo.Provider.create_party_ref!(%{
+        source_party_id: party2.id,
+        role: :Supervisor,
+        party_id: party1.id
+      })
+
+      party_refs = Diffo.Provider.list_party_refs_by_source_party_id!(party3.id)
+      assert length(party_refs) == 2
+      # should be sorted by role
+      assert List.first(party_refs).role == :Contractor
+      assert List.last(party_refs).role == :Employee
+    end
   end
 
   describe "Diffo.Provider create PartyRefs" do
@@ -198,11 +318,11 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :Organization,
+          role: :PrimaryContact,
           party_id: party.id
         })
 
-      assert party_ref.role == :Organization
+      assert party_ref.role == :PrimaryContact
     end
   end
 
@@ -221,7 +341,7 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :Organization,
+          role: :PrimaryContact,
           party_id: party.id
         })
 
@@ -243,12 +363,12 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :NetworkSite,
+          role: :PrimaryContact,
           party_id: party.id
         })
 
-      updated_party_ref = party_ref |> Diffo.Provider.update_party_ref!(%{role: :Organization})
-      assert updated_party_ref.role == :Organization
+      updated_party_ref = party_ref |> Diffo.Provider.update_party_ref!(%{role: :PrimaryContact})
+      assert updated_party_ref.role == :PrimaryContact
     end
 
     test "update id - failure - not updatable" do
@@ -265,7 +385,7 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :Organization,
+          role: :PrimaryContact,
           party_id: party.id
         })
 
@@ -288,7 +408,7 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :Organization,
+          role: :PrimaryContact,
           party_id: party.id
         })
 
@@ -312,7 +432,7 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :Organization,
+          role: :PrimaryContact,
           party_id: party.id
         })
 
@@ -343,14 +463,14 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :Organization,
+          role: :PrimaryContact,
           party_id: party.id
         })
 
       encoding = Jason.encode!(party_ref)
 
       assert encoding ==
-               "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"role\":\"Organization\",\"@type\":\"Individual\"}"
+               "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"role\":\"PrimaryContact\",\"@type\":\"Individual\"}"
     end
 
     test "encode json party referredType - success" do
@@ -368,14 +488,14 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :Organization,
+          role: :PrimaryContact,
           party_id: party.id
         })
 
       encoding = Jason.encode!(party_ref)
 
       assert encoding ==
-               "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"role\":\"Organization\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"}"
+               "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"role\":\"PrimaryContact\",\"@referredType\":\"Individual\",\"@type\":\"PartyRef\"}"
     end
   end
 
@@ -395,12 +515,12 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :Organization,
+          role: :PrimaryContact,
           party_id: party.id
         })
 
       expected_party_ref = %Diffo.Provider.PartyRef{
-        role: :Organization,
+        role: :PrimaryContact,
         party: %Diffo.Provider.Party{
           id: ~r/IND\d{12}/,
           name: "individualId",
@@ -414,7 +534,7 @@ defmodule Diffo.Provider.PartyRefTest do
   end
 
   describe "Diffo.Provider delete PartyRefs" do
-    test "delete place_ref with related instance - success" do
+    test "delete party_ref with related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
@@ -429,7 +549,61 @@ defmodule Diffo.Provider.PartyRefTest do
       party_ref =
         Diffo.Provider.create_party_ref!(%{
           instance_id: instance.id,
-          role: :Organization,
+          role: :PrimaryContact,
+          party_id: party.id
+        })
+
+      :ok = Diffo.Provider.delete_party_ref(party_ref)
+      {:error, _error} = Diffo.Provider.get_party_ref_by_id(party_ref.id)
+    end
+
+    test "delete party_ref with related place - success" do
+      place =
+        Diffo.Provider.create_place!(%{
+        id: "LOC000000897353",
+        name: :locationId,
+        referredType: :GeographicAddress
+      })
+
+      party =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897353",
+          name: :individualId,
+          href: "party/internal/IND000000897353",
+          referredType: :Individual
+        })
+
+      party_ref =
+        Diffo.Provider.create_party_ref!(%{
+          place_id: place.id,
+          role: :TechnicalContact,
+          party_id: party.id
+        })
+
+      :ok = Diffo.Provider.delete_party_ref(party_ref)
+      {:error, _error} = Diffo.Provider.get_party_ref_by_id(party_ref.id)
+    end
+
+    test "delete party_ref with related source party - success" do
+      source_party =
+        Diffo.Provider.create_party!(%{
+          id: "ORG000163435034",
+          name: :organizationId,
+          referredType: :Organization
+        })
+
+      party =
+        Diffo.Provider.create_party!(%{
+          id: "IND000000897353",
+          name: :individualId,
+          href: "party/internal/IND000000897353",
+          referredType: :Individual
+        })
+
+      party_ref =
+        Diffo.Provider.create_party_ref!(%{
+          source_party_id: source_party.id,
+          role: :Employee,
           party_id: party.id
         })
 
