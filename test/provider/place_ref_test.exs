@@ -560,10 +560,10 @@ defmodule Diffo.Provider.PlaceRefTest do
 
       place =
         Diffo.Provider.create_place!(%{
-        id: "LOC000000897353",
-        name: :locationId,
-        referredType: :GeographicAddress
-      })
+          id: "LOC000000897353",
+          name: :locationId,
+          referredType: :GeographicAddress
+        })
 
       place_ref =
         Diffo.Provider.create_place_ref!(%{
