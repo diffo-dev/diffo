@@ -23,7 +23,7 @@ defmodule Diffo.Provider.Party do
     translate id: :key
 
     relate [
-      {:party_refs, :INVOLVED_WITH, :incoming, :PartyRef},
+      {:party_refs, :RELATES, :incoming, :PartyRef},
       {:external_identifiers, :OWNS, :outgoing, :ExternalIdentifier},
       {:notes, :AUTHORS, :outgoing, :Note}
     ]

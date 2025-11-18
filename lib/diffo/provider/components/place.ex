@@ -23,7 +23,7 @@ defmodule Diffo.Provider.Place do
     translate id: :key
 
     relate [
-      {:place_refs, :LOCATED_BY, :incoming, :PlaceRef}
+      {:place_refs, :RELATES, :incoming, :PlaceRef}
     ]
   end
 
