@@ -21,8 +21,10 @@ defmodule Diffo.Provider.PlaceRef do
 
   neo4j do
     relate [
-      {:instance, :LOCATED_BY, :incoming, :Instance},
-      {:place, :LOCATED_BY, :outgoing, :Place}
+      {:instance, :RELATES, :incoming, :Instance},
+      {:party, :RELATES, :incoming, :Party},
+      {:source_place, :RELATES, :incoming, :Place},
+      {:place, :RELATES, :outgoing, :Place}
     ]
   end
 
@@ -50,12 +52,16 @@ defmodule Diffo.Provider.PlaceRef do
     defaults [:read, :destroy]
 
     create :create do
-      description "creates a place ref, relating an instance and a place"
+      description "creates a place ref, relating an instance, party or source place to a place"
       accept [:role]
       argument :instance_id, :uuid
+      argument :party_id, :string
+      argument :source_place_id, :string
       argument :place_id, :string
 
       change manage_relationship(:instance_id, :instance, type: :append_and_remove)
+      change manage_relationship(:party_id, :party, type: :append_and_remove)
+      change manage_relationship(:source_place_id, :source_place, type: :append_and_remove)
       change manage_relationship(:place_id, :place, type: :append_and_remove)
     end
 
@@ -67,6 +73,18 @@ defmodule Diffo.Provider.PlaceRef do
       description "lists place refs by instance id"
       argument :instance_id, :uuid
       filter expr(instance_id == ^arg(:instance_id))
+    end
+
+    read :list_place_refs_by_party_id do
+      description "lists place refs by party id"
+      argument :party_id, :string
+      filter expr(party_id == ^arg(:party_id))
+    end
+
+    read :list_place_refs_by_source_place_id do
+      description "lists place refs by source_place id"
+      argument :source_place_id, :string
+      filter expr(source_place_id == ^arg(:source_place_id))
     end
 
     read :list_place_refs_by_place_id do
@@ -88,7 +106,7 @@ defmodule Diffo.Provider.PlaceRef do
     end
 
     attribute :role, :atom do
-      description "the role of the place to the instance"
+      description "the role of the place to the instance, party or source place"
       allow_nil? true
       public? true
     end
@@ -101,7 +119,21 @@ defmodule Diffo.Provider.PlaceRef do
   relationships do
     belongs_to :instance, Diffo.Provider.Instance do
       description "the instance which relates to a place via this place ref"
-      allow_nil? false
+      allow_nil? true
+      public? true
+    end
+
+    belongs_to :party, Diffo.Provider.Party do
+      description "the party which relates to a place via this place ref"
+      attribute_type :string
+      allow_nil? true
+      public? true
+    end
+
+    belongs_to :source_place, Diffo.Provider.Place do
+      description "the source place which relates to a place via this place ref"
+      attribute_type :string
+      allow_nil? true
       public? true
     end
 
@@ -116,6 +148,20 @@ defmodule Diffo.Provider.PlaceRef do
   identities do
     identity :instance_place_uniqueness, [:instance_id, :place_id] do
       message "another place ref exists relating the same instance and place"
+    end
+
+    identity :party_place_uniqueness, [:party_id, :place_id] do
+      message "another place ref exists"
+    end
+
+    identity :source_place_place_uniqueness, [:source_place_id, :place_id] do
+      message "another place ref exists"
+    end
+  end
+
+  validations do
+    validate present([:instance_id, :party_id, :source_place_id], exactly: 1) do
+      message "a place ref can relate either an instance, party or source place"
     end
   end
 

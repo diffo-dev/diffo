@@ -117,6 +117,9 @@ defmodule Diffo.Provider do
         action: :list_place_refs_by_instance_id,
         args: [:instance_id]
 
+      define :list_place_refs_by_party_id, action: :list_place_refs_by_party_id, args: [:party_id]
+      define :list_place_refs_by_source_place_id, action: :list_place_refs_by_source_place_id, args: [:source_place_id]
+
       define :update_place_ref, action: :update
       define :delete_place_ref, action: :destroy
     end

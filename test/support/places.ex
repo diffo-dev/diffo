@@ -25,7 +25,7 @@ defmodule Diffo.Test.Places do
                %{uuid: instance.id},
                :PlaceRef,
                %{uuid: actual_place_ref.id},
-               :LOCATED_BY,
+               :RELATES,
                :outgoing
              )
 
@@ -34,7 +34,7 @@ defmodule Diffo.Test.Places do
                %{uuid: actual_place_ref.id},
                :Place,
                %{key: actual_place_ref.place_id},
-               :LOCATED_BY,
+               :RELATES,
                :outgoing
              )
     end)
