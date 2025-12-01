@@ -25,8 +25,20 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 * customise instance via specification
 * improve relationships to avoid circular loads
 
-## [v0.1.1](https://github.com/diffo-dev/diffo/compare/v0.1.1...v0.1.2) (2025-10-20)
+## [v0.1.2](https://github.com/diffo-dev/diffo/compare/v0.1.1...v0.1.2) (2025-10-20)
 
 ### Features
 
 * REUSE compliant
+
+## [v0.1.3](https://github.com/diffo-dev/diffo/compare/v0.1.2...v0.1.3) (2025-12-01)
+
+### Features
+
+* place_ref source party or place
+* party_ref source place or party
+* instance events
+
+### Maintenance
+
+* remove access domain
