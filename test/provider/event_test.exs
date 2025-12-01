@@ -7,8 +7,7 @@ defmodule Diffo.Provider.EventTest do
   use ExUnit.Case
 
   setup_all do
-    # AshNeo4j.BoltxHelper.start()
-    :ok
+    AshNeo4j.BoltxHelper.start()
   end
 
   setup do
