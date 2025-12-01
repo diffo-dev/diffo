@@ -19,7 +19,6 @@ defmodule Diffo.Provider.InstanceTest do
 
   describe "Diffo.Provider read Instances!" do
     test "list instances" do
-      delete_all_instances()
       specification = Diffo.Provider.create_specification!(%{name: "firewall"})
       Diffo.Provider.create_instance!(%{specified_by: specification.id})
       Diffo.Provider.create_instance!(%{specified_by: specification.id})
