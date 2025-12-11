@@ -339,7 +339,47 @@ defmodule Diffo.Provider.RelationshipTest do
     end
   end
 
-  describe "Diffo.Provider updated Relationships" do
+  describe "Diffo.Provider update Relationships" do
+    test "update relationship remove characteristics - success" do
+      specification = Diffo.Provider.create_specification!(%{name: "evc1"})
+
+      first_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "first"})
+
+      second_instance =
+        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "second"})
+
+      first_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :role,
+          value: "worker",
+          type: :relationship
+        })
+
+      second_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :type,
+          value: :evpl,
+          type: :relationship
+        })
+
+      relationship =
+        Diffo.Provider.create_relationship!(%{
+          type: :uses,
+          source_id: first_instance.id,
+          target_id: second_instance.id,
+          characteristics: [first_characteristic.id, second_characteristic.id]
+        })
+
+      updated_relationship =
+        relationship
+        |> Diffo.Provider.unrelate_relationship_characteristics!(%{
+          characteristics: [first_characteristic.id, second_characteristic.id]
+        })
+
+      assert updated_relationship.characteristics == []
+    end
+
     test "add alias - success" do
       parent_specification =
         Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
