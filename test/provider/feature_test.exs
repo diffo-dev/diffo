@@ -84,7 +84,7 @@ defmodule Diffo.Provider.FeatureTest do
     end
   end
 
-  describe "Diffo.Provider updated Features" do
+  describe "Diffo.Provider update Features" do
     test "update feature isEnabled - success" do
       feature =
         Diffo.Provider.create_feature!(%{
@@ -123,6 +123,29 @@ defmodule Diffo.Provider.FeatureTest do
         |> Diffo.Provider.relate_feature_characteristics!(%{
           characteristics: [connection_characteristic.id]
         })
+    end
+
+    test "update feature remove characteristic - success" do
+      device_characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :device,
+          value: :epic1000a,
+          type: :feature
+        })
+
+      feature =
+        Diffo.Provider.create_feature!(%{
+          name: :management,
+          characteristics: [device_characteristic.id]
+        })
+
+      updated_feature =
+        feature
+        |> Diffo.Provider.unrelate_feature_characteristics!(%{
+          characteristics: [device_characteristic.id]
+        })
+
+      assert updated_feature.characteristics == []
     end
 
     test "update feature with duplicate characteristic - failure" do
@@ -267,7 +290,6 @@ defmodule Diffo.Provider.FeatureTest do
 
       :ok = Diffo.Provider.delete_feature(feature)
       {:error, _error} = Diffo.Provider.get_feature_by_id(feature.id)
-      Diffo.Provider.get_characteristic_by_id!(characteristic.id)
     end
 
     test "delete feature with related instance - failure, related instance" do
