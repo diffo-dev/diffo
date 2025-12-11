@@ -166,5 +166,47 @@ defmodule Diffo.Test.AssignerTest do
       assert encoding ==
                ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/shelf/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":5}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":47,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
     end
+
+    test "unassign an auto-assigned port from a resource" do
+      {:ok, assignee} = Domain.build_shelf()
+
+      {:ok, card} = Domain.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
+      ]
+
+      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
+
+      {:ok, card} =
+        Domain.assign_port(card, %{
+          assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
+        })
+
+      Characteristics.check_values([ports: [free: 47]], card)
+
+      assigned_port =
+        Enum.find(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
+        |> Map.get(:characteristics)
+        |> Enum.find(fn char -> char.name == :port end)
+        |> Map.get(:value)
+
+      {:ok, card} =
+        Domain.assign_port(card, %{
+          assignment: %Assignment{
+            id: assigned_port,
+            assignee_id: assignee.id,
+            operation: :unassign
+          }
+        })
+
+      Characteristics.check_values([ports: [free: 48]], card)
+
+      encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
+
+      assert encoding ==
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/card/#{card.id}",\"category\":\"Network Resource\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+    end
   end
 end

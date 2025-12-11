@@ -45,7 +45,7 @@ defmodule Diffo.Provider.Assigner do
             end
 
           :unassign ->
-            unrelate_is_assigned(result, things, assignment.id, assignee_id)
+            unrelate_is_assigned(result, things, thing, assignment.id, assignee_id)
         end
     end
   end
@@ -80,12 +80,57 @@ defmodule Diffo.Provider.Assigner do
     end
   end
 
-  defp unrelate_is_assigned(result, things, value, assignee_id)
-       when is_struct(result) and is_atom(things) and is_integer(value) and
+  defp unrelate_is_assigned(result, things, thing, value, assignee_id)
+       when is_struct(result) and is_atom(things) and is_atom(thing) and is_integer(value) and
               is_bitstring(assignee_id) do
-    # destroy characteristic
-    # destroy relationship
-    {:error, "not implemented"}
+    relationships =
+      Enum.filter(result.forward_relationships, fn %{
+                                                     type: type,
+                                                     target_id: target_id,
+                                                     characteristics: characteristics
+                                                   } ->
+        type == :assignedTo and target_id == assignee_id and
+          Enum.any?(characteristics, fn %{name: name, value: v} ->
+            name == thing and v == value
+          end)
+      end)
+
+    case length(relationships) do
+      0 ->
+        {:error, "#{thing} #{value} is not assigned to assignee #{assignee_id}"}
+
+      1 ->
+        relationship = hd(relationships)
+
+        characteristic =
+          Enum.find(relationship.characteristics, fn %{name: n} -> n == thing end)
+
+        # unrelate the relationship characterisitic
+        relationship = Diffo.Provider.unrelate_relationship_characteristics!(relationship, %{
+               characteristics: [characteristic.id]
+             })
+
+        # delete the relationship characteristic
+        Diffo.Provider.delete_characteristic(characteristic.id)
+
+        # delete the relationship
+        case Diffo.Provider.delete_relationship(relationship.id) do
+          :ok ->
+            case increment_free(result, things) do
+              :ok ->
+                {:ok, result}
+
+              {:error, error} ->
+                {:error, error}
+            end
+
+          {:error, error} ->
+            {:error, error}
+        end
+
+      _ ->
+        {:error, "multiple relationships found for #{thing} #{value} and assignee #{assignee_id}"}
+    end
   end
 
   defp assignments(instance, thing) when is_struct(instance) and is_atom(thing) do
@@ -103,7 +148,8 @@ defmodule Diffo.Provider.Assigner do
             assignment =
               struct(Diffo.Provider.Assignment, %{
                 id: characteristic.value,
-                instance_id: target_id
+                type: thing,
+                assignee_id: target_id
               })
 
             [assignment | acc]
@@ -155,6 +201,22 @@ defmodule Diffo.Provider.Assigner do
 
     {_free, assignable_value} =
       Map.get_and_update(characteristic.value, :free, fn free -> {free - 1, free - 1} end)
+
+    case Diffo.Provider.update_characteristic(characteristic, %{value: assignable_value}) do
+      {:ok, _characteristic} ->
+        :ok
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+    defp increment_free(instance, things) when is_struct(instance) and is_atom(things) do
+    characteristic =
+      Enum.find(instance.characteristics, fn %{name: name} -> name == things end)
+
+    {_free, assignable_value} =
+      Map.get_and_update(characteristic.value, :free, fn free -> {free + 1, free + 1} end)
 
     case Diffo.Provider.update_characteristic(characteristic, %{value: assignable_value}) do
       {:ok, _characteristic} ->

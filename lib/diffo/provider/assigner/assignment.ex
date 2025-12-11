@@ -18,14 +18,16 @@ defmodule Diffo.Provider.Assignment do
   typed_struct do
     field :id, :integer,
       constraints: [min: 0],
-      description: "the id of the partial resource"
+      description: "the id of the assigned thing"
+
+    field :type, :atom, description: "the type of the assigned thing"
 
     field :assignee_id, :uuid, description: "the id of the assignee Ash resource"
 
     field :operation, :atom,
       description: "the operation the assignee is requesting",
-      default: :assign,
-      constraints: [one_of: [:assign, :unassign, :auto_assign]]
+      default: nil,
+      constraints: [one_of: [nil, :assign, :unassign, :auto_assign]]
   end
 
   defimpl String.Chars do
