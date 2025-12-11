@@ -31,7 +31,7 @@ defmodule Diffo.Provider.AssignableValue do
       default: 1,
       constraints: [min: 0]
 
-    field :type, :string, description: "the type of the thing"
+    field :type, :atom, description: "the type of the assignable thing"
 
     field :algorithm, :atom,
       description: "the assignment algorithm",

@@ -126,7 +126,7 @@ defmodule Diffo.Provider.CharacteristicTest do
     end
   end
 
-  describe "Diffo.Provider updated Characteristics" do
+  describe "Diffo.Provider update Characteristics" do
     test "update characteristic value - success" do
       parent_specification =
         Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
