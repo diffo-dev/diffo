@@ -42,3 +42,13 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 ### Maintenance
 
 * remove access domain
+
+## [v0.1.4](https://github.com/diffo-dev/diffo/compare/v0.1.3...v0.1.4) (2026-03-12)
+
+### Features
+
+* assigner unassign operation
+
+### Maintenance
+
+* updated ash_neo4j, uses bolty rather than boltx
