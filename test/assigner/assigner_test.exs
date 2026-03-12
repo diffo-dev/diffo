@@ -14,7 +14,7 @@ defmodule Diffo.Test.AssignerTest do
   alias Diffo.Test.Card
 
   setup_all do
-    AshNeo4j.BoltxHelper.start()
+    AshNeo4j.BoltyHelper.start()
   end
 
   setup do

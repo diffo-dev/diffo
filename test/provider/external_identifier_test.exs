@@ -9,7 +9,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
   alias Diffo.Provider.Party
 
   setup_all do
-    AshNeo4j.BoltxHelper.start()
+    AshNeo4j.BoltyHelper.start()
   end
 
   setup do

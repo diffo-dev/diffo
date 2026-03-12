@@ -8,7 +8,7 @@ defmodule Diffo.Provider.InstanceTest do
   alias Diffo.Provider.Instance
 
   setup_all do
-    AshNeo4j.BoltxHelper.start()
+    AshNeo4j.BoltyHelper.start()
   end
 
   setup do
