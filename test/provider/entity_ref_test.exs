@@ -10,7 +10,7 @@ defmodule Diffo.Provider.EntityRefTest do
   alias Diffo.Provider.EntityRef
 
   setup_all do
-    AshNeo4j.BoltxHelper.start()
+    AshNeo4j.BoltyHelper.start()
   end
 
   setup do

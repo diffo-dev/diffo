@@ -40,7 +40,7 @@ by adding `diffo` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:diffo, "~> 0.1.3"}
+    {:diffo, "~> 0.1.4"}
   ]
 end
 ```
@@ -68,11 +68,11 @@ Contributions are welcome, please start with either a [discussion](https://githu
 
 ## Acknowledgements
 
-Thanks to [Telstra](https://www.telstra.com.au/) for supporting innovation in orchestration and inventory shared-tech which resulted in the award winning difference engine [2024 TMF Excellence Award in Autonomous Networks](https://www.tmforum.org/about/awards-and-recognition/excellence-awards/winners-2024/) powering three network service entities enabling outstanding product experience [2025 TMF Excellence Award in Customer Experience](https://www.tmforum.org/about/awards-and-recognition/excellence-awards/winners-2025/) and inspiring both this open source and internal shared-tech.
+Thanks to my colleagues in the Telco industry, in particular those who I've collaborated with in the Telco industry.
 
-Thanks to the [Ash Core](https://github.com/ash-project) for [ash](https://github.com/ash-project/ash) 🚀
+Thanks to the vibrant Elixir and Ash communities, and in particular the [Ash Core](https://github.com/ash-project) for [ash](https://github.com/ash-project/ash) 🚀
 
-Thanks to [Sagastume](https://github.com/sagastume) for [boltx](https://github.com/tiagodavi/ex4j) which is used by the [Ash Neo4j DataLayer](https://github.com/diffo-dev/ash_neo4j)
+Thanks to [Florin Patrascu](https://github.com/florinpatrascu) for [bolt_sips](https://github.com/florinpatrascu/bolt_sips) and[Luis Sagastume](https://github.com/sagastume) for [boltx](https://github.com/sagastume/boltx), both forerunners of [bolty](https://github.com/diffo-dev/bolty) the bolt driver for neo4j.
 
 Thanks to the [Neo4j Core](https://github.com/neo4j) for [neo4j](https://github.com/neo4j/neo4j) and pioneering work on graph databases.
 

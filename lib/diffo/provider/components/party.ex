@@ -20,8 +20,6 @@ defmodule Diffo.Provider.Party do
   end
 
   neo4j do
-    translate id: :key
-
     relate [
       {:party_refs, :RELATES, :incoming, :PartyRef},
       {:external_identifiers, :OWNS, :outgoing, :ExternalIdentifier},
@@ -90,6 +88,7 @@ defmodule Diffo.Provider.Party do
       primary_key? true
       allow_nil? false
       public? true
+      source :key
     end
 
     attribute :href, :string do

@@ -23,8 +23,6 @@ defmodule Diffo.Provider.Entity do
     relate [
       {:entity_refs, :RELATES, :incoming, :EntityRef}
     ]
-
-    translate id: :uuid
   end
 
   jason do

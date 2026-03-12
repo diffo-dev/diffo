@@ -164,6 +164,7 @@ defmodule Diffo.Provider.BaseInstance do
       allow_nil? false
       public? true
       default &Diffo.Uuid.uuid4/0
+      source :uuid
     end
 
     attribute :which, :atom do

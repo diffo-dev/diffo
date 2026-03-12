@@ -13,7 +13,6 @@ locals_without_parens = [
   field: 3,
   expect: 1,
   relate: 1,
-  translate: 1,
   guard: 1,
   customize: 1,
   order: 1,
