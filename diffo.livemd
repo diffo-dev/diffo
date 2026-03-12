@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.1.3"}
+    {:diffo, "~> 0.1.4"}
   ],
   consolidate_protocols: false
 )
@@ -24,7 +24,7 @@ If you are not already familiar with Ash then please explore [Ash Get Started](h
 
 In this livebook tutorial you will learn:
 
-* Installing Neo4j and Configuring Boltx
+* Installing Neo4j and Configuring Bolty
 * Implementing a Minimal Service
 * Adding Initial Parties and Places
 * Defining Service Features and Characteristics
@@ -33,7 +33,7 @@ In this livebook tutorial you will learn:
 * Advancing Service State
 * Relating a Service with other Services and Resources
 
-## Installing Neo4j and Configuring Boltx
+## Installing Neo4j and Configuring Bolty
 
 Diffo uses the [Ash Neo4j DataLayer](https://github.com/diffo-dev/ash_neo4j), which requires Neo4j to be installed
 
@@ -59,16 +59,16 @@ config = [
 ]
 ```
 
-Boltx needs a process in your supervision tree, this will start one with the config if not already running:
+Bolty needs a process in your supervision tree, this will start one with the config if not already running:
 
 ```elixir
-AshNeo4j.BoltxHelper.start(config)
+AshNeo4j.BoltyHelper.start(config)
 ```
 
 Now you should be able to verify that Neo4j is running:
 
 ```elixir
-AshNeo4j.BoltxHelper.is_connected()
+AshNeo4j.BoltyHelper.is_connected()
 ```
 
 You can get all nodes related to other nodes the following query:
