@@ -197,7 +197,7 @@ Jason.encode!(parties, pretty: true) |> IO.puts
 We'll also add a CustomerSite place where the service is to be delivered to the customer. Historically this is the Z-end.
 
 ```elixir
-z_end = Provider.create_place!(%{id: "1657363", name: :addressId, href: "place/telstra/1657363", referredType: :GeographicAddress})
+z_end = Provider.create_place!(%{id: "1657363", name: :addressId, href: "place/telco/1657363", referredType: :GeographicAddress})
 Jason.encode!(z_end, pretty: true) |> IO.puts
 ```
 
