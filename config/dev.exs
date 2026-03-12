@@ -4,7 +4,7 @@
 
 import Config
 
-config :boltx, Bolt,
+config :bolty, Bolt,
   uri: "bolt://localhost:7687",
   auth: [username: "neo4j", password: "password"],
   user_agent: "DiffoDev/1",

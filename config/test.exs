@@ -8,7 +8,7 @@ config :logger, level: :warning
 config :ash, disable_async?: true
 config :ash, :missed_notifications, :ignore
 
-config :boltx, Bolt,
+config :bolty, Bolt,
   uri: "bolt://localhost:7687",
   auth: [username: "neo4j", password: "password"],
   user_agent: "DiffoTest/1",

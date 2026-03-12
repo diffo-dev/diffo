@@ -20,8 +20,6 @@ defmodule Diffo.Provider.Place do
   end
 
   neo4j do
-    translate id: :key
-
     relate [
       {:place_refs, :RELATES, :incoming, :PlaceRef}
     ]
@@ -84,6 +82,7 @@ defmodule Diffo.Provider.Place do
       primary_key? true
       allow_nil? false
       public? true
+      source :key
     end
 
     attribute :href, :string do
