@@ -350,7 +350,7 @@ defmodule Diffo.Compute.Test do
       Provider.create_place!(%{
         id: "DONC",
         name: :exchangeId,
-        href: "place/telstra/DONC",
+        href: "place/telco/DONC",
         referredType: :GeographicSite
       })
   
