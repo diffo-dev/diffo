@@ -106,9 +106,10 @@ defmodule Diffo.Provider.Assigner do
           Enum.find(relationship.characteristics, fn %{name: n} -> n == thing end)
 
         # unrelate the relationship characterisitic
-        relationship = Diffo.Provider.unrelate_relationship_characteristics!(relationship, %{
-               characteristics: [characteristic.id]
-             })
+        relationship =
+          Diffo.Provider.unrelate_relationship_characteristics!(relationship, %{
+            characteristics: [characteristic.id]
+          })
 
         # delete the relationship characteristic
         Diffo.Provider.delete_characteristic(characteristic.id)
@@ -211,7 +212,7 @@ defmodule Diffo.Provider.Assigner do
     end
   end
 
-    defp increment_free(instance, things) when is_struct(instance) and is_atom(things) do
+  defp increment_free(instance, things) when is_struct(instance) and is_atom(things) do
     characteristic =
       Enum.find(instance.characteristics, fn %{name: name} -> name == things end)
 
