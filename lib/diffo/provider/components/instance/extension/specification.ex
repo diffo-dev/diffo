@@ -29,8 +29,8 @@ defmodule Diffo.Provider.Instance.Specification do
       {:ok, specification} ->
         Ash.Changeset.force_set_argument(changeset, :specified_by, specification.id)
 
-      {:error, _error} ->
-        Logger.error("couldn't find/create required specification")
+      {:error, error} ->
+        Ash.Changeset.add_error(changeset, error)
     end
   end
 

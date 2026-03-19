@@ -63,7 +63,7 @@ defmodule Diffo.Uuid do
 
     case info do
       {:ok, result} ->
-        if result[:version] == 4 do
+        if result[:version] == 4 and result[:variant] == :rfc4122 do
           true
         else
           false
