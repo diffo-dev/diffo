@@ -17,12 +17,12 @@ defmodule Diffo.Test.Shelf do
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.AssignableValue
 
-  alias Diffo.Test.Domain
+  alias Diffo.Test.Servo
   alias Diffo.Test.ShelfValue
 
   use Ash.Resource,
     fragments: [BaseInstance],
-    domain: Domain
+    domain: Servo
 
   resource do
     description "An Ash Resource representing a Shelf"
@@ -60,7 +60,7 @@ defmodule Diffo.Test.Shelf do
              end)
 
       change after_action(fn changeset, result, _context ->
-               ActionHelper.build_after(changeset, result, Domain, :get_shelf_by_id)
+               ActionHelper.build_after(changeset, result, Servo, :get_shelf_by_id)
              end)
 
       change load [:href]
@@ -73,7 +73,7 @@ defmodule Diffo.Test.Shelf do
 
       change after_action(fn changeset, result, _context ->
                with {:ok, result} <- Characteristic.update_values(result, changeset),
-                    {:ok, result} <- Domain.get_shelf_by_id(result.id),
+                    {:ok, result} <- Servo.get_shelf_by_id(result.id),
                     do: {:ok, result}
              end)
     end
@@ -84,7 +84,7 @@ defmodule Diffo.Test.Shelf do
 
       change after_action(fn changeset, result, _context ->
                with {:ok, result} <- Relationship.relate_instance(result, changeset),
-                    {:ok, result} <- Domain.get_shelf_by_id(result.id),
+                    {:ok, result} <- Servo.get_shelf_by_id(result.id),
                     do: {:ok, result}
              end)
     end
@@ -95,7 +95,7 @@ defmodule Diffo.Test.Shelf do
 
       change after_action(fn changeset, result, _context ->
                with {:ok, result} <- Assigner.assign(result, changeset, :slots, :slot),
-                    {:ok, result} <- Domain.get_shelf_by_id(result.id),
+                    {:ok, result} <- Servo.get_shelf_by_id(result.id),
                     do: {:ok, result}
              end)
     end

@@ -12,7 +12,7 @@ defmodule Diffo.Provider.InstanceTest do
   end
 
   setup do
-    on_exit(fn ->
+   on_exit(fn ->
       AshNeo4j.Neo4jHelper.delete_all()
     end)
   end
@@ -80,6 +80,10 @@ defmodule Diffo.Provider.InstanceTest do
       refute instance.service_operating_status
       assert instance.specification.id == specification.id
       assert instance.href == "serviceInventoryManagement/v4/service/fibreAccess/#{instance.id}"
+
+      # both specification and instance nodes are labelled :Provider
+      {:ok, response} = AshNeo4j.Neo4jHelper.read_nodes(:Provider)
+      assert length(response.results) == 2
     end
 
     test "create a service instance with a supplied id - success" do
