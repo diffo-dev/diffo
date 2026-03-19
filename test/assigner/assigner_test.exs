@@ -10,7 +10,7 @@ defmodule Diffo.Test.AssignerTest do
   alias Diffo.Provider.Assignment
 
   alias Diffo.Test.Characteristics
-  alias Diffo.Test.Domain
+  alias Diffo.Test.Servo
   alias Diffo.Test.Card
 
   setup_all do
@@ -25,7 +25,7 @@ defmodule Diffo.Test.AssignerTest do
 
   describe "build card" do
     test "create a card" do
-      {:ok, card} = Domain.build_card(%{})
+      {:ok, card} = Servo.build_card(%{})
 
       # check the instance is a Card
       assert is_struct(card, Card)
@@ -67,14 +67,14 @@ defmodule Diffo.Test.AssignerTest do
     end
 
     test "define card" do
-      {:ok, card} = Domain.build_card(%{})
+      {:ok, card} = Servo.build_card(%{})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
         ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
       ]
 
-      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
@@ -83,19 +83,19 @@ defmodule Diffo.Test.AssignerTest do
     end
 
     test "auto assign port to resource" do
-      {:ok, assignee} = Domain.build_shelf()
+      {:ok, assignee} = Servo.build_shelf()
 
-      {:ok, card} = Domain.build_card(%{})
+      {:ok, card} = Servo.build_card(%{})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
         ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
       ]
 
-      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
 
       {:ok, card} =
-        Domain.assign_port(card, %{
+        Servo.assign_port(card, %{
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
@@ -108,24 +108,24 @@ defmodule Diffo.Test.AssignerTest do
     end
 
     test "auto assign two ports to same resource" do
-      {:ok, assignee} = Domain.build_shelf()
+      {:ok, assignee} = Servo.build_shelf()
 
-      {:ok, card} = Domain.build_card(%{})
+      {:ok, card} = Servo.build_card(%{})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
         ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
       ]
 
-      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
 
       {:ok, card} =
-        Domain.assign_port(card, %{
+        Servo.assign_port(card, %{
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
       {:ok, card} =
-        Domain.assign_port(card, %{
+        Servo.assign_port(card, %{
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
@@ -138,24 +138,24 @@ defmodule Diffo.Test.AssignerTest do
     end
 
     test "specific assignment rejects duplicate request" do
-      {:ok, assignee} = Domain.build_shelf()
+      {:ok, assignee} = Servo.build_shelf()
 
-      {:ok, card} = Domain.build_card(%{})
+      {:ok, card} = Servo.build_card(%{})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
         ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
       ]
 
-      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
 
       {:ok, card} =
-        Domain.assign_port(card, %{
+        Servo.assign_port(card, %{
           assignment: %Assignment{id: 5, assignee_id: assignee.id, operation: :assign}
         })
 
       {:error, _error} =
-        Domain.assign_port(card, %{
+        Servo.assign_port(card, %{
           assignment: %Assignment{id: 5, assignee_id: assignee.id, operation: :assign}
         })
 
@@ -168,19 +168,19 @@ defmodule Diffo.Test.AssignerTest do
     end
 
     test "unassign an auto-assigned port from a resource" do
-      {:ok, assignee} = Domain.build_shelf()
+      {:ok, assignee} = Servo.build_shelf()
 
-      {:ok, card} = Domain.build_card(%{})
+      {:ok, card} = Servo.build_card(%{})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
         ports: [first: 1, last: 48, free: 48, type: "ADSL2+"]
       ]
 
-      {:ok, card} = Domain.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
 
       {:ok, card} =
-        Domain.assign_port(card, %{
+        Servo.assign_port(card, %{
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
@@ -193,7 +193,7 @@ defmodule Diffo.Test.AssignerTest do
         |> Map.get(:value)
 
       {:ok, card} =
-        Domain.assign_port(card, %{
+        Servo.assign_port(card, %{
           assignment: %Assignment{
             id: assigned_port,
             assignee_id: assignee.id,
