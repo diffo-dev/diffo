@@ -14,6 +14,9 @@ defmodule Diffo.Test.Servo do
 
   alias Diffo.Test.Shelf
   alias Diffo.Test.Card
+  alias Diffo.Test.InvalidSpecification
+  alias Diffo.Test.InvalidCharacteristic
+  alias Diffo.Test.InvalidFeatureCharacteristic
 
   domain do
     description "service and resource management"
@@ -34,6 +37,21 @@ defmodule Diffo.Test.Servo do
       define :define_card, action: :define
       define :relate_card, action: :relate
       define :assign_port, action: :assign_port
+    end
+
+    resource InvalidSpecification do
+      define :get_invalid_specification_by_id, action: :read, get_by: :id
+      define :build_invalid_specification, action: :build
+    end
+
+    resource InvalidCharacteristic do
+      define :get_invalid_characteristic_by_id, action: :read, get_by: :id
+      define :build_invalid_characteristic, action: :build
+    end
+
+    resource InvalidFeatureCharacteristic do
+      define :get_invalid_feature_characteristic_by_id, action: :read, get_by: :id
+      define :build_invalid_feature_characteristic, action: :build
     end
   end
 end

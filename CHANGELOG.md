@@ -58,3 +58,13 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 ### Fixes
 
 * fixed relationship enrichment inconsistent across neo4j versions
+
+## [v0.1.6](https://github.com/diffo-dev/diffo/compare/v0.1.5...v0.1.6) (2026-03-19)
+
+### Fixes
+
+* incorrect domain label
+
+### Maintenance
+
+* improved error handling

@@ -30,6 +30,9 @@ defmodule Diffo.Provider.Instance.Characteristic do
       [] ->
         changeset
 
+      {:error, error} ->
+        Ash.Changeset.add_error(changeset, error)
+
       _ ->
         characteristic_ids = Enum.map(characteristics, &Map.get(&1, :id))
         Ash.Changeset.force_set_argument(changeset, :characteristics, characteristic_ids)
@@ -43,14 +46,20 @@ defmodule Diffo.Provider.Instance.Characteristic do
     characteristics = Info.characteristics(module)
 
     Enum.reduce_while(characteristics, [], fn %{name: name, value_type: value_type}, acc ->
-      value = struct(value_type)
+      try do
+        value = struct(value_type)
 
-      case Provider.create_characteristic(%{name: name, type: type, value: value}) do
-        {:ok, result} ->
-          {:cont, [result | acc]}
+        case Provider.create_characteristic(%{name: name, type: type, value: value}) do
+          {:ok, result} ->
+            {:cont, [result | acc]}
 
-        {:error, _error} ->
-          {:halt, []}
+          {:error, error} ->
+            {:halt, {:error, error}}
+        end
+      rescue
+        _e in UndefinedFunctionError ->
+          {:halt,
+           {:error, "couldn't create characteristic with value of unknown type #{value_type}"}}
       end
     end)
   end

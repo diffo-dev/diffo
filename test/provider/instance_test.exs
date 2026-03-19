@@ -12,7 +12,7 @@ defmodule Diffo.Provider.InstanceTest do
   end
 
   setup do
-   on_exit(fn ->
+    on_exit(fn ->
       AshNeo4j.Neo4jHelper.delete_all()
     end)
   end

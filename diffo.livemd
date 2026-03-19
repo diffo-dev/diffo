@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.1.5"}
+    {:diffo, "~> 0.1.6"}
   ],
   consolidate_protocols: false
 )
