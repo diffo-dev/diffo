@@ -52,3 +52,9 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 ### Maintenance
 
 * updated ash_neo4j, uses bolty rather than boltx
+
+## [v0.1.5](https://github.com/diffo-dev/diffo/compare/v0.1.4...v0.1.5) (2026-03-19)
+
+### Fixes
+
+* fixed relationship enrichment inconsistent across neo4j versions
