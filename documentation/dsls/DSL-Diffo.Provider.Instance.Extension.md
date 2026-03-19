@@ -56,9 +56,7 @@ Configuration for Instance Features
 features do
   feature :dynamic_line_management do
     is_enabled? true
-    characteristics do
-      characteristic :constraints, Diffo.Access.Constraints
-    end
+    characteristic :constraints, Diffo.Access.Constraints
   end
 end
 
