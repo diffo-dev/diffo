@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Domain do
+defmodule Diffo.Test.Servo do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Domain - domain for testing
+  Servo - a service and resource management domain
   """
   use Ash.Domain,
     otp_app: :diffo,
@@ -16,7 +16,7 @@ defmodule Diffo.Test.Domain do
   alias Diffo.Test.Card
 
   domain do
-    description "A domain for testing"
+    description "service and resource management"
   end
 
   resources do
