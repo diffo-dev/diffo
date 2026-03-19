@@ -15,12 +15,12 @@ defmodule Diffo.Test.Card do
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.AssignableValue
-  alias Diffo.Test.Domain
+  alias Diffo.Test.Servo
   alias Diffo.Test.CardValue
 
   use Ash.Resource,
     fragments: [BaseInstance],
-    domain: Domain
+    domain: Servo
 
   resource do
     description "An Ash Resource representing a Card"
@@ -58,7 +58,7 @@ defmodule Diffo.Test.Card do
              end)
 
       change after_action(fn changeset, result, _context ->
-               ActionHelper.build_after(changeset, result, Domain, :get_card_by_id)
+               ActionHelper.build_after(changeset, result, Servo, :get_card_by_id)
              end)
 
       change load [:href]
@@ -71,7 +71,7 @@ defmodule Diffo.Test.Card do
 
       change after_action(fn changeset, result, _context ->
                with {:ok, result} <- Characteristic.update_values(result, changeset),
-                    {:ok, result} <- Domain.get_card_by_id(result.id),
+                    {:ok, result} <- Servo.get_card_by_id(result.id),
                     do: {:ok, result}
              end)
     end
@@ -82,7 +82,7 @@ defmodule Diffo.Test.Card do
 
       change after_action(fn changeset, result, _context ->
                with {:ok, result} <- Relationship.relate_instance(result, changeset),
-                    {:ok, result} <- Domain.get_card_by_id(result.id),
+                    {:ok, result} <- Servo.get_card_by_id(result.id),
                     do: {:ok, result}
              end)
     end
@@ -93,7 +93,7 @@ defmodule Diffo.Test.Card do
 
       change after_action(fn changeset, result, _context ->
                with {:ok, result} <- Assigner.assign(result, changeset, :ports, :port),
-                    {:ok, result} <- Domain.get_card_by_id(result.id),
+                    {:ok, result} <- Servo.get_card_by_id(result.id),
                     do: {:ok, result}
              end)
     end
