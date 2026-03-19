@@ -19,6 +19,7 @@ defmodule Diffo.Test.Shelf do
 
   alias Diffo.Test.Servo
   alias Diffo.Test.ShelfValue
+  alias Diffo.Test.DeploymentClassValue
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -35,6 +36,13 @@ defmodule Diffo.Test.Shelf do
     type :resourceSpecification
     description "A Shelf Resource Instance which contain cards"
     category "Network Resource"
+  end
+
+  features do
+    feature :spectralManagement do
+      is_enabled? true
+      characteristic :deploymentClass, DeploymentClassValue
+    end
   end
 
   characteristics do
