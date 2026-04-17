@@ -10,6 +10,7 @@ defmodule Diffo.Provider.Assigner do
   """
 
   alias Diffo.Provider.AssignableValue
+  alias Diffo.Type.Value
 
   @doc """
   Assign a thing using the instance changeset assignment
@@ -53,7 +54,11 @@ defmodule Diffo.Provider.Assigner do
   defp relate_is_assigned(result, things, thing, value, assignee_id)
        when is_struct(result) and is_atom(things) and is_atom(thing) and is_integer(value) and
               is_bitstring(assignee_id) do
-    case Diffo.Provider.create_characteristic(%{name: thing, value: value, type: :relationship}) do
+    case Diffo.Provider.create_characteristic(%{
+           name: thing,
+           value: Value.primitive("integer", value),
+           type: :relationship
+         }) do
       {:ok, characteristic} ->
         case Diffo.Provider.create_relationship(%{
                type: :assignedTo,
@@ -62,7 +67,6 @@ defmodule Diffo.Provider.Assigner do
                characteristics: [characteristic.id]
              }) do
           {:ok, _relationship} ->
-            # we haven't refreshed the result there will be a new forward_relationship and an updated things characteristic
             case decrement_free(result, things) do
               :ok ->
                 {:ok, result}
@@ -91,7 +95,7 @@ defmodule Diffo.Provider.Assigner do
                                                    } ->
         type == :assignedTo and target_id == assignee_id and
           Enum.any?(characteristics, fn %{name: name, value: v} ->
-            name == thing and v == value
+            name == thing and Diffo.Unwrap.unwrap(v) == value
           end)
       end)
 
@@ -105,16 +109,13 @@ defmodule Diffo.Provider.Assigner do
         characteristic =
           Enum.find(relationship.characteristics, fn %{name: n} -> n == thing end)
 
-        # unrelate the relationship characterisitic
         relationship =
           Diffo.Provider.unrelate_relationship_characteristics!(relationship, %{
             characteristics: [characteristic.id]
           })
 
-        # delete the relationship characteristic
         Diffo.Provider.delete_characteristic(characteristic.id)
 
-        # delete the relationship
         case Diffo.Provider.delete_relationship(relationship.id) do
           :ok ->
             case increment_free(result, things) do
@@ -148,8 +149,8 @@ defmodule Diffo.Provider.Assigner do
           if characteristic do
             assignment =
               struct(Diffo.Provider.Assignment, %{
-                id: characteristic.value,
-                type: thing,
+                id: Diffo.Unwrap.unwrap(characteristic.value),
+                assignable_type: thing,
                 assignee_id: target_id
               })
 
@@ -168,9 +169,10 @@ defmodule Diffo.Provider.Assigner do
   defp next(instance, things, thing)
        when is_struct(instance) and is_atom(things) and is_atom(thing) do
     characteristic = Enum.find(instance.characteristics, fn %{name: name} -> name == things end)
-    algorithm = Map.get(characteristic.value, :algorithm)
+    assignable_value = Diffo.Unwrap.unwrap(characteristic.value)
+    algorithm = Map.get(assignable_value, :algorithm)
 
-    case free = free(instance, thing, characteristic.value) do
+    case free = free(instance, thing, assignable_value) do
       [] ->
         {:error, "all things are assigned"}
 
@@ -191,7 +193,8 @@ defmodule Diffo.Provider.Assigner do
   defp assignable?(instance, things, thing, value)
        when is_struct(instance) and is_atom(things) and is_atom(thing) and is_integer(value) do
     characteristic = Enum.find(instance.characteristics, fn %{name: name} -> name == things end)
-    free = free(instance, thing, characteristic.value)
+    assignable_value = Diffo.Unwrap.unwrap(characteristic.value)
+    free = free(instance, thing, assignable_value)
 
     value in free
   end
@@ -200,10 +203,15 @@ defmodule Diffo.Provider.Assigner do
     characteristic =
       Enum.find(instance.characteristics, fn %{name: name} -> name == things end)
 
-    {_free, assignable_value} =
-      Map.get_and_update(characteristic.value, :free, fn free -> {free - 1, free - 1} end)
+    assignable_value = Diffo.Unwrap.unwrap(characteristic.value)
 
-    case Diffo.Provider.update_characteristic(characteristic, %{value: assignable_value}) do
+    {_free, updated} =
+      Map.get_and_update(assignable_value, :free, fn free -> {free - 1, free - 1} end)
+
+    {:ok, new_struct} = Ash.Type.cast_input(AssignableValue, Map.from_struct(updated), AssignableValue.subtype_constraints())
+    new_value = Value.dynamic(AssignableValue, new_struct)
+
+    case Diffo.Provider.update_characteristic(characteristic, %{value: new_value}) do
       {:ok, _characteristic} ->
         :ok
 
@@ -216,10 +224,15 @@ defmodule Diffo.Provider.Assigner do
     characteristic =
       Enum.find(instance.characteristics, fn %{name: name} -> name == things end)
 
-    {_free, assignable_value} =
-      Map.get_and_update(characteristic.value, :free, fn free -> {free + 1, free + 1} end)
+    assignable_value = Diffo.Unwrap.unwrap(characteristic.value)
 
-    case Diffo.Provider.update_characteristic(characteristic, %{value: assignable_value}) do
+    {_free, updated} =
+      Map.get_and_update(assignable_value, :free, fn free -> {free + 1, free + 1} end)
+
+    {:ok, new_struct} = Ash.Type.cast_input(AssignableValue, Map.from_struct(updated), AssignableValue.subtype_constraints())
+    new_value = Value.dynamic(AssignableValue, new_struct)
+
+    case Diffo.Provider.update_characteristic(characteristic, %{value: new_value}) do
       {:ok, _characteristic} ->
         :ok
 

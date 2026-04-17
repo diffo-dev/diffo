@@ -19,6 +19,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
   end
 
   describe "Diffo.Provider read ExternalIdentifiers" do
+    @tag :casing
     test "list external identifiers - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})

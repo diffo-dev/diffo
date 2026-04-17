@@ -535,7 +535,7 @@ We need to define each GPU instance, in this case defining the gpu Characteristi
 ```elixir
 updates = [
   gpu: [family: :nvidia, model: "GeForce RTX5090", technology: :blackwell],
-  cores: [first: 1, last: 680, free: 680, type: "tensor"]
+  cores: [first: 1, last: 680, free: 680, assignable_type: "tensor"]
 ]
 
 gpu_1 = Compute.define_gpu!(gpu_1, %{characteristic_value_updates: updates})

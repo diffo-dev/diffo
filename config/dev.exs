@@ -23,5 +23,6 @@ level =
   end
 
 config :logger, :console,
-  level: level,
+  # level: level,
+  level: :debug,
   format: "$date $time [$level] $metadata$message\n"

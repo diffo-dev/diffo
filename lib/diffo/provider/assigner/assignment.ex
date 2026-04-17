@@ -11,8 +11,9 @@ defmodule Diffo.Provider.Assignment do
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   jason do
-    pick [:id, :assignee_id, :operation]
+    pick [:id, :assignee_id, :assignable_type, :operation]
     compact true
+    rename assignable_type: :type
   end
 
   typed_struct do
@@ -20,7 +21,7 @@ defmodule Diffo.Provider.Assignment do
       constraints: [min: 0],
       description: "the id of the assigned thing"
 
-    field :type, :atom, description: "the type of the assigned thing"
+    field :assignable_type, :string, description: "the type of the assigned thing"
 
     field :assignee_id, :uuid, description: "the id of the assignee Ash resource"
 
