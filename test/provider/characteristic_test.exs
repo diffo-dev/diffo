@@ -199,7 +199,7 @@ defmodule Diffo.Provider.CharacteristicTest do
       updated_characteristic =
         characteristic
         |> Diffo.Provider.update_characteristic!(%{
-          value: Value.dynamic(Patch, %Patch{aEnd: 1, zEnd: 42})
+          value: Value.dynamic(%Patch{aEnd: 1, zEnd: 42})
         })
 
       assert Diffo.Unwrap.unwrap(updated_characteristic.value) == %Patch{aEnd: 1, zEnd: 42}
@@ -224,7 +224,7 @@ defmodule Diffo.Provider.CharacteristicTest do
     use Outstand
     @port1 %Diffo.Provider.Characteristic{name: "port", value: Value.primitive("integer", 1)}
     @port3 %Diffo.Provider.Characteristic{name: "port", value: Value.primitive("integer", 3)}
-    #@port5 %Diffo.Provider.Characteristic{name: "port", value: Value.primitive("integer", 5)}
+    # @port5 %Diffo.Provider.Characteristic{name: "port", value: Value.primitive("integer", 5)}
     @pair1 %Diffo.Provider.Characteristic{name: "pair", value: Value.primitive("integer", 1)}
     @name_only %Diffo.Provider.Characteristic{name: "port"}
     # map only
