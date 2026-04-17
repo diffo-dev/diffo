@@ -48,7 +48,7 @@ defmodule Diffo.Provider.Instance.Characteristic do
 
     Enum.reduce_while(characteristics, [], fn %{name: name, value_type: value_type}, acc ->
       try do
-        value = Value.dynamic(value_type, struct(value_type))
+        value = Value.dynamic(struct(value_type))
 
         case Provider.create_characteristic(%{name: name, type: type, value: value}) do
           {:ok, result} ->
@@ -110,7 +110,7 @@ defmodule Diffo.Provider.Instance.Characteristic do
                     end)
 
                   new_value =
-                    Value.dynamic(value_type, struct(value_type, Map.from_struct(updated)))
+                    Value.dynamic(struct(value_type, Map.from_struct(updated)))
 
                   [{characteristic, new_value} | acc]
 
