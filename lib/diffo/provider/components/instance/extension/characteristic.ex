@@ -14,6 +14,7 @@ defmodule Diffo.Provider.Instance.Characteristic do
   alias Diffo.Provider
   alias Diffo.Provider.Instance
   alias Diffo.Provider.Instance.Extension.Info
+  alias Diffo.Type.Value
 
   @doc """
   Struct for a Characteristic
@@ -47,7 +48,7 @@ defmodule Diffo.Provider.Instance.Characteristic do
 
     Enum.reduce_while(characteristics, [], fn %{name: name, value_type: value_type}, acc ->
       try do
-        value = struct(value_type)
+        value = Value.dynamic(value_type, struct(value_type))
 
         case Provider.create_characteristic(%{name: name, type: type, value: value}) do
           {:ok, result} ->
@@ -99,16 +100,22 @@ defmodule Diffo.Provider.Instance.Characteristic do
             if characteristic do
               cond do
                 is_list(update) ->
-                  value =
-                    Enum.reduce(update, characteristic.value, fn {field, val}, acc ->
-                      # merge update
-                      Map.merge(acc, %{field => val})
+                  # unwrap the current value, merge the update fields, rewrap
+                  unwrapped = Diffo.Unwrap.unwrap(characteristic.value)
+                  value_type = unwrapped.__struct__
+
+                  updated =
+                    Enum.reduce(update, unwrapped, fn {field, val}, acc ->
+                      Map.put(acc, field, val)
                     end)
 
-                  [{characteristic, value} | acc]
+                  new_value =
+                    Value.dynamic(value_type, struct(value_type, Map.from_struct(updated)))
+
+                  [{characteristic, new_value} | acc]
 
                 true ->
-                  # replace the value
+                  # replace the value entirely
                   [{characteristic, update} | acc]
               end
             else
@@ -123,12 +130,16 @@ defmodule Diffo.Provider.Instance.Characteristic do
               {:ok, characteristic} ->
                 {:cont, [characteristic | acc]}
 
-              {:error, _error} ->
-                {:halt, []}
+              {:error, error} ->
+                # preserve the error
+                {:halt, {:error, error}}
             end
           end)
 
         case characteristics do
+          {:error, error} ->
+            {:error, error}
+
           [] ->
             {:error, "couldn't update characteristics"}
 

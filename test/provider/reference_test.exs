@@ -10,12 +10,11 @@ defmodule Diffo.Provider.ReferenceTest do
     test "encode json - success" do
       reference = %Diffo.Provider.Reference{
         id: "8bcfbf9a-34a5-427a-8eae-5c3812466432",
-        href:
-          "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"
+        href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"
       }
 
       assert Jason.encode!(reference) ==
-               "{\"id\":\"8bcfbf9a-34a5-427a-8eae-5c3812466432\",\"href\":\"serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432\"}"
+               "{\"id\":\"8bcfbf9a-34a5-427a-8eae-5c3812466432\",\"href\":\"serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432\"}"
     end
   end
 
@@ -24,13 +23,11 @@ defmodule Diffo.Provider.ReferenceTest do
 
     @id_and_href %Diffo.Provider.Reference{
       id: "8bcfbf9a-34a5-427a-8eae-5c3812466432",
-      href:
-        "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"
+      href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"
     }
     @id_only %Diffo.Provider.Reference{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432"}
     @href_only %Diffo.Provider.Reference{
-      href:
-        "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432"
+      href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"
     }
     @any_id_and_href %Diffo.Provider.Reference{
       id: &Outstand.any_bitstring/1,
@@ -38,8 +35,7 @@ defmodule Diffo.Provider.ReferenceTest do
     }
     @instance_id_and_href %Diffo.Provider.Instance{
       id: "8bcfbf9a-34a5-427a-8eae-5c3812466432",
-      href:
-        "serviceInventoryManagement/v4/service/siteConnection/8bcfbf9a-34a5-427a-8eae-5c3812466432",
+      href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432",
       type: :service
     }
 

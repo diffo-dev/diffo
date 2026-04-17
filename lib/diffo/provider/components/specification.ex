@@ -192,36 +192,9 @@ defmodule Diffo.Provider.Specification do
   end
 
   calculations do
-    calculate :version,
-              :string,
-              expr("v" <> major_version <> "." <> minor_version <> "." <> patch_version) do
-      description "the full version string, e.g. v1.0.0"
-    end
-
-    calculate :href,
-              :string,
-              expr(
-                cond do
-                  type == :serviceSpecification ->
-                    "serviceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
-
-                  type == :resourceSpecification ->
-                    "resourceCatalogManagement/v" <> tmf_version <> "/" <> type <> "/" <> id
-                end
-              ) do
-      description "the href for the service or resource specification"
-    end
-
-    calculate :instance_type,
-              :atom,
-              expr(
-                cond do
-                  type == :serviceSpecification -> :service
-                  type == :resourceSpecification -> :resource
-                end
-              ) do
-      description "the type of the instance specified specification, either service or resource"
-    end
+    calculate :version, :string, Diffo.Provider.Calculations.SpecificationVersion
+    calculate :href, :string, Diffo.Provider.Calculations.SpecificationHref
+    calculate :instance_type, :atom, Diffo.Provider.Calculations.SpecificationInstanceType
   end
 
   preparations do

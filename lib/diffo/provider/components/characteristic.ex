@@ -94,8 +94,9 @@ defmodule Diffo.Provider.Characteristic do
       public? true
     end
 
-    attribute :value, :term do
+    attribute :value, Diffo.Type.Value do
       description "the value of the characteristic"
+      constraints Diffo.Type.Value.subtype_constraints()
       allow_nil? true
       public? true
     end

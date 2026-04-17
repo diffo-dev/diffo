@@ -25,7 +25,7 @@ defmodule Diffo.Test.Characteristics do
             Enum.each(
               expected,
               fn {field, expected_value} ->
-                assert expected_value --- Map.get(characteristic.value, field) == nil
+                assert expected_value --- Map.get(Diffo.Unwrap.unwrap(characteristic.value), field) == nil
               end
             )
 

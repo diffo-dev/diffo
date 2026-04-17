@@ -14,6 +14,7 @@ defmodule Diffo.Provider.Instance.Feature do
   alias Diffo.Provider
   alias Diffo.Provider.Instance
   alias Diffo.Provider.Instance.Extension.Info
+  alias Diffo.Type.Value
 
   @doc """
   Struct for a Feature
@@ -53,7 +54,7 @@ defmodule Diffo.Provider.Instance.Feature do
         characteristic_ids =
           Enum.reduce_while(characteristics, [], fn %{name: name, value_type: value_type}, acc ->
             try do
-              value = struct(value_type)
+              value = Value.dynamic(value_type, struct(value_type))
 
               case Provider.create_characteristic(%{name: name, value: value, type: :feature}) do
                 {:ok, result} ->

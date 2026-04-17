@@ -2,6 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-Mix.Task.run("app.start")
-ExUnit.start()
-Logger.put_application_level(:ash_neo4j, :warning)
+defimpl Diffo.Unwrap, for: Ash.CiString do
+  def unwrap(ci_string), do: Ash.CiString.to_comparable_string(ci_string)
+end

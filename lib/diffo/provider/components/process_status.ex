@@ -103,7 +103,7 @@ defmodule Diffo.Provider.ProcessStatus do
       public? true
     end
 
-    attribute :parameterized_message, :term do
+    attribute :parameterized_message, :map do
       description "the parameterized message of this process status, this is an optional value"
       allow_nil? true
       public? true

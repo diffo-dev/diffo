@@ -117,7 +117,7 @@ defmodule Diffo.Provider.EventTest do
       encoding = Jason.encode!(event) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"eventId\":\"#{event.id}\",\"eventTime\":\"now\",\"eventType\":\"serviceCreateEvent\",\"event\":{\"service\":{\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/nbnAccess/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"nbnAccess\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\"}}})
+               ~s({\"eventId\":\"#{event.id}\",\"eventTime\":\"now\",\"eventType\":\"serviceCreateEvent\",\"event\":{\"service\":{\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"nbnAccess\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\"}}})
     end
   end
 
