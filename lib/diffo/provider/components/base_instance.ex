@@ -504,18 +504,7 @@ defmodule Diffo.Provider.BaseInstance do
   end
 
   calculations do
-    calculate :href,
-              :string,
-              expr(
-                type <>
-                  "InventoryManagement/v" <>
-                  specification.tmf_version <>
-                  "/" <>
-                  type <>
-                  "/" <>
-                  specification.name <>
-                  "/" <> id
-              ) do
+    calculate :href, :string, Diffo.Provider.Calculations.InstanceHref do
       description "the inventory href of the service or resource instance"
     end
   end

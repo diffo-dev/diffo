@@ -36,5 +36,7 @@ config :spark,
     ]
   ]
 
+config :ash, :custom_expressions, [Diffo.Unwrap.AshCustomExpression]
+
 config :diffo, ash_domains: [Diffo.Provider]
 import_config "#{config_env()}.exs"

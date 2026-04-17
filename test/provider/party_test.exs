@@ -384,6 +384,7 @@ defmodule Diffo.Provider.PartyTest do
       {:error, _error} = Diffo.Provider.get_party_by_id(party.id)
     end
 
+    @tag :guard
     test "delete party - failure, related ExternalIdentifier" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})

@@ -35,7 +35,11 @@ defmodule Diffo.Provider.ProcessStatusTest do
     test "create a process status with a parameterised message - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      parameterized_message = %{reason: "cancelled due to force majeure"}
+
+      parameterized_message = %Ash.Union{
+        type: :map,
+        value: %{reason: "cancelled due to force majeure"}
+      }
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -123,7 +127,9 @@ defmodule Diffo.Provider.ProcessStatusTest do
         process_status
         |> Diffo.Provider.ProcessStatus.update!(%{parameterized_message: parameterized_message})
 
-      assert updated_process_status.parameterized_message == parameterized_message
+      assert updated_process_status.parameterized_message == %{
+               "reason" => "cancelled due to force majeure"
+             }
     end
 
     test "update code to nil - failure" do
@@ -213,6 +219,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
 
     test "encode json with parameterized message - success" do
       parameterized_message = %{reason: "cancelled due to force majeure"}
+
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
