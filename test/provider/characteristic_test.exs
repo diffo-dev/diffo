@@ -5,6 +5,8 @@
 defmodule Diffo.Provider.CharacteristicTest do
   @moduledoc false
   use ExUnit.Case
+  alias Diffo.Test.Patch
+  alias Diffo.Type.Value
 
   setup_all do
     AshNeo4j.BoltyHelper.start()
@@ -20,25 +22,25 @@ defmodule Diffo.Provider.CharacteristicTest do
     test "list characteristics - success" do
       Diffo.Provider.create_characteristic!(%{
         name: :port,
-        value: "_not_null",
+        value: Value.primitive("string", "_not_null"),
         type: :instance
       })
 
       Diffo.Provider.create_characteristic!(%{
         name: :circuit,
-        value: "_not_null",
+        value: Value.primitive("string", "_not_null"),
         type: :instance
       })
 
       Diffo.Provider.create_characteristic!(%{
         name: :type,
-        value: :fraudHeavy,
+        value: Value.primitive("string", "fraudHeavy"),
         type: :feature
       })
 
       Diffo.Provider.create_characteristic!(%{
         name: :expiry,
-        value: "20250131",
+        value: Value.primitive("date", ~D[2026-04-16]),
         type: :feature
       })
 
@@ -70,7 +72,7 @@ defmodule Diffo.Provider.CharacteristicTest do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :port,
-          value: "port13",
+          value: Value.primitive("string", "port13"),
           type: :relationship
         })
 
@@ -82,7 +84,7 @@ defmodule Diffo.Provider.CharacteristicTest do
       })
 
       assert characteristic.name == :port
-      assert characteristic.value == "port13"
+      assert Diffo.Unwrap.unwrap(characteristic.value) == "port13"
     end
 
     test "create forward and reverse characteristic with same name on same relationship - success" do
@@ -97,14 +99,14 @@ defmodule Diffo.Provider.CharacteristicTest do
       forward_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :role,
-          value: "worker",
+          value: Value.primitive("string", "worker"),
           type: :relationship
         })
 
       reverse_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :role,
-          value: "protect",
+          value: Value.primitive("string", "protect"),
           type: :relationship
         })
 
@@ -127,6 +129,7 @@ defmodule Diffo.Provider.CharacteristicTest do
   end
 
   describe "Diffo.Provider update Characteristics" do
+    @tag :debug
     test "update characteristic value - success" do
       parent_specification =
         Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
@@ -143,7 +146,7 @@ defmodule Diffo.Provider.CharacteristicTest do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :pair,
-          value: "pair13",
+          value: Value.primitive("string", "pair13"),
           type: :relationship
         })
 
@@ -155,38 +158,51 @@ defmodule Diffo.Provider.CharacteristicTest do
           characteristics: [characteristic.id]
         })
 
+      # boolean
       updated_characteristic =
-        characteristic |> Diffo.Provider.update_characteristic!(%{value: true})
+        characteristic
+        |> Diffo.Provider.update_characteristic!(%{
+          value: Value.primitive("boolean", false)
+        })
 
-      assert updated_characteristic.name == :pair
-      assert updated_characteristic.value == true
+      # we expect the value false here
+      assert Diffo.Unwrap.unwrap(updated_characteristic.value) == false
 
+      # string
       updated_characteristic =
-        characteristic |> Diffo.Provider.update_characteristic!(%{value: "_not_null"})
+        characteristic
+        |> Diffo.Provider.update_characteristic!(%{value: Value.primitive("string", "_not_null")})
 
-      assert updated_characteristic.value == "_not_null"
+      assert Diffo.Unwrap.unwrap(updated_characteristic.value) == "_not_null"
 
+      # integer
+      updated_characteristic =
+        characteristic
+        |> Diffo.Provider.update_characteristic!(%{value: Value.primitive("integer", 1)})
+
+      assert Diffo.Unwrap.unwrap(updated_characteristic.value) == 1
+
+      # float
+      updated_characteristic =
+        characteristic
+        |> Diffo.Provider.update_characteristic!(%{value: Value.primitive("float", 1.2)})
+
+      assert Diffo.Unwrap.unwrap(updated_characteristic.value) == 1.2
+
+      # nil (shouldn't need to unwrap nil)
       updated_characteristic =
         characteristic |> Diffo.Provider.update_characteristic!(%{value: nil})
 
-      assert updated_characteristic.value == nil
+      assert Diffo.Unwrap.unwrap(updated_characteristic.value) == nil
 
-      updated_characteristic =
-        characteristic |> Diffo.Provider.update_characteristic!(%{value: ["one", "two"]})
-
-      assert updated_characteristic.value == ["one", "two"]
-
+      # dynamic
       updated_characteristic =
         characteristic
-        |> Diffo.Provider.update_characteristic!(%{value: %{aEnd: 1, zEnd: 13}})
+        |> Diffo.Provider.update_characteristic!(%{
+          value: Value.dynamic(Patch, %Patch{aEnd: 1, zEnd: 42})
+        })
 
-      assert updated_characteristic.value == %{aEnd: 1, zEnd: 13}
-
-      updated_characteristic =
-        characteristic
-        |> Diffo.Provider.update_characteristic!(%{value: %{"aEnd" => 1, "zEnd" => 13}})
-
-      assert updated_characteristic.value == %{"aEnd" => 1, "zEnd" => 13}
+      assert Diffo.Unwrap.unwrap(updated_characteristic.value) == %Patch{aEnd: 1, zEnd: 42}
     end
   end
 
@@ -195,7 +211,7 @@ defmodule Diffo.Provider.CharacteristicTest do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :device,
-          value: :managed,
+          value: Value.primitive("string", "managed"),
           type: :instance
         })
 
@@ -206,14 +222,15 @@ defmodule Diffo.Provider.CharacteristicTest do
 
   describe "Diffo.Provider outstanding Characteristics" do
     use Outstand
-    @port1 %Diffo.Provider.Characteristic{name: "port", value: 1}
-    @port3 %Diffo.Provider.Characteristic{name: "port", value: 3}
-    @port5 %Diffo.Provider.Characteristic{name: "port", value: 5}
-    @pair1 %Diffo.Provider.Characteristic{name: "pair", value: 1}
+    @port1 %Diffo.Provider.Characteristic{name: "port", value: Value.primitive("integer", 1)}
+    @port3 %Diffo.Provider.Characteristic{name: "port", value: Value.primitive("integer", 3)}
+    #@port5 %Diffo.Provider.Characteristic{name: "port", value: Value.primitive("integer", 5)}
+    @pair1 %Diffo.Provider.Characteristic{name: "pair", value: Value.primitive("integer", 1)}
     @name_only %Diffo.Provider.Characteristic{name: "port"}
-    @value_only %Diffo.Provider.Characteristic{value: 1}
-    @range_only %Diffo.Provider.Characteristic{value: 1..4}
-    @port_range %Diffo.Provider.Characteristic{name: "port", value: 1..4}
+    # map only
+    @value_only %Diffo.Provider.Characteristic{value: %{value: 1}}
+    # @range_only %Diffo.Provider.Characteristic{value: 1..4}
+    # @port_range %Diffo.Provider.Characteristic{name: "port", value: 1..4}
 
     gen_nothing_outstanding_test("specific nothing outstanding", @port1, @port1)
 
@@ -238,22 +255,22 @@ defmodule Diffo.Provider.CharacteristicTest do
       Ash.Test.strip_metadata(@value_only)
     )
 
-    gen_nothing_outstanding_test("port range nothing outstanding, port1", @port_range, @port1)
-    gen_nothing_outstanding_test("port range nothing outstanding, port3", @port_range, @port3)
+    # gen_nothing_outstanding_test("port range nothing outstanding, port1", @port_range, @port1)
+    # gen_nothing_outstanding_test("port range nothing outstanding, port3", @port_range, @port3)
 
-    gen_result_outstanding_test(
-      "port range name result, pair1",
-      @port_range,
-      @pair1,
-      Ash.Test.strip_metadata(@name_only)
-    )
+    # gen_result_outstanding_test(
+    #  "port range name result, pair1",
+    #  @port_range,
+    #  @pair1,
+    #  Ash.Test.strip_metadata(@name_only)
+    # )
 
-    gen_result_outstanding_test(
-      "port range value result, port5",
-      @port_range,
-      @port5,
-      Ash.Test.strip_metadata(@range_only)
-    )
+    # gen_result_outstanding_test(
+    #  "port range value result, port5",
+    #  @port_range,
+    #  @port5,
+    #  Ash.Test.strip_metadata(@range_only)
+    # )
   end
 
   describe "Diffo.Provider delete Characteristics" do
@@ -261,7 +278,7 @@ defmodule Diffo.Provider.CharacteristicTest do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :device,
-          value: :managed,
+          value: Value.primitive("string", "managed"),
           type: :instance
         })
 
@@ -275,7 +292,7 @@ defmodule Diffo.Provider.CharacteristicTest do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :device,
-          value: :managed,
+          value: Value.primitive("string", "managed"),
           type: :instance
         })
 

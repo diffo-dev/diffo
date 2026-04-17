@@ -4,7 +4,6 @@
 
 import Config
 
-config :logger, level: :warning
 config :ash, disable_async?: true
 config :ash, :missed_notifications, :ignore
 
@@ -16,8 +15,8 @@ config :bolty, Bolt,
   max_overflow: 3,
   prefix: :default,
   name: Bolt,
-  log: true,
-  log_hex: true
+  log: false,
+  log_hex: false
 
 level =
   if System.get_env("DEBUG") do
@@ -25,6 +24,8 @@ level =
   else
     :info
   end
+
+config :logger, level: level
 
 config :logger, :console,
   level: level,

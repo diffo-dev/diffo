@@ -11,8 +11,9 @@ defmodule Diffo.Provider.AssignableValue do
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   jason do
-    pick [:first, :last, :free, :type, :algorithm]
+    pick [:first, :last, :free, :assignable_type, :algorithm]
     compact true
+    rename assignable_type: :type
   end
 
   typed_struct do
@@ -31,7 +32,7 @@ defmodule Diffo.Provider.AssignableValue do
       default: 1,
       constraints: [min: 0]
 
-    field :type, :atom, description: "the type of the assignable thing"
+    field :assignable_type, :string, description: "the type of the assignable thing"
 
     field :algorithm, :atom,
       description: "the assignment algorithm",

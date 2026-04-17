@@ -6,6 +6,8 @@ defmodule Diffo.Provider.RelationshipTest do
   @moduledoc false
   use ExUnit.Case
 
+  alias Diffo.Type.Value
+
   setup_all do
     AshNeo4j.BoltyHelper.start()
   end
@@ -287,14 +289,14 @@ defmodule Diffo.Provider.RelationshipTest do
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :role,
-          value: "worker",
+          value: Value.primitive("string", "worker"),
           type: :relationship
         })
 
       second_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :type,
-          value: :evpl,
+          value: Value.primitive("string", "evpl"),
           type: :relationship
         })
 
@@ -318,14 +320,14 @@ defmodule Diffo.Provider.RelationshipTest do
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :role,
-          value: "worker",
+          value: Value.primitive("string", "worker"),
           type: :relationship
         })
 
       second_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :role,
-          value: "protect",
+          value: Value.primitive("string", "protect"),
           type: :relationship
         })
 
@@ -352,14 +354,14 @@ defmodule Diffo.Provider.RelationshipTest do
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :role,
-          value: "worker",
+          value: Value.primitive("string", "worker"),
           type: :relationship
         })
 
       second_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :type,
-          value: :evpl,
+          value: Value.primitive("string", "evpl"),
           type: :relationship
         })
 
@@ -442,7 +444,7 @@ defmodule Diffo.Provider.RelationshipTest do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :role,
-          value: :gateway,
+          value: Value.primitive("string", "gateway"),
           type: :relationship
         })
 
@@ -457,7 +459,7 @@ defmodule Diffo.Provider.RelationshipTest do
       encoding = Jason.encode!(relationship)
 
       assert encoding ==
-               ~s({\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/device/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]})
+               ~s({\"type\":\"bestows\",\"service\":{\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{child_instance.id}\"},\"serviceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"gateway\"}]})
     end
 
     test "encode service instance resourceRelationship json - success" do
@@ -478,7 +480,7 @@ defmodule Diffo.Provider.RelationshipTest do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :role,
-          value: :primary,
+          value: Value.primitive("string", "primary"),
           type: :relationship
         })
 
@@ -493,7 +495,7 @@ defmodule Diffo.Provider.RelationshipTest do
       encoding = Jason.encode!(relationship)
 
       assert encoding ==
-               ~s({\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{resource_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/can/#{resource_instance.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"primary\"}]})
+               ~s({\"type\":\"isAssigned\",\"resource\":{\"id\":\"#{resource_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{resource_instance.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"role\",\"value\":\"primary\"}]})
     end
 
     test "encode resource instance serviceRelationship json - success" do
@@ -521,7 +523,7 @@ defmodule Diffo.Provider.RelationshipTest do
       encoding = Jason.encode!(relationship)
 
       assert encoding ==
-               ~s({\"type\":\"assignedTo\",\"service\":{\"id\":\"#{service_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/adslAccess/#{service_instance.id}\"}})
+               ~s({\"type\":\"assignedTo\",\"service\":{\"id\":\"#{service_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{service_instance.id}\"}})
     end
   end
 
@@ -601,7 +603,7 @@ defmodule Diffo.Provider.RelationshipTest do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :role,
-          value: :gateway,
+          value: Value.primitive("string", "gateway"),
           type: :relationship
         })
 

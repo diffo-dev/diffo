@@ -6,6 +6,8 @@ defmodule Diffo.Provider.FeatureTest do
   @moduledoc false
   use ExUnit.Case
 
+  alias Diffo.Type.Value
+
   setup_all do
     AshNeo4j.BoltyHelper.start()
   end
@@ -44,14 +46,14 @@ defmodule Diffo.Provider.FeatureTest do
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :encapsulation,
-          value: :qinq,
+          value: Value.primitive("string", "qinq"),
           type: :feature
         })
 
       second_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :type,
-          value: :evpl,
+          value: Value.primitive("string", "evpl"),
           type: :feature
         })
 
@@ -65,14 +67,14 @@ defmodule Diffo.Provider.FeatureTest do
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :type,
-          value: :fraudHeavy,
+          value: Value.primitive("string", "fraudHeavy"),
           type: :feature
         })
 
       second_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :type,
-          value: :fraudLight,
+          value: Value.primitive("string", "fraudLight"),
           type: :feature
         })
 
@@ -101,14 +103,14 @@ defmodule Diffo.Provider.FeatureTest do
       device_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :device,
-          value: :epic1000a,
+          value: Value.primitive("string", "epic1000a"),
           type: :feature
         })
 
       connection_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :connection,
-          value: :foreign,
+          value: Value.primitive("string", "foreign"),
           type: :feature
         })
 
@@ -129,7 +131,7 @@ defmodule Diffo.Provider.FeatureTest do
       device_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :device,
-          value: :epic1000a,
+          value: Value.primitive("string", "epic1000a"),
           type: :feature
         })
 
@@ -152,14 +154,14 @@ defmodule Diffo.Provider.FeatureTest do
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :type,
-          value: :fraudHeavy,
+          value: Value.primitive("string", "fraudHeavy"),
           type: :feature
         })
 
       second_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :type,
-          value: :fraudLight,
+          value: Value.primitive("string", "fraudLight"),
           type: :feature
         })
 
@@ -182,14 +184,14 @@ defmodule Diffo.Provider.FeatureTest do
       device_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :device,
-          value: :epic1000a,
+          value: Value.primitive("string", "epic1000a"),
           type: :feature
         })
 
       connection_characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :connection,
-          value: :foreign,
+          value: Value.primitive("string", "foreign"),
           type: :feature
         })
 
@@ -221,7 +223,10 @@ defmodule Diffo.Provider.FeatureTest do
       name: :dynamicLineManagement,
       isEnabled: false,
       characteristics: [
-        %Diffo.Provider.Characteristic{name: :optimiseFor, value: :speed}
+        %Diffo.Provider.Characteristic{
+          name: :optimiseFor,
+          value: Value.primitive("string", "speed")
+        }
       ]
     }
 
@@ -229,7 +234,10 @@ defmodule Diffo.Provider.FeatureTest do
       name: :dynamicLineManagement,
       isEnabled: false,
       characteristics: [
-        %Diffo.Provider.Characteristic{name: :optimiseFor, value: :stable}
+        %Diffo.Provider.Characteristic{
+          name: :optimiseFor,
+          value: Value.primitive("string", "stable")
+        }
       ]
     }
     @name_only %Diffo.Provider.Feature{name: :dynamicLineManagement}
@@ -237,7 +245,8 @@ defmodule Diffo.Provider.FeatureTest do
     @isDisabled_only %Diffo.Provider.Feature{isEnabled: false}
     @speed_only %Diffo.Provider.Feature{
       characteristics: [
-        %Diffo.Provider.Characteristic{value: :speed}
+        # outstanding on primitive is a map
+        %Diffo.Provider.Characteristic{value: %{value: "speed"}}
       ]
     }
 
@@ -281,7 +290,7 @@ defmodule Diffo.Provider.FeatureTest do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :device,
-          value: :epic1000a,
+          value: Value.primitive("string", "epic1000a"),
           type: :feature
         })
 

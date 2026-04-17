@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-Mix.Task.run("app.start")
-ExUnit.start()
-Logger.put_application_level(:ash_neo4j, :warning)
+defimpl Diffo.Unwrap, for: Ash.NotLoaded do
+  def unwrap(%{field: field}) do
+    raise "Diffo.Unwrap: #{field} was not loaded"
+  end
+end
