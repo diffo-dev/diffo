@@ -97,7 +97,7 @@ defmodule Diffo.MixProject do
       {:ash_state_machine, "~> 0.2.12"},
       # {:ash_neo4j, ash_neo4j_version("~> 0.2.15")},
       {:ash_neo4j, github: "diffo-dev/ash_neo4j", branch: "dev"},
-      {:ash, ash_version("~> 3.0 and >= 3.19.1")},
+      {:ash, ash_version("~> 3.0 and >= 3.24.2")},
       {:uuid, "~> 1.1"},
       {:igniter, ">= 0.6.29 and < 1.0.0-0",
        [env: :prod, hex: "igniter", repo: "hexpm", optional: true]},
