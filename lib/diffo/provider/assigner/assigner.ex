@@ -208,8 +208,14 @@ defmodule Diffo.Provider.Assigner do
     {_free, updated} =
       Map.get_and_update(assignable_value, :free, fn free -> {free - 1, free - 1} end)
 
-    {:ok, new_struct} = Ash.Type.cast_input(AssignableValue, Map.from_struct(updated), AssignableValue.subtype_constraints())
-    new_value = Value.dynamic(AssignableValue, new_struct)
+    {:ok, new_struct} =
+      Ash.Type.cast_input(
+        AssignableValue,
+        Map.from_struct(updated),
+        AssignableValue.subtype_constraints()
+      )
+
+    new_value = Value.dynamic(new_struct)
 
     case Diffo.Provider.update_characteristic(characteristic, %{value: new_value}) do
       {:ok, _characteristic} ->
@@ -229,8 +235,14 @@ defmodule Diffo.Provider.Assigner do
     {_free, updated} =
       Map.get_and_update(assignable_value, :free, fn free -> {free + 1, free + 1} end)
 
-    {:ok, new_struct} = Ash.Type.cast_input(AssignableValue, Map.from_struct(updated), AssignableValue.subtype_constraints())
-    new_value = Value.dynamic(AssignableValue, new_struct)
+    {:ok, new_struct} =
+      Ash.Type.cast_input(
+        AssignableValue,
+        Map.from_struct(updated),
+        AssignableValue.subtype_constraints()
+      )
+
+    new_value = Value.dynamic(new_struct)
 
     case Diffo.Provider.update_characteristic(characteristic, %{value: new_value}) do
       {:ok, _characteristic} ->

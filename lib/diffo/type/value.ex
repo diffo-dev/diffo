@@ -67,7 +67,9 @@ defmodule Diffo.Type.Value do
 
   def primitive(type, value), do: Diffo.Type.Primitive.wrap(type, value)
 
-  def dynamic(type, value),
+  def dynamic(%type{} = dynamic), do: dynamic(type, dynamic)
+
+  defp dynamic(type, value),
     do: %{type: "dynamic", value: %Diffo.Type.Dynamic{type: type, value: value}}
 
   def wrap(type, value), do: %Ash.Union{type: type, value: value}

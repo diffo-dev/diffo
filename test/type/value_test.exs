@@ -13,7 +13,7 @@ defmodule Diffo.Type.ValueTest do
 
   describe "value cast and dump" do
     test "cast_input dynamic using Value.dynamic" do
-      value = Value.dynamic(Patch, %Patch{aEnd: 1, zEnd: 42})
+      value = Value.dynamic(%Patch{aEnd: 1, zEnd: 42})
 
       assert {:ok, %Ash.Union{type: :dynamic, value: %Dynamic{type: Patch}}} =
                Ash.Type.cast_input(Value, value, Value.subtype_constraints())
@@ -33,7 +33,7 @@ defmodule Diffo.Type.ValueTest do
                Ash.Type.cast_input(Value, value, Value.subtype_constraints())
     end
 
-    @tag bugged: "raw Dynamic struct cast_input requires Value.dynamic/2 wrapper"
+    @tag bugged: "raw Dynamic struct cast_input requires Value wrapper"
     @tag :skip
     test "cast_input dynamic" do
       value = %Dynamic{type: Patch, value: %Patch{aEnd: 1, zEnd: 42}}
@@ -92,7 +92,7 @@ defmodule Diffo.Type.ValueTest do
     end
 
     test "roundtrip dynamic from Value.dynamic" do
-      value = Value.dynamic(Patch, %Patch{aEnd: 1, zEnd: 42})
+      value = Value.dynamic(%Patch{aEnd: 1, zEnd: 42})
       {:ok, cast} = Ash.Type.cast_input(Value, value, Value.subtype_constraints())
       {:ok, dumped} = Ash.Type.dump_to_native(Value, cast, Value.subtype_constraints())
       {:ok, result} = Ash.Type.cast_stored(Value, dumped, Value.subtype_constraints())
