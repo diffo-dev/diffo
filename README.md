@@ -53,6 +53,12 @@ To get started you need a running instance of [Livebook](https://livebook.dev/)
 
 [![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fdiffo%2Ddev%2Fdiffo%2Fblob%2Fdev%2Fdiffo.livemd)
 
+### Diffo.Type — no Neo4j required
+
+Explore `Diffo.Type.Value`, `Diffo.Type.Primitive`, and `Diffo.Type.Dynamic` in pure Elixir without a database connection.
+
+[![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fdiffo%2Ddev%2Fdiffo%2Fblob%2Fdev%2Fdocumentation%2Fhow_to%2Fuse_diffo_type.livemd)
+
 
 ## Future Work
 
