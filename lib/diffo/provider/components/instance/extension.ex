@@ -81,9 +81,10 @@ defmodule Diffo.Provider.Instance.Extension do
       ],
       value_type: [
         doc: """
-          The optional type of the characteristic's value, an atom, may be a module name such as an Ash.TypedStruct
+          The type of the characteristic's value. An atom module name such as an Ash.TypedStruct for a scalar value,
+          or `{:array, module}` for an array of values of that type.
         """,
-        type: :atom
+        type: :any
       ]
     ]
   }

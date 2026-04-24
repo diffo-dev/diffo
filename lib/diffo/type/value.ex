@@ -92,6 +92,12 @@ defmodule Diffo.Type.Value do
   def handle_change(_old_value, nil, _constraints), do: {:ok, nil}
   def handle_change(old_value, new_value, constraints), do: super(old_value, new_value, constraints)
 
+  def handle_change_array(_old_values, nil, _constraints), do: {:ok, nil}
+  def handle_change_array(old_values, new_values, constraints), do: super(old_values, new_values, constraints)
+
+  def prepare_change_array(_old_values, nil, _constraints), do: {:ok, nil}
+  def prepare_change_array(old_values, new_values, constraints), do: super(old_values, new_values, constraints)
+
   def primitive(type, value), do: Diffo.Type.Primitive.wrap(type, value)
 
   def dynamic(%type{} = dynamic), do: dynamic(type, dynamic)

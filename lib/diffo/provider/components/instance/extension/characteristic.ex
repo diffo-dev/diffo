@@ -48,9 +48,16 @@ defmodule Diffo.Provider.Instance.Characteristic do
 
     Enum.reduce_while(characteristics, [], fn %{name: name, value_type: value_type}, acc ->
       try do
-        value = Value.dynamic(struct(value_type))
+        attrs =
+          case value_type do
+            {:array, _inner} ->
+              %{name: name, type: type, values: [], is_array: true}
 
-        case Provider.create_characteristic(%{name: name, type: type, value: value}) do
+            module ->
+              %{name: name, type: type, value: Value.dynamic(struct(module))}
+          end
+
+        case Provider.create_characteristic(attrs) do
           {:ok, result} ->
             {:cont, [result | acc]}
 
