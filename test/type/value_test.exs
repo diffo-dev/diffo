@@ -98,6 +98,24 @@ defmodule Diffo.Type.ValueTest do
       {:ok, result} = Ash.Type.cast_stored(Value, dumped, Value.subtype_constraints())
       assert Diffo.Unwrap.unwrap(result) == %Patch{aEnd: 1, zEnd: 42}
     end
+
+    test "cast_input nil" do
+      assert {:ok, nil} = Ash.Type.cast_input(Value, nil, Value.subtype_constraints())
+    end
+
+    test "cast_stored nil" do
+      assert {:ok, nil} = Ash.Type.cast_stored(Value, nil, Value.subtype_constraints())
+    end
+
+    test "handle_change from primitive to nil" do
+      old = %Ash.Union{type: :string, value: Primitive.wrap("string", "hello")}
+      assert {:ok, nil} = Ash.Type.handle_change(Value, old, nil, Value.subtype_constraints())
+    end
+
+    test "handle_change from nil to primitive" do
+      new = %Ash.Union{type: :string, value: Primitive.wrap("string", "hello")}
+      assert {:ok, ^new} = Ash.Type.handle_change(Value, nil, new, Value.subtype_constraints())
+    end
   end
 
   describe "value json" do

@@ -18,9 +18,17 @@ defmodule Diffo.Type.DynamicTest do
                Ash.Type.cast_input(Dynamic, value, [])
     end
 
+    test "cast_input nil" do
+      assert {:ok, nil} = Ash.Type.cast_input(Dynamic, nil, [])
+    end
+
     test "dump_to_native" do
       value = %Dynamic{type: Patch, value: %Patch{aEnd: 1, zEnd: 42}}
       assert {:ok, _dumped} = Ash.Type.dump_to_native(Dynamic, value, [])
+    end
+
+    test "dump_to_native nil" do
+      assert {:ok, nil} = Ash.Type.dump_to_native(Dynamic, nil, [])
     end
 
     test "cast_stored roundtrip" do
@@ -29,6 +37,23 @@ defmodule Diffo.Type.DynamicTest do
 
       assert {:ok, %Dynamic{type: Patch, value: %Patch{aEnd: 1, zEnd: 42}}} =
                Ash.Type.cast_stored(Dynamic, dumped, [])
+    end
+
+    test "cast_stored nil" do
+      assert {:ok, nil} = Ash.Type.cast_stored(Dynamic, nil, [])
+    end
+
+    test "apply_constraints with valid struct" do
+      value = %Dynamic{type: Patch, value: %Patch{aEnd: 1, zEnd: 42}}
+      assert {:ok, ^value} = Ash.Type.apply_constraints(Dynamic, value, [])
+    end
+
+    test "apply_constraints nil" do
+      assert {:ok, nil} = Ash.Type.apply_constraints(Dynamic, nil, [])
+    end
+
+    test "apply_constraints with invalid value" do
+      assert {:error, _} = Ash.Type.apply_constraints(Dynamic, "not a dynamic", [])
     end
   end
 
