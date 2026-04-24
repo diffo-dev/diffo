@@ -110,7 +110,7 @@ Adds a Characteristic
 | Name | Type | Default | Docs |
 |------|------|---------|------|
 | [`name`](#features-feature-characteristic-name){: #features-feature-characteristic-name .spark-required} | `atom` |  | The name of the characteristic, an atom |
-| [`value_type`](#features-feature-characteristic-value_type){: #features-feature-characteristic-value_type } | `atom` |  | The optional type of the characteristic's value, an atom, may be a module name such as an Ash.TypedStruct |
+| [`value_type`](#features-feature-characteristic-value_type){: #features-feature-characteristic-value_type } | `any` |  | The type of the characteristic's value. An atom module name such as an Ash.TypedStruct for a scalar value,   or `{:array, module}` for an array of values of that type. |
 
 
 
@@ -169,7 +169,7 @@ Adds a Characteristic
 | Name | Type | Default | Docs |
 |------|------|---------|------|
 | [`name`](#characteristics-characteristic-name){: #characteristics-characteristic-name .spark-required} | `atom` |  | The name of the characteristic, an atom |
-| [`value_type`](#characteristics-characteristic-value_type){: #characteristics-characteristic-value_type } | `atom` |  | The optional type of the characteristic's value, an atom, may be a module name such as an Ash.TypedStruct |
+| [`value_type`](#characteristics-characteristic-value_type){: #characteristics-characteristic-value_type } | `any` |  | The type of the characteristic's value. An atom module name such as an Ash.TypedStruct for a scalar value,   or `{:array, module}` for an array of values of that type. |
 
 
 
