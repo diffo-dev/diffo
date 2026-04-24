@@ -25,5 +25,14 @@ defmodule Diffo.InstanceExtension.CharacteristicTest do
       assert hd(errors).message ==
                "couldn't create characteristic with value of unknown type Elixir.InvalidValue"
     end
+
+    test "create resource with array characteristic - success" do
+      {:ok, shelf} = Servo.build_shelf(%{})
+
+      shelves = Enum.find(shelf.characteristics, fn c -> c.name == :shelves end)
+      assert shelves.is_array == true
+      assert shelves.values == []
+      assert Diffo.Unwrap.unwrap(shelves) == []
+    end
   end
 end
