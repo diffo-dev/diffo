@@ -206,8 +206,81 @@ defmodule Diffo.Provider.CharacteristicTest do
     end
   end
 
+  describe "Diffo.Provider create array Characteristics" do
+    test "create characteristic with values - success" do
+      characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :ports,
+          values: [
+            Value.primitive("integer", 1),
+            Value.primitive("integer", 2),
+            Value.primitive("integer", 3)
+          ],
+          is_array: true,
+          type: :instance
+        })
+
+      assert characteristic.is_array == true
+      assert Diffo.Unwrap.unwrap(characteristic) == [1, 2, 3]
+    end
+
+    test "create characteristic with both value and values - failure" do
+      assert {:error, _} =
+               Diffo.Provider.create_characteristic(%{
+                 name: :bad,
+                 value: Value.primitive("string", "x"),
+                 values: [Value.primitive("string", "y")],
+                 type: :instance
+               })
+    end
+  end
+
+  describe "Diffo.Provider update array Characteristics" do
+    test "update value characteristic to values (morphing) - success" do
+      characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :ports,
+          value: Value.primitive("integer", 1),
+          type: :instance
+        })
+
+      updated =
+        Diffo.Provider.update_characteristic!(characteristic, %{
+          value: nil,
+          values: [
+            Value.primitive("integer", 1),
+            Value.primitive("integer", 2)
+          ],
+          is_array: true
+        })
+
+      assert updated.is_array == true
+      assert Diffo.Unwrap.unwrap(updated) == [1, 2]
+    end
+
+    test "update values characteristic back to value (shrinking) - success" do
+      characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :ports,
+          values: [Value.primitive("integer", 1), Value.primitive("integer", 2)],
+          is_array: true,
+          type: :instance
+        })
+
+      updated =
+        Diffo.Provider.update_characteristic!(characteristic, %{
+          values: nil,
+          value: Value.primitive("integer", 1),
+          is_array: false
+        })
+
+      assert updated.is_array == false
+      assert Diffo.Unwrap.unwrap(updated) == 1
+    end
+  end
+
   describe "Diffo.Provider encode Characteristics" do
-    test "encode json - success" do
+    test "encode json value - success" do
       characteristic =
         Diffo.Provider.create_characteristic!(%{
           name: :device,
@@ -217,6 +290,19 @@ defmodule Diffo.Provider.CharacteristicTest do
 
       encoding = Jason.encode!(characteristic)
       assert encoding == "{\"name\":\"device\",\"value\":\"managed\"}"
+    end
+
+    test "encode json values - success" do
+      characteristic =
+        Diffo.Provider.create_characteristic!(%{
+          name: :ports,
+          values: [Value.primitive("integer", 1), Value.primitive("integer", 2)],
+          is_array: true,
+          type: :instance
+        })
+
+      encoding = Jason.encode!(characteristic)
+      assert encoding == "{\"name\":\"ports\",\"values\":[1,2]}"
     end
   end
 
