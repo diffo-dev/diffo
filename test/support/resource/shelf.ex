@@ -42,12 +42,14 @@ defmodule Diffo.Test.Shelf do
     feature :spectralManagement do
       is_enabled? true
       characteristic :deploymentClass, DeploymentClassValue
+      characteristic :deploymentClasses, {:array, DeploymentClassValue}
     end
   end
 
   characteristics do
     characteristic :shelf, ShelfValue
     characteristic :slots, AssignableValue
+    characteristic :shelves, {:array, ShelfValue}
   end
 
   actions do

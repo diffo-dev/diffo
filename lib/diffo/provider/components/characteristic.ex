@@ -34,11 +34,37 @@ defmodule Diffo.Provider.Characteristic do
   end
 
   jason do
-    pick [:name, :value]
+    pick [:name, :value, :values]
+    compact true
   end
 
   outstanding do
-    expect [:name, :value]
+    expect [:name]
+
+    customize fn outstanding, expected, actual ->
+      key = if expected.is_array, do: :values, else: :value
+      expected_val = Map.get(expected, key)
+
+      val_out =
+        if actual == nil do
+          expected_val
+        else
+          Outstanding.outstanding(expected_val, Map.get(actual, key))
+        end
+
+      cond do
+        val_out == nil ->
+          outstanding
+
+        outstanding == nil ->
+          %{key => val_out}
+          |> Outstand.map_to_struct(Diffo.Provider.Characteristic)
+          |> Ash.Test.strip_metadata()
+
+        true ->
+          Map.put(outstanding, key, val_out)
+      end
+    end
   end
 
   actions do
@@ -46,7 +72,7 @@ defmodule Diffo.Provider.Characteristic do
 
     create :create do
       description "creates a characteristic"
-      accept [:name, :value, :type]
+      accept [:name, :value, :values, :is_array, :type]
     end
 
     read :read do
@@ -71,7 +97,7 @@ defmodule Diffo.Provider.Characteristic do
     update :update do
       primary? true
       description "updates the characteristic value or instance, feature or relationship"
-      accept [:value]
+      accept [:value, :values, :is_array]
       argument :instance_id, :uuid
       argument :feature_id, :uuid
       argument :relationship_id, :uuid
@@ -98,6 +124,20 @@ defmodule Diffo.Provider.Characteristic do
       description "the value of the characteristic"
       constraints Diffo.Type.Value.subtype_constraints()
       allow_nil? true
+      public? true
+    end
+
+    attribute :values, {:array, Diffo.Type.Value} do
+      description "the array of values of the characteristic"
+      constraints items: Diffo.Type.Value.subtype_constraints()
+      allow_nil? true
+      public? true
+    end
+
+    attribute :is_array, :boolean do
+      description "true when this characteristic holds an array of values; defaults false"
+      default false
+      allow_nil? false
       public? true
     end
 
@@ -154,6 +194,10 @@ defmodule Diffo.Provider.Characteristic do
     validate present([:instance_id, :feature_id, :relationship_id], at_most: 1) do
       message "characteristic must be related to at most one of an instance, feature or relationship"
     end
+
+    validate present([:value, :values], at_most: 1) do
+      message "characteristic must have at most one of value or values"
+    end
   end
 
   preparations do
@@ -172,4 +216,9 @@ defmodule Diffo.Provider.Characteristic do
 
   """
   def compare(%{name: name0}, %{name: name1}), do: Diffo.Util.compare(name0, name1)
+
+  defimpl Diffo.Unwrap do
+    def unwrap(%{values: values}) when is_list(values), do: Diffo.Unwrap.unwrap(values)
+    def unwrap(%{value: value}), do: Diffo.Unwrap.unwrap(value)
+  end
 end

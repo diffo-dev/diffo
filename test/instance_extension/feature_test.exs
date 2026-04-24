@@ -25,5 +25,16 @@ defmodule Diffo.InstanceExtension.FeatureTest do
       assert hd(errors).message ==
                "couldn't create feature characteristic with value of unknown type Elixir.InvalidValue"
     end
+
+    test "create resource with array feature characteristic - success" do
+      {:ok, shelf} = Servo.build_shelf(%{})
+
+      spectral = Enum.find(shelf.features, fn f -> f.name == :spectralManagement end)
+      deployment_classes = Enum.find(spectral.characteristics, fn c -> c.name == :deploymentClasses end)
+
+      assert deployment_classes.is_array == true
+      assert deployment_classes.values == []
+      assert Diffo.Unwrap.unwrap(deployment_classes) == []
+    end
   end
 end
