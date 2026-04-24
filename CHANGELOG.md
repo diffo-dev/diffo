@@ -70,15 +70,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 * `Diffo.Type.Value` — union of `Diffo.Type.Primitive` and `Diffo.Type.Dynamic`, enabling mixed primitive and typed-struct values on characteristics and other resources
 * `Diffo.Type.Primitive` — typed union of string, integer, float, boolean, date, time, datetime, duration
 * `Diffo.Type.Dynamic` — runtime-typed struct for Ash.Type.NewType values
+* `Diffo.Type.Dynamic.is_valid?/1` — predicate to check whether a module is a valid Dynamic type (Ash.Type.NewType with storage_type :map) before constructing a value
+* `Characteristic.values` — homogeneous array of `Diffo.Type.Value` on a characteristic, with `is_array` boolean flag; supports morphing between scalar and array representations
+* `Diffo.Unwrap` on `List` — unwraps each element, enabling `Diffo.Unwrap.unwrap/1` to reduce nested wrapped lists to plain Elixir values in one call
+* Provider instance extension DSL — characteristic and feature characteristic value types now accept `{:array, Module}` in addition to plain module references
 
 ### Fixes
 
 * `Diffo.Type.Value` nil update — override `handle_change/3` to prevent Ash union type from wrapping nil in the previous member type, which caused malformed JSON to be written to Neo4j
+* `Diffo.Type.Value` nil array update — added nil guards to `handle_change_array/3` and `prepare_change_array/3` to prevent enumeration errors when setting an array characteristic to nil
 * `Diffo.Type.Dynamic` nil safety — added nil clauses to `cast_stored/2` and `dump_to_native/2`
 
 ### Maintenance
 
 * bolty 0.0.10 — native DateTime handling for both BOLT 4.x and BOLT 5.x
+* `Diffo.Unwrap` protocol documentation — recursive unwrap behaviour, custom implementation guide, and array examples added to livebook and module docs
 
 ## [v0.1.6](https://github.com/diffo-dev/diffo/compare/v0.1.5...v0.1.6) (2026-03-19)
 
