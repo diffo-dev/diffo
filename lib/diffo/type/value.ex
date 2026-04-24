@@ -65,6 +65,9 @@ defmodule Diffo.Type.Value do
       storage: :type_and_value
     ]
 
+  def handle_change(_old_value, nil, _constraints), do: {:ok, nil}
+  def handle_change(old_value, new_value, constraints), do: super(old_value, new_value, constraints)
+
   def primitive(type, value), do: Diffo.Type.Primitive.wrap(type, value)
 
   def dynamic(%type{} = dynamic), do: dynamic(type, dynamic)

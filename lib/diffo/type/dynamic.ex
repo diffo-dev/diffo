@@ -94,6 +94,8 @@ defmodule Diffo.Type.Dynamic do
   end
 
   @impl true
+  def cast_stored(nil, _constraints), do: {:ok, nil}
+
   def cast_stored(%{"type" => type_string, "value" => value}, _constraints) do
     type = String.to_existing_atom(type_string)
     constraints = dynamic_constraints(type_string)
@@ -105,6 +107,8 @@ defmodule Diffo.Type.Dynamic do
   end
 
   @impl true
+  def dump_to_native(nil, _constraints), do: {:ok, nil}
+
   def dump_to_native(%__MODULE__{type: type, value: value}, _constraints) do
     constraints = dynamic_constraints(type)
 

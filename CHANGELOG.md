@@ -59,6 +59,27 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 * fixed relationship enrichment inconsistent across neo4j versions
 
+## [v0.2.0](https://github.com/diffo-dev/diffo/compare/v0.1.6...v0.2.0) (2026-04-24)
+
+### Breaking Changes
+
+* Updated to ash_neo4j 0.3.1 and bolty 0.0.10 — no database compatibility with prior versions due to significant changes in the data layer and Bolt protocol handling
+
+### Features
+
+* `Diffo.Type.Value` — union of `Diffo.Type.Primitive` and `Diffo.Type.Dynamic`, enabling mixed primitive and typed-struct values on characteristics and other resources
+* `Diffo.Type.Primitive` — typed union of string, integer, float, boolean, date, time, datetime, duration
+* `Diffo.Type.Dynamic` — runtime-typed struct for Ash.Type.NewType values
+
+### Fixes
+
+* `Diffo.Type.Value` nil update — override `handle_change/3` to prevent Ash union type from wrapping nil in the previous member type, which caused malformed JSON to be written to Neo4j
+* `Diffo.Type.Dynamic` nil safety — added nil clauses to `cast_stored/2` and `dump_to_native/2`
+
+### Maintenance
+
+* bolty 0.0.10 — native DateTime handling for both BOLT 4.x and BOLT 5.x
+
 ## [v0.1.6](https://github.com/diffo-dev/diffo/compare/v0.1.5...v0.1.6) (2026-03-19)
 
 ### Fixes
