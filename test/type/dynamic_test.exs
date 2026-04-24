@@ -10,6 +10,51 @@ defmodule Diffo.Type.DynamicTest do
   alias Diffo.Test.Patch
   alias Diffo.Test.CardValue
 
+  describe "dynamic type validation" do
+    test "cast_input rejects non-NewType scalar Ash type" do
+      value = %Dynamic{type: Ash.Type.Date, value: ~D[2026-01-01]}
+      assert {:error, msg} = Ash.Type.cast_input(Dynamic, value, [])
+      assert msg =~ "storage_type :map"
+    end
+
+    test "cast_input rejects unloaded module" do
+      value = %Dynamic{type: Diffo.Type.NonExistent, value: nil}
+      assert {:error, msg} = Ash.Type.cast_input(Dynamic, value, [])
+      assert msg =~ "storage_type :map"
+    end
+
+    test "apply_constraints rejects invalid type" do
+      value = %Dynamic{type: Ash.Type.Date, value: ~D[2026-01-01]}
+      assert {:error, msg} = Ash.Type.apply_constraints(Dynamic, value, [])
+      assert msg =~ "storage_type :map"
+    end
+
+    test "is_valid? returns false for non-NewType" do
+      assert Dynamic.is_valid?(Ash.Type.Date) == false
+    end
+
+    test "is_valid? returns false for unloaded module" do
+      assert Dynamic.is_valid?(Diffo.Type.NonExistent) == false
+    end
+
+    test "is_valid? returns true for valid map-storage NewType" do
+      assert Dynamic.is_valid?(Patch) == true
+    end
+
+    test "dynamic_constraints returns [] for non-NewType" do
+      assert Dynamic.dynamic_constraints(Ash.Type.Date) == []
+    end
+
+    test "dynamic_constraints returns [] for unloaded module" do
+      assert Dynamic.dynamic_constraints(Diffo.Type.NonExistent) == []
+    end
+
+    test "valid map-storage NewType still works" do
+      value = %Dynamic{type: Patch, value: %Patch{aEnd: 1, zEnd: 42}}
+      assert {:ok, %Dynamic{type: Patch}} = Ash.Type.cast_input(Dynamic, value, [])
+    end
+  end
+
   describe "dynamic cast and dump" do
     test "cast_input from struct" do
       value = %Dynamic{type: Patch, value: %Patch{aEnd: 1, zEnd: 42}}

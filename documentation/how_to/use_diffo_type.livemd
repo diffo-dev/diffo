@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.2.0"},
+    {:diffo, "~> 0.2.0"}
   ],
   consolidate_protocols: false
 )
@@ -47,7 +47,7 @@ Built-in implementations:
 | `Diffo.Type.Primitive` | returns the primitive value     |
 | `Diffo.Type.Dynamic`   | delegates to inner `:value`     |
 | `Ash.CiString`         | returns the comparable string   |
-| `Ash.NotLoaded`        | raises — field was not loaded   |
+| `Ash.NotLoaded`        | raises — field was not loaded |
 | `List`                 | unwraps each element            |
 | `Any`                  | returns the value unchanged     |
 
@@ -252,6 +252,22 @@ Diffo.Unwrap.unwrap(result)
 {:ok, nil} = Ash.Type.dump_to_native(Dynamic, nil, [])
 {:ok, nil} = Ash.Type.cast_stored(Dynamic, nil, [])
 :ok
+```
+
+### Checking type compatibility
+
+`Dynamic.is_valid?/1` lets you check whether a module is usable as a Dynamic type before constructing a value. It returns `true` only for `Ash.Type.NewType` modules with `storage_type: :map`:
+
+```elixir
+Dynamic.is_valid?(MyApp.Patch)
+```
+
+```elixir
+Dynamic.is_valid?(Ash.Type.Date)
+```
+
+```elixir
+Dynamic.is_valid?(NonExistent.Module)
 ```
 
 ### Constraint validation
