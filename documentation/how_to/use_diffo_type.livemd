@@ -1,0 +1,277 @@
+<!--
+SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+
+SPDX-License-Identifier: MIT
+-->
+
+# Using Diffo.Type
+
+```elixir
+Mix.install(
+  [
+    #{:diffo, "~> 0.2.0"},
+    {:diffo, path: "/Users/beanlanda/git/diffo", override: true}
+  ],
+  consolidate_protocols: false
+)
+```
+
+## Overview
+
+`Diffo.Type` provides three complementary types for carrying values on Diffo resources:
+
+* **`Diffo.Type.Primitive`** — a discriminated union of the standard TMF primitive types (string, integer, float, boolean, date, time, datetime, duration)
+* **`Diffo.Type.Dynamic`** — a runtime-typed wrapper for any `Ash.TypedStruct` or map-storage `Ash.Type.NewType`
+* **`Diffo.Type.Value`** — a union of Primitive or Dynamic; the attribute type used by `Diffo.Provider.Characteristic.value`
+
+All three types can also be used as array element types — `{:array, Diffo.Type.Value}`, `{:array, Diffo.Type.Primitive}`, or `{:array, Diffo.Type.Dynamic}` — when an attribute needs to hold multiple values.
+
+These types do not require a Neo4j connection. Everything in this livebook runs in pure Elixir.
+
+```elixir
+alias Diffo.Type.Value
+alias Diffo.Type.Primitive
+alias Diffo.Type.Dynamic
+```
+
+## Diffo.Unwrap protocol
+
+`Diffo.Unwrap` is a protocol that extracts the underlying Elixir value from Diffo and Ash wrapper types. It is defined with `@fallback_to_any true`, so any value that does not have an explicit implementation is returned as-is.
+
+The protocol is recursive: each implementation calls `Diffo.Unwrap.unwrap/1` on its inner value, so nested wrappers are peeled all the way down to the plain Elixir value in one call.
+
+Built-in implementations:
+
+| Type                   | Behaviour                       |
+| ---------------------- | ------------------------------- |
+| `Ash.Union`            | delegates to inner `:value`     |
+| `Diffo.Type.Primitive` | returns the primitive value     |
+| `Diffo.Type.Dynamic`   | delegates to inner `:value`     |
+| `Ash.CiString`         | returns the comparable string   |
+| `Ash.NotLoaded`        | raises — field was not loaded   |
+| `List`                 | unwraps each element            |
+| `Any`                  | returns the value unchanged     |
+
+### Implementing Diffo.Unwrap on your own types
+
+If your domain defines a struct that wraps a value, implement the protocol to make it transparent to Diffo:
+
+```elixir
+defmodule MyApp.Tagged do
+  defstruct [:tag, :value]
+end
+
+defimpl Diffo.Unwrap, for: MyApp.Tagged do
+  def unwrap(%{value: value}), do: Diffo.Unwrap.unwrap(value)
+end
+```
+
+Because the implementation calls `Diffo.Unwrap.unwrap/1` on the inner value, nesting works automatically — a `MyApp.Tagged` wrapping a `Diffo.Type.Primitive` unwraps all the way to the raw Elixir value:
+
+```elixir
+tagged = %MyApp.Tagged{tag: "example", value: Primitive.wrap("integer", 7)}
+Diffo.Unwrap.unwrap(tagged)
+```
+
+## Arrays
+
+All three types work as array element types. `Diffo.Unwrap` handles lists by unwrapping each element, so a stored list of wrapped values reduces to a plain Elixir list in one call.
+
+```elixir
+primitives = [
+  Primitive.wrap("integer", 1),
+  Primitive.wrap("integer", 2),
+  Primitive.wrap("integer", 3)
+]
+
+Diffo.Unwrap.unwrap(primitives)
+```
+
+The same applies to `Value` — after a cast roundtrip, unwrapping the list gives back the raw values:
+
+```elixir
+values = [Value.primitive("string", "a"), Value.primitive("string", "b")]
+
+cast_values =
+  Enum.map(values, fn v ->
+    {:ok, cast} = Ash.Type.cast_input(Value, v, Value.subtype_constraints())
+    cast
+  end)
+
+Diffo.Unwrap.unwrap(cast_values)
+```
+
+## Primitive
+
+`Diffo.Type.Primitive` wraps a single primitive value. Use `wrap/2` to construct one from a type name and a value. Use `Diffo.Unwrap.unwrap/1` to extract the value.
+
+```elixir
+Primitive.wrap("string", "connectivity") |> Diffo.Unwrap.unwrap()
+```
+
+```elixir
+Primitive.wrap("integer", 42) |> Diffo.Unwrap.unwrap()
+```
+
+```elixir
+Primitive.wrap("float", 1.5) |> Diffo.Unwrap.unwrap()
+```
+
+```elixir
+Primitive.wrap("boolean", false) |> Diffo.Unwrap.unwrap()
+```
+
+### Temporal types
+
+Date, time, datetime, and duration values are converted to ISO 8601 strings internally. This avoids nested serialisation issues when storing through AshNeo4j.
+
+```elixir
+Primitive.wrap("date", ~D[2026-04-24]) |> Diffo.Unwrap.unwrap()
+```
+
+```elixir
+Primitive.wrap("time", ~T[09:30:00]) |> Diffo.Unwrap.unwrap()
+```
+
+```elixir
+Primitive.wrap("datetime", ~U[2026-04-24 09:30:00Z]) |> Diffo.Unwrap.unwrap()
+```
+
+### Unknown types
+
+`wrap/2` returns `nil` for unrecognised type names.
+
+```elixir
+Primitive.wrap("unknown", "x")
+```
+
+### Cast and dump roundtrip
+
+The Primitive type integrates with the Ash type system.
+
+```elixir
+value = Primitive.wrap("string", "connectivity")
+{:ok, cast} = Ash.Type.cast_input(Primitive, value, Primitive.subtype_constraints())
+{:ok, dumped} = Ash.Type.dump_to_native(Primitive, cast, Primitive.subtype_constraints())
+{:ok, result} = Ash.Type.cast_stored(Primitive, dumped, Primitive.subtype_constraints())
+Diffo.Unwrap.unwrap(result)
+```
+
+## Value
+
+`Diffo.Type.Value` is the union type used for `Diffo.Provider.Characteristic.value`. Use `Value.primitive/2` and `Value.dynamic/1` to construct values. Stored values are `%Ash.Union{}` structs — use `Diffo.Unwrap.unwrap/1` to extract the underlying Elixir value.
+
+```elixir
+Value.primitive("string", "connectivity") |> Diffo.Unwrap.unwrap()
+```
+
+```elixir
+Value.primitive("integer", 42) |> Diffo.Unwrap.unwrap()
+```
+
+### Nil values
+
+Setting a characteristic value to nil is fully supported. The `handle_change/3` override ensures Ash does not wrap nil in the previous member type.
+
+```elixir
+Ash.Type.handle_change(Value, nil, nil, Value.subtype_constraints())
+```
+
+```elixir
+old = %Ash.Union{type: :string, value: Primitive.wrap("string", "old")}
+Ash.Type.handle_change(Value, old, nil, Value.subtype_constraints())
+```
+
+### Full roundtrip for a primitive Value
+
+```elixir
+value = Value.primitive("float", 3.14)
+{:ok, cast} = Ash.Type.cast_input(Value, value, Value.subtype_constraints())
+{:ok, dumped} = Ash.Type.dump_to_native(Value, cast, Value.subtype_constraints())
+{:ok, result} = Ash.Type.cast_stored(Value, dumped, Value.subtype_constraints())
+Diffo.Unwrap.unwrap(result)
+```
+
+## Dynamic
+
+`Diffo.Type.Dynamic` carries a value whose type is known only at runtime. The `:type` field is the `Ash.Type.NewType` module; `:value` is the cast value.
+
+Dynamic is limited to types with `storage_type: :map` — `Ash.TypedStruct` and `Ash.Type.NewType` subtypes of `:struct`, `:map`, `:union`, `:keyword`, or `:tuple`. Scalar Ash types such as `Ash.Type.Date` are not supported.
+
+### Defining a typed struct
+
+First, define a struct that will be the dynamic value. In a real application this is defined in your own domain — it does not need to be in Diffo itself.
+
+```elixir
+defmodule MyApp.Patch do
+  use Ash.TypedStruct
+
+  typed_struct do
+    field :a_end, :integer, constraints: [min: 0]
+    field :z_end, :integer, constraints: [min: 0]
+  end
+end
+```
+
+### Creating a Dynamic value
+
+```elixir
+dynamic = %Dynamic{type: MyApp.Patch, value: %MyApp.Patch{a_end: 1, z_end: 42}}
+```
+
+### Cast roundtrip
+
+```elixir
+{:ok, cast} = Ash.Type.cast_input(Dynamic, dynamic, [])
+{:ok, dumped} = Ash.Type.dump_to_native(Dynamic, cast, [])
+{:ok, result} = Ash.Type.cast_stored(Dynamic, dumped, [])
+result
+```
+
+### Unwrapping
+
+```elixir
+Diffo.Unwrap.unwrap(result)
+```
+
+### Using Dynamic inside Value
+
+Wrap the dynamic value using `Value.dynamic/1`, then round-trip through the Value union.
+
+```elixir
+value = Value.dynamic(%MyApp.Patch{a_end: 1, z_end: 42})
+{:ok, cast} = Ash.Type.cast_input(Value, value, Value.subtype_constraints())
+{:ok, dumped} = Ash.Type.dump_to_native(Value, cast, Value.subtype_constraints())
+{:ok, result} = Ash.Type.cast_stored(Value, dumped, Value.subtype_constraints())
+Diffo.Unwrap.unwrap(result)
+```
+
+### Nil handling
+
+```elixir
+{:ok, nil} = Ash.Type.cast_input(Dynamic, nil, [])
+{:ok, nil} = Ash.Type.dump_to_native(Dynamic, nil, [])
+{:ok, nil} = Ash.Type.cast_stored(Dynamic, nil, [])
+:ok
+```
+
+### Constraint validation
+
+Dynamic enforces the constraints defined on the inner type during casting. Here `MyApp.Patch` requires both fields to be `>= 0`, so passing a negative value returns an error:
+
+```elixir
+invalid = %Dynamic{type: MyApp.Patch, value: %MyApp.Patch{a_end: -1, z_end: 42}}
+Ash.Type.cast_input(Dynamic, invalid, [])
+```
+
+A valid value casts successfully:
+
+```elixir
+valid = %Dynamic{type: MyApp.Patch, value: %MyApp.Patch{a_end: 0, z_end: 42}}
+Ash.Type.cast_input(Dynamic, valid, [])
+```
+
+## Further reading
+
+* [Diffo Livebook](../../diffo.livemd) — full tutorial including Neo4j setup and Provider resources
+* [Using Diffo Provider Instance Extension](./use_diffo_provider_instance_extension.livemd) — defining custom resources with typed characteristics

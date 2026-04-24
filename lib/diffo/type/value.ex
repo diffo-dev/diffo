@@ -5,7 +5,31 @@ defmodule Diffo.Type.Value do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Value - an Ash.Type.NewType subtype_of :union representing a primitive or Dynamic value
+  `Diffo.Type.Value` is an `Ash.Type.NewType` union that holds either a `Diffo.Type.Primitive`
+  or a `Diffo.Type.Dynamic` value.
+
+  It is the intended attribute type for `Diffo.Provider.Characteristic.value` and any resource
+  field that needs to carry a value whose type is known only at runtime.
+
+  Use `primitive/2` to build a primitive value and `dynamic/1` to build a dynamic value.
+  Use `Diffo.Unwrap.unwrap/1` on the stored `%Ash.Union{}` to extract the underlying Elixir value.
+
+  ## Examples
+
+      iex> Diffo.Type.Value.primitive("string", "connectivity") |> Diffo.Unwrap.unwrap()
+      "connectivity"
+
+      iex> Diffo.Type.Value.primitive("integer", 42) |> Diffo.Unwrap.unwrap()
+      42
+
+      iex> Diffo.Type.Value.primitive("float", 3.14) |> Diffo.Unwrap.unwrap()
+      3.14
+
+      iex> Diffo.Type.Value.primitive("boolean", true) |> Diffo.Unwrap.unwrap()
+      true
+
+      iex> Diffo.Type.Value.primitive("date", ~D[2026-04-24]) |> Diffo.Unwrap.unwrap()
+      "2026-04-24"
   """
 
   use Ash.Type.NewType,

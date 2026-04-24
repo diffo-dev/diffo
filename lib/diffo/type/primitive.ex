@@ -5,8 +5,36 @@ defmodule Diffo.Type.Primitive do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Primitive - an Ash.TypedStruct representing a single TMF primitive value.
-  The :type field identifies which primitive field is populated.
+  `Diffo.Type.Primitive` is a discriminated union of primitive types: string, integer, float,
+  boolean, date, time, datetime, and duration.
+
+  Use `wrap/2` to construct a Primitive from a type name string and a value.
+  Use `Diffo.Unwrap.unwrap/1` to extract the value.
+
+  > #### Temporal types {: .info}
+  >
+  > Date, time, datetime, and duration values are stored internally as ISO 8601 strings
+  > to avoid nested serialisation issues. `Diffo.Unwrap.unwrap/1` returns the string form.
+
+  ## Examples
+
+      iex> Diffo.Type.Primitive.wrap("string", "connectivity") |> Diffo.Unwrap.unwrap()
+      "connectivity"
+
+      iex> Diffo.Type.Primitive.wrap("integer", 42) |> Diffo.Unwrap.unwrap()
+      42
+
+      iex> Diffo.Type.Primitive.wrap("float", 3.14) |> Diffo.Unwrap.unwrap()
+      3.14
+
+      iex> Diffo.Type.Primitive.wrap("boolean", false) |> Diffo.Unwrap.unwrap()
+      false
+
+      iex> Diffo.Type.Primitive.wrap("date", ~D[2026-04-24]) |> Diffo.Unwrap.unwrap()
+      "2026-04-24"
+
+      iex> Diffo.Type.Primitive.wrap("unknown", "x")
+      nil
   """
   use Ash.TypedStruct
 

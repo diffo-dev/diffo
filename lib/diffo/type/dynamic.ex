@@ -5,7 +5,31 @@ defmodule Diffo.Type.Dynamic do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Dynamic - an Ash.Type subtype_of :struct with dynamic Ash.Type.NewType typing
+  `Diffo.Type.Dynamic` is an `Ash.Type.NewType` for values whose exact type is not known until
+  runtime. The `:type` field holds the `Ash.Type.NewType` module and `:value` holds the cast value.
+
+  Dynamic is limited to types that have `storage_type: :map` — that is, `Ash.TypedStruct` and
+  `Ash.Type.NewType` subtypes of `:struct`, `:map`, `:union`, `:keyword`, or `:tuple`.
+  Scalar Ash types such as `Ash.Type.Date` or `Ash.Type.Decimal` are not supported.
+
+  In practice, `Diffo.Type.Dynamic` is used as a member of `Diffo.Type.Value` and is not
+  typically used as a standalone attribute type.
+
+  ## Nil handling
+
+      iex> Ash.Type.cast_input(Diffo.Type.Dynamic, nil, [])
+      {:ok, nil}
+
+      iex> Ash.Type.dump_to_native(Diffo.Type.Dynamic, nil, [])
+      {:ok, nil}
+
+      iex> Ash.Type.cast_stored(Diffo.Type.Dynamic, nil, [])
+      {:ok, nil}
+
+  ## Constraints
+
+      iex> Diffo.Type.Dynamic.dynamic_constraints(nil)
+      []
   """
 
   defstruct [:type, :value]
