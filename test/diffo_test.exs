@@ -6,6 +6,10 @@ defmodule DiffoTest do
   @moduledoc false
   use ExUnit.Case
   doctest Diffo
+  doctest Diffo.Unwrap
+  doctest Diffo.Type.Primitive
+  doctest Diffo.Type.Value
+  doctest Diffo.Type.Dynamic
   doctest Diffo.Uuid
   doctest Diffo.Util
   doctest Diffo.Provider.Reference
