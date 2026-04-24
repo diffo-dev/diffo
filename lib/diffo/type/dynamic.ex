@@ -26,6 +26,28 @@ defmodule Diffo.Type.Dynamic do
       iex> Ash.Type.cast_stored(Diffo.Type.Dynamic, nil, [])
       {:ok, nil}
 
+  ## Invalid types
+
+  Scalar Ash types and modules that are not `Ash.Type.NewType` with `storage_type: :map` are
+  rejected at cast time:
+
+      iex> Ash.Type.cast_input(Diffo.Type.Dynamic, %Diffo.Type.Dynamic{type: Ash.Type.Date, value: ~D[2026-01-01]}, [])
+      {:error, "Dynamic type Ash.Type.Date must be an Ash.Type.NewType with storage_type :map"}
+
+      iex> Ash.Type.cast_input(Diffo.Type.Dynamic, %Diffo.Type.Dynamic{type: Diffo.Type.NonExistent, value: nil}, [])
+      {:error, "Dynamic type Diffo.Type.NonExistent must be an Ash.Type.NewType with storage_type :map"}
+
+  ## Checking type compatibility
+
+  Use `is_valid?/1` to check whether a module is usable as a Dynamic type before
+  constructing a `%Diffo.Type.Dynamic{}`:
+
+      iex> Diffo.Type.Dynamic.is_valid?(Ash.Type.Date)
+      false
+
+      iex> Diffo.Type.Dynamic.is_valid?(Diffo.Type.NonExistent)
+      false
+
   ## Constraints
 
       iex> Diffo.Type.Dynamic.dynamic_constraints(nil)
@@ -68,7 +90,7 @@ defmodule Diffo.Type.Dynamic do
 
   def dynamic_constraints(type) when is_atom(type) do
     cond do
-      Ash.Type.NewType.new_type?(type) ->
+      is_valid?(type) ->
         [
           fields: [
             type: @type_field_constraints,
@@ -85,7 +107,14 @@ defmodule Diffo.Type.Dynamic do
   def dynamic_constraints(_), do: []
 
   @impl true
-  def apply_constraints(%__MODULE__{} = value, _constraints), do: {:ok, value}
+  def apply_constraints(%__MODULE__{type: type} = value, _constraints) do
+    if is_valid?(type) do
+      {:ok, value}
+    else
+      {:error, "Dynamic type #{inspect(type)} must be an Ash.Type.NewType with storage_type :map"}
+    end
+  end
+
   def apply_constraints(nil, _constraints), do: {:ok, nil}
   def apply_constraints(value, _constraints), do: {:error, "is invalid: #{inspect(value)}"}
 
@@ -93,15 +122,16 @@ defmodule Diffo.Type.Dynamic do
   def cast_input(nil, _constraints), do: {:ok, nil}
 
   def cast_input(%__MODULE__{type: type, value: value}, _constraints) do
-    constraints = dynamic_constraints(type)
-    result = Ash.Type.cast_input(type, value, constraints[:fields][:value][:constraints] || [])
+    if is_valid?(type) do
+      constraints = dynamic_constraints(type)
+      result = Ash.Type.cast_input(type, value, constraints[:fields][:value][:constraints] || [])
 
-    case result do
-      {:ok, cast_value} ->
-        {:ok, %__MODULE__{type: type, value: cast_value}}
-
-      error ->
-        error
+      case result do
+        {:ok, cast_value} -> {:ok, %__MODULE__{type: type, value: cast_value}}
+        error -> error
+      end
+    else
+      {:error, "Dynamic type #{inspect(type)} must be an Ash.Type.NewType with storage_type :map"}
     end
   end
 
@@ -141,6 +171,21 @@ defmodule Diffo.Type.Dynamic do
       error -> error
     end
   end
+
+  @doc """
+  Returns true if the module is a valid Dynamic type — an `Ash.Type.NewType` with
+  `storage_type: :map`. Returns false for unloaded modules, non-NewTypes, and scalar
+  Ash types such as `Ash.Type.Date`.
+  """
+  def is_valid?(type) when is_atom(type) do
+    Code.ensure_loaded?(type) and
+      Ash.Type.NewType.new_type?(type) and
+      Ash.Type.storage_type(type, []) == :map
+  rescue
+    _ -> false
+  end
+
+  def is_valid?(_), do: false
 
   defimpl Diffo.Unwrap do
     def unwrap(%{value: value}), do: Diffo.Unwrap.unwrap(value)
