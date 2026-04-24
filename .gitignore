@@ -25,3 +25,6 @@ diffo-*.tar
 /.elixir_ls
 
 .DS_Store
+
+# Agent related
+.claude/*
