@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Provider.Instance.Extension.Info do
+defmodule Diffo.Provider.Party.Extension.Info do
   use Spark.InfoGenerator,
-    extension: Diffo.Provider.Instance.Extension,
-    sections: [:specification, :features, :characteristics, :parties]
+    extension: Diffo.Provider.Party.Extension,
+    sections: [:instance, :party]
 end
