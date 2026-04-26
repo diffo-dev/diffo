@@ -52,6 +52,11 @@ defmodule Diffo.Test.Shelf do
     characteristic :shelves, {:array, ShelfValue}
   end
 
+  parties do
+    party :facilitated_by, Diffo.Test.Organisation
+    party :overseen_by, Diffo.Test.Person
+  end
+
   actions do
     create :build do
       description "creates a new Shelf resource instance for build"
