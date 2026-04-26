@@ -183,5 +183,55 @@ Target: `Diffo.Provider.Instance.Characteristic`
 
 
 
+## parties
+List of Instance Party roles
+
+### Nested DSLs
+ * [party](#parties-party)
+
+
+### Examples
+```
+parties do
+  party :facilitated_by, MyApp.Rsp
+  party :overseen_by, MyApp.Person
+end
+
+```
+
+
+
+
+### parties.party
+```elixir
+party role, party_type
+```
+
+
+Declares a party role on this Instance
+
+
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`role`](#parties-party-role){: #parties-party-role .spark-required} | `atom` |  | The role name, an atom |
+| [`party_type`](#parties-party-party_type){: #parties-party-party_type } | `any` |  | The module of the Party kind. An atom module name such as a BaseParty-derived resource. |
+
+
+
+
+
+
+### Introspection
+
+Target: `Diffo.Provider.Instance.Extension.PartyDeclaration`
+
+
+
+
 
 <style type="text/css">.spark-required::after { content: "*"; color: red !important; }</style>
