@@ -152,6 +152,44 @@ defmodule Diffo.Provider.Instance.Extension do
     ]
   }
 
+  @party_entity %Spark.Dsl.Entity{
+    name: :party,
+    describe: "Declares a party role on this Instance",
+    target: Diffo.Provider.Instance.Extension.PartyDeclaration,
+    args: [:role, :party_type],
+    schema: [
+      role: [
+        doc: """
+          The role name, an atom
+        """,
+        type: :atom,
+        required: true
+      ],
+      party_type: [
+        doc: """
+          The module of the Party kind. An atom module name such as a BaseParty-derived resource.
+        """,
+        type: :any
+      ]
+    ]
+  }
+
+  @parties %Spark.Dsl.Section{
+    name: :parties,
+    describe: "List of Instance Party roles",
+    examples: [
+      """
+      parties do
+        party :facilitated_by, MyApp.Rsp
+        party :overseen_by, MyApp.Person
+      end
+      """
+    ],
+    entities: [
+      @party_entity
+    ]
+  }
+
   use Spark.Dsl.Extension,
-    sections: [@specification, @features, @characteristics]
+    sections: [@specification, @features, @characteristics, @parties]
 end
