@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.EntityRef do
   @moduledoc """
-  EntityRef - Ash Resource for a TMF Entity Reference
+  Ash Resource for a TMF Entity Reference
   """
   use Ash.Resource,
     otp_app: :diffo,
