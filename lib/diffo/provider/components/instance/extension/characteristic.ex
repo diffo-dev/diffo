@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.Characteristic do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Characteristic for Instance Extension
-  """
-
+  @moduledoc false
   require Logger
 
   alias Diffo.Provider

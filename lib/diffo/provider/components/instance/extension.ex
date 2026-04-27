@@ -4,9 +4,15 @@
 
 defmodule Diffo.Provider.Instance.Extension do
   @moduledoc """
-  DSL Extension customising an Instance
-  """
+  DSL Extension customising an Instance.
 
+  Provides compile-time declaration blocks for domain-specific Service and Resource kinds
+  built on `Diffo.Provider.BaseInstance`. All declarations are introspectable via
+  `Diffo.Provider.Instance.Extension.Info`.
+
+  See the [DSL cheat sheet](DSL-Diffo.Provider.Instance.Extension.html) for the full DSL reference.
+  See `Diffo.Provider.BaseInstance` for full usage documentation.
+  """
   @specification %Spark.Dsl.Section{
     name: :specification,
     describe: "Defines the Instance Specification",
@@ -152,26 +158,50 @@ defmodule Diffo.Provider.Instance.Extension do
     ]
   }
 
+  @party_schema [
+    role: [
+      doc: "The role name, an atom",
+      type: :atom,
+      required: true
+    ],
+    party_type: [
+      doc: "The module of the Party kind. An atom module name such as a BaseParty-derived resource.",
+      type: :any
+    ],
+    reference: [
+      doc: "If true, no direct PartyRef edge is created; the party is reachable by graph traversal.",
+      type: :boolean,
+      default: false
+    ],
+    calculate: [
+      doc: "Name of an Ash calculation on this resource that produces the party at build time.",
+      type: :atom
+    ]
+  ]
+
   @party_entity %Spark.Dsl.Entity{
     name: :party,
-    describe: "Declares a party role on this Instance",
+    describe: "Declares a singular party role on this Instance",
     target: Diffo.Provider.Instance.Extension.PartyDeclaration,
     args: [:role, :party_type],
-    schema: [
-      role: [
-        doc: """
-          The role name, an atom
-        """,
-        type: :atom,
-        required: true
-      ],
-      party_type: [
-        doc: """
-          The module of the Party kind. An atom module name such as a BaseParty-derived resource.
-        """,
-        type: :any
-      ]
-    ]
+    auto_set_fields: [multiple: false],
+    schema: @party_schema
+  }
+
+  @parties_entity %Spark.Dsl.Entity{
+    name: :parties,
+    describe: "Declares a plural party role on this Instance",
+    target: Diffo.Provider.Instance.Extension.PartyDeclaration,
+    args: [:role, :party_type],
+    auto_set_fields: [multiple: true],
+    schema:
+      @party_schema ++
+        [
+          constraints: [
+            doc: "Multiplicity constraints on the number of parties in this role, e.g. [min: 1, max: 3]",
+            type: :keyword_list
+          ]
+        ]
   }
 
   @parties %Spark.Dsl.Section{
@@ -180,13 +210,15 @@ defmodule Diffo.Provider.Instance.Extension do
     examples: [
       """
       parties do
-        party :facilitated_by, MyApp.Rsp
-        party :overseen_by, MyApp.Person
+        party :provider, MyApp.Provider, calculate: :provider_calculation
+        parties :technician, MyApp.Technician, constraints: [min: 1, max: 3]
+        party :owner, MyApp.InfrastructureCo, reference: true
       end
       """
     ],
     entities: [
-      @party_entity
+      @party_entity,
+      @parties_entity
     ]
   }
 

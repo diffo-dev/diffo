@@ -29,7 +29,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -37,7 +37,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_external_identifier!(%{
@@ -71,7 +71,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -79,7 +79,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party2 =
@@ -87,7 +87,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_external_identifier!(%{
@@ -142,7 +142,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -150,7 +150,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party2 =
@@ -158,7 +158,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_external_identifier!(%{
@@ -216,7 +216,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -224,7 +224,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party2 =
@@ -232,7 +232,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_external_identifier!(%{
@@ -298,7 +298,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =
@@ -324,7 +324,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       {:error, _error} =
@@ -346,7 +346,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =
@@ -372,7 +372,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =
@@ -399,7 +399,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =
@@ -426,7 +426,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -434,7 +434,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =
@@ -462,7 +462,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =
@@ -488,7 +488,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =
@@ -520,7 +520,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =
@@ -565,7 +565,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =

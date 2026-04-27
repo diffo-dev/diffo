@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Validations.HrefEndsWithId do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-
-  HrefEndsWithId - Ash Resource Validation checking href ends with id
-  """
+  @moduledoc false
   use Ash.Resource.Validation
 
   @impl true

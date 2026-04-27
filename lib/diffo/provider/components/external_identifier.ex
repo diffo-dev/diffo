@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.ExternalIdentifier do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  ExternalIdentifier - Ash Resource for a TMF ExternalIdentifier
+  Ash Resource for a TMF ExternalIdentifier
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -147,17 +145,4 @@ defmodule Diffo.Provider.ExternalIdentifier do
     prepare build(load: [:owner], sort: [created_at: :desc])
   end
 
-  @doc """
-  Compares two external identifier, by most recent insertion order
-  ## Examples
-    iex> Diffo.Provider.ExternalIdentifier.compare(%{created_at: "a"}, %{created_at: "a"})
-    :eq
-    iex> Diffo.Provider.ExternalIdentifier.compare(%{created_at: "b"}, %{created_at: "a"})
-    :gt
-    iex> Diffo.Provider.ExternalIdentifier.compare(%{created_at: "a"}, %{created_at: "b"})
-    :lt
-
-  """
-  def compare(%{created_at: created_at0}, %{created_at: created_at1}),
-    do: Diffo.Util.compare(created_at0, created_at1)
 end

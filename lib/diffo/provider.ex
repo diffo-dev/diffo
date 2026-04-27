@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Provider - API endpoint
+  Provider API endpoint
   """
   use Ash.Domain,
     otp_app: :diffo

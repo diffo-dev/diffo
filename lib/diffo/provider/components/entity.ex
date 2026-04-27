@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.Entity do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Entity - Ash Resource for a TMF Entity
+  Ash Resource for a TMF Entity
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -26,13 +24,13 @@ defmodule Diffo.Provider.Entity do
   end
 
   jason do
-    pick [:id, :href, :name, :referredType, :type]
+    pick [:id, :href, :name, :referred_type, :type]
     compact true
-    rename referredType: "@referredType", type: "@type"
+    rename referred_type: "@referredType", type: "@type"
   end
 
   outstanding do
-    expect [:id, :href, :name, :referredType, :type]
+    expect [:id, :href, :name, :referred_type, :type]
   end
 
   actions do
@@ -40,7 +38,7 @@ defmodule Diffo.Provider.Entity do
 
     create :create do
       description "creates a entity"
-      accept [:id, :href, :name, :type, :referredType]
+      accept [:id, :href, :name, :type, :referred_type]
       upsert? true
     end
 
@@ -72,7 +70,7 @@ defmodule Diffo.Provider.Entity do
 
     update :update do
       description "updates the entity"
-      accept [:href, :name, :type, :referredType]
+      accept [:href, :name, :type, :referred_type]
     end
   end
 
@@ -104,7 +102,7 @@ defmodule Diffo.Provider.Entity do
       default :EntityRef
     end
 
-    attribute :referredType, :atom do
+    attribute :referred_type, :atom do
       description "the type of the entity"
       allow_nil? true
       public? true
@@ -129,13 +127,13 @@ defmodule Diffo.Provider.Entity do
     end
 
     validate attribute_equals(:type, :EntityRef) do
-      where present(:referredType)
-      message "when referredType is present, type must be EntityRef"
+      where present(:referred_type)
+      message "when referred_type is present, type must be EntityRef"
     end
 
     validate attribute_does_not_equal(:type, :EntityRef) do
-      where absent(:referredType)
-      message "when referredType is absent, type must be not be EntityRef"
+      where absent(:referred_type)
+      message "when referred_type is absent, type must be not be EntityRef"
     end
   end
 
@@ -143,16 +141,4 @@ defmodule Diffo.Provider.Entity do
     prepare build(sort: [id: :asc])
   end
 
-  @doc """
-  Compares two entity, by ascending id
-  ## Examples
-    iex> Diffo.Provider.Entity.compare(%{id: "a"}, %{id: "a"})
-    :eq
-    iex> Diffo.Provider.Entity.compare(%{id: "b"}, %{id: "a"})
-    :gt
-    iex> Diffo.Provider.Entity.compare(%{id: "a"}, %{id: "b"})
-    :lt
-
-  """
-  def compare(%{id: id0}, %{id: id1}), do: Diffo.Util.compare(id0, id1)
 end

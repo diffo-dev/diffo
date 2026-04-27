@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.Event do
   @moduledoc """
-  Diffo - TMF Service and Reource Management with a difference
-
-  Event - Ash Resource for a TMF Event
+  Ash Resource for a TMF Event
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -156,17 +154,4 @@ defmodule Diffo.Provider.Event do
     )
   end
 
-  @doc """
-  Compares two event, by id
-  ## Examples
-    iex> Diffo.Provider.Event.compare(%{id: "a"}, %{id: "a"})
-    :eq
-    iex> Diffo.Provider.Event.compare(%{id: "b"}, %{id: "a"})
-    :gt
-    iex> Diffo.Provider.Event.compare(%{id: "a"}, %{id: "b"})
-    :lt
-
-  """
-  def compare(%{id: id0}, %{id: id1}),
-    do: Diffo.Util.compare(id0, id1)
 end

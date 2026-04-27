@@ -24,13 +24,13 @@ defmodule Diffo.Provider.PartyTest do
       Diffo.Provider.create_party!(%{
         id: "IND000000123456",
         name: :individualId,
-        referredType: :Individual
+        referred_type: :Individual
       })
 
       Diffo.Provider.create_party!(%{
         id: "IND000000897353",
         name: :individualId,
-        referredType: :Individual
+        referred_type: :Individual
       })
 
       parties = Diffo.Provider.list_parties!()
@@ -44,19 +44,19 @@ defmodule Diffo.Provider.PartyTest do
       Diffo.Provider.create_party!(%{
         id: "IND000000897353",
         name: :individualId,
-        referredType: :Individual
+        referred_type: :Individual
       })
 
       Diffo.Provider.create_party!(%{
         id: "IND000000123456",
         name: :individualId,
-        referredType: :Individual
+        referred_type: :Individual
       })
 
       Diffo.Provider.create_party!(%{
         id: "ORG000163435034",
         name: :organizationId,
-        referredType: :Organization
+        referred_type: :Organization
       })
 
       parties = Diffo.Provider.find_parties_by_id!("IND")
@@ -70,19 +70,19 @@ defmodule Diffo.Provider.PartyTest do
       Diffo.Provider.create_party!(%{
         id: "IND000000897353",
         name: :individualId,
-        referredType: :Individual
+        referred_type: :Individual
       })
 
       Diffo.Provider.create_party!(%{
         id: "IND000000123456",
         name: :individualId,
-        referredType: :Individual
+        referred_type: :Individual
       })
 
       Diffo.Provider.create_party!(%{
         id: "ORG000163435034",
         name: :organizationId,
-        referredType: :Organization
+        referred_type: :Organization
       })
 
       parties = Diffo.Provider.find_parties_by_name!("individual")
@@ -94,31 +94,31 @@ defmodule Diffo.Provider.PartyTest do
   end
 
   describe "Diffo.Provider create Parties" do
-    test "create a Individual referredType party  - success" do
+    test "create a Individual referred_type party  - success" do
       party =
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       assert party.type == :PartyRef
     end
 
-    test "create a Organization referredType party - success" do
+    test "create a Organization referred_type party - success" do
       party =
         Diffo.Provider.create_party!(%{
           id: "ORG000000124343",
           name: :organizationId,
-          referredType: :Organization
+          referred_type: :Organization
         })
 
       assert party.type == :PartyRef
     end
 
-    test "create a Entity party referredType - success" do
+    test "create a Entity party referred_type - success" do
       party =
-        Diffo.Provider.create_party!(%{id: "T8_NUMBERS", name: :entityId, referredType: :Entity})
+        Diffo.Provider.create_party!(%{id: "T8_NUMBERS", name: :entityId, referred_type: :Entity})
 
       assert party.type == :PartyRef
     end
@@ -131,7 +131,7 @@ defmodule Diffo.Provider.PartyTest do
           type: :Individual
         })
 
-      assert party.referredType == nil
+      assert party.referred_type == nil
     end
 
     test "create a Organization type party - success" do
@@ -142,12 +142,12 @@ defmodule Diffo.Provider.PartyTest do
           type: :Organization
         })
 
-      assert party.referredType == nil
+      assert party.referred_type == nil
     end
 
     test "create a Entity party type - success" do
       party = Diffo.Provider.create_party!(%{id: "T8_NUMBERS", name: :entityId, type: :Entity})
-      assert party.referredType == nil
+      assert party.referred_type == nil
     end
 
     test "create a Entity party type with a href - success" do
@@ -159,7 +159,7 @@ defmodule Diffo.Provider.PartyTest do
           type: :Entity
         })
 
-      assert party.referredType == nil
+      assert party.referred_type == nil
     end
 
     test "create a Party that already exists, preserving attributes - success" do
@@ -230,19 +230,19 @@ defmodule Diffo.Provider.PartyTest do
       assert updated_party.type == :Entity
     end
 
-    test "update party referredType - success" do
+    test "update party referred_type - success" do
       party =
         Diffo.Provider.create_party!(%{
           id: "5ADE",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
-      updated_party = party |> Diffo.Provider.update_party!(%{referredType: :Entity})
-      assert updated_party.referredType == :Entity
+      updated_party = party |> Diffo.Provider.update_party!(%{referred_type: :Entity})
+      assert updated_party.referred_type == :Entity
     end
 
-    test "update party type to referredType - success" do
+    test "update party type to referred_type - success" do
       party =
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
@@ -251,25 +251,25 @@ defmodule Diffo.Provider.PartyTest do
         })
 
       updated_party =
-        party |> Diffo.Provider.update_party!(%{type: :PartyRef, referredType: :Individual})
+        party |> Diffo.Provider.update_party!(%{type: :PartyRef, referred_type: :Individual})
 
       assert updated_party.type == :PartyRef
-      assert updated_party.referredType == :Individual
+      assert updated_party.referred_type == :Individual
     end
 
-    test "update party referredType to type - success" do
+    test "update party referred_type to type - success" do
       party =
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       updated_party =
-        party |> Diffo.Provider.update_party!(%{type: :Individual, referredType: nil})
+        party |> Diffo.Provider.update_party!(%{type: :Individual, referred_type: nil})
 
       assert updated_party.type == :Individual
-      assert updated_party.referredType == nil
+      assert updated_party.referred_type == nil
     end
 
     test "update id - failure - href does not end with id" do
@@ -284,7 +284,7 @@ defmodule Diffo.Provider.PartyTest do
         party |> Diffo.Provider.update_party(%{href: "party/nbnco/IND000000897354"})
     end
 
-    test "update referredType - failure - type Party cannot have referredTYpe" do
+    test "update referred_type - failure - type Party cannot have referredTYpe" do
       party =
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
@@ -292,19 +292,19 @@ defmodule Diffo.Provider.PartyTest do
           type: :Individual
         })
 
-      {:error, _error} = party |> Diffo.Provider.update_party(%{referredType: :Individual})
+      {:error, _error} = party |> Diffo.Provider.update_party(%{referred_type: :Individual})
     end
 
-    test "update referredType - failure - PartyRef requires referredType" do
+    test "update referred_type - failure - PartyRef requires referred_type" do
       party =
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
           name: :individualId,
           type: :PartyRef,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
-      {:error, _error} = party |> Diffo.Provider.update_party(%{referredType: nil})
+      {:error, _error} = party |> Diffo.Provider.update_party(%{referred_type: nil})
     end
 
     test "update id - failure - not updatable" do
@@ -335,13 +335,13 @@ defmodule Diffo.Provider.PartyTest do
                "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"@type\":\"Individual\"}"
     end
 
-    test "encode json party referredType - success" do
+    test "encode json party referred_type - success" do
       party =
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
           name: :individualId,
           href: "party/internal/IND000000897353",
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       encoding = Jason.encode!(party)
@@ -358,13 +358,13 @@ defmodule Diffo.Provider.PartyTest do
           id: "IND000000897353",
           name: "individualId",
           href: "party/internal/IND000000897353",
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       expected_party = %Diffo.Provider.Party{
         id: ~r/IND\d{12}/,
         name: "individualId",
-        referredType: :Individual
+        referred_type: :Individual
       }
 
       refute expected_party >>> party
@@ -394,7 +394,7 @@ defmodule Diffo.Provider.PartyTest do
           id: "T5_VALUE_ADD",
           name: :entityId,
           href: "entity/internal/T5_VALUE_ADD",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       external_identifier =
@@ -422,7 +422,7 @@ defmodule Diffo.Provider.PartyTest do
           id: "T3_FIXED",
           name: :entityId,
           href: "entity/internal/T3_FIXED",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       party_ref =

@@ -20,14 +20,11 @@ defmodule Diffo.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       package: package(),
-      # ex_doc
       source_url: "https://github.com/diffo-dev/diffo/",
       homepage_url: "http://diffo.dev/diffo/",
-      docs: [main: "readme", extras: ["README.md"]],
       elixirc_paths: elixirc_paths(Mix.env()),
-      # hex.pm stuff
-      deps: deps(),
       docs: &docs/0,
+      deps: deps(),
       aliases: aliases(),
       consolidate_protocols: Mix.env() != :dev
     ]
@@ -72,7 +69,14 @@ defmodule Diffo.MixProject do
         "documentation/dsls/DSL-Diffo.Provider.Instance.Extension.md": [
           title: "DSL: Diffo.Provider.Instance.Extension",
           search_data: Spark.Docs.search_data_for(Diffo.Provider.Instance.Extension)
+        ],
+        "documentation/dsls/DSL-Diffo.Provider.Party.Extension.md": [
+          title: "DSL: Diffo.Provider.Party.Extension",
+          search_data: Spark.Docs.search_data_for(Diffo.Provider.Party.Extension)
         ]
+      ],
+      groups_for_extras: [
+        "DSLs": ~r/documentation\/dsls\//
       ]
     ]
   end

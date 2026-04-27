@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Person do
+defmodule Diffo.Test.Organization do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Person - Person Party
+  Organization - Organization Party
   """
 
   alias Diffo.Provider.BaseParty
@@ -17,8 +17,8 @@ defmodule Diffo.Test.Person do
     domain: Nbn
 
   resource do
-    description "A Person"
-    plural_name :persons
+    description "An Organization"
+    plural_name :organizations
   end
 
   jason do
@@ -33,11 +33,11 @@ defmodule Diffo.Test.Person do
   actions do
     create :build do
       accept [:id, :href, :name]
-      change set_attribute(:type, :Individual)
+      change set_attribute(:type, :Organization)
     end
   end
 
-  parties do
-    role :manager, Diffo.Test.Person
+  instances do
+    role :facilitator, Diffo.Provider.Instance
   end
 end

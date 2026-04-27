@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.Note do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Note - Ash Resource for a TMF Note
+  Ash Resource for a TMF Note
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -151,17 +149,4 @@ defmodule Diffo.Provider.Note do
     prepare build(load: [:author], sort: [timestamp: :desc])
   end
 
-  @doc """
-  Compares two note, by most recent insertion order
-  ## Examples
-    iex> Diffo.Provider.Note.compare(%{timestamp: "a"}, %{timestamp: "a"})
-    :eq
-    iex> Diffo.Provider.Note.compare(%{timestamp: "b"}, %{timestamp: "a"})
-    :gt
-    iex> Diffo.Provider.Note.compare(%{timestamp: "a"}, %{timestamp: "b"})
-    :lt
-
-  """
-  def compare(%{timestamp: timestamp0}, %{timestamp: timestamp1}),
-    do: Diffo.Util.compare(timestamp0, timestamp1)
 end

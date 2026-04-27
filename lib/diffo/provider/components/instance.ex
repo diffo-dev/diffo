@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.Instance do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Instance - Ash Resource for a TMF Service or Resource Instance
+  Ash Resource for a TMF Service or Resource Instance
   """
   alias Diffo.Provider.BaseInstance
 

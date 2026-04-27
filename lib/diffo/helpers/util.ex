@@ -4,11 +4,8 @@
 
 defmodule Diffo.Util do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Util - utility methods
+  Utility methods
   """
-
   @doc """
   Renames map key, unless old value is empty
   ## Examples
@@ -98,25 +95,6 @@ defmodule Diffo.Util do
     end
   end
 
-  @spec compare(any(), any()) :: :eq | :gt | :lt
-  @doc """
-  Compares two terms
-  ## Examples
-    iex> Diffo.Util.compare("a", "a")
-    :eq
-    iex> Diffo.Util.compare("b", "a")
-    :gt
-    iex> Diffo.Util.compare("a", "b")
-    :lt
-  """
-  def compare(a, b) do
-    cond do
-      a < b -> :lt
-      a > b -> :gt
-      true -> :eq
-    end
-  end
-
   @doc """
   true if the datetime is close to (+/- 5 mins) from now
   ## Examples
@@ -149,7 +127,6 @@ defmodule Diffo.Util do
     iex> Diffo.Util.past?(DateTime.utc_now() |> DateTime.shift(minute: -4))
     false
   """
-
   def past?(datetime) do
     now = DateTime.utc_now()
     past = DateTime.shift(now, minute: -5)
@@ -165,7 +142,6 @@ defmodule Diffo.Util do
     iex> Diffo.Util.future?(DateTime.utc_now() |> DateTime.shift(minute: 4))
     false
   """
-
   def future?(datetime) do
     now = DateTime.utc_now()
     future = DateTime.shift(now, minute: 5)
@@ -215,7 +191,6 @@ defmodule Diffo.Util do
     :past
 
   """
-
   def summarise(datetime) do
     cond do
       close_to_now?(datetime) -> :now
@@ -235,7 +210,6 @@ defmodule Diffo.Util do
     "past,now,future"
 
   """
-
   def summarise_dates(payload) do
     Regex.replace(~r/\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}.\d{3}Z/, payload, fn iso8601 ->
       case DateTime.from_iso8601(iso8601) do

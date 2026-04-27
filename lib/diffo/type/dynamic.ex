@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: MIT
 defmodule Diffo.Type.Dynamic do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
   `Diffo.Type.Dynamic` is an `Ash.Type.NewType` for values whose exact type is not known until
   runtime. The `:type` field holds the `Ash.Type.NewType` module and `:value` holds the cast value.
 
@@ -14,6 +12,7 @@ defmodule Diffo.Type.Dynamic do
 
   In practice, `Diffo.Type.Dynamic` is used as a member of `Diffo.Type.Value` and is not
   typically used as a standalone attribute type.
+  Outstanding comparison is implemented inline via `defoutstanding`.
 
   ## Nil handling
 
@@ -53,7 +52,6 @@ defmodule Diffo.Type.Dynamic do
       iex> Diffo.Type.Dynamic.dynamic_constraints(nil)
       []
   """
-
   defstruct [:type, :value]
 
   @type_field_constraints [
@@ -75,10 +73,11 @@ defmodule Diffo.Type.Dynamic do
     subtype_of: :struct,
     constraints: @constraints
 
+  use Outstand
+
   @doc """
   Returns the dynamic constraints from dynamic struct or map
   """
-
   def dynamic_constraints(nil), do: []
 
   def dynamic_constraints(%{type: type}) when is_atom(type), do: dynamic_constraints(type)
@@ -194,6 +193,33 @@ defmodule Diffo.Type.Dynamic do
   defimpl Jason.Encoder do
     def encode(value, opts) do
       value |> Diffo.Unwrap.unwrap() |> Jason.Encode.value(opts)
+    end
+  end
+
+  defoutstanding expected :: Diffo.Type.Dynamic, actual :: Any do
+    type_outstanding =
+      case actual do
+        %{type: type} -> Outstanding.outstanding(expected.type, type)
+        _ -> expected.type
+      end
+
+    value_outstanding =
+      case actual do
+        %{} ->
+          Outstanding.outstanding(
+            Diffo.Unwrap.unwrap(expected),
+            Diffo.Unwrap.unwrap(actual)
+          )
+
+        _ ->
+          Diffo.Unwrap.unwrap(expected)
+      end
+
+    case {type_outstanding, value_outstanding} do
+      {nil, nil} -> nil
+      {nil, _} -> %Diffo.Type.Dynamic{type: nil, value: value_outstanding}
+      {_, nil} -> %Diffo.Type.Dynamic{type: type_outstanding, value: nil}
+      {_, _} -> %Diffo.Type.Dynamic{type: type_outstanding, value: value_outstanding}
     end
   end
 end

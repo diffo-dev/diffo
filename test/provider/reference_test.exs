@@ -6,6 +6,37 @@ defmodule Diffo.Provider.ReferenceTest do
   @moduledoc false
   use ExUnit.Case
 
+  alias Diffo.Provider.Reference
+
+  describe "Diffo.Provider.Reference construction" do
+    test "reference/1 from id and href" do
+      instance = %{
+        id: "8bcfbf9a-34a5-427a-8eae-5c3812466432",
+        href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"
+      }
+
+      assert Reference.reference(instance) == %Reference{
+               id: "8bcfbf9a-34a5-427a-8eae-5c3812466432",
+               href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"
+             }
+    end
+
+    test "reference/2 extracts id from trailing uuid in href attribute" do
+      instance = %{
+        target_href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"
+      }
+
+      assert Reference.reference(instance, :target_href) == %Reference{
+               id: "8bcfbf9a-34a5-427a-8eae-5c3812466432",
+               href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"
+             }
+    end
+
+    test "reference/1 nil returns nil" do
+      assert Reference.reference(nil) == nil
+    end
+  end
+
   describe "Diffo.Provider.Reference encode" do
     test "encode json - success" do
       reference = %Diffo.Provider.Reference{

@@ -648,7 +648,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       Diffo.Provider.create_place_ref!(%{
@@ -668,7 +668,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party2 =
@@ -676,7 +676,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t4_party =
@@ -684,7 +684,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T4_CPE",
           name: :entityId,
           href: "entity/internal/T4_CPE",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_party_ref!(%{
@@ -763,7 +763,7 @@ defmodule Diffo.Provider.InstanceTest do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000123456",
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 
@@ -860,7 +860,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       Diffo.Provider.create_place_ref!(%{
@@ -880,7 +880,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party2 =
@@ -888,7 +888,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t4_party =
@@ -896,7 +896,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T4_CPE",
           name: :entityId,
           href: "entity/internal/T4_CPE",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_external_identifier!(%{
@@ -1328,7 +1328,7 @@ defmodule Diffo.Provider.InstanceTest do
         id: "T3_CONNECTIVITY",
         name: :entityId,
         href: "entity/internal/T3_CONNECTIVITY",
-        referredType: :Entity,
+        referred_type: :Entity,
         type: :PartyRef
       })
 
