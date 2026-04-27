@@ -23,21 +23,21 @@ defmodule Diffo.Provider.EntityTest do
         id: "11b6ba17-2865-41c5-b469-2939249631e8",
         href:
           "serviceProblemManagement/v4/serviceProblem/nbnAccess/11b6ba17-2865-41c5-b469-2939249631e8",
-        referredType: :serviceProblem
+        referred_type: :serviceProblem
       })
 
       Diffo.Provider.create_entity!(%{
         id: "22b85e20-06a9-4e51-baa3-41c2a72958c5",
         href:
           "serviceProblemManagement/v4/serviceProblem/nbnAccess/22b85e20-06a9-4e51-baa3-41c2a72958c5",
-        referredType: :serviceProblem
+        referred_type: :serviceProblem
       })
 
       Diffo.Provider.create_entity!(%{
         id: "33db60a1-62bf-4c11-abf3-265287a729c1",
         href:
           "serviceProblemManagement/v4/serviceProblem/nbnAccess/33db60a1-62bf-4c11-abf3-265287a729c1",
-        referredType: :serviceProblem
+        referred_type: :serviceProblem
       })
 
       entities = Diffo.Provider.list_entities!()
@@ -50,7 +50,7 @@ defmodule Diffo.Provider.EntityTest do
     test "find entities by id - success" do
       Diffo.Provider.create_entity!(%{
         id: "COR000000123456",
-        referredType: :cost,
+        referred_type: :cost,
         name: "2025-01"
       })
 
@@ -58,12 +58,12 @@ defmodule Diffo.Provider.EntityTest do
         id: "22b85e20-06a9-4e51-baa3-41c2a72958c5",
         href:
           "serviceProblemManagement/v4/serviceProblem/nbnAccess/22b85e20-06a9-4e51-baa3-41c2a72958c5",
-        referredType: :serviceProblem
+        referred_type: :serviceProblem
       })
 
       Diffo.Provider.create_entity!(%{
         id: "COR000000767342",
-        referredType: :cost,
+        referred_type: :cost,
         name: "2025-01"
       })
 
@@ -77,7 +77,7 @@ defmodule Diffo.Provider.EntityTest do
     test "find entities by name - success" do
       Diffo.Provider.create_entity!(%{
         id: "COR000000123456",
-        referredType: :cost,
+        referred_type: :cost,
         name: "2025-01"
       })
 
@@ -85,12 +85,12 @@ defmodule Diffo.Provider.EntityTest do
         id: "22b85e20-06a9-4e51-baa3-41c2a72958c5",
         href:
           "serviceProblemManagement/v4/serviceProblem/nbnAccess/22b85e20-06a9-4e51-baa3-41c2a72958c5",
-        referredType: :serviceProblem
+        referred_type: :serviceProblem
       })
 
       Diffo.Provider.create_entity!(%{
         id: "COR000000767342",
-        referredType: :cost,
+        referred_type: :cost,
         name: "2025-01"
       })
 
@@ -103,23 +103,23 @@ defmodule Diffo.Provider.EntityTest do
   end
 
   describe "Diffo.Provider create Entities" do
-    test "create a service problem referredType entity  - success" do
+    test "create a service problem referred_type entity  - success" do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "11b6ba17-2865-41c5-b469-2939249631e8",
           href:
             "serviceProblemManagement/v4/serviceProblem/nbnAccess/11b6ba17-2865-41c5-b469-2939249631e8",
-          referredType: :serviceProblem
+          referred_type: :serviceProblem
         })
 
       assert entity.type == :EntityRef
     end
 
-    test "create a cost referredType entity - success" do
+    test "create a cost referred_type entity - success" do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000123456",
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 
@@ -135,14 +135,14 @@ defmodule Diffo.Provider.EntityTest do
           type: :serviceProblem
         })
 
-      assert entity.referredType == nil
+      assert entity.referred_type == nil
     end
 
     test "create a cost type entity - success" do
       entity =
         Diffo.Provider.create_entity!(%{id: "COR000000123456", type: :cost, name: "2025-01"})
 
-      assert entity.referredType == nil
+      assert entity.referred_type == nil
     end
 
     test "create an Entity that already exists, preserving attributes - success" do
@@ -191,7 +191,7 @@ defmodule Diffo.Provider.EntityTest do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "11b6ba17-2865-41c5-b469-2939249631e8",
-          referredType: :serviceProblem
+          referred_type: :serviceProblem
         })
 
       updated_entity =
@@ -209,7 +209,7 @@ defmodule Diffo.Provider.EntityTest do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000123456",
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 
@@ -225,47 +225,47 @@ defmodule Diffo.Provider.EntityTest do
       assert updated_entity.type == :sla
     end
 
-    test "update entity referredType - success" do
+    test "update entity referred_type - success" do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000123456",
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 
-      updated_entity = entity |> Diffo.Provider.update_entity!(%{referredType: :sla})
-      assert updated_entity.referredType == :sla
+      updated_entity = entity |> Diffo.Provider.update_entity!(%{referred_type: :sla})
+      assert updated_entity.referred_type == :sla
     end
 
-    test "update entity type to referredType - success" do
+    test "update entity type to referred_type - success" do
       entity =
         Diffo.Provider.create_entity!(%{id: "COR000000123456", type: :cost, name: "2025-01"})
 
       updated_entity =
-        entity |> Diffo.Provider.update_entity!(%{type: :EntityRef, referredType: :cost})
+        entity |> Diffo.Provider.update_entity!(%{type: :EntityRef, referred_type: :cost})
 
       assert updated_entity.type == :EntityRef
-      assert updated_entity.referredType == :cost
+      assert updated_entity.referred_type == :cost
     end
 
-    test "update entity referredType to type - success" do
+    test "update entity referred_type to type - success" do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000123456",
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 
-      updated_entity = entity |> Diffo.Provider.update_entity!(%{type: :cost, referredType: nil})
+      updated_entity = entity |> Diffo.Provider.update_entity!(%{type: :cost, referred_type: nil})
       assert updated_entity.type == :cost
-      assert updated_entity.referredType == nil
+      assert updated_entity.referred_type == nil
     end
 
     test "update id - failure - href does not end with id" do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000897353",
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 
@@ -273,23 +273,23 @@ defmodule Diffo.Provider.EntityTest do
         entity |> Diffo.Provider.update_entity(%{href: "entity/nbnco/COR000000897354"})
     end
 
-    test "update referredType - failure - type Party cannot have referredType" do
+    test "update referred_type - failure - type Party cannot have referred_type" do
       entity =
         Diffo.Provider.create_entity!(%{id: "COR000000897353", type: :cost, name: "2025-01"})
 
-      {:error, _error} = entity |> Diffo.Provider.update_entity(%{referredType: :cost})
+      {:error, _error} = entity |> Diffo.Provider.update_entity(%{referred_type: :cost})
     end
 
-    test "update referredType - failure - EntityRef requires referredType" do
+    test "update referred_type - failure - EntityRef requires referred_type" do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000897353",
           type: :EntityRef,
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 
-      {:error, _error} = entity |> Diffo.Provider.update_entity(%{referredType: nil})
+      {:error, _error} = entity |> Diffo.Provider.update_entity(%{referred_type: nil})
     end
 
     test "update id - failure - not updatable" do
@@ -314,11 +314,11 @@ defmodule Diffo.Provider.EntityTest do
              "{\"id\":\"11b6ba17-2865-41c5-b469-2939249631e8\",\"href\":\"serviceProblemManagement/v4/serviceProblem/nbnAccess/11b6ba17-2865-41c5-b469-2939249631e8\",\"@type\":\"serviceProblem\"}"
   end
 
-  test "encode json entity referredType - success" do
+  test "encode json entity referred_type - success" do
     entity =
       Diffo.Provider.create_entity!(%{
         id: "COR000000123456",
-        referredType: :cost,
+        referred_type: :cost,
         name: "2025-01"
       })
 
@@ -337,14 +337,14 @@ defmodule Diffo.Provider.EntityTest do
           name: "2025-01",
           href: "costManagement/v2/cost/COR000000123456",
           type: :EntityRef,
-          referredType: :cost
+          referred_type: :cost
         })
 
       expected_entity = %Diffo.Provider.Entity{
         id: ~r/COR\d{12}/,
         name: ~r/\d{4}-\d{2}/,
         type: :EntityRef,
-        referredType: :cost
+        referred_type: :cost
       }
 
       refute expected_entity >>> entity
@@ -356,7 +356,7 @@ defmodule Diffo.Provider.EntityTest do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000123456",
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 
@@ -368,7 +368,7 @@ defmodule Diffo.Provider.EntityTest do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000123456",
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 

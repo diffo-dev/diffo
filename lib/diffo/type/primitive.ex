@@ -3,13 +3,12 @@
 # SPDX-License-Identifier: MIT
 defmodule Diffo.Type.Primitive do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
   `Diffo.Type.Primitive` is a discriminated union of primitive types: string, integer, float,
   boolean, date, time, datetime, and duration.
 
   Use `wrap/2` to construct a Primitive from a type name string and a value.
   Use `Diffo.Unwrap.unwrap/1` to extract the value.
+  Outstanding comparison is implemented inline via `defoutstanding`.
 
   > #### Temporal types {: .info}
   >
@@ -37,6 +36,7 @@ defmodule Diffo.Type.Primitive do
       nil
   """
   use Ash.TypedStruct
+  use Outstand
 
   typed_struct do
     field :type, :string, description: "the primitive type discriminator"
@@ -92,6 +92,36 @@ defmodule Diffo.Type.Primitive do
   defimpl Jason.Encoder do
     def encode(value, _opts) do
       value |> Diffo.Unwrap.unwrap() |> Jason.encode!()
+    end
+  end
+
+  defoutstanding expected :: Diffo.Type.Primitive, actual :: Any do
+    # we return a map since Primitive doesn't allow type nil
+    type_outstanding =
+      case actual do
+        %{type: type} -> Outstanding.outstanding(expected.type, type)
+        nil -> expected.type
+        # actual is wrong type entirely
+        _ -> expected.type
+      end
+
+    value_outstanding =
+      case actual do
+        %{} ->
+          Outstanding.outstanding(
+            Diffo.Unwrap.unwrap(expected),
+            Diffo.Unwrap.unwrap(actual)
+          )
+
+        _ ->
+          Diffo.Unwrap.unwrap(expected)
+      end
+
+    case {type_outstanding, value_outstanding} do
+      {nil, nil} -> nil
+      {nil, _} -> %{value: value_outstanding}
+      {_, nil} -> %{type: type_outstanding}
+      {_, _} -> %{type: type_outstanding, value: value_outstanding}
     end
   end
 end

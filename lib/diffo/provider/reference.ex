@@ -3,35 +3,17 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Reference do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-
-  Reference - utilities relating to reference
-  """
-
+  @moduledoc false
   defstruct id: nil, href: nil
 
-  @doc """
-  Creates a reference struct from an instance with id and href
-    ## Examples
-    iex> instance = %{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
-    iex> Diffo.Provider.Reference.reference(instance)
-    %Diffo.Provider.Reference{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
-  """
+  @doc false
   def reference(instance) when is_map(instance) do
     %Diffo.Provider.Reference{id: instance.id, href: instance.href}
   end
 
   def reference(instance) when is_nil(instance), do: nil
 
-  @doc """
-  Creates a reference struct from an instance attribute containing a href
-    ## Examples
-    iex> instance = %{target_href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
-    iex> Diffo.Provider.Reference.reference(instance, :target_href)
-    %Diffo.Provider.Reference{id: "8bcfbf9a-34a5-427a-8eae-5c3812466432", href: "serviceInventoryManagement/v4/service/8bcfbf9a-34a5-427a-8eae-5c3812466432"}
-  """
+  @doc false
   def reference(instance, attribute) when is_map(instance) and is_atom(attribute) do
     href = Map.get(instance, attribute)
     %Diffo.Provider.Reference{id: Diffo.Uuid.trailing_uuid4(href), href: href}

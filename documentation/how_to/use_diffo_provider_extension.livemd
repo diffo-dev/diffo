@@ -4,14 +4,14 @@ SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/di
 SPDX-License-Identifier: MIT
 -->
 
-# Using the Diffo Provider Extension
+# Using the Diffo Provider Instance Extension
 
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.2.0"},
+    {:diffo, path: "/Users/Beanlanda/git/diffo"}
   ],
-    config: [
+  config: [
     diffo: [ash_domains: [Diffo.Provider]]
   ],
   consolidate_protocols: false
@@ -27,7 +27,7 @@ If you are not already familiar with Ash then please explore [Ash Get Started](h
 
 First ensure you've explored the Diffo Livebook for an introduction to Diffo: [![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fdiffo%2Ddev%2Fdiffo%2Fblob%2Fdev%2Fdiffo.livemd)
 
-In this 'Diffo Provider Extension' livebook you will learn about:
+In this 'Diffo Provider Instance Extension' livebook you will learn about:
 
 * TMF Services and Resources
 * Building your own Domain
@@ -122,14 +122,12 @@ Partial resource assignment uses a relationship characteristic to indicate which
 
 ## Instance Extension
 
-Diffo.Provider.Instance modelling a Service or Resource actually uses the Diffo.Provider.BaseInstance [Spark.Dsl.Fragment](https://hexdocs.pm/spark/Spark.Dsl.Fragment.html). There is no need to evaluate the Diffo.Provider.Instance below, it is already defined.
+Diffo.Provider.Instance models either a Service or Resource. It actually uses the Diffo.Provider.BaseInstance [Spark.Dsl.Fragment](https://hexdocs.pm/spark/Spark.Dsl.Fragment.html). There is no need to evaluate the Diffo.Provider.Instance below, it is already defined.
 
 ```elixir
 defmodule Diffo.Provider.Instance do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Instance - Ash Resource for a TMF Service or Resource Instance
+  Ash Resource for a TMF Service or Resource Instance
   """
   alias Diffo.Provider.BaseInstance
 
@@ -144,7 +142,7 @@ defmodule Diffo.Provider.Instance do
 end
 ```
 
-Diffo also has an inbuilt Spark DSL extension [Diffo.Provider.Instance.Extension](https://hexdocs.pm/diffo/Diffo.Provider.Instance.Extension.html) which provides DSL and functions for use in building domain specific services and resources.
+Diffo also has an inbuilt Spark DSL extension [Diffo.Provider.Instance.Extension](https://hexdocs.pm/diffo/Diffo.Provider.Instance.Extension.html) which provides DSL and functions for use in building and operating domain specific services and resources.
 
 Currently it has DSL to allow you to declare specification, features, characteristics, and party roles. It can be used for services or resources.
 Feature and Instance Characteristics can have payloads defined by [Ash.TypedStruct](https://hexdocs.pm/ash/Ash.TypedStruct.html). TypedStruct are DSL specified types which are effectively lightweight embedded resources. We've extended both [AshJason](https://hexdocs.pm/ash_jason/) and [AshOutstanding](https://hexdocs.pm/ash_outstanding/) to support Ash.TypedStruct.
@@ -168,9 +166,7 @@ We will start by declaring the Cluster Resource. It is going to be a composite r
 ```elixir
 defmodule Diffo.Compute.Cluster do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Cluster - Cluster Resource Instance
+  Cluster Resource Instance
   """
 
   alias Diffo.Provider.BaseInstance
@@ -179,7 +175,7 @@ defmodule Diffo.Compute.Cluster do
   alias Diffo.Provider.Instance.ActionHelper
   alias Diffo.Compute
   alias Diffo.Compute.ClusterValue
-  alias Diffo.Compute.Organisation
+  alias Diffo.Compute.Tenant
   alias Diffo.Compute.Engineer
 
   use Ash.Resource,
@@ -204,8 +200,8 @@ defmodule Diffo.Compute.Cluster do
   end
 
   parties do
-    party :operated_by, Organisation
-    party :managed_by, Engineer
+    party :operator, Tenant
+    party :manager, Engineer
   end
 
   actions do
@@ -261,9 +257,7 @@ And of course we'll need a ClusterValue TypedStruct for the Cluster Resource's c
 ```elixir
 defmodule Diffo.Compute.ClusterValue do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  ClusterValue - AshTyped Struct for Cluster Characteristic Value
+  AshTyped Struct for Cluster Characteristic Value
   """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
@@ -305,9 +299,7 @@ We'll now define a GPU Resource which uses the Diffo.Provider.Assigner functiona
 ```elixir
 defmodule Diffo.Compute.GPU do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  GPU - GPU Resource Instance
+  GPU Resource Instance
   """
 
   alias Diffo.Provider.BaseInstance
@@ -406,9 +398,7 @@ And we must define the GPUValue TypedStruct, used in the GPU's gpu characteristi
 ```elixir
 defmodule Diffo.Compute.GPUValue do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  GPUValue - AshTyped Struct for GPU Characteristic Value
+  AshTyped Struct for GPU Characteristic Value
   """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
 
@@ -441,22 +431,20 @@ end
 
 ## Party Extension
 
-`Diffo.Provider.BaseParty` is an Ash Resource Fragment for domain-specific Party kinds, mirroring `BaseInstance`. It provides common Party attributes — `id`, `name`, `kind` — and the `Diffo.Provider.Party.Extension` DSL, which lets a Party kind declare the roles it plays with respect to Instances and other Parties.
+`Diffo.Provider.BaseParty` is an Ash Resource Fragment for domain-specific Party kinds, mirroring `BaseInstance`. It provides common Party attributes — `id`, `href`, `name`, `type`, `referred_type` — and the `Diffo.Provider.Party.Extension` DSL, which lets a Party kind declare the roles it plays with respect to Instances and other Parties.
 
-`kind` is either `:individual` or `:organization`. The `id` defaults to a generated uuid but can be set by the domain to any meaningful string (such as an ABN or a data centre identifier).
+`type` defaults to `:PartyRef` and can be set to `:Individual`, `:Organization`, or `:Entity`. Domain party kinds typically set `type` in their `build` action. The `id` defaults to a generated uuid but can be set to any meaningful string (such as an ABN or a data centre identifier).
 
 The `Diffo.Provider.Party.Extension` DSL cheat sheet is at [DSL-Diffo.Provider.Party.Extension](https://hexdocs.pm/diffo/DSL-Diffo.Provider.Party.Extension.html).
 
 ### Defining Party kinds
 
-We'll add two Party kinds to our Compute domain — `Organisation` for the operating company, and `Engineer` for the individuals who manage resources.
+We'll add two Party kinds to our Compute domain — `Tenant` for the operating company, and `Engineer` for the individuals who manage resources.
 
 ```elixir
-defmodule Diffo.Compute.Organisation do
+defmodule Diffo.Compute.Tenant do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Organisation - an Organisation in the Compute domain
+  Tenant in the Compute domain
   """
 
   alias Diffo.Provider.BaseParty
@@ -467,13 +455,20 @@ defmodule Diffo.Compute.Organisation do
     domain: Compute
 
   resource do
-    description "A Compute Organisation"
-    plural_name :organisations
+    description "A Compute Tenant"
+    plural_name :tenants
   end
 
-  instance do
-    role :operates, Diffo.Compute.Cluster
-    role :operates, Diffo.Compute.GPU
+  actions do
+    create :build do
+      accept [:id, :name]
+      change set_attribute(:type, :Organization)
+    end
+  end
+
+  instances do
+    role :operator, Diffo.Compute.Cluster
+    role :operator, Diffo.Compute.GPU
   end
 end
 ```
@@ -481,9 +476,7 @@ end
 ```elixir
 defmodule Diffo.Compute.Engineer do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Engineer - an Engineer in the Compute domain
+  Engineer in the Compute domain
   """
 
   alias Diffo.Provider.BaseParty
@@ -498,12 +491,19 @@ defmodule Diffo.Compute.Engineer do
     plural_name :engineers
   end
 
-  instance do
-    role :manages, Diffo.Compute.Cluster
+  actions do
+    create :build do
+      accept [:id, :name]
+      change set_attribute(:type, :Individual)
+    end
   end
 
-  party do
-    role :employed_by, Diffo.Compute.Organisation
+  instances do
+    role :manager, Diffo.Compute.Cluster
+  end
+
+  parties do
+    role :employer, Diffo.Compute.Tenant
   end
 end
 ```
@@ -515,8 +515,6 @@ With all resources defined we can now declare the `Diffo.Compute` domain, which 
 ```elixir
 defmodule Diffo.Compute do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
   Compute - example domain
   """
   use Ash.Domain,
@@ -526,7 +524,7 @@ defmodule Diffo.Compute do
   alias Diffo.Compute.GPU
   #alias Diffo.Compute.NPU
   alias Diffo.Compute.Cluster
-  alias Diffo.Compute.Organisation
+  alias Diffo.Compute.Tenant
   alias Diffo.Compute.Engineer
 
   resources do
@@ -553,22 +551,22 @@ defmodule Diffo.Compute do
       define :relate_cluster, action: :relate
     end
 
-    resource Organisation do
-      define :create_organisation, action: :create
-      define :get_organisation_by_id, action: :read, get_by: :id
-      define :list_organisations, action: :list
+    resource Tenant do
+      define :create_tenant, action: :build
+      define :get_tenant_by_id, action: :read, get_by: :id
+      define :list_tenants, action: :read
     end
 
     resource Engineer do
-      define :create_engineer, action: :create
+      define :create_engineer, action: :build
       define :get_engineer_by_id, action: :read, get_by: :id
-      define :list_engineers, action: :list
+      define :list_engineers, action: :read
     end
   end
 end
 ```
 
-### Creating a Cluster
+### Creating Party instances
 
 Clear any data from previous runs before starting (safe to re-evaluate):
 
@@ -576,13 +574,30 @@ Clear any data from previous runs before starting (safe to re-evaluate):
 AshNeo4j.Neo4jHelper.delete_all()
 ```
 
-Now the domain is defined we can create our first Cluster instance. We'll use a helper module to set up the place and provider party ref:
+Now the domain is defined we'll create our Tenant and Engineer first — we'll need them when building Cluster instances. The `id` for the Tenant is set to a meaningful string — the company's ABN.
+
+```elixir
+alias Diffo.Compute
+alias Diffo.Provider.Instance.Party
+
+{:ok, tenant} = Compute.create_tenant(%{
+  id: "51824753556",
+  name: "Acme Compute Pty Ltd"
+})
+
+{:ok, engineer} = Compute.create_engineer(%{
+  name: "Alice Zhang"
+})
+```
+
+### Creating a Cluster
+
+We'll use a helper module to set up the data centre place:
 
 ```elixir
 defmodule Diffo.Compute.Test do
   alias Diffo.Provider
   alias Diffo.Provider.Instance.Place
-  alias Diffo.Provider.Instance.Party
 
   def create_data_centre_place do
     dc =
@@ -590,26 +605,18 @@ defmodule Diffo.Compute.Test do
         id: "NXTM2",
         name: :dataCentreId,
         href: "place/compute/NXTM2",
-        referredType: :GeographicSite
+        referred_type: :GeographicSite
       })
 
-    %Place{id: dc.id, role: :DataCentre}
-  end
-
-  def create_provider_party do
-    provider =
-      Provider.create_party!(%{
-        id: "Compute",
-        name: :organizationId,
-        referredType: :Organization
-      })
-
-    %Party{id: provider.id, role: :Provider}
+    %Place{id: dc.id, role: :dataCentre}
   end
 end
 
 places = [Diffo.Compute.Test.create_data_centre_place()]
-parties = [Diffo.Compute.Test.create_provider_party()]
+parties = [
+  %Party{id: tenant.id, role: :operator},
+  %Party{id: engineer.id, role: :manager}
+]
 cluster_1 = Diffo.Compute.build_cluster!(%{name: "cluster_1", places: places, parties: parties})
 ```
 
@@ -622,8 +629,6 @@ Jason.encode!(cluster_1, pretty: true) |> IO.puts
 Now we'll create a couple of GPU instances:
 
 ```elixir
-alias Diffo.Compute
-
 gpu_1 = Compute.build_gpu!(%{name: "GPU 1"})
 gpu_2 = Compute.build_gpu!(%{name: "GPU 2"})
 ```
@@ -652,7 +657,6 @@ Now we can auto-assign GPU cores from each GPU to our cluster_1. We'll assign 3 
 
 ```elixir
 alias Diffo.Provider.Assignment
-alias Diffo.Compute
 
 assignment = %{assignment: %Assignment{assignee_id: cluster_1.id, operation: :auto_assign}}
 gpu_1 = Compute.assign_gpu_core!(gpu_1, assignment)
@@ -677,71 +681,9 @@ As an exercise, clone the GPU resource to create an NPU resource and assign some
 What happens when there are none left to assign?
 What happens when I request a specific assignment from an instance to which the partial resource is already assigned?
 
-### Creating Party instances
-
-Now we can create an Organisation and an Engineer in the Compute domain. The `id` for the Organisation is set to a meaningful string — the company's ABN.
-
-```elixir
-alias Diffo.Compute
-
-{:ok, org} = Compute.create_organisation(%{
-  id: "51824753556",
-  name: "Acme Compute Pty Ltd",
-  kind: :organization
-})
-
-{:ok, engineer} = Compute.create_engineer(%{
-  name: "Alice Zhang",
-  kind: :individual
-})
-```
-
-### Using Parties with a Cluster
-
-We can now build a Cluster and relate it to our Organisation and Engineer using the base provider party ref mechanism.
-
-```elixir
-alias Diffo.Provider.Instance.Party
-
-parties = [
-  %Party{id: org.id, role: :operated_by},
-  %Party{id: engineer.id, role: :managed_by}
-]
-
-cluster_2 = Compute.build_cluster!(%{
-  name: "cluster_2",
-  places: [Diffo.Compute.Test.create_data_centre_place()],
-  parties: parties
-})
-
-Jason.encode!(cluster_2, pretty: true) |> IO.puts
-```
-
-### What the Party DSL declares
-
-The `instance do` and `party do` blocks are compile-time declarations — they document which roles a Party kind plays and make that information available via `Diffo.Provider.Party.Extension.Info`:
-
-```elixir
-alias Diffo.Provider.Party.Extension.Info, as: PartyInfo
-
-PartyInfo.instance(Diffo.Compute.Organisation)
-```
-
-```elixir
-PartyInfo.party(Diffo.Compute.Engineer)
-```
-
-These declarations also inform the Instance DSL's `parties do` block, which documents which party kinds an Instance resource expects:
-
-```elixir
-alias Diffo.Provider.Instance.Extension.Info, as: InstanceInfo
-
-InstanceInfo.parties(Diffo.Compute.Cluster)
-```
-
 ### What Next?
 
-In this tutorial you've used Diffo's Provider Instance Extension to define a Compute domain with a composite Cluster resource comprised of assigned GPU cores, and the Provider Party Extension to define Organisation and Engineer party kinds that operate and manage those resources.
+In this tutorial you've used Diffo's Provider Instance Extension to define a Compute domain with a composite Cluster resource comprised of assigned GPU cores, and the Provider Party Extension to define Tenant and Engineer party kinds that operate and manage those resources.
 
 The BaseParty fragment follows the same pattern as BaseInstance — domain-specific resources use it as a fragment and finish their actions with a domain-scoped reload to pick up extended fields.
 

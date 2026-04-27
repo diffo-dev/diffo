@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Validations.IsUuid4OrNil do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-
-  IsUuid4OrNil - Ash Resource Validation checking uuid is v4 if supplied
-  """
+  @moduledoc false
   use Ash.Resource.Validation
 
   @impl true

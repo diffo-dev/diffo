@@ -12,7 +12,7 @@ defmodule Diffo.Test.Nbn do
     otp_app: :diffo,
     validate_config_inclusion?: false
 
-  alias Diffo.Test.Organisation
+  alias Diffo.Test.Organization
   alias Diffo.Test.Person
 
   domain do
@@ -20,14 +20,14 @@ defmodule Diffo.Test.Nbn do
   end
 
   resources do
-    resource Organisation do
-      define :create_organisation, action: :create
-      define :get_organisation_by_id, action: :read, get_by: :id
-      define :list_organisations, action: :list
+    resource Organization do
+      define :create_organization, action: :build
+      define :get_organization_by_id, action: :read, get_by: :id
+      define :list_organizations, action: :list
     end
 
     resource Person do
-      define :create_person, action: :create
+      define :create_person, action: :build
       define :get_person_by_id, action: :read, get_by: :id
       define :list_persons, action: :list
     end

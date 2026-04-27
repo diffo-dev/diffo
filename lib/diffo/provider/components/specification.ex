@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.Specification do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Specification - Ash Resource for a TMF Service or Resource Specification
+  Ash Resource for a TMF Service or Resource Specification
   """
   require Ash.Resource.Change.Builtins
 

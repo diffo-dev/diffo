@@ -65,21 +65,21 @@ defmodule Diffo.Provider.PlaceRefTest do
         Diffo.Provider.create_place!(%{
           id: "LOC000000897353",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place2 =
         Diffo.Provider.create_place!(%{
           id: "LOC000000897354",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place3 =
         Diffo.Provider.create_place!(%{
           id: "CSA000000123456",
           name: :csaId,
-          referredType: :GeographicLocation
+          referred_type: :GeographicLocation
         })
 
       Diffo.Provider.create_place_ref!(%{
@@ -118,35 +118,35 @@ defmodule Diffo.Provider.PlaceRefTest do
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party2 =
         Diffo.Provider.create_party!(%{
           id: "IND000000897354",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party3 =
         Diffo.Provider.create_party!(%{
           id: "ORG000163435034",
           name: :organizationId,
-          referredType: :Organization
+          referred_type: :Organization
         })
 
       place1 =
         Diffo.Provider.create_place!(%{
           id: "LOC000000123456",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place2 =
         Diffo.Provider.create_place!(%{
           id: "LOC000000897353",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       Diffo.Provider.create_place_ref!(%{
@@ -190,21 +190,21 @@ defmodule Diffo.Provider.PlaceRefTest do
         Diffo.Provider.create_place!(%{
           id: "LOC000000897353",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place2 =
         Diffo.Provider.create_place!(%{
           id: "LOC000000897354",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place3 =
         Diffo.Provider.create_place!(%{
           id: "CSA000000123456",
           name: :csaId,
-          referredType: :GeographicLocation
+          referred_type: :GeographicLocation
         })
 
       Diffo.Provider.create_place_ref!(%{
@@ -465,7 +465,7 @@ defmodule Diffo.Provider.PlaceRefTest do
                "{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@type\":\"GeographicAddress\"}"
     end
 
-    test "encode json place referredType - success" do
+    test "encode json place referred_type - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
@@ -474,7 +474,7 @@ defmodule Diffo.Provider.PlaceRefTest do
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place_ref =
@@ -501,7 +501,7 @@ defmodule Diffo.Provider.PlaceRefTest do
           id: "LOC000000897353",
           name: "locationId",
           href: "place/nbnco/LOC000000897353",
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place_ref =
@@ -517,7 +517,7 @@ defmodule Diffo.Provider.PlaceRefTest do
           id: ~r/LOC\d{12}/,
           name: "locationId",
           type: :PlaceRef,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         }
       }
 
@@ -535,7 +535,7 @@ defmodule Diffo.Provider.PlaceRefTest do
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place_ref =
@@ -555,14 +555,14 @@ defmodule Diffo.Provider.PlaceRefTest do
           id: "IND000000897353",
           name: :individualId,
           href: "party/internal/IND000000897353",
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       place =
         Diffo.Provider.create_place!(%{
           id: "LOC000000897353",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place_ref =

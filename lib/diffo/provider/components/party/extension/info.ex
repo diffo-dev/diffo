@@ -5,5 +5,5 @@
 defmodule Diffo.Provider.Party.Extension.Info do
   use Spark.InfoGenerator,
     extension: Diffo.Provider.Party.Extension,
-    sections: [:instance, :party]
+    sections: [:instances, :parties]
 end

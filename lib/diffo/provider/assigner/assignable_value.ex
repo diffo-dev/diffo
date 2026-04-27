@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.AssignableValue do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  AssignableValue - AshTyped Struct for Assignable Characteristic Value
+  Ash Typed Struct for Assignable Characteristic Value
   """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 

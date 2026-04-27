@@ -1,4 +1,4 @@
-<!-- 
+<!--
 SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
 
 SPDX-License-Identifier: MIT
@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.2.0"}
+    {:diffo, path: "/Users/Beanlanda/git/diffo"}
   ],
   consolidate_protocols: false
 )
@@ -113,8 +113,39 @@ alias Diffo.Provider.PartyRef
 alias Diffo.Provider.Place
 alias Diffo.Provider.PartyRef
 alias Diffo.Uuid
+alias Diffo.Type.Value
 import Jason, only: [encode: 2]
 use Outstand
+```
+
+The value types used in this livebook are defined without the Provider Extension DSL — each requires a dedicated `Ash.TypedStruct` so that `Diffo.Type.Dynamic` can round-trip values through Neo4j storage.
+
+```elixir
+defmodule Diffo.Livebook.E2eValue do
+  @derive Jason.Encoder
+  use Ash.TypedStruct
+  typed_struct do
+    field :downstream, :integer
+    field :upstream, :integer
+    field :units, :atom
+  end
+end
+
+defmodule Diffo.Livebook.OptionsValue do
+  @derive Jason.Encoder
+  use Ash.TypedStruct
+  typed_struct do
+    field :options, {:array, :atom}
+  end
+end
+
+defmodule Diffo.Livebook.TechnologyValue do
+  @derive Jason.Encoder
+  use Ash.TypedStruct
+  typed_struct do
+    field :access, :atom
+  end
+end
 ```
 
 We can either create specification instances with Ash directly, or use the Diffo.Provider code interface.
@@ -173,13 +204,13 @@ individual =
   Diffo.Provider.create_party!(%{
     id: "IND000000897354",
     name: :individualId,
-    referredType: :Individual
+    referred_type: :Individual
   })
 org =
   Diffo.Provider.create_party!(%{
     id: "ORG000000123456",
     name: :organizationId,
-    referredType: :Organization
+    referred_type: :Organization
   })
 parties = [individual, org]
 Jason.encode!(parties, pretty: true) |> IO.puts
@@ -197,7 +228,7 @@ Jason.encode!(parties, pretty: true) |> IO.puts
 We'll also add a CustomerSite place where the service is to be delivered to the customer. Historically this is the Z-end.
 
 ```elixir
-z_end = Provider.create_place!(%{id: "1657363", name: :addressId, href: "place/telco/1657363", referredType: :GeographicAddress})
+z_end = Provider.create_place!(%{id: "1657363", name: :addressId, href: "place/telco/1657363", referred_type: :GeographicAddress})
 Jason.encode!(z_end, pretty: true) |> IO.puts
 ```
 
@@ -230,7 +261,7 @@ First we'll create a backup feature to indicate that we want mobile backup, and 
 We'll create an e2e 'instance' characteristic to detail our bandwidth and latency requirements:
 
 ```elixir
-e2e = Provider.create_characteristic!(%{type: :instance, name: :e2e, value: %{bandwidth: %{downstream: 250, upstream: 25, units: :Mbps}}})
+e2e = Provider.create_characteristic!(%{type: :instance, name: :e2e, value: Value.dynamic(%Diffo.Livebook.E2eValue{downstream: 250, upstream: 25, units: :Mbps})})
 broadband_0001 = broadband_0001 
   |> Provider.relate_instance_characteristics!(%{characteristics: [e2e.id]})
 broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
@@ -240,7 +271,7 @@ We'll create mobile backup and device management features. The device management
 
 ```elixir
 backup = Provider.create_feature!(%{name: :backup, isEnabled: true})
-options = Provider.create_characteristic!(%{type: :feature, name: :options, value: [:updates, :monitoring]})
+options = Provider.create_characteristic!(%{type: :feature, name: :options, value: Value.dynamic(%Diffo.Livebook.OptionsValue{options: [:updates, :monitoring]})})
 device_management = Provider.create_feature!(%{name: :deviceManagement, isEnabled: true, characteristics: [options.id]})
 broadband_0001 = broadband_0001 
   |> Provider.relate_instance_features!(%{features: [backup.id, device_management.id]}) 
@@ -305,13 +336,13 @@ We'll have a few things outstanding which we would normally find out during serv
 We recommend using outstanding to drive next task logic, so that the orchestration is directed by the difference engine. This could look like an address lookup (where we learn the provider) followed by a provider service qualification (where we learn the technology) and the related network places.
 
 ```elixir
-nbn = Provider.create_party!(%{id: :nbn, name: "NBNCo", referredType: :Organization})
+nbn = Provider.create_party!(%{id: "nbn", name: "NBNCo", referred_type: :Organization})
 nbn_party_ref = Provider.create_party_ref!(%{instance_id: broadband_0001.id, party_id: nbn.id, role: :Provider})
-provider_z_end = Provider.create_place!(%{id: "LOC000000899353", name: "locationId", href: "place/nbnco/LOC000000899353",referredType: :GeographicAddress})
+provider_z_end = Provider.create_place!(%{id: "LOC000000899353", name: "locationId", href: "place/nbnco/LOC000000899353", referred_type: :GeographicAddress})
 provider_z_end_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :CustomerSite, place_id: provider_z_end.id})
-csa = Provider.create_place!(%{id: "CSA200000000685", name: "csaId", href: "place/nbnco/CSA200000000685", referredType: :GeographicLocation})
+csa = Provider.create_place!(%{id: "CSA200000000685", name: "csaId", href: "place/nbnco/CSA200000000685", referred_type: :GeographicLocation})
 csa_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :ServingArea, place_id: csa.id})
-poi = Provider.create_place!(%{id: "2CAR", name: "poiId", href: "place/nbnco/2CAR",referredType: :GeographicSite})
+poi = Provider.create_place!(%{id: "2CAR", name: "poiId", href: "place/nbnco/2CAR", referred_type: :GeographicSite})
 poi_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :AccessNNI, place_id: poi.id})
 
 places = Diffo.Provider.list_place_refs!()
@@ -331,7 +362,7 @@ outstanding = expected_instance --- broadband_0001
 We create and add the technology characteristic to the actual service. This should resolve the characteristic expectation.
 
 ```elixir
-technology = Provider.create_characteristic!(%{type: :instance, name: :technology, value: %{access: :nbnEthernet}})
+technology = Provider.create_characteristic!(%{type: :instance, name: :technology, value: Value.dynamic(%Diffo.Livebook.TechnologyValue{access: :nbnEthernet})})
 broadband_0001 |> Provider.relate_instance_characteristics!(%{characteristics: [technology.id]})
 
 
@@ -358,6 +389,7 @@ Given that our feasibilityCheck above was complete we want to set the :feasibili
 
 ```elixir
 broadband_0001 = broadband_0001 |> Provider.feasibilityCheck_service!(%{service_operating_status: :feasible})
+broadband_0001 = Provider.get_instance_by_id!(broadband_0001.id)
 broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ```
 
@@ -449,5 +481,7 @@ broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 
 In this tutorial you've used Diffo to create, relate and update some TMF Service and Resources, simulating activities over the service and resource lifecycle, and you've learned how this functionality is underpinned by open source Neo4j, Ash Framework and Elixir.
 Diffo contains an example Access domain showing how to specialise the structure and behaviour of TMF Services and Resources.
+
+But there is a lot of friction here and we still only have structure and not much behaviour. In practice, you'd use the Provider Extension DSLs to do the heavy lifting. But what you've learned here is foundational to help you move on to the other livebooks.
 
 If you find Diffo useful please visit and star on [github](https://github.com/diffo-dev/diffo/). Feel free to join discussions and raise issues to discuss PR's.

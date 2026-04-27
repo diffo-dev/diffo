@@ -4,9 +4,14 @@
 
 defmodule Diffo.Provider.Party.Extension do
   @moduledoc """
-  DSL Extension customising a Party
-  """
+  DSL Extension customising a Party.
 
+  Provides compile-time declaration blocks for domain-specific Party kinds
+  built on `Diffo.Provider.BaseParty`. All declarations are introspectable via
+  `Diffo.Provider.Party.Extension.Info`.
+
+  See the [DSL cheat sheet](DSL-Diffo.Provider.Party.Extension.html) for the full DSL reference.
+  """
   @role %Spark.Dsl.Entity{
     name: :role,
     describe: "Declares a role this Party kind plays",
@@ -43,12 +48,12 @@ defmodule Diffo.Provider.Party.Extension do
     ]
   }
 
-  @instance %Spark.Dsl.Section{
-    name: :instance,
+  @instances %Spark.Dsl.Section{
+    name: :instances,
     describe: "Declares the roles this Party kind plays with respect to Instances",
     examples: [
       """
-      instance do
+      instances do
         role :facilitates, MyApp.AccessService
       end
       """
@@ -56,12 +61,12 @@ defmodule Diffo.Provider.Party.Extension do
     entities: [@role]
   }
 
-  @party %Spark.Dsl.Section{
-    name: :party,
+  @parties %Spark.Dsl.Section{
+    name: :parties,
     describe: "Declares the roles this Party kind plays with respect to other Parties",
     examples: [
       """
-      party do
+      parties do
         role :managed_by, MyApp.Person
       end
       """
@@ -70,5 +75,5 @@ defmodule Diffo.Provider.Party.Extension do
   }
 
   use Spark.Dsl.Extension,
-    sections: [@instance, @party]
+    sections: [@instances, @parties]
 end

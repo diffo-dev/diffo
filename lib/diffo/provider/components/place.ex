@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.Place do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Place - Ash Resource for a TMF Place
+  Ash Resource for a TMF Place
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -26,13 +24,13 @@ defmodule Diffo.Provider.Place do
   end
 
   jason do
-    pick [:id, :href, :name, :referredType, :type]
+    pick [:id, :href, :name, :referred_type, :type]
     compact true
-    rename referredType: "@referredType", type: "@type"
+    rename referred_type: "@referredType", type: "@type"
   end
 
   outstanding do
-    expect [:id, :name, :referredType, :type]
+    expect [:id, :name, :referred_type, :type]
   end
 
   actions do
@@ -40,7 +38,7 @@ defmodule Diffo.Provider.Place do
 
     create :create do
       description "creates a place"
-      accept [:id, :href, :name, :type, :referredType]
+      accept [:id, :href, :name, :type, :referred_type]
       upsert? true
     end
 
@@ -72,7 +70,7 @@ defmodule Diffo.Provider.Place do
 
     update :update do
       description "updates the place"
-      accept [:href, :name, :type, :referredType]
+      accept [:href, :name, :type, :referred_type]
     end
   end
 
@@ -106,7 +104,7 @@ defmodule Diffo.Provider.Place do
       constraints one_of: [:PlaceRef, :GeographicSite, :GeographicLocation, :GeographicAddress]
     end
 
-    attribute :referredType, :atom do
+    attribute :referred_type, :atom do
       description "the type of the place"
       allow_nil? true
       public? true
@@ -132,13 +130,13 @@ defmodule Diffo.Provider.Place do
     end
 
     validate attribute_equals(:type, :PlaceRef) do
-      where present(:referredType)
-      message "when referredType is present, type must be PlaceRef"
+      where present(:referred_type)
+      message "when referred_type is present, type must be PlaceRef"
     end
 
     validate attribute_does_not_equal(:type, :PlaceRef) do
-      where absent(:referredType)
-      message "when referredType is absent, type must be not be PlaceRef"
+      where absent(:referred_type)
+      message "when referred_type is absent, type must be not be PlaceRef"
     end
   end
 
@@ -146,16 +144,4 @@ defmodule Diffo.Provider.Place do
     prepare build(sort: [id: :asc, name: :asc])
   end
 
-  @doc """
-  Compares two place, by ascending id
-  ## Examples
-    iex> Diffo.Provider.Place.compare(%{id: "a"}, %{id: "a"})
-    :eq
-    iex> Diffo.Provider.Place.compare(%{id: "b"}, %{id: "a"})
-    :gt
-    iex> Diffo.Provider.Place.compare(%{id: "a"}, %{id: "b"})
-    :lt
-
-  """
-  def compare(%{id: id0}, %{id: id1}), do: Diffo.Util.compare(id0, id1)
 end

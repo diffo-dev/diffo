@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.PlaceRef do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  PlaceRef - Ash Resource for a TMF Place Reference
+  Ash Resource for a TMF Place Reference
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -36,7 +34,7 @@ defmodule Diffo.Provider.PlaceRef do
       |> Diffo.Util.extract_suppress(:place, :id, :id)
       |> Diffo.Util.extract_suppress(:place, :href, :href)
       |> Diffo.Util.extract_suppress(:place, :name, :name)
-      |> Diffo.Util.extract_suppress(:place, :referredType, "@referredType")
+      |> Diffo.Util.extract_suppress(:place, :referred_type, "@referredType")
       |> Diffo.Util.extract_suppress(:place, :type, "@type")
       |> Diffo.Util.remove(:place)
     end
@@ -172,17 +170,4 @@ defmodule Diffo.Provider.PlaceRef do
             )
   end
 
-  @doc """
-  Compares two place ref, by ascending place_id
-  ## Examples
-    iex> Diffo.Provider.PlaceRef.compare(%{place_id: "a"}, %{place_id: "a"})
-    :eq
-    iex> Diffo.Provider.PlaceRef.compare(%{place_id: "b"}, %{place_id: "a"})
-    :gt
-    iex> Diffo.Provider.PlaceRef.compare(%{place_id: "a"}, %{place_id: "b"})
-    :lt
-
-  """
-  def compare(%{place_id: place_id0}, %{place_id: place_id1}),
-    do: Diffo.Util.compare(place_id0, place_id1)
 end

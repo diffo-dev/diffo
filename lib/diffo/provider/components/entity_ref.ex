@@ -4,8 +4,6 @@
 
 defmodule Diffo.Provider.EntityRef do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
   EntityRef - Ash Resource for a TMF Entity Reference
   """
   use Ash.Resource,
@@ -34,7 +32,7 @@ defmodule Diffo.Provider.EntityRef do
       |> Diffo.Util.extract_suppress(:entity, :id, :id)
       |> Diffo.Util.extract_suppress(:entity, :href, :href)
       |> Diffo.Util.extract_suppress(:entity, :name, :name)
-      |> Diffo.Util.extract_suppress(:entity, :referredType, "@referredType")
+      |> Diffo.Util.extract_suppress(:entity, :referred_type, "@referredType")
       |> Diffo.Util.extract_suppress(:entity, :type, "@type")
       |> Diffo.Util.remove(:party)
     end
@@ -124,17 +122,4 @@ defmodule Diffo.Provider.EntityRef do
     prepare build(load: [:entity], sort: [created_at: :desc])
   end
 
-  @doc """
-  Compares two entity ref, by ascending entity_id
-  ## Examples
-    iex> Diffo.Provider.EntityRef.compare(%{entity_id: "a"}, %{entity_id: "a"})
-    :eq
-    iex> Diffo.Provider.EntityRef.compare(%{entity_id: "b"}, %{entity_id: "a"})
-    :gt
-    iex> Diffo.Provider.EntityRef.compare(%{entity_id: "a"}, %{entity_id: "b"})
-    :lt
-
-  """
-  def compare(%{entity_id: entity_id0}, %{entity_id: entity_id1}),
-    do: Diffo.Util.compare(entity_id0, entity_id1)
 end
