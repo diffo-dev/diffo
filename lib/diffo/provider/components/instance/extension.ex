@@ -223,5 +223,11 @@ defmodule Diffo.Provider.Instance.Extension do
   }
 
   use Spark.Dsl.Extension,
-    sections: [@specification, @features, @characteristics, @parties]
+    sections: [@specification, @features, @characteristics, @parties],
+    verifiers: [
+      Diffo.Provider.Instance.Extension.Verifiers.VerifySpecification,
+      Diffo.Provider.Instance.Extension.Verifiers.VerifyCharacteristics,
+      Diffo.Provider.Instance.Extension.Verifiers.VerifyFeatures,
+      Diffo.Provider.Instance.Extension.Verifiers.VerifyParties
+    ]
 end
