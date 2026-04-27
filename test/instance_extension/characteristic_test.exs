@@ -6,6 +6,7 @@ defmodule Diffo.InstanceExtension.CharacteristicTest do
   @moduledoc false
   use ExUnit.Case
   alias Diffo.Test.Servo
+  alias Diffo.Test.Parties
 
   setup_all do
     AshNeo4j.BoltyHelper.start()
@@ -27,7 +28,7 @@ defmodule Diffo.InstanceExtension.CharacteristicTest do
     end
 
     test "create resource with array characteristic - success" do
-      {:ok, shelf} = Servo.build_shelf(%{})
+      {:ok, shelf} = Parties.build_shelf_with_installer()
 
       shelves = Enum.find(shelf.characteristics, fn c -> c.name == :shelves end)
       assert shelves.is_array == true

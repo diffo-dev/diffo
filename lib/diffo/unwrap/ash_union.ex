@@ -3,5 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defimpl Diffo.Unwrap, for: Ash.Union do
+  @moduledoc false
+
   def unwrap(%{value: value}), do: Diffo.Unwrap.unwrap(value)
 end

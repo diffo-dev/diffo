@@ -3,13 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Repo do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-
-  Repo - persistance
-  """
-
+  @moduledoc false
   use GenServer
 
   def init(init_arg) do

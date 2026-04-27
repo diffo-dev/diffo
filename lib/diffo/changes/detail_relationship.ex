@@ -3,13 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Changes.DetailRelationship do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-
-  DetailRelationship - Ash Resource Change for populating relationship detail
-
-  """
+  @moduledoc false
   use Ash.Resource.Change
 
   def change(changeset, _opts, _context) do

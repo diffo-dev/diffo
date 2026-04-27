@@ -10,6 +10,7 @@ defmodule Diffo.InstanceExtension.AssignerTest do
   alias Diffo.Provider.Assignment
 
   alias Diffo.Test.Characteristics
+  alias Diffo.Test.Parties
   alias Diffo.Test.Servo
   alias Diffo.Test.Card
 
@@ -84,7 +85,7 @@ defmodule Diffo.InstanceExtension.AssignerTest do
     end
 
     test "auto assign port to resource" do
-      {:ok, assignee} = Servo.build_shelf()
+      {:ok, assignee} = Parties.build_shelf_with_installer()
 
       {:ok, card} = Servo.build_card(%{})
 
@@ -109,7 +110,7 @@ defmodule Diffo.InstanceExtension.AssignerTest do
     end
 
     test "auto assign two ports to same resource" do
-      {:ok, assignee} = Servo.build_shelf()
+      {:ok, assignee} = Parties.build_shelf_with_installer()
 
       {:ok, card} = Servo.build_card(%{})
 
@@ -139,7 +140,7 @@ defmodule Diffo.InstanceExtension.AssignerTest do
     end
 
     test "specific assignment rejects duplicate request" do
-      {:ok, assignee} = Servo.build_shelf()
+      {:ok, assignee} = Parties.build_shelf_with_installer()
 
       {:ok, card} = Servo.build_card(%{})
 
@@ -169,7 +170,7 @@ defmodule Diffo.InstanceExtension.AssignerTest do
     end
 
     test "unassign an auto-assigned port from a resource" do
-      {:ok, assignee} = Servo.build_shelf()
+      {:ok, assignee} = Parties.build_shelf_with_installer()
 
       {:ok, card} = Servo.build_card(%{})
 

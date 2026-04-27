@@ -1,0 +1,12 @@
+version = 1
+
+[[annotations]]
+path = [
+  ".gitignore",
+  ".tool-versions",
+  "mix.lock",
+  "logos/diffo.jpg",
+  "documentation/dsls/**",
+]
+SPDX-FileCopyrightText = "2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>"
+SPDX-License-Identifier = "MIT"

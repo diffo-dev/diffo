@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Changes.DetailEvent do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  DetailEvent - Ash Resource Change for detailing an Event
-
-  """
+  @moduledoc false
   use Ash.Resource.Change
 
   def change(changeset, _opts, _context) do

@@ -3,15 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.Util do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Util - Methods of general utility to an Instance
-  """
-
-  @doc """
-  Assists in encoding instance category
-  """
+  @moduledoc false
+  @doc false
   def category(result, record) do
     specification = Map.get(record, :specification)
 
@@ -28,9 +21,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Assists in encoding instance description
-  """
+  @doc false
   def description(result, record) do
     specification = Map.get(record, :specification)
 
@@ -47,9 +38,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Assists in encoding instance dates
-  """
+  @doc false
   def dates(result, record) do
     result
     |> Diffo.Util.set(
@@ -66,9 +55,7 @@ defmodule Diffo.Provider.Instance.Util do
     )
   end
 
-  @doc """
-  Assists in encoding instance states
-  """
+  @doc false
   def states(result, record) do
     case record.type do
       :service ->
@@ -85,9 +72,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Assists in encoding instance-instance relationships
-  """
+  @doc false
   def relationships(result) do
     if relationships = Diffo.Util.get(result, :forward_relationships) do
       service_relationships =
@@ -134,16 +119,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Derives the type prefix from the specification type
-  ## Examples
-    iex> Diffo.Provider.Instance.derive_type(:serviceSpecification)
-    :service
-
-    iex> Diffo.Provider.Instance.derive_type(:resourceSpecification)
-    :resource
-
-  """
+  @doc false
   def derive_type(specification_type) do
     case specification_type do
       :serviceSpecification -> :service
@@ -152,16 +128,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Derives the instance feature list name from the instance type
-  ## Examples
-    iex> Diffo.Provider.Instance.derive_feature_list_name(:service)
-    :feature
-
-    iex> Diffo.Provider.Instance.derive_feature_list_name(:resource)
-    :activationFeature
-
-  """
+  @doc false
   def derive_feature_list_name(type) do
     case type do
       :service -> :feature
@@ -170,16 +137,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Derives the instance characteristic list name from the instance type
-  ## Examples
-    iex> Diffo.Provider.Instance.derive_characteristic_list_name(:service)
-    :serviceCharacteristic
-
-    iex> Diffo.Provider.Instance.derive_characteristic_list_name(:resource)
-    :resourceCharacteristic
-
-  """
+  @doc false
   def derive_characteristic_list_name(type) do
     case type do
       :service -> :serviceCharacteristic
@@ -188,17 +146,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Derives the instance create date name from the instance type
-  ## Examples
-    iex> Diffo.Provider.Instance.derive_create_date_name(:service)
-    :serviceDate
-
-    iex> Diffo.Provider.Instance.derive_create_date_name(:resource)
-    nil
-
-  """
-
+  @doc false
   def derive_create_date_name(type) do
     case type do
       :service -> :serviceDate
@@ -206,17 +154,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Derives the instance start date name from the instance type
-  ## Examples
-    iex> Diffo.Provider.Instance.derive_start_date_name(:service)
-    :startDate
-
-    iex> Diffo.Provider.Instance.derive_start_date_name(:resource)
-    :startOperatingDate
-
-  """
-
+  @doc false
   def derive_start_date_name(type) do
     case type do
       :service -> :startDate
@@ -225,17 +163,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Derives the instance end date name from the instance type
-  ## Examples
-    iex> Diffo.Provider.Instance.derive_end_date_name(:service)
-    :endDate
-
-    iex> Diffo.Provider.Instance.derive_end_date_name(:resource)
-    :endOperatingDate
-
-  """
-
+  @doc false
   def derive_end_date_name(type) do
     case type do
       :service -> :endDate
@@ -244,17 +172,7 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Given which returns the other which
-  ## Examples
-    iex> Diffo.Provider.Instance.other(:actual)
-    :expected
-
-    iex> Diffo.Provider.Instance.other(:expected)
-    :actual
-
-  """
-
+  @doc false
   def other(which) do
     case which do
       :actual -> :expected
@@ -263,16 +181,4 @@ defmodule Diffo.Provider.Instance.Util do
     end
   end
 
-  @doc """
-  Compares two instances, by ascending href
-  ## Examples
-    iex> compare(%{href: "a"}, %{href: "a"})
-    :eq
-    iex> compare(%{href: "b"}, %{href: "a"})
-    :gt
-    iex> compare(%{href: "a"}, %{href: "b"})
-    :lt
-
-  """
-  def compare(%{href: href0}, %{href: href1}), do: Diffo.Util.compare(href0, href1)
 end

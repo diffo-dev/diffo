@@ -4,11 +4,8 @@
 
 defmodule Diffo.Provider.Party.Extension.PartyRole do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
   PartyRole - DSL entity declaring a role this Party kind plays with respect to other Parties
   """
-
   defstruct [:role, :party_type, __spark_metadata__: nil]
 
   defimpl String.Chars do

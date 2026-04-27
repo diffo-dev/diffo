@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.ActionHelper do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  ActionHelper - helping with Instance actions
-  """
-
+  @moduledoc false
   alias Diffo.Provider.Instance.Specification
   alias Diffo.Provider.Instance.Relationship
   alias Diffo.Provider.Instance.Feature
@@ -24,6 +19,7 @@ defmodule Diffo.Provider.Instance.ActionHelper do
     |> Specification.set_specified_by_argument()
     |> Feature.set_features_argument()
     |> Characteristic.set_characteristics_argument()
+    |> Party.validate_parties()
   end
 
   @doc """

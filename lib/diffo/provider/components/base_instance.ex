@@ -4,9 +4,74 @@
 
 defmodule Diffo.Provider.BaseInstance do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
+  Ash Resource Fragment which is a the point of extension for your TMF Service or Resource Instance
 
-  BaseInstance - Ash Resource Fragment of a TMF Service or Resource Instance
+  `BaseInstance` is the foundation for domain-specific Service and Resource kinds.
+  Include it as a fragment on an `Ash.Resource` to get common Instance attributes,
+  Neo4j graph wiring, state machine, and the `Diffo.Provider.Instance.Extension` DSL.
+
+  ## Instance Extension DSL
+
+  The `Diffo.Provider.Instance.Extension` DSL provides compile-time declaration blocks
+  for describing the shape of a domain-specific Service or Resource.
+
+  `specification do` — declares the TMF Specification for this Instance kind.
+
+  `features do` — declares the Features this Instance kind may have, each optionally
+  carrying a typed characteristic payload.
+
+  `characteristics do` — declares the top-level Characteristics of this Instance kind,
+  each backed by an `Ash.TypedStruct`.
+
+  `parties do` — declares the Party roles this Instance kind relates to. Role names are
+  domain-specific nouns describing what the party is to the instance. Two forms:
+
+      parties do
+        party :provider, MyApp.Provider, calculate: :provider_calculation
+        parties :installer, MyApp.Installer
+        parties :technician, MyApp.Technician, constraints: [min: 1, max: 3]
+        party :owner, MyApp.InfrastructureCo, reference: true
+      end
+
+  - `party` — singular (at most one party in this role)
+  - `parties` — plural (unbounded, or bounded with `constraints:`)
+  - `reference: true` — no direct `PartyRef` edge; party is reachable by graph traversal
+  - `calculate:` — names an Ash calculation on this resource that produces the party at build time
+
+  All declarations are introspectable via `Diffo.Provider.Instance.Extension.Info`.
+
+  ## Usage
+
+      defmodule MyApp.Cluster do
+        use Ash.Resource, fragments: [BaseInstance], domain: MyApp.Domain
+
+        resource do
+          description "A Cluster Resource Instance"
+          plural_name :clusters
+        end
+
+        specification do
+          id "4bcfc4c9-e776-4878-a658-e8d81857bed7"
+          name "cluster"
+          type :resourceSpecification
+        end
+
+        parties do
+          party :operator, MyApp.Organization
+          parties :installer, MyApp.Engineer
+        end
+      end
+
+  ## Action pattern
+
+  Domain-specific Instance resources should finish their `build` action with a reload via
+  their own domain's `get_xxx_by_id` to pick up extended fields:
+
+      create :build do
+        change after_action(fn changeset, result, _context ->
+          ActionHelper.build_after(changeset, result, MyApp.Domain, :get_cluster_by_id)
+        end)
+      end
   """
   use Spark.Dsl.Fragment,
     of: Ash.Resource,

@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Unwrap.AshCustomExpression do
+  @moduledoc false
+
   use Ash.CustomExpression,
     name: :unwrap,
     arguments: [
