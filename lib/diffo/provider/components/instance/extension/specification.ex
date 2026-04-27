@@ -52,18 +52,7 @@ defmodule Diffo.Provider.Instance.Specification do
   def relate_instance(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     specified_by = Ash.Changeset.get_argument(changeset, :specified_by)
-    instance = struct(Instance, Map.from_struct(result))
-
-    case Provider.specify_instance(instance, %{specified_by: specified_by}) do
-      {:ok, specification} ->
-        {:ok,
-         result
-         |> Map.put(:specification, specification)
-         |> Map.put(:specification_id, specified_by)}
-
-      {:error, error} ->
-        {:error, error}
-    end
+    Provider.specify_instance(%Instance{id: result.id}, %{specified_by: specified_by})
   end
 
   defimpl String.Chars do

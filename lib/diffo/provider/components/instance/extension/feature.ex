@@ -101,8 +101,7 @@ defmodule Diffo.Provider.Instance.Feature do
   def relate_instance(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     features = Ash.Changeset.get_argument(changeset, :features)
-    instance = struct(Instance, Map.from_struct(result))
-    Provider.relate_instance_features(instance, %{features: features})
+    Provider.relate_instance_features(%Instance{id: result.id}, %{features: features})
   end
 
   defimpl String.Chars do

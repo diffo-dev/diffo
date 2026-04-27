@@ -58,7 +58,7 @@ defmodule Diffo.Test.Card do
              end)
 
       change after_action(fn changeset, result, _context ->
-               ActionHelper.build_after(changeset, result, Servo, :get_card_by_id)
+               ActionHelper.build_after(changeset, result)
              end)
 
       change load [:href]

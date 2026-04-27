@@ -69,7 +69,7 @@ defmodule Diffo.Provider.BaseInstance do
 
       create :build do
         change after_action(fn changeset, result, _context ->
-          ActionHelper.build_after(changeset, result, MyApp.Domain, :get_cluster_by_id)
+          ActionHelper.build_after(changeset, result)
         end)
       end
   """

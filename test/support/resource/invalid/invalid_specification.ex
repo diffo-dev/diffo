@@ -12,11 +12,9 @@ defmodule Diffo.Test.InvalidSpecification do
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.ActionHelper
 
-  alias Diffo.Test.Servo
-
   use Ash.Resource,
     fragments: [BaseInstance],
-    domain: Servo
+    domain: Diffo.Test.Servo
 
   resource do
     description "Ash Resource with an invalid specification"
@@ -47,12 +45,7 @@ defmodule Diffo.Test.InvalidSpecification do
              end)
 
       change after_action(fn changeset, result, _context ->
-               ActionHelper.build_after(
-                 changeset,
-                 result,
-                 Servo,
-                 :get_invalid_specification_by_id
-               )
+               ActionHelper.build_after(changeset, result)
              end)
 
       change load [:href]
