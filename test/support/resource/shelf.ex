@@ -78,7 +78,7 @@ defmodule Diffo.Test.Shelf do
              end)
 
       change after_action(fn changeset, result, _context ->
-               ActionHelper.build_after(changeset, result, Servo, :get_shelf_by_id)
+               ActionHelper.build_after(changeset, result)
              end)
 
       change load [:href]
