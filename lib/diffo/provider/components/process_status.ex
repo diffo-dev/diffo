@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.ProcessStatus do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  ProcessStatus - Ash Resource for a TMF ProcessStatus
+  Ash Resource for a TMF ProcessStatus
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -127,17 +125,4 @@ defmodule Diffo.Provider.ProcessStatus do
     prepare build(sort: [timestamp: :desc])
   end
 
-  @doc """
-  Compares two process status, by timestamp
-  ## Examples
-    iex> Diffo.Provider.ProcessStatus.compare(%{timestamp: "a"}, %{timestamp: "a"})
-    :eq
-    iex> Diffo.Provider.ProcessStatus.compare(%{timestamp: "b"}, %{timestamp: "a"})
-    :gt
-    iex> Diffo.Provider.ProcessStatus.compare(%{timestamp: "a"}, %{timestamp: "b"})
-    :lt
-
-  """
-  def compare(%{timestamp: timestamp0}, %{timestamp: timestamp1}),
-    do: Diffo.Util.compare(timestamp0, timestamp1)
 end

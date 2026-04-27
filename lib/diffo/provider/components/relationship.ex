@@ -4,10 +4,8 @@
 
 defmodule Diffo.Provider.Relationship do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
 
-
-  Relationship - Ash Resource for a TMF Service or Resource Relationship
+  Ash Resource for a TMF Service or Resource Relationship
   """
   use Ash.Resource,
     otp_app: :diffo,

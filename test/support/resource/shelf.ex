@@ -53,8 +53,11 @@ defmodule Diffo.Test.Shelf do
   end
 
   parties do
-    party :facilitated_by, Diffo.Test.Organisation
-    party :overseen_by, Diffo.Test.Person
+    party :facilitator, Diffo.Test.Organization
+    party :overseer, Diffo.Test.Person
+    party :provider, Diffo.Test.Organization, reference: true
+    party :manager, Diffo.Test.Organization, calculate: :manager_calc
+    parties :installer, Diffo.Test.Person, constraints: [min: 1, max: 3]
   end
 
   actions do

@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.Place do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Place for Instance Extension
-  """
-
+  @moduledoc false
   alias Diffo.Provider
 
   @doc """

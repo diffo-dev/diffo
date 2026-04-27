@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.PartyRef do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  PartyRef - Ash Resource for a TMF PartyRef
+  Ash Resource for a TMF PartyRef
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -36,7 +34,7 @@ defmodule Diffo.Provider.PartyRef do
       |> Diffo.Util.extract_suppress(:party, :id, :id)
       |> Diffo.Util.extract_suppress(:party, :href, :href)
       |> Diffo.Util.extract_suppress(:party, :name, :name)
-      |> Diffo.Util.extract_suppress(:party, :referredType, "@referredType")
+      |> Diffo.Util.extract_suppress(:party, :referred_type, "@referredType")
       |> Diffo.Util.extract_suppress(:party, :type, "@type")
       |> Diffo.Util.remove(:party)
     end
@@ -45,7 +43,7 @@ defmodule Diffo.Provider.PartyRef do
   end
 
   outstanding do
-    expect [:party_id, :name, :role, :referredType, :type]
+    expect [:party_id, :name, :role, :referred_type, :type]
   end
 
   actions do
@@ -203,17 +201,4 @@ defmodule Diffo.Provider.PartyRef do
     end
   end
 
-  @doc """
-  Compares two party ref, by ascending party_id
-  ## Examples
-    iex> Diffo.Provider.PartyRef.compare(%{party_id: "a"}, %{party_id: "a"})
-    :eq
-    iex> Diffo.Provider.PartyRef.compare(%{party_id: "b"}, %{party_id: "a"})
-    :gt
-    iex> Diffo.Provider.PartyRef.compare(%{party_id: "a"}, %{party_id: "b"})
-    :lt
-
-  """
-  def compare(%{party_id: party_id0}, %{party_id: party_id1}),
-    do: Diffo.Util.compare(party_id0, party_id1)
 end

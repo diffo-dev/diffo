@@ -6,6 +6,7 @@ defmodule Diffo.InstanceExtension.FeatureTest do
   @moduledoc false
   use ExUnit.Case
   alias Diffo.Test.Servo
+  alias Diffo.Test.Parties
 
   setup_all do
     AshNeo4j.BoltyHelper.start()
@@ -27,7 +28,7 @@ defmodule Diffo.InstanceExtension.FeatureTest do
     end
 
     test "create resource with array feature characteristic - success" do
-      {:ok, shelf} = Servo.build_shelf(%{})
+      {:ok, shelf} = Parties.build_shelf_with_installer()
 
       spectral = Enum.find(shelf.features, fn f -> f.name == :spectralManagement end)
       deployment_classes = Enum.find(spectral.characteristics, fn c -> c.name == :deploymentClasses end)

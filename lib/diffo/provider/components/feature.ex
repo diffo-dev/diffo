@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.Feature do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Feature - Ash Resource for a TMF Feature
+  Ash Resource for a TMF Feature
   """
   use Ash.Resource,
     otp_app: :diffo,
@@ -138,16 +136,4 @@ defmodule Diffo.Provider.Feature do
     prepare build(load: [:characteristics], sort: [name: :asc])
   end
 
-  @doc """
-  Compares two feature, by ascending name
-  ## Examples
-    iex> Diffo.Provider.Feature.compare(%{name: "a"}, %{name: "a"})
-    :eq
-    iex> Diffo.Provider.Feature.compare(%{name: "b"}, %{name: "a"})
-    :gt
-    iex> Diffo.Provider.Feature.compare(%{name: "a"}, %{name: "b"})
-    :lt
-
-  """
-  def compare(%{name: name0}, %{name: name1}), do: Diffo.Util.compare(name0, name1)
 end

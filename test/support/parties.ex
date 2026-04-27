@@ -11,6 +11,13 @@ defmodule Diffo.Test.Parties do
 
   import ExUnit.Assertions
 
+  alias Diffo.Provider.Instance.Party
+
+  def build_shelf_with_installer do
+    {:ok, person} = Diffo.Test.Nbn.create_person(%{name: "Installer"})
+    Diffo.Test.Servo.build_shelf(%{parties: [%Party{id: person.id, role: :installer}]})
+  end
+
   def check_parties(expected_parties, instance)
       when is_list(expected_parties) and is_struct(instance) do
     Enum.zip_reduce(expected_parties, instance.parties, [], fn _expected_party,

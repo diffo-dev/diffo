@@ -4,9 +4,7 @@
 
 defmodule Diffo.Provider.Assignment do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Assignment - AshTyped Struct for Assignment
+  Ash Typed Struct for Assignment
   """
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
@@ -31,12 +29,18 @@ defmodule Diffo.Provider.Assignment do
       constraints: [one_of: [nil, :assign, :unassign, :auto_assign]]
   end
 
+  def compare(%__MODULE__{id: a}, %__MODULE__{id: b}) do
+    cond do
+      a < b -> :lt
+      a > b -> :gt
+      true -> :eq
+    end
+  end
+
   defimpl String.Chars do
     def to_string(struct) do
       inspect(struct)
     end
   end
 
-  def compare(%{id: id0}, %{id: id1}),
-    do: Diffo.Util.compare(id0, id1)
 end

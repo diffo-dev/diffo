@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.Relationship do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Relationship for Instance Extension
-  """
-
+  @moduledoc false
   alias Diffo.Provider
 
   @doc """

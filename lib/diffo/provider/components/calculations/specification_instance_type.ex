@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Calculations.SpecificationInstanceType do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  SpecificationInstanceType - Ash Resource Calculation for generating the instance type a specification specifies
-
-  """
+  @moduledoc false
   use Ash.Resource.Calculation
 
   @impl true

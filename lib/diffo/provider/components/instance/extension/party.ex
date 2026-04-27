@@ -3,18 +3,70 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.Party do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Party for Instance Extension
-  """
-
+  @moduledoc false
   alias Diffo.Provider
+  alias Diffo.Provider.Instance.Extension.Info, as: InstanceInfo
 
   @doc """
   Struct for a Party
   """
   defstruct [:id, :role]
+
+  @doc false
+  def validate_parties(changeset) do
+    declarations = InstanceInfo.parties(changeset.resource)
+
+    if declarations == [] do
+      changeset
+    else
+      parties = Ash.Changeset.get_argument(changeset, :parties) || []
+      changeset
+      |> validate_roles(parties, declarations)
+      |> validate_constraints(parties, declarations)
+    end
+  end
+
+  defp validate_roles(changeset, parties, declarations) do
+    declared_roles = MapSet.new(declarations, & &1.role)
+
+    Enum.reduce(parties, changeset, fn %{role: role}, cs ->
+      if MapSet.member?(declared_roles, role) do
+        cs
+      else
+        Ash.Changeset.add_error(cs,
+          field: :parties,
+          message: "role #{inspect(role)} is not declared on this resource"
+        )
+      end
+    end)
+  end
+
+  defp validate_constraints(changeset, parties, declarations) do
+    counts = Enum.frequencies_by(parties, & &1.role)
+
+    declarations
+    |> Enum.reject(&(&1.reference || &1.calculate))
+    |> Enum.reduce(changeset, fn decl, cs ->
+      count = Map.get(counts, decl.role, 0)
+      constraints = decl.constraints || []
+
+      cs
+      |> check_min(decl.role, count, Keyword.get(constraints, :min))
+      |> check_max(decl.role, count, Keyword.get(constraints, :max))
+    end)
+  end
+
+  defp check_min(cs, _role, _count, nil), do: cs
+  defp check_min(cs, _role, count, min) when count >= min, do: cs
+  defp check_min(cs, role, count, min),
+    do: Ash.Changeset.add_error(cs, field: :parties,
+          message: "role #{inspect(role)} requires at least #{min} (got #{count})")
+
+  defp check_max(cs, _role, _count, nil), do: cs
+  defp check_max(cs, _role, count, max) when count <= max, do: cs
+  defp check_max(cs, role, count, max),
+    do: Ash.Changeset.add_error(cs, field: :parties,
+          message: "role #{inspect(role)} allows at most #{max} (got #{count})")
 
   @doc """
   Relates the parties in the changeset with the Extended Instance by creating party_ref

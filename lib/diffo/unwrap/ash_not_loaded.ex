@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 defimpl Diffo.Unwrap, for: Ash.NotLoaded do
+  @moduledoc false
+
   def unwrap(%{field: field}) do
     raise "Diffo.Unwrap: #{field} was not loaded"
   end

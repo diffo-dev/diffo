@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: MIT
 defmodule Diffo.Type.Value do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
   `Diffo.Type.Value` is an `Ash.Type.NewType` union that holds either a `Diffo.Type.Primitive`
   or a `Diffo.Type.Dynamic` value.
 
@@ -13,6 +11,9 @@ defmodule Diffo.Type.Value do
 
   Use `primitive/2` to build a primitive value and `dynamic/1` to build a dynamic value.
   Use `Diffo.Unwrap.unwrap/1` on the stored `%Ash.Union{}` to extract the underlying Elixir value.
+
+  Outstanding comparison is handled by `AshOutstanding.Union`, which delegates to the inner
+  `Diffo.Type.Primitive` or `Diffo.Type.Dynamic` outstanding implementation.
 
   ## Examples
 
@@ -31,7 +32,6 @@ defmodule Diffo.Type.Value do
       iex> Diffo.Type.Value.primitive("date", ~D[2026-04-24]) |> Diffo.Unwrap.unwrap()
       "2026-04-24"
   """
-
   use Ash.Type.NewType,
     subtype_of: :union,
     constraints: [
