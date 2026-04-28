@@ -8,7 +8,6 @@ defmodule Diffo.Provider.Instance.Specification do
 
   alias Diffo.Provider
   alias Diffo.Provider.Instance
-  alias Diffo.Provider.Instance.Extension.Info
 
   @doc """
   Struct for a Specification
@@ -18,18 +17,6 @@ defmodule Diffo.Provider.Instance.Specification do
   @doc """
   Sets the specified_by argument in the changeset, ensuring the Extended Instance's specification exists
   """
-  def set_specified_by_argument(changeset) when is_struct(changeset, Ash.Changeset) do
-    %module{} = changeset.data
-    # ensure the specification exists
-    case upsert_specification(module) do
-      {:ok, specification} ->
-        Ash.Changeset.force_set_argument(changeset, :specified_by, specification.id)
-
-      {:error, error} ->
-        Ash.Changeset.add_error(changeset, error)
-    end
-  end
-
   def set_specified_by_argument(changeset, options)
       when is_struct(changeset, Ash.Changeset) and is_list(options) do
     specification = struct(__MODULE__, options)
@@ -40,22 +27,6 @@ defmodule Diffo.Provider.Instance.Specification do
 
       {:error, error} ->
         Ash.Changeset.add_error(changeset, error)
-    end
-  end
-
-  @doc """
-  Upserts the Specification from a Extended Instance's module
-  """
-  def upsert_specification(module) when is_atom(module) do
-    options = Info.specification_options(module)
-    specification = struct(__MODULE__, options)
-
-    case Provider.create_specification(Map.from_struct(specification)) do
-      {:ok, _result} ->
-        {:ok, specification}
-
-      {:error, error} ->
-        {:error, error}
     end
   end
 

@@ -12,7 +12,7 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyParties do
   @impl true
   def verify(dsl_state) do
     resource = Verifier.get_persisted(dsl_state, :module)
-    parties = Verifier.get_entities(dsl_state, [:parties])
+    parties = Verifier.get_entities(dsl_state, [:structure, :parties])
 
     duplicate_errors =
       parties
@@ -21,7 +21,7 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyParties do
       |> Enum.map(fn {role, _} ->
         DslError.exception(
           module: resource,
-          path: [:parties],
+          path: [:structure, :parties],
           message: "parties: role #{inspect(role)} is declared more than once"
         )
       end)
@@ -32,7 +32,7 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyParties do
           [
             DslError.exception(
               module: resource,
-              path: [:parties, party.role],
+              path: [:structure, :parties, party.role],
               message: "parties: party_type #{inspect(party.party_type)} does not exist"
             )
             | acc

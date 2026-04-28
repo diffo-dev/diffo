@@ -357,6 +357,11 @@ defmodule Diffo.Provider.BaseInstance do
     end
   end
 
+  changes do
+    change Diffo.Provider.Instance.Extension.Changes.BuildBefore, on: [:create]
+    change Diffo.Provider.Instance.Extension.Changes.BuildAfter, on: [:create]
+  end
+
   actions do
     defaults [:destroy]
 

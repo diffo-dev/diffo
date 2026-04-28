@@ -8,7 +8,6 @@ defmodule Diffo.Provider.Instance.Characteristic do
 
   alias Diffo.Provider
   alias Diffo.Provider.Instance
-  alias Diffo.Provider.Instance.Extension.Info
   alias Diffo.Type.Value
 
   @doc """
@@ -19,22 +18,6 @@ defmodule Diffo.Provider.Instance.Characteristic do
   @doc """
   Sets the Extended Instances characteristics argument in the changeset, creating the characteristics
   """
-  def set_characteristics_argument(changeset) when is_struct(changeset, Ash.Changeset) do
-    %module{} = changeset.data
-
-    case characteristics = create_characteristics(module, :instance) do
-      [] ->
-        changeset
-
-      {:error, error} ->
-        Ash.Changeset.add_error(changeset, error)
-
-      _ ->
-        characteristic_ids = Enum.map(characteristics, &Map.get(&1, :id))
-        Ash.Changeset.force_set_argument(changeset, :characteristics, characteristic_ids)
-    end
-  end
-
   def set_characteristics_argument(changeset, declarations)
       when is_struct(changeset, Ash.Changeset) and is_list(declarations) do
     case characteristics = create_characteristics_from_declarations(declarations, :instance) do
@@ -48,13 +31,6 @@ defmodule Diffo.Provider.Instance.Characteristic do
         characteristic_ids = Enum.map(characteristics, &Map.get(&1, :id))
         Ash.Changeset.force_set_argument(changeset, :characteristics, characteristic_ids)
     end
-  end
-
-  @doc """
-  Creates the Characteristics from a Extended Instance's module
-  """
-  def create_characteristics(module, type) when is_atom(module) and is_atom(type) do
-    Info.characteristics(module) |> create_characteristics_from_declarations(type)
   end
 
   defp create_characteristics_from_declarations(declarations, type) do

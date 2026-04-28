@@ -10,28 +10,35 @@ defmodule Diffo.InstanceExtension.TransformerTest do
   alias Diffo.Test.Card
   alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Provider.Instance.Feature
+  alias Diffo.Provider.Instance.Info
 
-  describe "TransformSpecification" do
-    test "bakes specification options into __diffo_specification__/0" do
-      spec = Shelf.__diffo_specification__()
+  describe "PersistSpecification" do
+    test "bakes specification/0 onto the resource" do
+      spec = Shelf.specification()
       assert spec[:id] == "ef016d85-9dbd-429c-84da-1df56cc7dda5"
       assert spec[:name] == "shelf"
       assert spec[:type] == :resourceSpecification
       assert spec[:description] == "A Shelf Resource Instance which contain cards"
       assert spec[:category] == "Network Resource"
+      assert spec[:major_version] == 1
     end
 
-    test "card specification is also baked correctly" do
-      spec = Card.__diffo_specification__()
+    test "card specification is baked correctly" do
+      spec = Card.specification()
       assert spec[:id] == "cd29956f-6c68-44cc-bf54-705eb8d2f754"
       assert spec[:name] == "card"
       assert spec[:type] == :resourceSpecification
     end
+
+    test "specification is also accessible via Info" do
+      assert Info.specification(Shelf)[:name] == "shelf"
+      assert Info.specification(Card)[:name] == "card"
+    end
   end
 
-  describe "TransformCharacteristics" do
-    test "bakes characteristic declarations into __diffo_characteristics__/0" do
-      chars = Shelf.__diffo_characteristics__()
+  describe "PersistCharacteristics" do
+    test "bakes characteristics/0 onto the resource" do
+      chars = Shelf.characteristics()
       assert is_list(chars)
       assert length(chars) == 3
       names = Enum.map(chars, & &1.name)
@@ -41,22 +48,28 @@ defmodule Diffo.InstanceExtension.TransformerTest do
     end
 
     test "each characteristic is a Characteristic struct" do
-      [first | _] = Shelf.__diffo_characteristics__()
+      [first | _] = Shelf.characteristics()
       assert is_struct(first, Characteristic)
     end
 
-    test "card characteristics are baked" do
-      chars = Card.__diffo_characteristics__()
-      assert length(chars) == 2
-      names = Enum.map(chars, & &1.name)
-      assert :card in names
-      assert :ports in names
+    test "characteristics are also accessible via Info" do
+      assert length(Info.characteristics(Shelf)) == 3
+      assert length(Info.characteristics(Card)) == 2
+    end
+
+    test "Info.characteristic/2 returns the named characteristic" do
+      char = Info.characteristic(Shelf, :shelves)
+      assert char.name == :shelves
+    end
+
+    test "Info.characteristic/2 returns nil for unknown name" do
+      assert Info.characteristic(Shelf, :nonexistent) == nil
     end
   end
 
-  describe "TransformFeatures" do
-    test "bakes feature declarations into __diffo_features__/0" do
-      features = Shelf.__diffo_features__()
+  describe "PersistFeatures" do
+    test "bakes features/0 onto the resource" do
+      features = Shelf.features()
       assert is_list(features)
       assert length(features) == 1
       [feature] = features
@@ -65,26 +78,49 @@ defmodule Diffo.InstanceExtension.TransformerTest do
     end
 
     test "each feature is a Feature struct" do
-      [feature] = Shelf.__diffo_features__()
+      [feature] = Shelf.features()
       assert is_struct(feature, Feature)
     end
 
-    test "feature characteristics are nested in the feature declaration" do
-      [feature] = Shelf.__diffo_features__()
+    test "feature characteristics are nested in the declaration" do
+      [feature] = Shelf.features()
       assert length(feature.characteristics) == 2
       char_names = Enum.map(feature.characteristics, & &1.name)
       assert :deploymentClass in char_names
       assert :deploymentClasses in char_names
     end
 
-    test "card has no features" do
-      assert Card.__diffo_features__() == []
+    test "features are also accessible via Info" do
+      assert length(Info.features(Shelf)) == 1
+      assert Info.features(Card) == []
+    end
+
+    test "Info.feature/2 returns the named feature" do
+      feature = Info.feature(Shelf, :spectralManagement)
+      assert feature.name == :spectralManagement
+    end
+
+    test "Info.feature/2 returns nil for unknown name" do
+      assert Info.feature(Shelf, :nonexistent) == nil
+    end
+
+    test "Info.feature_characteristic/3 returns the named characteristic within a feature" do
+      char = Info.feature_characteristic(Shelf, :spectralManagement, :deploymentClass)
+      assert char.name == :deploymentClass
+    end
+
+    test "Info.feature_characteristic/3 returns nil for unknown feature" do
+      assert Info.feature_characteristic(Shelf, :nonexistent, :deploymentClass) == nil
+    end
+
+    test "Info.feature_characteristic/3 returns nil for unknown characteristic" do
+      assert Info.feature_characteristic(Shelf, :spectralManagement, :nonexistent) == nil
     end
   end
 
-  describe "TransformParties" do
-    test "bakes party declarations into __diffo_party_declarations__/0" do
-      parties = Shelf.__diffo_party_declarations__()
+  describe "PersistParties" do
+    test "bakes parties/0 onto the resource" do
+      parties = Shelf.parties()
       assert is_list(parties)
       assert length(parties) == 5
       roles = Enum.map(parties, & &1.role)
@@ -96,44 +132,114 @@ defmodule Diffo.InstanceExtension.TransformerTest do
     end
 
     test "reference party has reference flag set" do
-      parties = Shelf.__diffo_party_declarations__()
-      provider = Enum.find(parties, &(&1.role == :provider))
+      provider = Enum.find(Shelf.parties(), &(&1.role == :provider))
       assert provider.reference == true
     end
 
     test "calculate party has calculate set" do
-      parties = Shelf.__diffo_party_declarations__()
-      manager = Enum.find(parties, &(&1.role == :manager))
+      manager = Enum.find(Shelf.parties(), &(&1.role == :manager))
       assert manager.calculate == :manager_calc
     end
 
     test "plural party has constraints" do
-      parties = Shelf.__diffo_party_declarations__()
-      installer = Enum.find(parties, &(&1.role == :installer))
+      installer = Enum.find(Shelf.parties(), &(&1.role == :installer))
       assert installer.multiple == true
       assert installer.constraints == [min: 1, max: 3]
     end
 
-    test "card has no parties" do
-      assert Card.__diffo_party_declarations__() == []
+    test "parties are also accessible via Info" do
+      assert length(Info.parties(Shelf)) == 5
+      assert Info.parties(Card) == []
+    end
+
+    test "Info.party/2 returns the named party declaration by role" do
+      p = Info.party(Shelf, :facilitator)
+      assert p.role == :facilitator
+    end
+
+    test "Info.party/2 returns nil for unknown role" do
+      assert Info.party(Shelf, :nonexistent) == nil
     end
   end
 
-  describe "TransformBuildActions" do
-    test "__diffo_build_before__/1 is defined on shelf" do
-      assert function_exported?(Shelf, :__diffo_build_before__, 1)
+  describe "TransformBehaviour" do
+    setup do
+      Code.ensure_loaded!(Shelf)
+      Code.ensure_loaded!(Card)
+      :ok
     end
 
-    test "__diffo_build_after__/2 is defined on shelf" do
-      assert function_exported?(Shelf, :__diffo_build_after__, 2)
+    test "build_before/1 is defined on shelf" do
+      assert function_exported?(Shelf, :build_before, 1)
     end
 
-    test "__diffo_build_before__/1 is defined on card" do
-      assert function_exported?(Card, :__diffo_build_before__, 1)
+    test "build_after/2 is defined on shelf" do
+      assert function_exported?(Shelf, :build_after, 2)
     end
 
-    test "__diffo_build_after__/2 is defined on card" do
-      assert function_exported?(Card, :__diffo_build_after__, 2)
+    test "build_before/1 is defined on card" do
+      assert function_exported?(Card, :build_before, 1)
+    end
+
+    test "build_after/2 is defined on card" do
+      assert function_exported?(Card, :build_after, 2)
+    end
+
+    test "action_create injects :specified_by argument into :build" do
+      action = Ash.Resource.Info.action(Shelf, :build)
+      arg_names = Enum.map(action.arguments, & &1.name)
+      assert :specified_by in arg_names
+      assert :features in arg_names
+      assert :characteristics in arg_names
+    end
+
+    test "injected arguments are not public" do
+      action = Ash.Resource.Info.action(Shelf, :build)
+      injected = Enum.filter(action.arguments, &(&1.name in [:specified_by, :features, :characteristics]))
+      assert Enum.all?(injected, &(&1.public? == false))
+    end
+
+    test "characteristic/1 returns the named characteristic" do
+      char = Shelf.characteristic(:shelves)
+      assert char.name == :shelves
+      assert char.value_type == {:array, Diffo.Test.ShelfValue}
+    end
+
+    test "characteristic/1 returns nil for unknown name" do
+      assert Shelf.characteristic(:nonexistent) == nil
+    end
+
+    test "feature/1 returns the named feature" do
+      feature = Shelf.feature(:spectralManagement)
+      assert feature.name == :spectralManagement
+      assert feature.is_enabled? == true
+    end
+
+    test "feature/1 returns nil for unknown name" do
+      assert Shelf.feature(:nonexistent) == nil
+    end
+
+    test "feature_characteristic/2 returns the named characteristic within a feature" do
+      char = Shelf.feature_characteristic(:spectralManagement, :deploymentClass)
+      assert char.name == :deploymentClass
+    end
+
+    test "feature_characteristic/2 returns nil for unknown feature" do
+      assert Shelf.feature_characteristic(:nonexistent, :deploymentClass) == nil
+    end
+
+    test "feature_characteristic/2 returns nil for unknown characteristic" do
+      assert Shelf.feature_characteristic(:spectralManagement, :nonexistent) == nil
+    end
+
+    test "party/1 returns the named party declaration by role" do
+      p = Shelf.party(:facilitator)
+      assert p.role == :facilitator
+      assert p.multiple == false
+    end
+
+    test "party/1 returns nil for unknown role" do
+      assert Shelf.party(:nonexistent) == nil
     end
   end
 end
