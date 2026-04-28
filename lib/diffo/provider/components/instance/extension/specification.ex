@@ -30,6 +30,19 @@ defmodule Diffo.Provider.Instance.Specification do
     end
   end
 
+  def set_specified_by_argument(changeset, options)
+      when is_struct(changeset, Ash.Changeset) and is_list(options) do
+    specification = struct(__MODULE__, options)
+
+    case Provider.create_specification(Map.from_struct(specification)) do
+      {:ok, _} ->
+        Ash.Changeset.force_set_argument(changeset, :specified_by, specification.id)
+
+      {:error, error} ->
+        Ash.Changeset.add_error(changeset, error)
+    end
+  end
+
   @doc """
   Upserts the Specification from a Extended Instance's module
   """

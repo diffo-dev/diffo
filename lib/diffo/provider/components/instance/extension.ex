@@ -224,6 +224,13 @@ defmodule Diffo.Provider.Instance.Extension do
 
   use Spark.Dsl.Extension,
     sections: [@specification, @features, @characteristics, @parties],
+    transformers: [
+      Diffo.Provider.Instance.Extension.Transformers.TransformSpecification,
+      Diffo.Provider.Instance.Extension.Transformers.TransformCharacteristics,
+      Diffo.Provider.Instance.Extension.Transformers.TransformFeatures,
+      Diffo.Provider.Instance.Extension.Transformers.TransformParties,
+      Diffo.Provider.Instance.Extension.Transformers.TransformBuildActions
+    ],
     verifiers: [
       Diffo.Provider.Instance.Extension.Verifiers.VerifySpecification,
       Diffo.Provider.Instance.Extension.Verifiers.VerifyCharacteristics,

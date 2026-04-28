@@ -15,7 +15,10 @@ defmodule Diffo.Provider.Instance.Party do
   @doc false
   def validate_parties(changeset) do
     declarations = InstanceInfo.parties(changeset.resource)
+    validate_parties(changeset, declarations)
+  end
 
+  def validate_parties(changeset, declarations) do
     if declarations == [] do
       changeset
     else
