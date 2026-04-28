@@ -35,14 +35,31 @@ defmodule Diffo.Provider.Instance.Feature do
     end
   end
 
+  def set_features_argument(changeset, declarations)
+      when is_struct(changeset, Ash.Changeset) and is_list(declarations) do
+    case features = create_features_from_declarations(declarations) do
+      [] ->
+        changeset
+
+      {:error, error} ->
+        Ash.Changeset.add_error(changeset, error)
+
+      _ ->
+        feature_ids = Enum.map(features, &Map.get(&1, :id))
+        Ash.Changeset.force_set_argument(changeset, :features, feature_ids)
+    end
+  end
+
   @doc """
   Creates the Features from a Extended Instance's module
   """
   def create_features(module) when is_atom(module) do
-    features = Info.features(module)
+    Info.features(module) |> create_features_from_declarations()
+  end
 
+  defp create_features_from_declarations(declarations) do
     Enum.reduce_while(
-      features,
+      declarations,
       [],
       # create any feature characteristics
       fn %{name: name, is_enabled?: isEnabled, characteristics: characteristics}, acc ->
