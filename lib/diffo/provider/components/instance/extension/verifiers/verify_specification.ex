@@ -12,14 +12,14 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifySpecification do
   @impl true
   def verify(dsl_state) do
     resource = Verifier.get_persisted(dsl_state, :module)
-    spec_id = Verifier.get_option(dsl_state, [:specification], :id)
+    spec_id = Verifier.get_option(dsl_state, [:structure, :specification], :id)
 
     errors =
       if spec_id && !Diffo.Uuid.uuid4?(spec_id) do
         [
           DslError.exception(
             module: resource,
-            path: [:specification, :id],
+            path: [:structure, :specification, :id],
             message: "specification: id must be a valid UUID4"
           )
         ]

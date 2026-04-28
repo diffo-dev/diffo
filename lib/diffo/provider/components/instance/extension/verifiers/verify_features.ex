@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyFeatures do
-  @moduledoc "Verifies that feature characteristic value_type modules exist"
+  @moduledoc "Verifies that feature names are unique, feature characteristic names are unique, and value_type modules exist"
   use Spark.Dsl.Verifier
 
   alias Spark.Dsl.Verifier
@@ -12,32 +12,57 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyFeatures do
   @impl true
   def verify(dsl_state) do
     resource = Verifier.get_persisted(dsl_state, :module)
-    features = Verifier.get_entities(dsl_state, [:features])
+    features = Verifier.get_entities(dsl_state, [:structure, :features])
 
-    errors =
+    duplicate_feature_errors =
+      features
+      |> Enum.group_by(& &1.name)
+      |> Enum.filter(fn {_name, fs} -> length(fs) > 1 end)
+      |> Enum.map(fn {name, _} ->
+        DslError.exception(
+          module: resource,
+          path: [:structure, :features],
+          message: "features: name #{inspect(name)} is declared more than once"
+        )
+      end)
+
+    type_errors =
       Enum.reduce(features, [], fn feature, acc ->
-        Enum.reduce(feature.characteristics, acc, fn char, acc ->
+        duplicate_char_errors =
+          feature.characteristics
+          |> Enum.group_by(& &1.name)
+          |> Enum.filter(fn {_name, chars} -> length(chars) > 1 end)
+          |> Enum.map(fn {name, _} ->
+            DslError.exception(
+              module: resource,
+              path: [:structure, :features, feature.name, :characteristics],
+              message: "features: characteristic name #{inspect(name)} is declared more than once in #{inspect(feature.name)}"
+            )
+          end)
+
+        Enum.reduce(feature.characteristics, acc ++ duplicate_char_errors, fn char, inner_acc ->
           case module_from_value_type(char.value_type) do
             {:ok, module} ->
               if Code.ensure_loaded?(module) do
-                acc
+                inner_acc
               else
                 [
                   DslError.exception(
                     module: resource,
-                    path: [:features, feature.name, :characteristics, char.name],
-                    message:
-                      "features: characteristic value_type #{inspect(module)} does not exist"
+                    path: [:structure, :features, feature.name, :characteristics, char.name],
+                    message: "features: characteristic value_type #{inspect(module)} does not exist"
                   )
-                  | acc
+                  | inner_acc
                 ]
               end
 
             :error ->
-              acc
+              inner_acc
           end
         end)
       end)
+
+    errors = duplicate_feature_errors ++ type_errors
 
     case errors do
       [] -> :ok

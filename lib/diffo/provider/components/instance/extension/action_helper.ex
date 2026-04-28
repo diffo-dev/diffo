@@ -11,20 +11,7 @@ defmodule Diffo.Provider.Instance.ActionHelper do
   alias Diffo.Provider.Instance.Place
   alias Diffo.Provider.Instance.Party
 
-  @doc """
-  build before_action helper, injects instance dsl configuration into the changeset
-  """
-  def build_before(changeset) do
-    changeset
-    |> Specification.set_specified_by_argument()
-    |> Feature.set_features_argument()
-    |> Characteristic.set_characteristics_argument()
-    |> Party.validate_parties()
-  end
-
-  @doc """
-  build after_action helper, relates TMF entities to the new instance
-  """
+  @doc false
   def build_after(changeset, result) do
     specified_by = Ash.Changeset.get_argument(changeset, :specified_by)
     result = %{result | specification_id: specified_by}

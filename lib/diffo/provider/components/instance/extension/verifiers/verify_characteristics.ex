@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyCharacteristics do
-  @moduledoc "Verifies that characteristic value_type modules exist"
+  @moduledoc "Verifies that characteristic names are unique and value_type modules exist"
   use Spark.Dsl.Verifier
 
   alias Spark.Dsl.Verifier
@@ -12,9 +12,21 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyCharacteristics do
   @impl true
   def verify(dsl_state) do
     resource = Verifier.get_persisted(dsl_state, :module)
-    characteristics = Verifier.get_entities(dsl_state, [:characteristics])
+    characteristics = Verifier.get_entities(dsl_state, [:structure, :characteristics])
 
-    errors =
+    duplicate_errors =
+      characteristics
+      |> Enum.group_by(& &1.name)
+      |> Enum.filter(fn {_name, chars} -> length(chars) > 1 end)
+      |> Enum.map(fn {name, _} ->
+        DslError.exception(
+          module: resource,
+          path: [:structure, :characteristics],
+          message: "characteristics: name #{inspect(name)} is declared more than once"
+        )
+      end)
+
+    type_errors =
       Enum.reduce(characteristics, [], fn char, acc ->
         case module_from_value_type(char.value_type) do
           {:ok, module} ->
@@ -24,7 +36,7 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyCharacteristics do
               [
                 DslError.exception(
                   module: resource,
-                  path: [:characteristics, char.name],
+                  path: [:structure, :characteristics, char.name],
                   message: "characteristics: value_type #{inspect(module)} does not exist"
                 )
                 | acc
@@ -35,6 +47,8 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyCharacteristics do
             acc
         end
       end)
+
+    errors = duplicate_errors ++ type_errors
 
     case errors do
       [] -> :ok

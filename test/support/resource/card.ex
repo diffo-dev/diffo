@@ -11,7 +11,6 @@ defmodule Diffo.Test.Card do
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
   alias Diffo.Provider.Instance.Characteristic
-  alias Diffo.Provider.Instance.ActionHelper
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.AssignableValue
@@ -27,40 +26,36 @@ defmodule Diffo.Test.Card do
     plural_name :Cards
   end
 
-  specification do
-    id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
-    name "card"
-    type :resourceSpecification
-    description "A Card Resource Instance"
-    category "Network Resource"
+  structure do
+    specification do
+      id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+      name "card"
+      type :resourceSpecification
+      description "A Card Resource Instance"
+      category "Network Resource"
+    end
+
+    characteristics do
+      characteristic :card, CardValue
+      characteristic :ports, AssignableValue
+    end
   end
 
-  characteristics do
-    characteristic :card, CardValue
-    characteristic :ports, AssignableValue
+  behaviour do
+    actions do
+      create :build
+    end
   end
 
   actions do
     create :build do
       description "creates a new Card resource instance for build"
       accept [:id, :name, :type, :which]
-      argument :specified_by, :uuid, public?: false
       argument :relationships, {:array, :struct}
-      argument :features, {:array, :uuid}, public?: false
-      argument :characteristics, {:array, :uuid}, public?: false
       argument :places, {:array, :struct}
       argument :parties, {:array, :struct}
 
       change set_attribute(:type, :resource)
-
-      change before_action(fn changeset, _context ->
-               ActionHelper.build_before(changeset)
-             end)
-
-      change after_action(fn changeset, result, _context ->
-               ActionHelper.build_after(changeset, result)
-             end)
-
       change load [:href]
       upsert? false
     end
