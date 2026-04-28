@@ -6,13 +6,41 @@ defmodule Diffo.Provider.Instance.Extension do
   @moduledoc """
   DSL Extension customising an Instance.
 
-  Provides compile-time declaration blocks for domain-specific Service and Resource kinds
-  built on `Diffo.Provider.BaseInstance`. All declarations are introspectable via
-  `Diffo.Provider.Instance.Extension.Info`.
+  Provides two top-level sections:
+
+  ## structure
+
+  Describes the static shape of the Instance kind — what it is, what values it carries,
+  and what parties it relates to. All structure declarations are baked into the resource
+  module at compile time via persisters and are introspectable at runtime via
+  `Diffo.Provider.Instance.Info` or directly as generated functions on the resource module.
+
+  - `specification do` — the TMF Specification (id, name, type, version, description, category).
+    The id is a stable UUID4 that is the same across all environments for this Instance kind.
+  - `characteristics do` — typed value slots carried by instances of this kind, each backed
+    by an `Ash.TypedStruct`.
+  - `features do` — optional capabilities of this kind, each with its own typed characteristic
+    payload and an enabled/disabled default.
+  - `parties do` — the party roles that instances of this kind relate to, with multiplicity,
+    reference, and calculation options.
+
+  ## behaviour
+
+  Declares which Ash actions should be wired for instance build lifecycle management.
+  Currently supports `create` declarations; future sections will cover triggers and other
+  lifecycle concerns.
+
+  Declaring `create :name` in `behaviour do actions do` causes the `TransformBehaviour`
+  transformer to inject `:specified_by`, `:features`, and `:characteristics` arguments onto
+  the named Ash create action. These arguments carry the UUIDs of the TMF entities created
+  by `build_before/1` and consumed by the Ash relationship management in the action.
 
   See the [DSL cheat sheet](DSL-Diffo.Provider.Instance.Extension.html) for the full DSL reference.
-  See `Diffo.Provider.BaseInstance` for full usage documentation.
+  See `Diffo.Provider.BaseInstance` for full usage documentation including generated functions.
   """
+
+  # ── structure ──────────────────────────────────────────────────────────────
+
   @specification %Spark.Dsl.Section{
     name: :specification,
     describe: "Defines the Instance Specification",
@@ -31,43 +59,31 @@ defmodule Diffo.Provider.Instance.Extension do
     schema: [
       id: [
         type: :string,
-        doc: """
-        The id of the specification, a uuid4 the same in all environments, unique for name and major_version.
-        """,
+        doc: "The id of the specification, a uuid4 the same in all environments, unique for name and major_version.",
         required: true
       ],
       name: [
         type: :string,
-        doc: """
-        The name of the specification, unique to a service but common for all versions.
-        """,
+        doc: "The name of the specification, unique to a service but common for all versions.",
         required: true
       ],
       type: [
         type: :atom,
-        doc: """
-        The type of the specification.
-        """,
+        doc: "The type of the specification.",
         default: :serviceSpecification
       ],
       major_version: [
         type: :integer,
-        doc: """
-        The major_version of the specification.
-        """,
+        doc: "The major_version of the specification.",
         default: 1
       ],
       description: [
         type: :string,
-        doc: """
-        A generic description of the specified service or resource.
-        """
+        doc: "A generic description of the specified service or resource."
       ],
       category: [
         type: :string,
-        doc: """
-        The category the specified service or resource belongs to.
-        """
+        doc: "The category the specified service or resource belongs to."
       ]
     ]
   }
@@ -79,17 +95,12 @@ defmodule Diffo.Provider.Instance.Extension do
     args: [:name, :value_type],
     schema: [
       name: [
-        doc: """
-          The name of the characteristic, an atom
-        """,
+        doc: "The name of the characteristic, an atom",
         type: :atom,
         required: true
       ],
       value_type: [
-        doc: """
-          The type of the characteristic's value. An atom module name such as an Ash.TypedStruct for a scalar value,
-          or `{:array, module}` for an array of values of that type.
-        """,
+        doc: "The type of the characteristic's value. An atom module name such as an Ash.TypedStruct for a scalar value, or `{:array, module}` for an array of values of that type.",
         type: :any
       ]
     ]
@@ -108,9 +119,7 @@ defmodule Diffo.Provider.Instance.Extension do
       end
       """
     ],
-    entities: [
-      @characteristic
-    ]
+    entities: [@characteristic]
   }
 
   @feature %Spark.Dsl.Entity{
@@ -120,16 +129,12 @@ defmodule Diffo.Provider.Instance.Extension do
     args: [:name],
     schema: [
       name: [
-        doc: """
-          The name of the feature, an atom
-        """,
+        doc: "The name of the feature, an atom",
         type: :atom,
         required: true
       ],
       is_enabled?: [
-        doc: """
-          Whether the feature is enabled by default, defaults true
-        """,
+        doc: "Whether the feature is enabled by default, defaults true",
         type: :boolean
       ]
     ],
@@ -153,9 +158,7 @@ defmodule Diffo.Provider.Instance.Extension do
       end
       """
     ],
-    entities: [
-      @feature
-    ]
+    entities: [@feature]
   }
 
   @party_schema [
@@ -216,12 +219,108 @@ defmodule Diffo.Provider.Instance.Extension do
       end
       """
     ],
-    entities: [
-      @party_entity,
-      @parties_entity
+    entities: [@party_entity, @parties_entity]
+  }
+
+  @structure %Spark.Dsl.Section{
+    name: :structure,
+    describe: "Defines the structural shape of the Instance — its specification, characteristics, features, and parties",
+    examples: [
+      """
+      structure do
+        specification do
+          id "da9b207a-26c3-451d-8abd-0640c6349979"
+          name "DSL Access Service"
+          type :serviceSpecification
+        end
+
+        characteristics do
+          characteristic :circuit, Diffo.Access.Circuit
+        end
+
+        parties do
+          party :provider, MyApp.Provider
+        end
+      end
+      """
+    ],
+    sections: [@specification, @characteristics, @features, @parties]
+  }
+
+  # ── behaviour ──────────────────────────────────────────────────────────────
+
+  @action_create %Spark.Dsl.Entity{
+    name: :create,
+    describe: "Marks a create action for instance build wiring, injecting :specified_by, :features, and :characteristics arguments",
+    target: Diffo.Provider.Instance.Extension.ActionCreate,
+    args: [:name],
+    schema: [
+      name: [
+        type: :atom,
+        required: true,
+        doc: "The name of the create action to wire"
+      ]
     ]
   }
 
+  @action_update %Spark.Dsl.Entity{
+    name: :update,
+    describe: "Marks an update action for instance behaviour wiring",
+    target: Diffo.Provider.Instance.Extension.ActionUpdate,
+    args: [:name],
+    schema: [
+      name: [
+        type: :atom,
+        required: true,
+        doc: "The name of the update action to wire"
+      ]
+    ]
+  }
+
+  @behaviour_actions %Spark.Dsl.Section{
+    name: :actions,
+    describe: "Declares which actions to wire for instance behaviour",
+    examples: [
+      """
+      actions do
+        create :build
+        update :define
+      end
+      """
+    ],
+    entities: [@action_create, @action_update]
+  }
+
+  @behaviour_section %Spark.Dsl.Section{
+    name: :behaviour,
+    describe: "Defines the behavioural wiring for the Instance — actions, and in future triggers and tasks",
+    examples: [
+      """
+      behaviour do
+        actions do
+          create :build
+          update :define
+        end
+      end
+      """
+    ],
+    sections: [@behaviour_actions]
+  }
+
   use Spark.Dsl.Extension,
-    sections: [@specification, @features, @characteristics, @parties]
+    sections: [@structure, @behaviour_section],
+    persisters: [
+      Diffo.Provider.Instance.Extension.Persisters.PersistSpecification,
+      Diffo.Provider.Instance.Extension.Persisters.PersistCharacteristics,
+      Diffo.Provider.Instance.Extension.Persisters.PersistFeatures,
+      Diffo.Provider.Instance.Extension.Persisters.PersistParties,
+      Diffo.Provider.Instance.Extension.Transformers.TransformBehaviour
+    ],
+    verifiers: [
+      Diffo.Provider.Instance.Extension.Verifiers.VerifySpecification,
+      Diffo.Provider.Instance.Extension.Verifiers.VerifyCharacteristics,
+      Diffo.Provider.Instance.Extension.Verifiers.VerifyFeatures,
+      Diffo.Provider.Instance.Extension.Verifiers.VerifyParties,
+      Diffo.Provider.Instance.Extension.Verifiers.VerifyBehaviour
+    ]
 end

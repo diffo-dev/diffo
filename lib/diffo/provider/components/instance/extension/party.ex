@@ -5,7 +5,6 @@
 defmodule Diffo.Provider.Instance.Party do
   @moduledoc false
   alias Diffo.Provider
-  alias Diffo.Provider.Instance.Extension.Info, as: InstanceInfo
 
   @doc """
   Struct for a Party
@@ -13,9 +12,7 @@ defmodule Diffo.Provider.Instance.Party do
   defstruct [:id, :role]
 
   @doc false
-  def validate_parties(changeset) do
-    declarations = InstanceInfo.parties(changeset.resource)
-
+  def validate_parties(changeset, declarations) do
     if declarations == [] do
       changeset
     else

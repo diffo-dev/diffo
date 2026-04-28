@@ -5,5 +5,12 @@
 defmodule Diffo.Provider.Instance.Extension.Info do
   use Spark.InfoGenerator,
     extension: Diffo.Provider.Instance.Extension,
-    sections: [:specification, :features, :characteristics, :parties]
+    sections: [:structure]
+
+  @doc "Returns true if the module is a BaseInstance-derived resource"
+  @spec instance?(module()) :: boolean()
+  def instance?(module) do
+    Code.ensure_loaded?(module) and
+      Diffo.Provider.Instance.Extension in Ash.Resource.Info.extensions(module)
+  end
 end
