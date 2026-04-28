@@ -5,7 +5,7 @@
 defmodule Diffo.Provider.Place.Extension.Info do
   use Spark.InfoGenerator,
     extension: Diffo.Provider.Place.Extension,
-    sections: []
+    sections: [:instances, :parties, :places]
 
   @doc "Returns true if the module is a BasePlace-derived resource"
   @spec place?(module()) :: boolean()
