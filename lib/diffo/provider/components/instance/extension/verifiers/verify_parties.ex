@@ -8,6 +8,7 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyParties do
 
   alias Spark.Dsl.Verifier
   alias Spark.Error.DslError
+  alias Diffo.Provider.Party.Extension.Info, as: PartyInfo
 
   @impl true
   def verify(dsl_state) do
@@ -28,17 +29,32 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyParties do
 
     type_errors =
       Enum.reduce(parties, [], fn party, acc ->
-        if party.party_type && !Code.ensure_loaded?(party.party_type) do
-          [
-            DslError.exception(
-              module: resource,
-              path: [:structure, :parties, party.role],
-              message: "parties: party_type #{inspect(party.party_type)} does not exist"
-            )
-            | acc
-          ]
-        else
-          acc
+        cond do
+          is_nil(party.party_type) ->
+            acc
+
+          !Code.ensure_loaded?(party.party_type) ->
+            [
+              DslError.exception(
+                module: resource,
+                path: [:structure, :parties, party.role],
+                message: "parties: party_type #{inspect(party.party_type)} does not exist"
+              )
+              | acc
+            ]
+
+          !PartyInfo.party?(party.party_type) ->
+            [
+              DslError.exception(
+                module: resource,
+                path: [:structure, :parties, party.role],
+                message: "parties: party_type #{inspect(party.party_type)} does not extend BaseParty"
+              )
+              | acc
+            ]
+
+          true ->
+            acc
         end
       end)
 
