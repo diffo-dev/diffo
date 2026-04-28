@@ -273,6 +273,34 @@ defmodule Diffo.InstanceExtension.VerifierTest do
         end
       )
     end
+
+    test "party_type not extending BaseParty warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "parties: party_type Diffo.Test.Shelf does not extend BaseParty",
+        fn ->
+          defmodule InvalidPartyBaseType do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with party_type that is not a BaseParty"
+            end
+
+            structure do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+              end
+
+              parties do
+                party :operator, Diffo.Test.Shelf
+              end
+            end
+          end
+        end
+      )
+    end
   end
 
   describe "behaviour verifier" do

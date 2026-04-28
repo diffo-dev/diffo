@@ -6,4 +6,11 @@ defmodule Diffo.Provider.Party.Extension.Info do
   use Spark.InfoGenerator,
     extension: Diffo.Provider.Party.Extension,
     sections: [:instances, :parties]
+
+  @doc "Returns true if the module is a BaseParty-derived resource"
+  @spec party?(module()) :: boolean()
+  def party?(module) do
+    Code.ensure_loaded?(module) and
+      Diffo.Provider.Party.Extension in Ash.Resource.Info.extensions(module)
+  end
 end
