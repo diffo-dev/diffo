@@ -74,6 +74,8 @@ defmodule Diffo.Provider.BasePlace do
     relate [
       {:place_refs, :RELATES, :incoming, :PlaceRef}
     ]
+
+    label :Place
   end
 
   attributes do

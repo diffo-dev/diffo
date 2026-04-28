@@ -110,5 +110,54 @@ Target: `Diffo.Provider.Party.Extension.PartyRole`
 
 
 
+## places
+Declares the roles this Party kind plays with respect to Places
+
+### Nested DSLs
+ * [role](#places-role)
+
+
+### Examples
+```
+places do
+  role :headquartered_at, MyApp.GeographicSite
+end
+
+```
+
+
+
+
+### places.role
+```elixir
+role role, place_type
+```
+
+
+Declares a role this Party kind plays with respect to Places
+
+
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`role`](#places-role-role){: #places-role-role .spark-required} | `atom` |  | The role name, an atom |
+| [`place_type`](#places-role-place_type){: #places-role-place_type } | `any` |  | The module of the related Place resource |
+
+
+
+
+
+
+### Introspection
+
+Target: `Diffo.Provider.Party.Extension.PlaceRole`
+
+
+
+
 
 <style type="text/css">.spark-required::after { content: "*"; color: red !important; }</style>

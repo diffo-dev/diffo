@@ -11,6 +11,7 @@ defmodule Diffo.InstanceExtension.TransformerTest do
   alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Provider.Instance.Feature
   alias Diffo.Provider.Instance.Info
+  alias Diffo.Provider.Instance.Extension.PlaceDeclaration
 
   describe "PersistSpecification" do
     test "bakes specification/0 onto the resource" do
@@ -162,6 +163,41 @@ defmodule Diffo.InstanceExtension.TransformerTest do
     end
   end
 
+  describe "PersistPlaces" do
+    test "bakes places/0 onto the resource" do
+      places = Shelf.places()
+      assert is_list(places)
+      assert length(places) == 2
+      roles = Enum.map(places, & &1.role)
+      assert :installation_site in roles
+      assert :billing_address in roles
+    end
+
+    test "each place is a PlaceDeclaration struct" do
+      [first | _] = Shelf.places()
+      assert is_struct(first, PlaceDeclaration)
+    end
+
+    test "reference place has reference flag set" do
+      billing = Enum.find(Shelf.places(), &(&1.role == :billing_address))
+      assert billing.reference == true
+    end
+
+    test "places are also accessible via Info" do
+      assert length(Info.places(Shelf)) == 2
+      assert Info.places(Card) == []
+    end
+
+    test "Info.place/2 returns the named place declaration by role" do
+      p = Info.place(Shelf, :installation_site)
+      assert p.role == :installation_site
+    end
+
+    test "Info.place/2 returns nil for unknown role" do
+      assert Info.place(Shelf, :nonexistent) == nil
+    end
+  end
+
   describe "TransformBehaviour" do
     setup do
       Code.ensure_loaded!(Shelf)
@@ -240,6 +276,16 @@ defmodule Diffo.InstanceExtension.TransformerTest do
 
     test "party/1 returns nil for unknown role" do
       assert Shelf.party(:nonexistent) == nil
+    end
+
+    test "place/1 returns the named place declaration by role" do
+      p = Shelf.place(:installation_site)
+      assert p.role == :installation_site
+      assert p.multiple == false
+    end
+
+    test "place/1 returns nil for unknown role" do
+      assert Shelf.place(:nonexistent) == nil
     end
   end
 end
