@@ -23,6 +23,8 @@ defmodule Diffo.Provider.Instance.Extension do
     payload and an enabled/disabled default.
   - `parties do` — the party roles that instances of this kind relate to, with multiplicity,
     reference, and calculation options.
+  - `places do` — the place roles that instances of this kind relate to, mirroring `parties do`
+    in structure and options.
 
   ## behaviour
 
@@ -222,9 +224,70 @@ defmodule Diffo.Provider.Instance.Extension do
     entities: [@party_entity, @parties_entity]
   }
 
+  @place_schema [
+    role: [
+      doc: "The role name, an atom",
+      type: :atom,
+      required: true
+    ],
+    place_type: [
+      doc: "The module of the Place kind. A BasePlace-derived resource.",
+      type: :any
+    ],
+    reference: [
+      doc: "If true, no direct PlaceRef edge is created; the place is reachable by graph traversal.",
+      type: :boolean,
+      default: false
+    ],
+    calculate: [
+      doc: "Name of an Ash calculation on this resource that produces the place at build time.",
+      type: :atom
+    ]
+  ]
+
+  @place_entity %Spark.Dsl.Entity{
+    name: :place,
+    describe: "Declares a singular place role on this Instance",
+    target: Diffo.Provider.Instance.Extension.PlaceDeclaration,
+    args: [:role, :place_type],
+    auto_set_fields: [multiple: false],
+    schema: @place_schema
+  }
+
+  @places_entity %Spark.Dsl.Entity{
+    name: :places,
+    describe: "Declares a plural place role on this Instance",
+    target: Diffo.Provider.Instance.Extension.PlaceDeclaration,
+    args: [:role, :place_type],
+    auto_set_fields: [multiple: true],
+    schema:
+      @place_schema ++
+        [
+          constraints: [
+            doc: "Multiplicity constraints on the number of places in this role, e.g. [min: 1, max: 3]",
+            type: :keyword_list
+          ]
+        ]
+  }
+
+  @places %Spark.Dsl.Section{
+    name: :places,
+    describe: "List of Instance Place roles",
+    examples: [
+      """
+      places do
+        place :installation_site, MyApp.GeographicSite
+        places :coverage_areas, MyApp.GeographicLocation, constraints: [min: 1]
+        place :billing_address, MyApp.GeographicAddress, reference: true
+      end
+      """
+    ],
+    entities: [@place_entity, @places_entity]
+  }
+
   @structure %Spark.Dsl.Section{
     name: :structure,
-    describe: "Defines the structural shape of the Instance — its specification, characteristics, features, and parties",
+    describe: "Defines the structural shape of the Instance — its specification, characteristics, features, parties, and places",
     examples: [
       """
       structure do
@@ -241,10 +304,14 @@ defmodule Diffo.Provider.Instance.Extension do
         parties do
           party :provider, MyApp.Provider
         end
+
+        places do
+          place :installation_site, MyApp.GeographicSite
+        end
       end
       """
     ],
-    sections: [@specification, @characteristics, @features, @parties]
+    sections: [@specification, @characteristics, @features, @parties, @places]
   }
 
   # ── behaviour ──────────────────────────────────────────────────────────────
@@ -314,6 +381,7 @@ defmodule Diffo.Provider.Instance.Extension do
       Diffo.Provider.Instance.Extension.Persisters.PersistCharacteristics,
       Diffo.Provider.Instance.Extension.Persisters.PersistFeatures,
       Diffo.Provider.Instance.Extension.Persisters.PersistParties,
+      Diffo.Provider.Instance.Extension.Persisters.PersistPlaces,
       Diffo.Provider.Instance.Extension.Transformers.TransformBehaviour
     ],
     verifiers: [

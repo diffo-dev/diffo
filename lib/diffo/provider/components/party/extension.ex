@@ -74,6 +74,37 @@ defmodule Diffo.Provider.Party.Extension do
     entities: [@party_role]
   }
 
+  @place_role %Spark.Dsl.Entity{
+    name: :role,
+    describe: "Declares a role this Party kind plays with respect to Places",
+    target: Diffo.Provider.Party.Extension.PlaceRole,
+    args: [:role, :place_type],
+    schema: [
+      role: [
+        type: :atom,
+        required: true,
+        doc: "The role name, an atom"
+      ],
+      place_type: [
+        type: :any,
+        doc: "The module of the related Place resource"
+      ]
+    ]
+  }
+
+  @places %Spark.Dsl.Section{
+    name: :places,
+    describe: "Declares the roles this Party kind plays with respect to Places",
+    examples: [
+      """
+      places do
+        role :headquartered_at, MyApp.GeographicSite
+      end
+      """
+    ],
+    entities: [@place_role]
+  }
+
   use Spark.Dsl.Extension,
-    sections: [@instances, @parties]
+    sections: [@instances, @parties, @places]
 end
