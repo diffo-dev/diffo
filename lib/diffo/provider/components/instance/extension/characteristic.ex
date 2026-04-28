@@ -8,7 +8,6 @@ defmodule Diffo.Provider.Instance.Characteristic do
 
   alias Diffo.Provider
   alias Diffo.Provider.Instance
-  alias Diffo.Provider.Instance.Extension.Info
   alias Diffo.Type.Value
 
   @doc """
@@ -19,10 +18,9 @@ defmodule Diffo.Provider.Instance.Characteristic do
   @doc """
   Sets the Extended Instances characteristics argument in the changeset, creating the characteristics
   """
-  def set_characteristics_argument(changeset) when is_struct(changeset, Ash.Changeset) do
-    %module{} = changeset.data
-
-    case characteristics = create_characteristics(module, :instance) do
+  def set_characteristics_argument(changeset, declarations)
+      when is_struct(changeset, Ash.Changeset) and is_list(declarations) do
+    case characteristics = create_characteristics_from_declarations(declarations, :instance) do
       [] ->
         changeset
 
@@ -35,13 +33,8 @@ defmodule Diffo.Provider.Instance.Characteristic do
     end
   end
 
-  @doc """
-  Creates the Characteristics from a Extended Instance's module
-  """
-  def create_characteristics(module, type) when is_atom(module) and is_atom(type) do
-    characteristics = Info.characteristics(module)
-
-    Enum.reduce_while(characteristics, [], fn %{name: name, value_type: value_type}, acc ->
+  defp create_characteristics_from_declarations(declarations, type) do
+    Enum.reduce_while(declarations, [], fn %{name: name, value_type: value_type}, acc ->
       try do
         attrs =
           case value_type do
@@ -73,8 +66,7 @@ defmodule Diffo.Provider.Instance.Characteristic do
   def relate_instance(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     characteristics = Ash.Changeset.get_argument(changeset, :characteristics)
-    instance = struct(Instance, Map.from_struct(result))
-    Provider.relate_instance_characteristics(instance, %{characteristics: characteristics})
+    Provider.relate_instance_characteristics(%Instance{id: result.id}, %{characteristics: characteristics})
   end
 
   @doc """

@@ -144,7 +144,12 @@ end
 
 Diffo also has an inbuilt Spark DSL extension [Diffo.Provider.Instance.Extension](https://hexdocs.pm/diffo/Diffo.Provider.Instance.Extension.html) which provides DSL and functions for use in building and operating domain specific services and resources.
 
-Currently it has DSL to allow you to declare specification, features, characteristics, and party roles. It can be used for services or resources.
+The extension has two top-level sections:
+
+**`structure do`** — describes the static shape of the Instance kind: its TMF Specification, Characteristics, Features, and Party roles. All declarations are baked into the module at compile time and introspectable at runtime via generated functions (`specification/0`, `characteristics/0`, `features/0`, `parties/0`) and `Diffo.Provider.Instance.Info`.
+
+**`behaviour do`** — declares which Ash actions should be wired for instance lifecycle management. Declaring `create :name` injects `:specified_by`, `:features`, and `:characteristics` arguments onto that action, and the `BuildBefore`/`BuildAfter` changes registered on `BaseInstance` automatically handle specification upsert, feature and characteristic creation, party validation, and graph relationship wiring for every create action. You write the action body for your domain-specific accepts and arguments; the structural wiring is handled for you.
+
 Feature and Instance Characteristics can have payloads defined by [Ash.TypedStruct](https://hexdocs.pm/ash/Ash.TypedStruct.html). TypedStruct are DSL specified types which are effectively lightweight embedded resources. We've extended both [AshJason](https://hexdocs.pm/ash_jason/) and [AshOutstanding](https://hexdocs.pm/ash_outstanding/) to support Ash.TypedStruct.
 
 For partial resource allocation and assignment we've created Diffo.Provider.Assigner. It is used by the host resource, which declares a characteristic with an Diffo.Provider.AssignableValue TypedStruct. Allocation is managed within the Provider domain using this characteristic. Assignment to Services or Resources is via 'reverse' type: "assignedTo" relationships enriched by relationship characteristics.
@@ -172,7 +177,6 @@ defmodule Diffo.Compute.Cluster do
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
   alias Diffo.Provider.Instance.Characteristic
-  alias Diffo.Provider.Instance.ActionHelper
   alias Diffo.Compute
   alias Diffo.Compute.ClusterValue
   alias Diffo.Compute.Tenant
@@ -187,42 +191,40 @@ defmodule Diffo.Compute.Cluster do
     plural_name :Clusters
   end
 
-  specification do
-    id "4bcfc4c9-e776-4878-a658-e8d81857bed7"
-    name "cluster"
-    type :resourceSpecification
-    description "A Cluster Resource Instance"
-    category "Network Resource"
+  structure do
+    specification do
+      id "4bcfc4c9-e776-4878-a658-e8d81857bed7"
+      name "cluster"
+      type :resourceSpecification
+      description "A Cluster Resource Instance"
+      category "Network Resource"
+    end
+
+    characteristics do
+      characteristic :cluster, ClusterValue
+    end
+
+    parties do
+      party :operator, Tenant
+      party :manager, Engineer
+    end
   end
 
-  characteristics do
-    characteristic :cluster, ClusterValue
-  end
-
-  parties do
-    party :operator, Tenant
-    party :manager, Engineer
+  behaviour do
+    actions do
+      create :build
+    end
   end
 
   actions do
     create :build do
       description "creates a new Cluster resource instance for build"
       accept [:id, :name, :type, :which]
-      argument :specified_by, :uuid, public?: false
       argument :relationships, {:array, :struct}
-      argument :features, {:array, :uuid}, public?: false
-      argument :characteristics, {:array, :uuid}, public?: false
       argument :places, {:array, :struct}
       argument :parties, {:array, :struct}
 
       change set_attribute(:type, :resource)
-
-      change before_action(fn changeset, _context -> ActionHelper.build_before(changeset) end)
-
-      change after_action(fn changeset, result, _context ->
-          ActionHelper.build_after(changeset, result, Compute, :get_cluster_by_id)
-        end)
-
       change load [:href]
       upsert? false
     end
@@ -232,7 +234,7 @@ defmodule Diffo.Compute.Cluster do
       argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, _result} <- Characteristic.update_values(result, changeset),
+               with {:ok, result} <- Characteristic.update_values(result, changeset),
                     {:ok, cluster} <- Compute.get_cluster_by_id(result.id),
                     do: {:ok, cluster}
              end)
@@ -305,7 +307,6 @@ defmodule Diffo.Compute.GPU do
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
   alias Diffo.Provider.Instance.Characteristic
-  alias Diffo.Provider.Instance.ActionHelper
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.AssignableValue
@@ -321,38 +322,36 @@ defmodule Diffo.Compute.GPU do
     plural_name :gpus
   end
 
-  specification do
-    id "ad50073f-17e0-45cb-b9b1-aa4296876156"
-    name "gpu"
-    type :resourceSpecification
-    description "A GPU Resource Instance"
-    category "Network Resource"
+  structure do
+    specification do
+      id "ad50073f-17e0-45cb-b9b1-aa4296876156"
+      name "gpu"
+      type :resourceSpecification
+      description "A GPU Resource Instance"
+      category "Network Resource"
+    end
+
+    characteristics do
+      characteristic :gpu, GPUValue
+      characteristic :cores, AssignableValue
+    end
   end
 
-  characteristics do
-    characteristic :gpu, GPUValue
-    characteristic :cores, AssignableValue
+  behaviour do
+    actions do
+      create :build
+    end
   end
 
   actions do
     create :build do
       description "creates a new GPU resource instance for build"
       accept [:id, :name, :type, :which]
-      argument :specified_by, :uuid, public?: false
       argument :relationships, {:array, :struct}
-      argument :features, {:array, :uuid}, public?: false
-      argument :characteristics, {:array, :uuid}, public?: false
       argument :places, {:array, :struct}
       argument :parties, {:array, :struct}
 
       change set_attribute(:type, :resource)
-
-      change before_action(fn changeset, _context -> ActionHelper.build_before(changeset) end)
-
-      change after_action(fn changeset, result, _context ->
-          ActionHelper.build_after(changeset, result, Compute, :get_gpu_by_id)
-        end)
-
       change load [:href]
       upsert? false
     end
@@ -685,7 +684,7 @@ What happens when I request a specific assignment from an instance to which the 
 
 In this tutorial you've used Diffo's Provider Instance Extension to define a Compute domain with a composite Cluster resource comprised of assigned GPU cores, and the Provider Party Extension to define Tenant and Engineer party kinds that operate and manage those resources.
 
-The BaseParty fragment follows the same pattern as BaseInstance — domain-specific resources use it as a fragment and finish their actions with a domain-scoped reload to pick up extended fields.
+`BaseParty` follows the same pattern as `BaseInstance` — domain-specific party resources use it as a fragment and write their own `build` action for domain-specific attributes. No manual wiring is needed.
 
 A `BasePlace` extension for domain-specific Place kinds (such as a DataCentre with its own attributes) follows the same pattern and will be added in a future release.
 
