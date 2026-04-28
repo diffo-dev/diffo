@@ -6,12 +6,37 @@ defmodule Diffo.Provider.Instance.Extension do
   @moduledoc """
   DSL Extension customising an Instance.
 
-  Provides compile-time declaration blocks for domain-specific Service and Resource kinds
-  built on `Diffo.Provider.BaseInstance`. All declarations are introspectable via
-  `Diffo.Provider.Instance.Extension.Info`.
+  Provides two top-level sections:
+
+  ## structure
+
+  Describes the static shape of the Instance kind — what it is, what values it carries,
+  and what parties it relates to. All structure declarations are baked into the resource
+  module at compile time via persisters and are introspectable at runtime via
+  `Diffo.Provider.Instance.Info` or directly as generated functions on the resource module.
+
+  - `specification do` — the TMF Specification (id, name, type, version, description, category).
+    The id is a stable UUID4 that is the same across all environments for this Instance kind.
+  - `characteristics do` — typed value slots carried by instances of this kind, each backed
+    by an `Ash.TypedStruct`.
+  - `features do` — optional capabilities of this kind, each with its own typed characteristic
+    payload and an enabled/disabled default.
+  - `parties do` — the party roles that instances of this kind relate to, with multiplicity,
+    reference, and calculation options.
+
+  ## behaviour
+
+  Declares which Ash actions should be wired for instance build lifecycle management.
+  Currently supports `create` declarations; future sections will cover triggers and other
+  lifecycle concerns.
+
+  Declaring `create :name` in `behaviour do actions do` causes the `TransformBehaviour`
+  transformer to inject `:specified_by`, `:features`, and `:characteristics` arguments onto
+  the named Ash create action. These arguments carry the UUIDs of the TMF entities created
+  by `build_before/1` and consumed by the Ash relationship management in the action.
 
   See the [DSL cheat sheet](DSL-Diffo.Provider.Instance.Extension.html) for the full DSL reference.
-  See `Diffo.Provider.BaseInstance` for full usage documentation.
+  See `Diffo.Provider.BaseInstance` for full usage documentation including generated functions.
   """
 
   # ── structure ──────────────────────────────────────────────────────────────

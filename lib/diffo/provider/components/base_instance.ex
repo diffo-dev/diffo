@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.BaseInstance do
   @moduledoc """
-  Ash Resource Fragment which is a the point of extension for your TMF Service or Resource Instance
+  Ash Resource Fragment which is the point of extension for your TMF Service or Resource Instance.
 
   `BaseInstance` is the foundation for domain-specific Service and Resource kinds.
   Include it as a fragment on an `Ash.Resource` to get common Instance attributes,
@@ -12,19 +12,22 @@ defmodule Diffo.Provider.BaseInstance do
 
   ## Instance Extension DSL
 
-  The `Diffo.Provider.Instance.Extension` DSL provides compile-time declaration blocks
-  for describing the shape of a domain-specific Service or Resource.
+  The DSL has two top-level sections: `structure do` describes what the instance kind is;
+  `behaviour do` wires it to Ash actions.
 
-  `specification do` — declares the TMF Specification for this Instance kind.
+  ### structure
 
-  `features do` — declares the Features this Instance kind may have, each optionally
-  carrying a typed characteristic payload.
+  `specification do` — declares the TMF Specification for this Instance kind (id, name, type,
+  major_version, description, category).
 
-  `characteristics do` — declares the top-level Characteristics of this Instance kind,
-  each backed by an `Ash.TypedStruct`.
+  `characteristics do` — declares the top-level Characteristics of this Instance kind, each
+  backed by an `Ash.TypedStruct`.
+
+  `features do` — declares the Features this Instance kind may have, each optionally carrying
+  its own typed characteristic payload.
 
   `parties do` — declares the Party roles this Instance kind relates to. Role names are
-  domain-specific nouns describing what the party is to the instance. Two forms:
+  domain-specific nouns describing what the party means to the instance. Two forms:
 
       parties do
         party :provider, MyApp.Provider, calculate: :provider_calculation
@@ -33,12 +36,44 @@ defmodule Diffo.Provider.BaseInstance do
         party :owner, MyApp.InfrastructureCo, reference: true
       end
 
-  - `party` — singular (at most one party in this role)
-  - `parties` — plural (unbounded, or bounded with `constraints:`)
+  - `party` — singular (at most one party in this role per instance)
+  - `parties` — plural (unbounded, or bounded with `constraints: [min: n, max: m]`)
   - `reference: true` — no direct `PartyRef` edge; party is reachable by graph traversal
   - `calculate:` — names an Ash calculation on this resource that produces the party at build time
 
-  All declarations are introspectable via `Diffo.Provider.Instance.Extension.Info`.
+  All declarations are introspectable at runtime via `Diffo.Provider.Instance.Info` and at
+  compile time via `Diffo.Provider.Instance.Extension.Info`.
+
+  ### behaviour
+
+  `behaviour do actions do create :name end end` — marks a named create action for build
+  wiring. This injects `:specified_by`, `:features`, and `:characteristics` arguments onto
+  that action so Ash accepts the values that `build_before/1` sets automatically.
+
+  You still write the action body yourself for domain-specific accepts, arguments, and changes.
+  The build arguments are not public and do not need to appear in `accept`.
+
+  ## Generated functions
+
+  Every resource using `BaseInstance` with a `specification do` gets the following functions
+  generated at compile time:
+
+  - `specification/0` — the specification keyword list baked at compile time
+  - `characteristics/0` — list of `Characteristic` structs
+  - `features/0` — list of `Feature` structs
+  - `parties/0` — list of `PartyDeclaration` structs
+  - `characteristic/1` — returns the named `Characteristic` or `nil`
+  - `feature/1` — returns the named `Feature` or `nil`
+  - `feature_characteristic/2` — returns the named characteristic within a feature, or `nil`
+  - `party/1` — returns the `PartyDeclaration` for the given role, or `nil`
+  - `build_before/1` — called automatically before every create action; upserts the
+    specification and creates features, characteristics, and parties, setting their ids
+    as action arguments
+  - `build_after/2` — called automatically after every create action; relates the created
+    TMF entities to the new instance node
+
+  Resources without a `specification do id` get trivial passthroughs for `build_before/1`
+  and `build_after/2`.
 
   ## Usage
 
@@ -50,28 +85,50 @@ defmodule Diffo.Provider.BaseInstance do
           plural_name :clusters
         end
 
-        specification do
-          id "4bcfc4c9-e776-4878-a658-e8d81857bed7"
-          name "cluster"
-          type :resourceSpecification
+        structure do
+          specification do
+            id "4bcfc4c9-e776-4878-a658-e8d81857bed7"
+            name "cluster"
+            type :resourceSpecification
+          end
+
+          parties do
+            party :operator, MyApp.Organization
+            parties :installer, MyApp.Engineer
+          end
         end
 
-        parties do
-          party :operator, MyApp.Organization
-          parties :installer, MyApp.Engineer
+        behaviour do
+          actions do
+            create :build
+          end
+        end
+
+        actions do
+          create :build do
+            description "creates a new Cluster resource instance"
+            accept [:id, :name, :type, :which]
+            argument :relationships, {:array, :struct}
+            argument :parties, {:array, :struct}
+
+            change set_attribute(:type, :resource)
+            change load [:href]
+            upsert? false
+          end
         end
       end
 
-  ## Action pattern
+  ## Rolling your own actions
 
-  Domain-specific Instance resources should finish their `build` action with a reload via
-  their own domain's `get_xxx_by_id` to pick up extended fields:
+  The `behaviour do actions do create :name end end` declaration is optional. Omitting it
+  means the `:specified_by`, `:features`, and `:characteristics` arguments are not declared
+  on that action — but `build_before/1` and `build_after/2` are still called for every
+  create via the global `BuildBefore` and `BuildAfter` changes registered on `BaseInstance`.
 
-      create :build do
-        change after_action(fn changeset, result, _context ->
-          ActionHelper.build_after(changeset, result)
-        end)
-      end
+  If you have a create action that should NOT trigger the full build wiring (e.g. a
+  lightweight admin create), you can override `build_before/1` or `build_after/2` on your
+  resource, or use Ash's `skip_unknown_inputs` to absorb the injected arguments without
+  declaring them.
   """
   use Spark.Dsl.Fragment,
     of: Ash.Resource,
