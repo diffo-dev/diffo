@@ -12,7 +12,7 @@ defmodule Diffo.Provider.Instance.Specification do
   @doc """
   Struct for a Specification
   """
-  defstruct [:id, :name, :type, :major_version, :category]
+  defstruct [:id, :name, :type, :major_version, :description, :category]
 
   @doc """
   Sets the specified_by argument in the changeset, ensuring the Extended Instance's specification exists
