@@ -453,7 +453,7 @@ defmodule Diffo.Provider.InstanceTest do
         Diffo.Provider.create_specification!(%{name: "wifiAccess", major_version: 2})
 
       updated_instance =
-        instance |> Diffo.Provider.specify_instance!(%{specified_by: new_specification.id})
+        instance |> Diffo.Provider.respecify_instance!(%{specified_by: new_specification.id})
 
       assert updated_instance.specification.id == new_specification.id
     end
@@ -463,7 +463,7 @@ defmodule Diffo.Provider.InstanceTest do
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       {:error, _error} =
-        instance |> Diffo.Provider.specify_instance(%{specified_by: UUID.uuid4()})
+        instance |> Diffo.Provider.respecify_instance(%{specified_by: UUID.uuid4()})
     end
 
     test "update a service instance specification - failure - not a uuid" do
@@ -471,7 +471,7 @@ defmodule Diffo.Provider.InstanceTest do
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       {:error, _error} =
-        instance |> Diffo.Provider.specify_instance(%{specified_by: "not a uuid"})
+        instance |> Diffo.Provider.respecify_instance(%{specified_by: "not a uuid"})
     end
 
     test "annotate a service instance with a note - success" do
