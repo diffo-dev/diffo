@@ -89,6 +89,12 @@ defmodule Diffo.Type.Value do
       storage: :type_and_value
     ]
 
+  def cast_input(%Diffo.Type.Dynamic{} = dynamic, constraints) do
+    super(%{type: "dynamic", value: dynamic}, constraints)
+  end
+
+  def cast_input(value, constraints), do: super(value, constraints)
+
   def handle_change(_old_value, nil, _constraints), do: {:ok, nil}
   def handle_change(old_value, new_value, constraints), do: super(old_value, new_value, constraints)
 
