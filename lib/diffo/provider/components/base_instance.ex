@@ -144,6 +144,26 @@ defmodule Diffo.Provider.BaseInstance do
   lightweight admin create), you can override `build_before/1` or `build_after/2` on your
   resource, or use Ash's `skip_unknown_inputs` to absorb the injected arguments without
   declaring them.
+
+  ## Instance versioning
+
+  Each Instance kind is tied to a specific major version of its Specification via the `id`
+  declared in `specification do`. Patch and minor version bumps update the existing
+  Specification node in place and require no instance changes. Major version bumps introduce
+  a new Instance kind module (e.g. `BroadbandV2`) with a new `id` and `major_version`,
+  leaving the original module and all its instances untouched.
+
+  To migrate an existing instance from one major version to another, call
+  `Diffo.Provider.respecify_instance/2` with the new specification's id:
+
+      {:ok, v2_spec} = Diffo.Provider.get_specification_by_id(BroadbandV2.specification()[:id])
+      {:ok, migrated} = Diffo.Provider.respecify_instance(instance, %{specified_by: v2_spec.id})
+
+  Any breaking data changes (e.g. a characteristic value that no longer exists in V2) must
+  be handled before or as part of respecification — either via Cypher directly against the
+  graph or via a domain-specific migration action you build on your own resource.
+
+  See `Diffo.Provider.Specification` for the full versioning lifecycle.
   """
   use Spark.Dsl.Fragment,
     of: Ash.Resource,
