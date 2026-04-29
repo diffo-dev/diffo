@@ -79,6 +79,18 @@ defmodule Diffo.Provider.Instance.Extension do
         doc: "The major_version of the specification.",
         default: 1
       ],
+      minor_version: [
+        type: :integer,
+        doc: "The minor_version of the specification."
+      ],
+      patch_version: [
+        type: :integer,
+        doc: "The patch_version of the specification."
+      ],
+      tmf_version: [
+        type: :integer,
+        doc: "The TMF API version of the specification, e.g. 4."
+      ],
       description: [
         type: :string,
         doc: "A generic description of the specified service or resource."

@@ -38,7 +38,7 @@ defmodule Diffo.Provider.Specification do
 
     create :create do
       description "creates a major version of a named serviceSpecification or resourceSpecification"
-      accept [:id, :type, :name, :major_version, :description, :category]
+      accept [:id, :type, :name, :major_version, :minor_version, :patch_version, :tmf_version, :description, :category]
       change load [:version, :href, :instance_type]
       upsert? true
       upsert_identity :unique_major_version_per_name

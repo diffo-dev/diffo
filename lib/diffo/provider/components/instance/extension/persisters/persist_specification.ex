@@ -14,6 +14,9 @@ defmodule Diffo.Provider.Instance.Extension.Persisters.PersistSpecification do
       name: Transformer.get_option(dsl_state, [:structure, :specification], :name),
       type: Transformer.get_option(dsl_state, [:structure, :specification], :type, :serviceSpecification),
       major_version: Transformer.get_option(dsl_state, [:structure, :specification], :major_version, 1),
+      minor_version: Transformer.get_option(dsl_state, [:structure, :specification], :minor_version),
+      patch_version: Transformer.get_option(dsl_state, [:structure, :specification], :patch_version),
+      tmf_version: Transformer.get_option(dsl_state, [:structure, :specification], :tmf_version),
       description: Transformer.get_option(dsl_state, [:structure, :specification], :description),
       category: Transformer.get_option(dsl_state, [:structure, :specification], :category)
     ]

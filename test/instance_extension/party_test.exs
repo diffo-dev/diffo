@@ -10,7 +10,7 @@ defmodule Diffo.InstanceExtension.PartyTest do
   alias Diffo.Provider.Party.Extension.Info, as: PartyInfo
   alias Diffo.Test.Organization
   alias Diffo.Test.Person
-  alias Diffo.Test.Carrier
+
   alias Diffo.Test.Shelf
   alias Diffo.Test.Nbn
   alias Diffo.Test.Servo
