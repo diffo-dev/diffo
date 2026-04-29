@@ -31,6 +31,105 @@ defmodule Diffo.InstanceExtension.VerifierTest do
         end
       )
     end
+
+    test "name not matching camelCase pattern warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "specification: name",
+        fn ->
+          defmodule InvalidSpecName do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with non-camelCase specification name"
+            end
+
+            structure do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "not camel case"
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "type not in allowed set warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "specification: type",
+        fn ->
+          defmodule InvalidSpecType do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with invalid specification type"
+            end
+
+            structure do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+                type :badType
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "negative major_version warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "specification: major_version",
+        fn ->
+          defmodule InvalidSpecMajorVersion do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with negative major_version"
+            end
+
+            structure do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+                major_version -1
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "tmf_version below minimum warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "specification: tmf_version",
+        fn ->
+          defmodule InvalidSpecTmfVersion do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with tmf_version below minimum"
+            end
+
+            structure do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+                tmf_version 0
+              end
+            end
+          end
+        end
+      )
+    end
   end
 
   describe "characteristics verifier" do
