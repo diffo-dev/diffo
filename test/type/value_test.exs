@@ -33,7 +33,6 @@ defmodule Diffo.Type.ValueTest do
                Ash.Type.cast_input(Value, value, Value.subtype_constraints())
     end
 
-    @tag :skip
     test "cast_input dynamic" do
       value = %Dynamic{type: Patch, value: %Patch{aEnd: 1, zEnd: 42}}
 
