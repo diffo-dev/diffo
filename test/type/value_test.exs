@@ -33,8 +33,6 @@ defmodule Diffo.Type.ValueTest do
                Ash.Type.cast_input(Value, value, Value.subtype_constraints())
     end
 
-    @tag bugged: "raw Dynamic struct cast_input requires Value wrapper"
-    @tag :skip
     test "cast_input dynamic" do
       value = %Dynamic{type: Patch, value: %Patch{aEnd: 1, zEnd: 42}}
 
