@@ -14,6 +14,8 @@ defmodule Diffo.Test.Servo do
 
   alias Diffo.Test.Shelf
   alias Diffo.Test.Card
+  alias Diffo.Test.Broadband
+  alias Diffo.Test.BroadbandV2
   alias Diffo.Test.InvalidSpecification
   alias Diffo.Test.InvalidCharacteristic
   alias Diffo.Test.InvalidFeatureCharacteristic
@@ -37,6 +39,16 @@ defmodule Diffo.Test.Servo do
       define :define_card, action: :define
       define :relate_card, action: :relate
       define :assign_port, action: :assign_port
+    end
+
+    resource Broadband do
+      define :build_broadband, action: :build
+      define :get_broadband_by_id, action: :read, get_by: :id
+    end
+
+    resource BroadbandV2 do
+      define :build_broadband_v2, action: :build
+      define :get_broadband_v2_by_id, action: :read, get_by: :id
     end
 
     resource InvalidSpecification do

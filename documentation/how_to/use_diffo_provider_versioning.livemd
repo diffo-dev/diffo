@@ -1,0 +1,425 @@
+<!--
+SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+
+SPDX-License-Identifier: MIT
+-->
+
+# Instance Versioning with the Diffo Provider
+
+```elixir
+Mix.install(
+  [
+    {:diffo, path: "/Users/Beanlanda/git/diffo"}
+  ],
+  config: [
+    diffo: [ash_domains: [Diffo.Provider]]
+  ],
+  consolidate_protocols: false
+)
+```
+
+## Overview
+
+This livebook explores how diffo handles the full lifecycle of a TMF Service or Resource
+Specification across minor and major version changes. Versioning is one of the hardest
+problems in operational support systems — traditional OSS platforms treat it as a schema
+migration problem, requiring coordinated downtime, data transformation pipelines, and
+carefully sequenced deployments. Diffo treats it as a graph relationship swap. The
+complexity disappears.
+
+We will follow a realistic NBN / RSP scenario:
+
+* **NBN** is the Provider — they define and publish service specifications
+* **RSPs** (Retail Service Providers) are Consumers — they create and operate service instances
+
+The scenario uses a `Broadband` service. We will walk through:
+
+1. Defining and deploying V1
+2. Adding a new technology type as a minor (backward-compatible) version — V1.1
+3. Publishing a breaking V2 alongside V1
+4. An RSP migrating their V1 instances to V2
+5. NBN withdrawing V1
+
+### Installing Neo4j and Configuring Bolty
+
+Diffo uses the [Ash Neo4j DataLayer](https://github.com/diffo-dev/ash_neo4j), which requires
+Neo4j to be installed and running.
+
+[AshNeo4j](https://github.com/diffo-dev/ash_neo4j) uses [neo4j](https://github.com/neo4j/neo4j).
+You can install latest major Neo4j versions from the community tab at
+[Neo4j Deployment Center](https://neo4j.com/deployment-center/?desktop-gdb), or use the
+[5.26.8 direct link](https://neo4j.com/download-thanks/?edition=community&release=5.26.8&flavour=rpm)
+
+Update the configuration below as necessary and evaluate.
+
+```elixir
+config = [
+  uri: "bolt://localhost:7687",
+  auth: [username: "neo4j", password: "password"],
+  user_agent: "diffoLivebook/1",
+  pool_size: 15,
+  max_overflow: 3,
+  prefix: :default,
+  name: Bolt,
+  log: false,
+  log_hex: false
+]
+```
+
+```elixir
+AshNeo4j.BoltyHelper.start(config)
+```
+
+```elixir
+AshNeo4j.BoltyHelper.is_connected()
+```
+
+**OPTIONAL** Clear the database before starting:
+
+```elixir
+AshNeo4j.Neo4jHelper.delete_all()
+```
+
+## Specifications and Versioning
+
+A `Diffo.Provider.Specification` identifies the *kind* of a TMF Service or Resource Instance.
+Every instance carries a relationship to exactly one Specification node in the Neo4j graph,
+established at build time and changeable via `Diffo.Provider.respecify_instance/2`.
+
+A Specification is uniquely identified by `{name, major_version}`. The `id` is a stable UUID4
+that is the same across all environments for a given `{name, major_version}` pair — it is
+declared as a constant in the `specification do` DSL block and committed to source control.
+
+Diffo uses semantic versioning:
+
+| Change | Mechanism                                 | Instance impact                                        | Intended usage                                                                         |
+| ------ | ----------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| Patch  | `next_patch_specification!/1`             | None — internal fix                                  | Corrections to metadata: description wording, category typos                           |
+| Minor  | `next_minor_specification!/1`             | None — all instances immediately reflect new version | Backward-compatible additions: new optional characteristics, new enum values           |
+| Major  | New module, new `id`, new `major_version` | Instances stay on old spec until explicitly migrated   | Breaking changes                                                                        |
+
+## Module and Domain Setup
+
+Livebook compiles each cell as it is evaluated, so all resource modules must be defined before
+the domain that references them. We define the V1 and V2 `Broadband` modules here, then
+register both with the `Diffo.Nbn` domain in a single cell.
+
+**This is a simplification.** In reality, NBN cannot write V2's API until they have designed it
+— they could not have included `BroadbandV2` in the domain the day V1 shipped. In a real
+deployment, the domain definition lives in a versioned package. When NBN publishes V2, they
+release a new version of that package with `BroadbandV2` added. RSPs pull the new package
+version to gain access to V2. We define both modules upfront here only because Livebook does
+not support hot module replacement across cells.
+
+### V1 — Broadband service characteristic value
+
+`:fttb` (Fibre to the Building) is the first supported technology type.
+
+```elixir
+defmodule Diffo.Nbn.BroadbandValue do
+  @moduledoc "Broadband service characteristic value (V1)"
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
+
+  jason do
+    pick [:technology]
+    compact true
+  end
+
+  typed_struct do
+    field :technology, :atom,
+      description: "access technology: :fttc, :fttb, :fttn, or :fttp"
+  end
+end
+```
+
+### V1 — Broadband module
+
+The `specification do` block declares the stable UUID and version. The `behaviour do` block
+wires the `build` action so that creating a `Broadband` instance automatically upserts the
+specification node and wires it into the graph.
+
+```elixir
+defmodule Diffo.Nbn.Broadband do
+  @moduledoc "Broadband Service Instance — V1"
+  alias Diffo.Provider.BaseInstance
+  alias Diffo.Nbn
+  alias Diffo.Nbn.BroadbandValue
+
+  use Ash.Resource,
+    fragments: [BaseInstance],
+    domain: Nbn
+
+  resource do
+    description "A Broadband Service Instance (V1)"
+    plural_name :broadbands
+  end
+
+  structure do
+    specification do
+      id "a1b2c3d4-e5f6-4a7b-8c9d-e0f1a2b3c4d5"
+      name "broadband"
+      type :serviceSpecification
+      major_version 1
+      description "A broadband access service"
+      category "Access"
+    end
+
+    characteristics do
+      characteristic :broadband, BroadbandValue
+    end
+  end
+
+  behaviour do
+    actions do
+      create :build
+    end
+  end
+
+  actions do
+    create :build do
+      accept [:id, :name]
+      change set_attribute(:type, :service)
+      change load [:href]
+      upsert? false
+    end
+  end
+end
+```
+
+### V2 — Broadband service characteristic value
+
+`:fttb` is retired in V2. `:fw` (Fixed Wireless) was added in V1.1 and carries forward.
+
+```elixir
+defmodule Diffo.Nbn.BroadbandV2Value do
+  @moduledoc "Broadband service characteristic value (V2) — :fttb removed"
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
+
+  jason do
+    pick [:technology]
+    compact true
+  end
+
+  typed_struct do
+    field :technology, :atom,
+      description: "access technology: :fttc, :fttn, :fttp, or :fw — :fttb retired"
+  end
+end
+```
+
+### V2 — Broadband module
+
+A new `id` and `major_version: 2` make V2 a distinct specification node. V1 and V2 coexist
+in the graph; RSPs migrate at their own pace.
+
+```elixir
+defmodule Diffo.Nbn.BroadbandV2 do
+  @moduledoc "Broadband Service Instance — V2 (:fttb retired)"
+  alias Diffo.Provider.BaseInstance
+  alias Diffo.Nbn
+  alias Diffo.Nbn.BroadbandV2Value
+
+  use Ash.Resource,
+    fragments: [BaseInstance],
+    domain: Nbn
+
+  resource do
+    description "A Broadband Service Instance (V2)"
+    plural_name :broadband_v2s
+  end
+
+  structure do
+    specification do
+      id "f6e5d4c3-b2a1-4f0e-9d8c-7b6a5f4e3d2c"
+      name "broadband"
+      type :serviceSpecification
+      major_version 2
+      description "A broadband access service — :fttb technology retired"
+      category "Access"
+    end
+
+    characteristics do
+      characteristic :broadband, BroadbandV2Value
+    end
+  end
+
+  behaviour do
+    actions do
+      create :build
+    end
+  end
+
+  actions do
+    create :build do
+      accept [:id, :name]
+      change set_attribute(:type, :service)
+      change load [:href]
+      upsert? false
+    end
+  end
+end
+```
+
+### Domain
+
+```elixir
+defmodule Diffo.Nbn do
+  @moduledoc "NBN service domain"
+  use Ash.Domain, otp_app: :diffo, validate_config_inclusion?: false
+
+  domain do
+    description "NBN broadband service domain"
+  end
+
+  resources do
+    resource Diffo.Nbn.Broadband do
+      define :build_broadband, action: :build
+      define :get_broadband_by_id, action: :read, get_by: :id
+    end
+
+    resource Diffo.Nbn.BroadbandV2 do
+      define :build_broadband_v2, action: :build
+      define :get_broadband_v2_by_id, action: :read, get_by: :id
+    end
+  end
+end
+```
+
+## Phase 1 — RSP Acme creates V1 instances
+
+RSP Acme creates broadband services for customers. The specification node is upserted on the
+first `build_broadband` call and reused on every subsequent call.
+
+```elixir
+{:ok, acme_1} = Diffo.Nbn.build_broadband(%{name: "acme-broadband-001"})
+{:ok, acme_2} = Diffo.Nbn.build_broadband(%{name: "acme-broadband-002"})
+
+IO.inspect(acme_1.specification.version, label: "spec version")
+IO.inspect(acme_1.specification_id, label: "spec id")
+IO.inspect(acme_2.specification_id, label: "acme_2 spec id (same)")
+```
+
+Both instances share the same specification node.
+
+## Phase 2 — NBN ships a minor version (V1.1): adds :fw technology
+
+NBN adds Fixed Wireless (`:fw`) as a supported technology type. This is a backward-compatible
+change — existing instances remain valid. NBN bumps the minor version on the specification node
+and deploys an updated `Broadband` module with `:fw` in `BroadbandValue`.
+
+The minor version bump requires no migration and no instance downtime. Every instance
+immediately reflects the new version — there is nothing to do.
+
+```elixir
+{:ok, spec} = Diffo.Provider.get_specification_by_id(Diffo.Nbn.Broadband.specification()[:id])
+IO.inspect(spec.version, label: "before")
+
+updated_spec = Diffo.Provider.next_minor_specification!(spec)
+IO.inspect(updated_spec.version, label: "after")
+```
+
+Reload an existing instance — its specification is now v1.1.0 with no action required:
+
+```elixir
+{:ok, reloaded} = Diffo.Provider.get_instance_by_id(acme_1.id)
+IO.inspect(reloaded.specification.version, label: "acme_1 spec version (automatic)")
+```
+
+## Phase 3 — NBN publishes V2: removes :fttb (breaking change)
+
+`:fttb` technology is being retired. This is a breaking change — existing instances with
+`technology: :fttb` cannot simply adopt V2 without data remediation. V1 and V2 coexist; RSPs
+can start creating V2 instances immediately at their own pace.
+
+RSP Beta starts creating V2 instances while Acme stays on V1. Both operate concurrently:
+
+```elixir
+{:ok, beta_1} = Diffo.Nbn.build_broadband_v2(%{name: "beta-broadband-v2-001"})
+
+IO.inspect(acme_1.specification_id, label: "Acme V1 spec")
+IO.inspect(beta_1.specification_id, label: "Beta V2 spec")
+
+specs = Diffo.Provider.find_specifications_by_name!("broadband")
+IO.inspect(Enum.map(specs, &{&1.major_version, &1.version}), label: "coexisting specs")
+```
+
+## Phase 4 — NBN freezes V1 creation (optional)
+
+NBN may choose to block new V1 instances before withdrawing V1 entirely, giving RSPs time to
+complete migration without the risk of creating new V1 instances they will immediately need to
+migrate.
+
+This is done by removing the `behaviour do` block from the `Broadband` module and deploying
+the update. The `build_broadband` function disappears from the domain API — the compiled module
+is the machine-readable announcement of the freeze. Existing V1 instances are completely
+unaffected; all lifecycle operations continue normally.
+
+Note: this step cannot be done simultaneously with publishing V2 — in-flight RSP orders on V1
+would lose their create capability mid-order. It is a deliberate, sequenced step once the
+concurrent period has settled.
+
+## Phase 5 — RSP Acme migrates V1 instances to V2
+
+Acme decides to migrate. For instances with `technology: :fttb`, data remediation is required
+before respecification — either via Cypher directly against the graph or via a domain-specific
+migration action. For all other instances, `respecify_instance` is all that is needed.
+
+`respecify_instance` is a Provider-level action. It swaps the `SPECIFIED_BY` relationship edge
+in the graph from the V1 specification node to V2.
+
+```elixir
+# Fetch as Diffo.Provider.Instance for the Provider API
+{:ok, instance_a} = Diffo.Provider.get_instance_by_id(acme_1.id)
+{:ok, instance_b} = Diffo.Provider.get_instance_by_id(acme_2.id)
+
+v2_spec_id = Diffo.Nbn.BroadbandV2.specification()[:id]
+
+{:ok, migrated_a} = Diffo.Provider.respecify_instance(instance_a, %{specified_by: v2_spec_id})
+{:ok, migrated_b} = Diffo.Provider.respecify_instance(instance_b, %{specified_by: v2_spec_id})
+
+IO.inspect(migrated_a.specification.id, label: "migrated spec id")
+IO.inspect(migrated_a.specification.major_version, label: "migrated major version")
+```
+
+Verify Acme has no remaining V1 instances:
+
+```elixir
+v1_spec_id = Diffo.Nbn.Broadband.specification()[:id]
+v1_remaining = Diffo.Provider.find_instances_by_specification_id!(v1_spec_id)
+IO.inspect(length(v1_remaining), label: "V1 instances remaining")
+```
+
+## Phase 6 — NBN withdraws V1
+
+NBN removes the `Broadband` module from the package. V1 instances that have not been migrated
+remain in the graph and continue to operate, but no domain API exists to create or manage them
+via domain-specific actions. RSPs must complete migration to regain full operational capability.
+
+Any RSP still holding V1 instances after withdrawal is in an unpleasant position — they cannot
+create new V1 instances to replace accidentally deleted ones. The recommendation is to complete
+migration before the withdrawal deadline.
+
+The V1 specification node itself is protected: `Diffo.Provider.delete_specification` will fail
+as long as any instance holds a `SPECIFIED_BY` relationship to it.
+
+```elixir
+{:ok, v1_spec} = Diffo.Provider.get_specification_by_id(v1_spec_id)
+{:error, _} = Diffo.Provider.delete_specification(v1_spec)
+|> IO.inspect(label: "delete V1 spec (protected while instances remain)")
+```
+
+## What diffo brings to versioning
+
+Traditional OSS platforms treat versioning as a schema migration problem. A major version
+requires coordinated downtime, data transformation pipelines, dual-write periods, and carefully
+sequenced deployments across every system that touches the service model. The cost is
+proportional to the number of systems involved and the size of the installed base.
+
+Diffo's model is:
+
+* **Minor/patch** — update a node property. Zero cost, instant, universal.
+* **Major** — add a module, swap a graph edge per instance. The graph stores the relationship,
+  not the version. Migration is as fast as the RSP chooses to make it.
+* **Withdrawal** — remove a module. Existing nodes are untouched.
+
+Diffo's model is simple and powerful.
