@@ -2,28 +2,29 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Organization do
+defmodule Diffo.Test.GeographicSite do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Organization - Organization Party
+  GeographicSite - test fixture for Place Extension DSL
   """
 
-  alias Diffo.Provider.BaseParty
+  alias Diffo.Provider.BasePlace
   alias Diffo.Test.Nbn
 
   use Ash.Resource,
-    fragments: [BaseParty],
+    fragments: [BasePlace],
     domain: Nbn
 
   resource do
-    description "An Organization"
-    plural_name :organizations
+    description "A Geographic Site"
+    plural_name :geographic_sites
   end
 
   jason do
-    pick [:id, :name, :type]
+    pick [:id, :href, :name, :type]
     compact true
+    rename type: "@type"
   end
 
   outstanding do
@@ -33,19 +34,19 @@ defmodule Diffo.Test.Organization do
   actions do
     create :build do
       accept [:id, :href, :name]
-      change set_attribute(:type, :Organization)
+      change set_attribute(:type, :GeographicSite)
     end
   end
 
   instances do
-    role :facilitator, Diffo.Provider.Instance
+    role :installed_at, Diffo.Provider.Instance
   end
 
   parties do
-    role :employer, Diffo.Test.Person
+    role :managed_by, Diffo.Test.Organization
   end
 
   places do
-    role :headquarters, Diffo.Provider.Place
+    role :contained_in, Diffo.Provider.Place
   end
 end

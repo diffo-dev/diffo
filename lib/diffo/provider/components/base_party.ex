@@ -76,6 +76,32 @@ defmodule Diffo.Provider.BaseParty do
         end
       end
 
+  ## Domain-specific attributes
+
+  Add Ash `attribute` declarations directly to your derived resource for any fields beyond the
+  base set. Those attributes can only be set via actions you declare on the derived resource —
+  the base `create` action provided by `BaseParty` only accepts the base fields (`id`, `href`,
+  `name`, `type`, `referred_type`). Use your domain API to call the derived resource's action:
+
+      defmodule MyApp.Carrier do
+        use Ash.Resource, fragments: [BaseParty], domain: MyApp.Domain
+
+        attributes do
+          attribute :abn, :string, public?: true
+          attribute :carrier_code, :string, public?: true
+        end
+
+        actions do
+          create :build do
+            accept [:id, :href, :name, :abn, :carrier_code]
+            change set_attribute(:type, :Organization)
+          end
+        end
+      end
+
+      # Use the domain API — Provider.create_party!/1 does not know about :abn
+      MyApp.Domain.create_carrier!(%{name: "Acme", abn: "51824753556", carrier_code: "ACM"})
+
   ## TMF type and referred_type
 
   The `type` and `referred_type` attributes map to the TMF `@type` and `@referredType` JSON

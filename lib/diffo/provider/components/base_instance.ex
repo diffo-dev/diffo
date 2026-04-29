@@ -41,6 +41,15 @@ defmodule Diffo.Provider.BaseInstance do
   - `reference: true` — no direct `PartyRef` edge; party is reachable by graph traversal
   - `calculate:` — names an Ash calculation on this resource that produces the party at build time
 
+  `places do` — declares the Place roles this Instance kind relates to. Mirrors `parties do`
+  in structure:
+
+      places do
+        place :installation_site, MyApp.GeographicSite
+        places :coverage_areas, MyApp.GeographicLocation, constraints: [min: 1]
+        place :billing_address, MyApp.GeographicAddress, reference: true
+      end
+
   All declarations are introspectable at runtime via `Diffo.Provider.Instance.Info` and at
   compile time via `Diffo.Provider.Instance.Extension.Info`.
 
@@ -62,10 +71,12 @@ defmodule Diffo.Provider.BaseInstance do
   - `characteristics/0` — list of `Characteristic` structs
   - `features/0` — list of `Feature` structs
   - `parties/0` — list of `PartyDeclaration` structs
+  - `places/0` — list of `PlaceDeclaration` structs
   - `characteristic/1` — returns the named `Characteristic` or `nil`
   - `feature/1` — returns the named `Feature` or `nil`
   - `feature_characteristic/2` — returns the named characteristic within a feature, or `nil`
   - `party/1` — returns the `PartyDeclaration` for the given role, or `nil`
+  - `place/1` — returns the `PlaceDeclaration` for the given role, or `nil`
   - `build_before/1` — called automatically before every create action; upserts the
     specification and creates features, characteristics, and parties, setting their ids
     as action arguments
@@ -95,6 +106,10 @@ defmodule Diffo.Provider.BaseInstance do
           parties do
             party :operator, MyApp.Organization
             parties :installer, MyApp.Engineer
+          end
+
+          places do
+            place :site, MyApp.GeographicSite
           end
         end
 

@@ -22,6 +22,8 @@ module at compile time via persisters and are introspectable at runtime via
   payload and an enabled/disabled default.
 - `parties do` — the party roles that instances of this kind relate to, with multiplicity,
   reference, and calculation options.
+- `places do` — the place roles that instances of this kind relate to, mirroring `parties do`
+  in structure and options.
 
 ## behaviour
 
@@ -39,7 +41,7 @@ See `Diffo.Provider.BaseInstance` for full usage documentation including generat
 
 
 ## structure
-Defines the structural shape of the Instance — its specification, characteristics, features, and parties
+Defines the structural shape of the Instance — its specification, characteristics, features, parties, and places
 
 ### Nested DSLs
  * [specification](#structure-specification)
@@ -51,6 +53,9 @@ Defines the structural shape of the Instance — its specification, characterist
  * [parties](#structure-parties)
    * party
    * parties
+ * [places](#structure-places)
+   * place
+   * places
 
 
 ### Examples
@@ -68,6 +73,10 @@ structure do
 
   parties do
     party :provider, MyApp.Provider
+  end
+
+  places do
+    place :installation_site, MyApp.GeographicSite
   end
 end
 
@@ -324,6 +333,95 @@ Declares a plural party role on this Instance
 ### Introspection
 
 Target: `Diffo.Provider.Instance.Extension.PartyDeclaration`
+
+
+### structure.places
+List of Instance Place roles
+
+### Nested DSLs
+ * [place](#structure-places-place)
+ * [places](#structure-places-places)
+
+
+### Examples
+```
+places do
+  place :installation_site, MyApp.GeographicSite
+  places :coverage_areas, MyApp.GeographicLocation, constraints: [min: 1]
+  place :billing_address, MyApp.GeographicAddress, reference: true
+end
+
+```
+
+
+
+
+### structure.places.place
+```elixir
+place role, place_type
+```
+
+
+Declares a singular place role on this Instance
+
+
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`role`](#structure-places-place-role){: #structure-places-place-role .spark-required} | `atom` |  | The role name, an atom |
+| [`place_type`](#structure-places-place-place_type){: #structure-places-place-place_type } | `any` |  | The module of the Place kind. A BasePlace-derived resource. |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`reference`](#structure-places-place-reference){: #structure-places-place-reference } | `boolean` | `false` | If true, no direct PlaceRef edge is created; the place is reachable by graph traversal. |
+| [`calculate`](#structure-places-place-calculate){: #structure-places-place-calculate } | `atom` |  | Name of an Ash calculation on this resource that produces the place at build time. |
+
+
+
+
+
+### Introspection
+
+Target: `Diffo.Provider.Instance.Extension.PlaceDeclaration`
+
+### structure.places.places
+```elixir
+places role, place_type
+```
+
+
+Declares a plural place role on this Instance
+
+
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`role`](#structure-places-places-role){: #structure-places-places-role .spark-required} | `atom` |  | The role name, an atom |
+| [`place_type`](#structure-places-places-place_type){: #structure-places-places-place_type } | `any` |  | The module of the Place kind. A BasePlace-derived resource. |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`reference`](#structure-places-places-reference){: #structure-places-places-reference } | `boolean` | `false` | If true, no direct PlaceRef edge is created; the place is reachable by graph traversal. |
+| [`calculate`](#structure-places-places-calculate){: #structure-places-places-calculate } | `atom` |  | Name of an Ash calculation on this resource that produces the place at build time. |
+| [`constraints`](#structure-places-places-constraints){: #structure-places-places-constraints } | `keyword` |  | Multiplicity constraints on the number of places in this role, e.g. [min: 1, max: 3] |
+
+
+
+
+
+### Introspection
+
+Target: `Diffo.Provider.Instance.Extension.PlaceDeclaration`
 
 
 

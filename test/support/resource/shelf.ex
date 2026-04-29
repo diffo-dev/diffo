@@ -59,6 +59,11 @@ defmodule Diffo.Test.Shelf do
       party :manager, Diffo.Test.Organization, calculate: :manager_calc
       parties :installer, Diffo.Test.Person, constraints: [min: 1, max: 3]
     end
+
+    places do
+      place :installation_site, Diffo.Provider.Place
+      place :billing_address, Diffo.Provider.Place, reference: true
+    end
   end
 
   behaviour do
