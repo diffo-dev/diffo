@@ -14,9 +14,12 @@ defmodule Diffo.Test.Nbn do
 
   alias Diffo.Test.Organization
   alias Diffo.Test.Person
+  alias Diffo.Test.Carrier
+  alias Diffo.Test.GeographicSite
+  alias Diffo.Test.ExchangeBuilding
 
   domain do
-    description "NBN party domain"
+    description "NBN party and place domain"
   end
 
   resources do
@@ -30,6 +33,21 @@ defmodule Diffo.Test.Nbn do
       define :create_person, action: :build
       define :get_person_by_id, action: :read, get_by: :id
       define :list_persons, action: :list
+    end
+
+    resource Carrier do
+      define :create_carrier, action: :build
+      define :get_carrier_by_id, action: :read, get_by: :id
+    end
+
+    resource GeographicSite do
+      define :create_geographic_site, action: :build
+      define :get_geographic_site_by_id, action: :read, get_by: :id
+    end
+
+    resource ExchangeBuilding do
+      define :create_exchange_building, action: :build
+      define :get_exchange_building_by_id, action: :read, get_by: :id
     end
   end
 end
