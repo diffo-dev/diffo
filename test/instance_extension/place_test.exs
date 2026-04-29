@@ -10,7 +10,7 @@ defmodule Diffo.InstanceExtension.PlaceTest do
   alias Diffo.Provider.Place.Extension.Info, as: PlaceInfo
   alias Diffo.Test.Organization
   alias Diffo.Test.GeographicSite
-  alias Diffo.Test.ExchangeBuilding
+
   alias Diffo.Test.Shelf
   alias Diffo.Test.Nbn
 
@@ -108,7 +108,7 @@ defmodule Diffo.InstanceExtension.PlaceTest do
     end
 
     test "domain-specific attributes are readable after creation" do
-      {:ok, building} = Nbn.create_exchange_building(%{
+      {:ok, _building} = Nbn.create_exchange_building(%{
         id: "EX-MEL-002",
         name: "South Yarra Exchange",
         nli: "MEXMELB0002",

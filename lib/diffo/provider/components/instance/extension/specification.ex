@@ -12,7 +12,7 @@ defmodule Diffo.Provider.Instance.Specification do
   @doc """
   Struct for a Specification
   """
-  defstruct [:id, :name, :type, :major_version, :description, :category]
+  defstruct [:id, :name, :type, :major_version, :minor_version, :patch_version, :tmf_version, :description, :category]
 
   @doc """
   Sets the specified_by argument in the changeset, ensuring the Extended Instance's specification exists
@@ -21,7 +21,9 @@ defmodule Diffo.Provider.Instance.Specification do
       when is_struct(changeset, Ash.Changeset) and is_list(options) do
     specification = struct(__MODULE__, options)
 
-    case Provider.create_specification(Map.from_struct(specification)) do
+    attrs = specification |> Map.from_struct() |> Map.reject(fn {_, v} -> is_nil(v) end)
+
+    case Provider.create_specification(attrs) do
       {:ok, _} ->
         Ash.Changeset.force_set_argument(changeset, :specified_by, specification.id)
 
