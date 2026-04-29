@@ -10,6 +10,7 @@ defmodule Diffo.InstanceExtension.PartyTest do
   alias Diffo.Provider.Party.Extension.Info, as: PartyInfo
   alias Diffo.Test.Organization
   alias Diffo.Test.Person
+  alias Diffo.Test.Carrier
   alias Diffo.Test.Shelf
   alias Diffo.Test.Nbn
   alias Diffo.Test.Servo
@@ -33,8 +34,10 @@ defmodule Diffo.InstanceExtension.PartyTest do
       assert hd(roles).party_type == Diffo.Provider.Instance
     end
 
-    test "no party roles declared" do
-      assert PartyInfo.parties(Organization) == []
+    test "party roles are declared" do
+      roles = PartyInfo.parties(Organization)
+      assert length(roles) == 1
+      assert hd(roles).role == :employer
     end
   end
 
@@ -46,8 +49,10 @@ defmodule Diffo.InstanceExtension.PartyTest do
       assert hd(roles).party_type == Diffo.Test.Person
     end
 
-    test "no instance roles declared" do
-      assert PartyInfo.instances(Person) == []
+    test "instance roles are declared" do
+      roles = PartyInfo.instances(Person)
+      assert length(roles) == 1
+      assert hd(roles).role == :overseer
     end
   end
 
@@ -153,14 +158,47 @@ defmodule Diffo.InstanceExtension.PartyTest do
     end
   end
 
-  describe "BaseParty — Organization CRUD" do
-    test "create and read organization" do
+  describe "BaseParty — simple pattern (Organization)" do
+    test "create and read using only base attributes" do
       {:ok, org} = Nbn.create_organization(%{name: "Acme Corp"})
       assert org.name == "Acme Corp"
       assert org.type == :Organization
 
       {:ok, loaded} = Nbn.get_organization_by_id(org.id)
       assert loaded.name == "Acme Corp"
+    end
+  end
+
+  describe "BaseParty — complex pattern (Carrier)" do
+    test "domain-specific attributes are accepted and persisted" do
+      {:ok, carrier} = Nbn.create_carrier(%{
+        name: "Acme Wholesale",
+        abn: "51824753556",
+        trading_name: "Acme"
+      })
+
+      assert carrier.name == "Acme Wholesale"
+      assert carrier.type == :Organization
+      assert carrier.abn == "51824753556"
+      assert carrier.trading_name == "Acme"
+    end
+
+    test "domain-specific attributes are readable after creation" do
+      {:ok, carrier} = Nbn.create_carrier(%{
+        name: "Acme Wholesale",
+        abn: "51824753556",
+        trading_name: "Acme"
+      })
+
+      {:ok, loaded} = Nbn.get_carrier_by_id(carrier.id)
+      assert loaded.abn == "51824753556"
+      assert loaded.trading_name == "Acme"
+    end
+
+    test "domain-specific attributes are nil when not provided" do
+      {:ok, carrier} = Nbn.create_carrier(%{name: "Bare Carrier"})
+      assert carrier.abn == nil
+      assert carrier.trading_name == nil
     end
   end
 

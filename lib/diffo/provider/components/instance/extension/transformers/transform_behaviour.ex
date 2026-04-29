@@ -62,6 +62,9 @@ defmodule Diffo.Provider.Instance.Extension.Transformers.TransformBehaviour do
 
       @doc false
       def party(role), do: Enum.find(parties(), &(&1.role == role))
+
+      @doc false
+      def place(role), do: Enum.find(places(), &(&1.role == role))
     end)}
   end
 
@@ -100,5 +103,6 @@ defmodule Diffo.Provider.Instance.Extension.Transformers.TransformBehaviour do
   def after?(Diffo.Provider.Instance.Extension.Persisters.PersistCharacteristics), do: true
   def after?(Diffo.Provider.Instance.Extension.Persisters.PersistFeatures), do: true
   def after?(Diffo.Provider.Instance.Extension.Persisters.PersistParties), do: true
+  def after?(Diffo.Provider.Instance.Extension.Persisters.PersistPlaces), do: true
   def after?(_), do: false
 end

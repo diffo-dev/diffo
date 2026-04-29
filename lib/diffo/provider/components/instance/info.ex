@@ -57,4 +57,16 @@ defmodule Diffo.Provider.Instance.Info do
   def party(resource, role) do
     Enum.find(parties(resource), &(&1.role == role))
   end
+
+  @doc "Returns the list of place role declarations for the resource"
+  @spec places(Ash.Resource.t()) :: list() | []
+  def places(resource) do
+    Extension.get_persisted(resource, :places, [])
+  end
+
+  @doc "Returns the place declaration for the given role, or nil"
+  @spec place(Ash.Resource.t(), atom()) :: struct() | nil
+  def place(resource, role) do
+    Enum.find(places(resource), &(&1.role == role))
+  end
 end

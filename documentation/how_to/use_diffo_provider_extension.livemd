@@ -35,6 +35,7 @@ In this 'Diffo Provider Instance Extension' livebook you will learn about:
 * Using the Assigner
 * Composing a Resource from partially assigned Resources
 * Declaring domain Parties using the Party Extension
+* Declaring domain Places using the Place Extension
 
 ### Installing Neo4j and Configuring Bolty
 
@@ -146,7 +147,7 @@ Diffo also has an inbuilt Spark DSL extension [Diffo.Provider.Instance.Extension
 
 The extension has two top-level sections:
 
-**`structure do`** — describes the static shape of the Instance kind: its TMF Specification, Characteristics, Features, and Party roles. All declarations are baked into the module at compile time and introspectable at runtime via generated functions (`specification/0`, `characteristics/0`, `features/0`, `parties/0`) and `Diffo.Provider.Instance.Info`.
+**`structure do`** — describes the static shape of the Instance kind: its TMF Specification, Characteristics, Features, Party roles, and Place roles. All declarations are baked into the module at compile time and introspectable at runtime via generated functions (`specification/0`, `characteristics/0`, `features/0`, `parties/0`, `places/0`) and `Diffo.Provider.Instance.Info`.
 
 **`behaviour do`** — declares which Ash actions should be wired for instance lifecycle management. Declaring `create :name` injects `:specified_by`, `:features`, and `:characteristics` arguments onto that action, and the `BuildBefore`/`BuildAfter` changes registered on `BaseInstance` automatically handle specification upsert, feature and characteristic creation, party validation, and graph relationship wiring for every create action. You write the action body for your domain-specific accepts and arguments; the structural wiring is handled for you.
 
@@ -207,6 +208,10 @@ defmodule Diffo.Compute.Cluster do
     parties do
       party :operator, Tenant
       party :manager, Engineer
+    end
+
+    places do
+      place :data_centre, Diffo.Compute.DataCentre
     end
   end
 
@@ -507,6 +512,60 @@ defmodule Diffo.Compute.Engineer do
 end
 ```
 
+## Place Extension
+
+`Diffo.Provider.BasePlace` is an Ash Resource Fragment for domain-specific Place kinds, mirroring `BaseInstance` and `BaseParty`. It provides common Place attributes — `id`, `href`, `name`, `type`, `referred_type` — and the `Diffo.Provider.Place.Extension` DSL, which lets a Place kind declare the roles it plays with respect to Instances, Parties, and other Places.
+
+`type` defaults to `:PlaceRef` and is typically set in the `build` action to the concrete place type (`:GeographicSite`, `:GeographicLocation`, or `:GeographicAddress`). When `referred_type` is present, `type` must be `:PlaceRef` — meaning this Place is a reference rather than a physical location.
+
+The `Diffo.Provider.Place.Extension` DSL cheat sheet is at [DSL-Diffo.Provider.Place.Extension](https://hexdocs.pm/diffo/DSL-Diffo.Provider.Place.Extension.html).
+
+### Defining Place kinds
+
+We'll add a `DataCentre` Place kind to our Compute domain. Clusters are hosted at a data centre; the `instances do` block records that relationship from the DataCentre's perspective.
+
+```elixir
+defmodule Diffo.Compute.DataCentre do
+  @moduledoc """
+  DataCentre in the Compute domain
+  """
+
+  alias Diffo.Provider.BasePlace
+  alias Diffo.Compute
+
+  use Ash.Resource,
+    fragments: [BasePlace],
+    domain: Compute
+
+  resource do
+    description "A Compute Data Centre"
+    plural_name :data_centres
+  end
+
+  jason do
+    pick [:id, :href, :name, :type]
+    compact true
+    rename type: "@type"
+  end
+
+  outstanding do
+    expect [:id, :name, :type]
+  end
+
+  actions do
+    create :build do
+      accept [:id, :href, :name]
+      change set_attribute(:type, :GeographicSite)
+    end
+  end
+
+  instances do
+    role :data_centre, Diffo.Compute.Cluster
+    role :data_centre, Diffo.Compute.GPU
+  end
+end
+```
+
 ### Compute Domain
 
 With all resources defined we can now declare the `Diffo.Compute` domain, which exposes a typed API for each resource:
@@ -525,6 +584,7 @@ defmodule Diffo.Compute do
   alias Diffo.Compute.Cluster
   alias Diffo.Compute.Tenant
   alias Diffo.Compute.Engineer
+  alias Diffo.Compute.DataCentre
 
   resources do
     resource GPU do
@@ -561,6 +621,11 @@ defmodule Diffo.Compute do
       define :get_engineer_by_id, action: :read, get_by: :id
       define :list_engineers, action: :read
     end
+
+    resource DataCentre do
+      define :create_data_centre, action: :build
+      define :get_data_centre_by_id, action: :read, get_by: :id
+    end
   end
 end
 ```
@@ -591,27 +656,18 @@ alias Diffo.Provider.Instance.Party
 
 ### Creating a Cluster
 
-We'll use a helper module to set up the data centre place:
+First we create the data centre — our `DataCentre` resource uses `BasePlace`, so it is managed via the Compute domain API like any other domain resource:
 
 ```elixir
-defmodule Diffo.Compute.Test do
-  alias Diffo.Provider
-  alias Diffo.Provider.Instance.Place
+alias Diffo.Provider.Instance.Place
 
-  def create_data_centre_place do
-    dc =
-      Provider.create_place!(%{
-        id: "NXTM2",
-        name: :dataCentreId,
-        href: "place/compute/NXTM2",
-        referred_type: :GeographicSite
-      })
+{:ok, dc} = Compute.create_data_centre(%{id: "NXTM2", name: "NextDC M2"})
+```
 
-    %Place{id: dc.id, role: :dataCentre}
-  end
-end
+Now build the cluster, passing the data centre as a place and our party members by id and role:
 
-places = [Diffo.Compute.Test.create_data_centre_place()]
+```elixir
+places = [%Place{id: dc.id, role: :data_centre}]
 parties = [
   %Party{id: tenant.id, role: :operator},
   %Party{id: engineer.id, role: :manager}
@@ -682,10 +738,10 @@ What happens when I request a specific assignment from an instance to which the 
 
 ### What Next?
 
-In this tutorial you've used Diffo's Provider Instance Extension to define a Compute domain with a composite Cluster resource comprised of assigned GPU cores, and the Provider Party Extension to define Tenant and Engineer party kinds that operate and manage those resources.
+In this tutorial you've used Diffo's Provider Instance Extension to define a Compute domain with a composite Cluster resource comprised of assigned GPU cores, the Provider Party Extension to define Tenant and Engineer party kinds that operate and manage those resources, and the Provider Place Extension to declare where instances and parties exist geographically.
 
-`BaseParty` follows the same pattern as `BaseInstance` — domain-specific party resources use it as a fragment and write their own `build` action for domain-specific attributes. No manual wiring is needed.
+`BaseParty` and `BasePlace` follow the same pattern as `BaseInstance` — domain-specific resources use them as fragments and write their own actions for domain-specific attributes. No manual wiring is needed.
 
-A `BasePlace` extension for domain-specific Place kinds (such as a DataCentre with its own attributes) follows the same pattern and will be added in a future release.
+Domain-specific Place kinds (such as a DataCentre with its own attributes) use `BasePlace` as a fragment and declare their roles via `instances do`, `parties do`, and `places do` sections on `Diffo.Provider.Place.Extension`. Party kinds similarly declare their place roles via `places do` on `Diffo.Provider.Party.Extension`.
 
 If you find Diffo useful please visit and star on [github](https://github.com/diffo-dev/diffo/). Feel free to join discussions and raise issues to discuss PR's.
