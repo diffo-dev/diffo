@@ -34,6 +34,10 @@ defmodule Diffo.Test.Shelf do
       id "ef016d85-9dbd-429c-84da-1df56cc7dda5"
       name "shelf"
       type :resourceSpecification
+      major_version 1
+      minor_version 2
+      patch_version 3
+      tmf_version 4
       description "A Shelf Resource Instance which contain cards"
       category "Network Resource"
     end
