@@ -53,6 +53,32 @@ defmodule Diffo.Provider.BasePlace do
         end
       end
 
+  ## Domain-specific attributes
+
+  Add Ash `attribute` declarations directly to your derived resource for any fields beyond the
+  base set. Those attributes can only be set via actions you declare on the derived resource —
+  the base `create` action provided by `BasePlace` only accepts the base fields (`id`, `href`,
+  `name`, `type`, `referred_type`). Use your domain API to call the derived resource's action:
+
+      defmodule MyApp.DataCentre do
+        use Ash.Resource, fragments: [BasePlace], domain: MyApp.Domain
+
+        attributes do
+          attribute :tier, :integer, public?: true
+          attribute :power_capacity_kw, :integer, public?: true
+        end
+
+        actions do
+          create :build do
+            accept [:id, :href, :name, :tier, :power_capacity_kw]
+            change set_attribute(:type, :GeographicSite)
+          end
+        end
+      end
+
+      # Use the domain API — Provider.create_place!/1 does not know about :tier
+      MyApp.Domain.create_data_centre!(%{name: "M2", tier: 3, power_capacity_kw: 40_000})
+
   ## TMF type and referred_type
 
   The `type` and `referred_type` attributes map to the TMF `@type` and `@referredType` JSON

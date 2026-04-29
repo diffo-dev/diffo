@@ -106,5 +106,13 @@ defmodule Diffo.Provider.Party.Extension do
   }
 
   use Spark.Dsl.Extension,
-    sections: [@instances, @parties, @places]
+    sections: [@instances, @parties, @places],
+    persisters: [
+      Diffo.Provider.Party.Extension.Persisters.PersistInstances,
+      Diffo.Provider.Party.Extension.Persisters.PersistParties,
+      Diffo.Provider.Party.Extension.Persisters.PersistPlaces
+    ],
+    verifiers: [
+      Diffo.Provider.Party.Extension.Verifiers.VerifyRoles
+    ]
 end
