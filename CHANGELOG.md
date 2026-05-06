@@ -11,10 +11,26 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.2.1](https://github.com/diffo-dev/diffo/compare/v0.2.0...v0.2.1) (2026-05-06)
+
+## Notable Changes
+* Updated to ash_neo4j 0.4.1 and bolty 0.0.12, now supporting transactions and test sandbox
+* Improvements to provider DSL and documentation
+
+## What's Changed
+* base party and related DSL and livebook by @matt-beanland in https://github.com/diffo-dev/diffo/pull/82
+* Instance DSL parties — multiplicity, validation, and enforcement by @matt-beanland in https://github.com/diffo-dev/diffo/pull/89
+* 86 transformers persisters verifiers by @matt-beanland in https://github.com/diffo-dev/diffo/pull/92
+* 91 place dsl by @matt-beanland in https://github.com/diffo-dev/diffo/pull/93
+* 79 provider instance specification doesnt set description by @matt-beanland in https://github.com/diffo-dev/diffo/pull/95
+* 94 provider instance specification dsl additional fields by @matt-beanland in https://github.com/diffo-dev/diffo/pull/97
+* document instance versioning lifecycle by @matt-beanland in https://github.com/diffo-dev/diffo/pull/98
+* accept raw dynamic by @matt-beanland in https://github.com/diffo-dev/diffo/pull/100
+* removed duplicate tests by @matt-beanland in https://github.com/diffo-dev/diffo/pull/108
+* 105 latest ash neo4j by @matt-beanland in https://github.com/diffo-dev/diffo/pull/109
 
 
 ## [v0.2.0](https://github.com/diffo-dev/diffo/compare/v0.1.6...v0.2.0) (2026-04-24)
-
 ### Breaking Changes
 
 * Updated to ash_neo4j 0.3.1 and bolty 0.0.10 — no database compatibility with prior versions due to significant changes in the data layer and Bolt protocol handling
