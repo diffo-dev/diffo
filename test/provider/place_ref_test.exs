@@ -7,14 +7,9 @@ defmodule Diffo.Provider.PlaceRefTest do
   use ExUnit.Case
   use Outstand
 
-  setup_all do
-    AshNeo4j.BoltyHelper.start()
-  end
-
   setup do
-    on_exit(fn ->
-      AshNeo4j.Neo4jHelper.delete_all()
-    end)
+    AshNeo4j.Sandbox.checkout()
+    on_exit(&AshNeo4j.Sandbox.rollback/0)
   end
 
   describe "Diffo.Provider read PlaceRefs" do
