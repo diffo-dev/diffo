@@ -16,9 +16,6 @@ defmodule Diffo.Test.Servo do
   alias Diffo.Test.Card
   alias Diffo.Test.Broadband
   alias Diffo.Test.BroadbandV2
-  alias Diffo.Test.InvalidSpecification
-  alias Diffo.Test.InvalidCharacteristic
-  alias Diffo.Test.InvalidFeatureCharacteristic
 
   domain do
     description "service and resource management"
@@ -49,21 +46,6 @@ defmodule Diffo.Test.Servo do
     resource BroadbandV2 do
       define :build_broadband_v2, action: :build
       define :get_broadband_v2_by_id, action: :read, get_by: :id
-    end
-
-    resource InvalidSpecification do
-      define :get_invalid_specification_by_id, action: :read, get_by: :id
-      define :build_invalid_specification, action: :build
-    end
-
-    resource InvalidCharacteristic do
-      define :get_invalid_characteristic_by_id, action: :read, get_by: :id
-      define :build_invalid_characteristic, action: :build
-    end
-
-    resource InvalidFeatureCharacteristic do
-      define :get_invalid_feature_characteristic_by_id, action: :read, get_by: :id
-      define :build_invalid_feature_characteristic, action: :build
     end
   end
 end

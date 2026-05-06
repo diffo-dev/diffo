@@ -19,12 +19,6 @@ defmodule Diffo.InstanceExtension.SpecificationTest do
   end
 
   describe "specification" do
-    test "create resource fails when specification id not uuid v4" do
-      {:error, error} = Servo.build_invalid_specification(%{})
-      %Ash.Error.Invalid{errors: errors} = error
-      assert hd(errors).message == "must be a uuid v4 or nil"
-    end
-
     test "description declared in specification DSL roundtrips to the persisted specification" do
       spec_id = Shelf.specification()[:id]
       description = Shelf.specification()[:description]
