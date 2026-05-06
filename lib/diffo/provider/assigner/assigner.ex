@@ -4,11 +4,8 @@
 
 defmodule Diffo.Provider.Assigner do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Assigner - Helper to perform Assignment maintaining AssignableValue
+  Helper to perform Assignment maintaining AssignableValue
   """
-
   alias Diffo.Provider.AssignableValue
   alias Diffo.Type.Value
 

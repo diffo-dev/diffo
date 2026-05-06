@@ -3,5 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defimpl Diffo.Unwrap, for: Any do
+  @moduledoc false
+
   def unwrap(value), do: value
 end

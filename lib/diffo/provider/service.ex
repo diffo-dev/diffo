@@ -3,13 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Service do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-
-  Service - utilities relating to service
-  """
-
+  @moduledoc false
   def service_states() do
     [
       :initial,

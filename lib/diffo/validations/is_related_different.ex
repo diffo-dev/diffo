@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Validations.IsRelatedDifferent do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-
-  IsRelatedDifferent - Ash Resource Validation checking related Instance has different attribute value
-  """
+  @moduledoc false
   use Ash.Resource.Validation
 
   @impl true

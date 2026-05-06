@@ -3,13 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Repo do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-
-  Repo - persistance
-  """
-
+  @moduledoc false
   use GenServer
 
   def init(init_arg) do
@@ -17,7 +11,9 @@ defmodule Diffo.Repo do
   end
 
   def start_link(_stack) do
-    config = Application.get_env(:bolty, Bolt)
-    Bolty.start_link(config)
+    case Application.get_env(:bolty, Bolt) do
+      nil -> :ignore
+      config -> Bolty.start_link(config)
+    end
   end
 end

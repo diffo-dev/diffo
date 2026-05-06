@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Calculations.InstanceHref do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  InstanceHref - Ash Resource Calculation for generating instance href
-
-  """
+  @moduledoc false
   use Ash.Resource.Calculation
 
   @impl true

@@ -4,9 +4,53 @@
 
 defmodule Diffo.Provider.Specification do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
+  Ash Resource for a TMF Service or Resource Specification.
 
-  Specification - Ash Resource for a TMF Service or Resource Specification
+  A Specification identifies the kind of a TMF Service or Resource Instance. Every instance
+  carries a relationship to exactly one Specification node in the graph, established at build
+  time and changeable via `Diffo.Provider.respecify_instance/2`.
+
+  ## Identity
+
+  A Specification is uniquely identified by `{name, major_version}`. The `id` is a stable
+  UUID4 that is the same across all environments for a given `{name, major_version}` pair —
+  it is typically declared as a constant in the Instance Extension DSL and committed to source
+  control.
+
+  ## Versioning
+
+  Diffo uses semantic versioning for Specifications with three independent mechanisms:
+
+  | Change | Mechanism                                 | Instance impact                                        | Intended usage                                                                    |
+  | ------ | ----------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+  | Patch  | `next_patch_specification!/1`             | None — internal fix                                    | Corrections to metadata: description wording, category typos                     |
+  | Minor  | `next_minor_specification!/1`             | None — all instances immediately reflect new version   | Backward-compatible additions: new optional characteristics, new enum values      |
+  | Major  | New module, new `id`, new `major_version` | Instances stay on old spec until explicitly migrated   | Breaking changes                                                                  |
+
+  What constitutes a breaking change is deliberately vague — it depends on the specification
+  domain and may require negotiation between provider and consumers.
+
+  ## Major version lifecycle
+
+  Major versions are decoupled across the provider/consumer boundary:
+
+  1. **Provider publishes V2** — deploys a new Instance kind module (e.g. `BroadbandV2`)
+     with the same specification `name`, a new `id`, and `major_version: 2`. V1 and V2
+     coexist; both can be used to create instances.
+  2. **Consumers adopt at their own pace** — each consumer (e.g. an RSP) decides when to
+     start creating V2 instances and when to migrate existing V1 instances.
+  3. **Provider withdraws V1** — removes the V1 module. Existing V1 instances remain in
+     the graph and continue to operate; the domain API for creating new V1 instances is
+     removed.
+  4. **Consumers complete migration** — each consumer migrates remaining V1 instances to V2
+     via `Diffo.Provider.respecify_instance/2`, handling any breaking data changes (e.g.
+     remapping or removing an enum value) before or as part of the respecification.
+
+  ## create upsert behaviour
+
+  `create_specification/1` uses `upsert? true` on the `{name, major_version}` identity.
+  Calling it for an existing `{name, major_version}` pair preserves any attributes not
+  supplied — a second call without `category` leaves the existing category intact.
   """
   require Ash.Resource.Change.Builtins
 
@@ -40,7 +84,7 @@ defmodule Diffo.Provider.Specification do
 
     create :create do
       description "creates a major version of a named serviceSpecification or resourceSpecification"
-      accept [:id, :type, :name, :major_version, :description, :category]
+      accept [:id, :type, :name, :major_version, :minor_version, :patch_version, :tmf_version, :description, :category]
       change load [:version, :href, :instance_type]
       upsert? true
       upsert_identity :unique_major_version_per_name

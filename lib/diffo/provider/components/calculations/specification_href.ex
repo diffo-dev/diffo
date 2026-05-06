@@ -5,13 +5,7 @@
 defmodule Diffo.Provider.Calculations.SpecificationHref do
   use Ash.Resource.Calculation
 
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  SpecificationHref - Ash Resource Calculation for generating specification href
-
-  """
-
+  @moduledoc false
   @impl true
   def load(_query, _opts, _context), do: [:type, :tmf_version, :id]
 

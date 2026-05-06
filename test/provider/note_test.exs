@@ -8,14 +8,9 @@ defmodule Diffo.Provider.NoteTest do
   alias Diffo.Provider.Party
   alias Diffo.Provider.Instance
 
-  setup_all do
-    AshNeo4j.BoltyHelper.start()
-  end
-
   setup do
-    on_exit(fn ->
-      AshNeo4j.Neo4jHelper.delete_all()
-    end)
+    AshNeo4j.Sandbox.checkout()
+    on_exit(&AshNeo4j.Sandbox.rollback/0)
   end
 
   describe "Diffo.Provider read Notes" do
@@ -28,7 +23,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -36,7 +31,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_note!(%{
@@ -70,7 +65,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -78,7 +73,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_note!(%{
@@ -126,7 +121,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -134,7 +129,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_note!(%{
@@ -181,7 +176,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -189,7 +184,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_note!(%{
@@ -251,7 +246,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       note =
@@ -280,7 +275,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_note!(%{
@@ -305,7 +300,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_note!(%{
@@ -334,7 +329,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       note =
@@ -358,7 +353,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       note =
@@ -382,7 +377,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       note =
@@ -409,7 +404,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party =
@@ -417,7 +412,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       note =
@@ -442,7 +437,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       note =
@@ -466,7 +461,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       note =
@@ -491,7 +486,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       note =
@@ -531,7 +526,7 @@ defmodule Diffo.Provider.NoteTest do
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       note =

@@ -5,17 +5,11 @@
 defmodule Diffo.Provider.InstanceTest do
   @moduledoc false
   use ExUnit.Case
-  alias Diffo.Provider.Instance
   alias Diffo.Type.Value
 
-  setup_all do
-    AshNeo4j.BoltyHelper.start()
-  end
-
   setup do
-    on_exit(fn ->
-      AshNeo4j.Neo4jHelper.delete_all()
-    end)
+    AshNeo4j.Sandbox.checkout()
+    on_exit(&AshNeo4j.Sandbox.rollback/0)
   end
 
   describe "Diffo.Provider read Instances!" do
@@ -83,8 +77,10 @@ defmodule Diffo.Provider.InstanceTest do
       assert instance.href == "serviceInventoryManagement/v4/service/#{instance.id}"
 
       # both specification and instance nodes are labelled :Provider
-      {:ok, response} = AshNeo4j.Neo4jHelper.read_nodes(:Provider)
-      assert length(response.results) == 2
+      {:ok, spec_nodes} = AshNeo4j.Neo4jHelper.read_nodes(:Provider, %{uuid: specification.id})
+      {:ok, inst_nodes} = AshNeo4j.Neo4jHelper.read_nodes(:Provider, %{uuid: instance.id})
+      assert length(spec_nodes.results) == 1
+      assert length(inst_nodes.results) == 1
     end
 
     test "create a service instance with a supplied id - success" do
@@ -135,8 +131,8 @@ defmodule Diffo.Provider.InstanceTest do
       {:ok, _result} =
         Diffo.Provider.create_instance(%{specified_by: specification.id, id: uuid})
 
-      instances = Instance |> Ash.read!()
-      assert length(instances) == 1
+      {:ok, found} = Diffo.Provider.get_instance_by_id(uuid)
+      assert found.id == uuid
     end
 
     # TODO fix this test, it is failing as specified_instance_type calculation is not loaded when create validation occurs
@@ -453,7 +449,7 @@ defmodule Diffo.Provider.InstanceTest do
         Diffo.Provider.create_specification!(%{name: "wifiAccess", major_version: 2})
 
       updated_instance =
-        instance |> Diffo.Provider.specify_instance!(%{specified_by: new_specification.id})
+        instance |> Diffo.Provider.respecify_instance!(%{specified_by: new_specification.id})
 
       assert updated_instance.specification.id == new_specification.id
     end
@@ -463,7 +459,7 @@ defmodule Diffo.Provider.InstanceTest do
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       {:error, _error} =
-        instance |> Diffo.Provider.specify_instance(%{specified_by: UUID.uuid4()})
+        instance |> Diffo.Provider.respecify_instance(%{specified_by: UUID.uuid4()})
     end
 
     test "update a service instance specification - failure - not a uuid" do
@@ -471,7 +467,7 @@ defmodule Diffo.Provider.InstanceTest do
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       {:error, _error} =
-        instance |> Diffo.Provider.specify_instance(%{specified_by: "not a uuid"})
+        instance |> Diffo.Provider.respecify_instance(%{specified_by: "not a uuid"})
     end
 
     test "annotate a service instance with a note - success" do
@@ -648,7 +644,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       Diffo.Provider.create_place_ref!(%{
@@ -668,7 +664,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party2 =
@@ -676,7 +672,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t4_party =
@@ -684,7 +680,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T4_CPE",
           name: :entityId,
           href: "entity/internal/T4_CPE",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_party_ref!(%{
@@ -763,7 +759,7 @@ defmodule Diffo.Provider.InstanceTest do
       entity =
         Diffo.Provider.create_entity!(%{
           id: "COR000000123456",
-          referredType: :cost,
+          referred_type: :cost,
           name: "2025-01"
         })
 
@@ -860,7 +856,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       Diffo.Provider.create_place_ref!(%{
@@ -880,7 +876,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t3_party2 =
@@ -888,7 +884,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       t4_party =
@@ -896,7 +892,7 @@ defmodule Diffo.Provider.InstanceTest do
           id: "T4_CPE",
           name: :entityId,
           href: "entity/internal/T4_CPE",
-          referredType: :Entity
+          referred_type: :Entity
         })
 
       Diffo.Provider.create_external_identifier!(%{
@@ -1328,7 +1324,7 @@ defmodule Diffo.Provider.InstanceTest do
         id: "T3_CONNECTIVITY",
         name: :entityId,
         href: "entity/internal/T3_CONNECTIVITY",
-        referredType: :Entity,
+        referred_type: :Entity,
         type: :PartyRef
       })
 

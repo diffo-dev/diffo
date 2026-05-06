@@ -6,23 +6,21 @@ defmodule Diffo.Provider.SpecificationTest do
   @moduledoc false
   use ExUnit.Case
 
-  setup_all do
-    AshNeo4j.BoltyHelper.start()
-  end
-
   setup do
-    on_exit(fn ->
-      AshNeo4j.Neo4jHelper.delete_all()
-    end)
+    AshNeo4j.Sandbox.checkout()
+    on_exit(&AshNeo4j.Sandbox.rollback/0)
   end
 
   describe "Diffo.Provider read Specifications!" do
     test "list specifications" do
-      Diffo.Provider.create_specification!(%{name: "compute", category: "cloud"})
-      Diffo.Provider.create_specification!(%{name: "storage", category: "cloud"})
-      Diffo.Provider.create_specification!(%{name: "intelligence", category: "agent"})
+      spec1 = Diffo.Provider.create_specification!(%{name: "compute", category: "cloud"})
+      spec2 = Diffo.Provider.create_specification!(%{name: "storage", category: "cloud"})
+      spec3 = Diffo.Provider.create_specification!(%{name: "intelligence", category: "agent"})
       specifications = Diffo.Provider.list_specifications!()
-      assert length(specifications) == 3
+      ids = Enum.map(specifications, & &1.id)
+      assert spec1.id in ids
+      assert spec2.id in ids
+      assert spec3.id in ids
     end
 
     test "find specifications by category" do

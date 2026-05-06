@@ -3,17 +3,11 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.Feature do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Feature for Instance Extension
-  """
-
+  @moduledoc false
   require Logger
 
   alias Diffo.Provider
   alias Diffo.Provider.Instance
-  alias Diffo.Provider.Instance.Extension.Info
   alias Diffo.Type.Value
 
   @doc """
@@ -24,10 +18,9 @@ defmodule Diffo.Provider.Instance.Feature do
   @doc """
   Sets the Extended Instances features argument in the changeset, creating the features and feature characteristics
   """
-  def set_features_argument(changeset) when is_struct(changeset, Ash.Changeset) do
-    %module{} = changeset.data
-
-    case features = create_features(module) do
+  def set_features_argument(changeset, declarations)
+      when is_struct(changeset, Ash.Changeset) and is_list(declarations) do
+    case features = create_features_from_declarations(declarations) do
       [] ->
         changeset
 
@@ -40,14 +33,9 @@ defmodule Diffo.Provider.Instance.Feature do
     end
   end
 
-  @doc """
-  Creates the Features from a Extended Instance's module
-  """
-  def create_features(module) when is_atom(module) do
-    features = Info.features(module)
-
+  defp create_features_from_declarations(declarations) do
     Enum.reduce_while(
-      features,
+      declarations,
       [],
       # create any feature characteristics
       fn %{name: name, is_enabled?: isEnabled, characteristics: characteristics}, acc ->
@@ -106,8 +94,7 @@ defmodule Diffo.Provider.Instance.Feature do
   def relate_instance(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     features = Ash.Changeset.get_argument(changeset, :features)
-    instance = struct(Instance, Map.from_struct(result))
-    Provider.relate_instance_features(instance, %{features: features})
+    Provider.relate_instance_features(%Instance{id: result.id}, %{features: features})
   end
 
   defimpl String.Chars do
