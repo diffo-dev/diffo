@@ -113,6 +113,9 @@ end
 | [`name`](#structure-specification-name){: #structure-specification-name .spark-required} | `String.t` |  | The name of the specification, unique to a service but common for all versions. |
 | [`type`](#structure-specification-type){: #structure-specification-type } | `atom` | `:serviceSpecification` | The type of the specification. |
 | [`major_version`](#structure-specification-major_version){: #structure-specification-major_version } | `integer` | `1` | The major_version of the specification. |
+| [`minor_version`](#structure-specification-minor_version){: #structure-specification-minor_version } | `integer` |  | The minor_version of the specification. |
+| [`patch_version`](#structure-specification-patch_version){: #structure-specification-patch_version } | `integer` |  | The patch_version of the specification. |
+| [`tmf_version`](#structure-specification-tmf_version){: #structure-specification-tmf_version } | `integer` |  | The TMF API version of the specification, e.g. 4. |
 | [`description`](#structure-specification-description){: #structure-specification-description } | `String.t` |  | A generic description of the specified service or resource. |
 | [`category`](#structure-specification-category){: #structure-specification-category } | `String.t` |  | The category the specified service or resource belongs to. |
 
