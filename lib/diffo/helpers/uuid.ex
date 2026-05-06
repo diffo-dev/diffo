@@ -4,11 +4,8 @@
 
 defmodule Diffo.Uuid do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  Uuid - validate and/or create uuids
+  Validate and/or create Uuid
   """
-
   @doc """
   Generates a uuid4
   """

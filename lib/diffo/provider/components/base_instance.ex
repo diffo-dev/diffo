@@ -4,9 +4,166 @@
 
 defmodule Diffo.Provider.BaseInstance do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
+  Ash Resource Fragment which is the point of extension for your TMF Service or Resource Instance.
 
-  BaseInstance - Ash Resource Fragment of a TMF Service or Resource Instance
+  `BaseInstance` is the foundation for domain-specific Service and Resource kinds.
+  Include it as a fragment on an `Ash.Resource` to get common Instance attributes,
+  Neo4j graph wiring, state machine, and the `Diffo.Provider.Instance.Extension` DSL.
+
+  ## Instance Extension DSL
+
+  The DSL has two top-level sections: `structure do` describes what the instance kind is;
+  `behaviour do` wires it to Ash actions.
+
+  ### structure
+
+  `specification do` — declares the TMF Specification for this Instance kind (id, name, type,
+  major_version, description, category).
+
+  `characteristics do` — declares the top-level Characteristics of this Instance kind, each
+  backed by an `Ash.TypedStruct`.
+
+  `features do` — declares the Features this Instance kind may have, each optionally carrying
+  its own typed characteristic payload.
+
+  `parties do` — declares the Party roles this Instance kind relates to. Role names are
+  domain-specific nouns describing what the party means to the instance. Two forms:
+
+      parties do
+        party :provider, MyApp.Provider, calculate: :provider_calculation
+        parties :installer, MyApp.Installer
+        parties :technician, MyApp.Technician, constraints: [min: 1, max: 3]
+        party :owner, MyApp.InfrastructureCo, reference: true
+      end
+
+  - `party` — singular (at most one party in this role per instance)
+  - `parties` — plural (unbounded, or bounded with `constraints: [min: n, max: m]`)
+  - `reference: true` — no direct `PartyRef` edge; party is reachable by graph traversal
+  - `calculate:` — names an Ash calculation on this resource that produces the party at build time
+
+  `places do` — declares the Place roles this Instance kind relates to. Mirrors `parties do`
+  in structure:
+
+      places do
+        place :installation_site, MyApp.GeographicSite
+        places :coverage_areas, MyApp.GeographicLocation, constraints: [min: 1]
+        place :billing_address, MyApp.GeographicAddress, reference: true
+      end
+
+  All declarations are introspectable at runtime via `Diffo.Provider.Instance.Info` and at
+  compile time via `Diffo.Provider.Instance.Extension.Info`.
+
+  ### behaviour
+
+  `behaviour do actions do create :name end end` — marks a named create action for build
+  wiring. This injects `:specified_by`, `:features`, and `:characteristics` arguments onto
+  that action so Ash accepts the values that `build_before/1` sets automatically.
+
+  You still write the action body yourself for domain-specific accepts, arguments, and changes.
+  The build arguments are not public and do not need to appear in `accept`.
+
+  ## Generated functions
+
+  Every resource using `BaseInstance` with a `specification do` gets the following functions
+  generated at compile time:
+
+  - `specification/0` — the specification keyword list baked at compile time
+  - `characteristics/0` — list of `Characteristic` structs
+  - `features/0` — list of `Feature` structs
+  - `parties/0` — list of `PartyDeclaration` structs
+  - `places/0` — list of `PlaceDeclaration` structs
+  - `characteristic/1` — returns the named `Characteristic` or `nil`
+  - `feature/1` — returns the named `Feature` or `nil`
+  - `feature_characteristic/2` — returns the named characteristic within a feature, or `nil`
+  - `party/1` — returns the `PartyDeclaration` for the given role, or `nil`
+  - `place/1` — returns the `PlaceDeclaration` for the given role, or `nil`
+  - `build_before/1` — called automatically before every create action; upserts the
+    specification and creates features, characteristics, and parties, setting their ids
+    as action arguments
+  - `build_after/2` — called automatically after every create action; relates the created
+    TMF entities to the new instance node
+
+  Resources without a `specification do id` get trivial passthroughs for `build_before/1`
+  and `build_after/2`.
+
+  ## Usage
+
+      defmodule MyApp.Cluster do
+        use Ash.Resource, fragments: [BaseInstance], domain: MyApp.Domain
+
+        resource do
+          description "A Cluster Resource Instance"
+          plural_name :clusters
+        end
+
+        structure do
+          specification do
+            id "4bcfc4c9-e776-4878-a658-e8d81857bed7"
+            name "cluster"
+            type :resourceSpecification
+          end
+
+          parties do
+            party :operator, MyApp.Organization
+            parties :installer, MyApp.Engineer
+          end
+
+          places do
+            place :site, MyApp.GeographicSite
+          end
+        end
+
+        behaviour do
+          actions do
+            create :build
+          end
+        end
+
+        actions do
+          create :build do
+            description "creates a new Cluster resource instance"
+            accept [:id, :name, :type, :which]
+            argument :relationships, {:array, :struct}
+            argument :parties, {:array, :struct}
+
+            change set_attribute(:type, :resource)
+            change load [:href]
+            upsert? false
+          end
+        end
+      end
+
+  ## Rolling your own actions
+
+  The `behaviour do actions do create :name end end` declaration is optional. Omitting it
+  means the `:specified_by`, `:features`, and `:characteristics` arguments are not declared
+  on that action — but `build_before/1` and `build_after/2` are still called for every
+  create via the global `BuildBefore` and `BuildAfter` changes registered on `BaseInstance`.
+
+  If you have a create action that should NOT trigger the full build wiring (e.g. a
+  lightweight admin create), you can override `build_before/1` or `build_after/2` on your
+  resource, or use Ash's `skip_unknown_inputs` to absorb the injected arguments without
+  declaring them.
+
+  ## Instance versioning
+
+  Each Instance kind is tied to a specific major version of its Specification via the `id`
+  declared in `specification do`. Patch and minor version bumps update the existing
+  Specification node in place and require no instance changes. Major version bumps introduce
+  a new Instance kind module (e.g. `BroadbandV2`) with a new `id` and `major_version`,
+  leaving the original module and all its instances untouched.
+
+  To migrate an existing instance from one major version to another, call
+  `Diffo.Provider.respecify_instance/2` with the new specification's id:
+
+      {:ok, v2_spec} = Diffo.Provider.get_specification_by_id(BroadbandV2.specification()[:id])
+      {:ok, migrated} = Diffo.Provider.respecify_instance(instance, %{specified_by: v2_spec.id})
+
+  Any breaking data changes (e.g. a characteristic value that no longer exists in V2) must
+  be handled before or as part of respecification — either via Cypher directly against the
+  graph or via a domain-specific migration action you build on your own resource.
+
+  See `Diffo.Provider.Specification` for the full versioning lifecycle.
   """
   use Spark.Dsl.Fragment,
     of: Ash.Resource,
@@ -290,6 +447,11 @@ defmodule Diffo.Provider.BaseInstance do
       public? true
       destination_attribute :instance_id
     end
+  end
+
+  changes do
+    change Diffo.Provider.Instance.Extension.Changes.BuildBefore, on: [:create]
+    change Diffo.Provider.Instance.Extension.Changes.BuildAfter, on: [:create]
   end
 
   actions do

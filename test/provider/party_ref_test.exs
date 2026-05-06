@@ -7,14 +7,9 @@ defmodule Diffo.Provider.PartyRefTest do
   use ExUnit.Case
   use Outstand
 
-  setup_all do
-    AshNeo4j.BoltyHelper.start()
-  end
-
   setup do
-    on_exit(fn ->
-      AshNeo4j.Neo4jHelper.delete_all()
-    end)
+    AshNeo4j.Sandbox.checkout()
+    on_exit(&AshNeo4j.Sandbox.rollback/0)
   end
 
   describe "Diffo.Provider read PartyRefs" do
@@ -65,21 +60,21 @@ defmodule Diffo.Provider.PartyRefTest do
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party2 =
         Diffo.Provider.create_party!(%{
           id: "IND000000897354",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party3 =
         Diffo.Provider.create_party!(%{
           id: "ORG000163435034",
           name: :organizationId,
-          referredType: :Organization
+          referred_type: :Organization
         })
 
       Diffo.Provider.create_party_ref!(%{
@@ -124,35 +119,35 @@ defmodule Diffo.Provider.PartyRefTest do
         Diffo.Provider.create_place!(%{
           id: "LOC000000123456",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       place2 =
         Diffo.Provider.create_place!(%{
           id: "LOC000000897353",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       party1 =
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party2 =
         Diffo.Provider.create_party!(%{
           id: "IND000000897354",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party3 =
         Diffo.Provider.create_party!(%{
           id: "ORG000163435034",
           name: :organizationId,
-          referredType: :Organization
+          referred_type: :Organization
         })
 
       Diffo.Provider.create_party_ref!(%{
@@ -201,21 +196,21 @@ defmodule Diffo.Provider.PartyRefTest do
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party2 =
         Diffo.Provider.create_party!(%{
           id: "IND000000897354",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party3 =
         Diffo.Provider.create_party!(%{
           id: "ORG000000123456",
           name: :organizationId,
-          referredType: :Organization
+          referred_type: :Organization
         })
 
       Diffo.Provider.create_party_ref!(%{
@@ -260,21 +255,21 @@ defmodule Diffo.Provider.PartyRefTest do
         Diffo.Provider.create_party!(%{
           id: "IND000000897353",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party2 =
         Diffo.Provider.create_party!(%{
           id: "IND000000897354",
           name: :individualId,
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party3 =
         Diffo.Provider.create_party!(%{
           id: "ORG000000123456",
           name: :organizationId,
-          referredType: :Organization
+          referred_type: :Organization
         })
 
       Diffo.Provider.create_party_ref!(%{
@@ -473,7 +468,7 @@ defmodule Diffo.Provider.PartyRefTest do
                "{\"id\":\"IND000000897353\",\"href\":\"party/internal/IND000000897353\",\"name\":\"individualId\",\"role\":\"PrimaryContact\",\"@type\":\"Individual\"}"
     end
 
-    test "encode json party referredType - success" do
+    test "encode json party referred_type - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
@@ -482,7 +477,7 @@ defmodule Diffo.Provider.PartyRefTest do
           id: "IND000000897353",
           name: :individualId,
           href: "party/internal/IND000000897353",
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party_ref =
@@ -509,7 +504,7 @@ defmodule Diffo.Provider.PartyRefTest do
           id: "IND000000897353",
           name: "individualId",
           href: "party/internal/IND000000897353",
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party_ref =
@@ -525,7 +520,7 @@ defmodule Diffo.Provider.PartyRefTest do
           id: ~r/IND\d{12}/,
           name: "individualId",
           type: :PartyRef,
-          referredType: :Individual
+          referred_type: :Individual
         }
       }
 
@@ -543,7 +538,7 @@ defmodule Diffo.Provider.PartyRefTest do
           id: "IND000000897353",
           name: :individualId,
           href: "party/internal/IND000000897353",
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party_ref =
@@ -562,7 +557,7 @@ defmodule Diffo.Provider.PartyRefTest do
         Diffo.Provider.create_place!(%{
           id: "LOC000000897353",
           name: :locationId,
-          referredType: :GeographicAddress
+          referred_type: :GeographicAddress
         })
 
       party =
@@ -570,7 +565,7 @@ defmodule Diffo.Provider.PartyRefTest do
           id: "IND000000897353",
           name: :individualId,
           href: "party/internal/IND000000897353",
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party_ref =
@@ -589,7 +584,7 @@ defmodule Diffo.Provider.PartyRefTest do
         Diffo.Provider.create_party!(%{
           id: "ORG000163435034",
           name: :organizationId,
-          referredType: :Organization
+          referred_type: :Organization
         })
 
       party =
@@ -597,7 +592,7 @@ defmodule Diffo.Provider.PartyRefTest do
           id: "IND000000897353",
           name: :individualId,
           href: "party/internal/IND000000897353",
-          referredType: :Individual
+          referred_type: :Individual
         })
 
       party_ref =

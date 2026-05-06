@@ -6,7 +6,7 @@ defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.2.1"
   @name "Diffo"
   @description "TMF Service and Resource Manager with a difference"
   @github_url "https://github.com/diffo-dev/diffo"
@@ -20,14 +20,11 @@ defmodule Diffo.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       package: package(),
-      # ex_doc
       source_url: "https://github.com/diffo-dev/diffo/",
       homepage_url: "http://diffo.dev/diffo/",
-      docs: [main: "readme", extras: ["README.md"]],
       elixirc_paths: elixirc_paths(Mix.env()),
-      # hex.pm stuff
-      deps: deps(),
       docs: &docs/0,
+      deps: deps(),
       aliases: aliases(),
       consolidate_protocols: Mix.env() != :dev
     ]
@@ -72,7 +69,14 @@ defmodule Diffo.MixProject do
         "documentation/dsls/DSL-Diffo.Provider.Instance.Extension.md": [
           title: "DSL: Diffo.Provider.Instance.Extension",
           search_data: Spark.Docs.search_data_for(Diffo.Provider.Instance.Extension)
+        ],
+        "documentation/dsls/DSL-Diffo.Provider.Party.Extension.md": [
+          title: "DSL: Diffo.Provider.Party.Extension",
+          search_data: Spark.Docs.search_data_for(Diffo.Provider.Party.Extension)
         ]
+      ],
+      groups_for_extras: [
+        "DSLs": ~r/documentation\/dsls\//
       ]
     ]
   end
@@ -95,7 +99,8 @@ defmodule Diffo.MixProject do
       {:ash_outstanding, "~> 0.2.3"},
       {:ash_jason, "~> 3.0"},
       {:ash_state_machine, "~> 0.2.12"},
-      {:ash_neo4j, ash_neo4j_version("~> 0.3.1")},
+      {:ash_neo4j, ash_neo4j_version("~> 0.4.1")},
+      {:bolty, ">= 0.0.12"},
       {:ash, ash_version("~> 3.0 and >= 3.24.2")},
       {:uuid, "~> 1.1"},
       {:igniter, ">= 0.6.29 and < 1.0.0-0",
@@ -113,9 +118,10 @@ defmodule Diffo.MixProject do
         "docs",
         "spark.replace_doc_links"
       ],
-      "spark.cheat_sheets": "spark.cheat_sheets --extensions Diffo.Provider.Instance.Extension",
+      "spark.cheat_sheets":
+        "spark.cheat_sheets --extensions Diffo.Provider.Instance.Extension,Diffo.Provider.Party.Extension",
       "spark.formatter": [
-        "spark.formatter --extensions Diffo.Provider.Instance.Extension",
+        "spark.formatter --extensions Diffo.Provider.Instance.Extension,Diffo.Provider.Party.Extension",
         "format .formatter.exs"
       ]
     ]

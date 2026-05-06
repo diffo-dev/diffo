@@ -4,8 +4,6 @@
 
 defprotocol Diffo.Unwrap do
   @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
   `Diffo.Unwrap` is a protocol for extracting the underlying Elixir value from Diffo and Ash
   wrapper types. It is defined with `@fallback_to_any true`, so any value without an explicit
   implementation is returned unchanged.
@@ -46,7 +44,6 @@ defprotocol Diffo.Unwrap do
       ...> |> Diffo.Unwrap.unwrap()
       [1, 2]
   """
-
   @fallback_to_any true
   def unwrap(value)
 end

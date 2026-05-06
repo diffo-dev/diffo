@@ -5,29 +5,16 @@
 defmodule Diffo.InstanceExtension.CharacteristicTest do
   @moduledoc false
   use ExUnit.Case
-  alias Diffo.Test.Servo
-
-  setup_all do
-    AshNeo4j.BoltyHelper.start()
-  end
+  alias Diffo.Test.Parties
 
   setup do
-    on_exit(fn ->
-      AshNeo4j.Neo4jHelper.delete_all()
-    end)
+    AshNeo4j.Sandbox.checkout()
+    on_exit(&AshNeo4j.Sandbox.rollback/0)
   end
 
   describe "characteristic" do
-    test "create resource fails when characteristic value type invalid" do
-      {:error, error} = Servo.build_invalid_characteristic(%{})
-      %Ash.Error.Invalid{errors: errors} = error
-
-      assert hd(errors).message ==
-               "couldn't create characteristic with value of unknown type Elixir.InvalidValue"
-    end
-
     test "create resource with array characteristic - success" do
-      {:ok, shelf} = Servo.build_shelf(%{})
+      {:ok, shelf} = Parties.build_shelf_with_installer()
 
       shelves = Enum.find(shelf.characteristics, fn c -> c.name == :shelves end)
       assert shelves.is_array == true

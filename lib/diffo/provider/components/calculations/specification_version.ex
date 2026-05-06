@@ -3,12 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Calculations.SpecificationVersion do
-  @moduledoc """
-  Diffo - TMF Service and Resource Management with a difference
-
-  SpecificationVersion - Ash Resource Calculation for generating the version of a specification
-
-  """
+  @moduledoc false
   use Ash.Resource.Calculation
 
   @impl true
