@@ -4,7 +4,7 @@
 
 defmodule Diffo.InstanceExtension.TransformerTest do
   @moduledoc false
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: true, async: true
 
   alias Diffo.Test.Shelf
   alias Diffo.Test.Card
@@ -231,7 +231,10 @@ defmodule Diffo.InstanceExtension.TransformerTest do
 
     test "injected arguments are not public" do
       action = Ash.Resource.Info.action(Shelf, :build)
-      injected = Enum.filter(action.arguments, &(&1.name in [:specified_by, :features, :characteristics]))
+
+      injected =
+        Enum.filter(action.arguments, &(&1.name in [:specified_by, :features, :characteristics]))
+
       assert Enum.all?(injected, &(&1.public? == false))
     end
 

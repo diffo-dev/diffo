@@ -22,18 +22,10 @@ defmodule Diffo.Test.ExchangeBuilding do
     plural_name :exchange_buildings
   end
 
-  attributes do
-    attribute :nli, :string do
-      description "Network Location Identifier"
-      allow_nil? true
-      public? true
-    end
-
-    attribute :access_type, :atom do
-      description "Access type for the exchange building"
-      allow_nil? true
-      public? true
-      constraints one_of: [:attended, :unmanned, :restricted]
+  actions do
+    create :build do
+      accept [:id, :href, :name, :nli, :access_type]
+      change set_attribute(:type, :GeographicSite)
     end
   end
 
@@ -47,10 +39,18 @@ defmodule Diffo.Test.ExchangeBuilding do
     expect [:id, :name, :type]
   end
 
-  actions do
-    create :build do
-      accept [:id, :href, :name, :nli, :access_type]
-      change set_attribute(:type, :GeographicSite)
+  attributes do
+    attribute :nli, :string do
+      description "Network Location Identifier"
+      allow_nil? true
+      public? true
+    end
+
+    attribute :access_type, :atom do
+      description "Access type for the exchange building"
+      allow_nil? true
+      public? true
+      constraints one_of: [:attended, :unmanned, :restricted]
     end
   end
 

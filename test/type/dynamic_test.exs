@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Type.DynamicTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   use Outstand
   alias Diffo.Type.Dynamic

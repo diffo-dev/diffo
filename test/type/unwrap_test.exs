@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.UnwrapTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Diffo.Type.Primitive
   alias Diffo.Type.Value

@@ -10,7 +10,16 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifySpecification do
   alias Spark.Error.DslError
 
   # Fields validated against Specification attribute constraints (id handled separately)
-  @spec_fields [:name, :type, :major_version, :minor_version, :patch_version, :tmf_version, :description, :category]
+  @spec_fields [
+    :name,
+    :type,
+    :major_version,
+    :minor_version,
+    :patch_version,
+    :tmf_version,
+    :description,
+    :category
+  ]
 
   @impl true
   def verify(dsl_state) do
@@ -28,11 +37,13 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifySpecification do
     spec_id = Verifier.get_option(dsl_state, [:structure, :specification], :id)
 
     if spec_id && !Diffo.Uuid.uuid4?(spec_id) do
-      [DslError.exception(
-        module: resource,
-        path: [:structure, :specification, :id],
-        message: "specification: id must be a valid UUID4"
-      )]
+      [
+        DslError.exception(
+          module: resource,
+          path: [:structure, :specification, :id],
+          message: "specification: id must be a valid UUID4"
+        )
+      ]
     else
       []
     end
@@ -53,11 +64,13 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifySpecification do
             []
 
           {:error, errors} ->
-            [DslError.exception(
-              module: resource,
-              path: [:structure, :specification, field],
-              message: "specification: #{field} - #{format_errors(errors)}"
-            )]
+            [
+              DslError.exception(
+                module: resource,
+                path: [:structure, :specification, field],
+                message: "specification: #{field} - #{format_errors(errors)}"
+              )
+            ]
         end
       else
         []
@@ -75,6 +88,7 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifySpecification do
 
   defp format_error(kwlist) do
     {message, bindings} = Keyword.pop(kwlist, :message, "invalid value")
+
     Enum.reduce(bindings, message, fn {key, val}, msg ->
       String.replace(msg, "%{#{key}}", to_string(val))
     end)

@@ -17,6 +17,7 @@ defmodule Diffo.Provider.Instance.Party do
       changeset
     else
       parties = Ash.Changeset.get_argument(changeset, :parties) || []
+
       changeset
       |> validate_roles(parties, declarations)
       |> validate_constraints(parties, declarations)
@@ -55,15 +56,23 @@ defmodule Diffo.Provider.Instance.Party do
 
   defp check_min(cs, _role, _count, nil), do: cs
   defp check_min(cs, _role, count, min) when count >= min, do: cs
+
   defp check_min(cs, role, count, min),
-    do: Ash.Changeset.add_error(cs, field: :parties,
-          message: "role #{inspect(role)} requires at least #{min} (got #{count})")
+    do:
+      Ash.Changeset.add_error(cs,
+        field: :parties,
+        message: "role #{inspect(role)} requires at least #{min} (got #{count})"
+      )
 
   defp check_max(cs, _role, _count, nil), do: cs
   defp check_max(cs, _role, count, max) when count <= max, do: cs
+
   defp check_max(cs, role, count, max),
-    do: Ash.Changeset.add_error(cs, field: :parties,
-          message: "role #{inspect(role)} allows at most #{max} (got #{count})")
+    do:
+      Ash.Changeset.add_error(cs,
+        field: :parties,
+        message: "role #{inspect(role)} allows at most #{max} (got #{count})"
+      )
 
   @doc """
   Relates the parties in the changeset with the Extended Instance by creating party_ref

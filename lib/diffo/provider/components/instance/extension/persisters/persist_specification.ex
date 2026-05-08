@@ -12,10 +12,19 @@ defmodule Diffo.Provider.Instance.Extension.Persisters.PersistSpecification do
     spec = [
       id: Transformer.get_option(dsl_state, [:structure, :specification], :id),
       name: Transformer.get_option(dsl_state, [:structure, :specification], :name),
-      type: Transformer.get_option(dsl_state, [:structure, :specification], :type, :serviceSpecification),
-      major_version: Transformer.get_option(dsl_state, [:structure, :specification], :major_version, 1),
-      minor_version: Transformer.get_option(dsl_state, [:structure, :specification], :minor_version),
-      patch_version: Transformer.get_option(dsl_state, [:structure, :specification], :patch_version),
+      type:
+        Transformer.get_option(
+          dsl_state,
+          [:structure, :specification],
+          :type,
+          :serviceSpecification
+        ),
+      major_version:
+        Transformer.get_option(dsl_state, [:structure, :specification], :major_version, 1),
+      minor_version:
+        Transformer.get_option(dsl_state, [:structure, :specification], :minor_version),
+      patch_version:
+        Transformer.get_option(dsl_state, [:structure, :specification], :patch_version),
       tmf_version: Transformer.get_option(dsl_state, [:structure, :specification], :tmf_version),
       description: Transformer.get_option(dsl_state, [:structure, :specification], :description),
       category: Transformer.get_option(dsl_state, [:structure, :specification], :category)
@@ -24,9 +33,14 @@ defmodule Diffo.Provider.Instance.Extension.Persisters.PersistSpecification do
     escaped = Macro.escape(spec)
     dsl_state = Transformer.persist(dsl_state, :specification, spec)
 
-    {:ok, Transformer.eval(dsl_state, [], quote do
-      @doc false
-      def specification, do: unquote(escaped)
-    end)}
+    {:ok,
+     Transformer.eval(
+       dsl_state,
+       [],
+       quote do
+         @doc false
+         def specification, do: unquote(escaped)
+       end
+     )}
   end
 end
