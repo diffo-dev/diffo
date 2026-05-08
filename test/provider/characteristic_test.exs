@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.CharacteristicTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias Diffo.Test.Patch
   alias Diffo.Type.Value
 

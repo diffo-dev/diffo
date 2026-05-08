@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.ProcessStatusTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   setup do
     AshNeo4j.Sandbox.checkout()

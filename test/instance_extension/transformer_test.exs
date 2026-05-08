@@ -4,7 +4,7 @@
 
 defmodule Diffo.InstanceExtension.TransformerTest do
   @moduledoc false
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: true, async: true
 
   alias Diffo.Test.Shelf
   alias Diffo.Test.Card

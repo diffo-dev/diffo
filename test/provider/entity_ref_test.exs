@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.EntityRefTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   use Outstand
   alias Diffo.Provider.Entity
   alias Diffo.Provider.EntityRef
