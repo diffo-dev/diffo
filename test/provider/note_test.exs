@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.NoteTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias Diffo.Provider.Party
   alias Diffo.Provider.Instance
 

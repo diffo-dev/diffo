@@ -4,7 +4,7 @@
 
 defmodule Diffo.PartyExtension.VerifierTest do
   @moduledoc false
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true, async: false
   alias Diffo.Test.Util
 
   describe "instances verifier" do

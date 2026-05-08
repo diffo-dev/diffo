@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.VersioningTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Diffo.Test.Servo
   alias Diffo.Test.Broadband
@@ -81,8 +81,11 @@ defmodule Diffo.Provider.VersioningTest do
       {:ok, v1} = Servo.build_broadband(%{})
       {:ok, v2} = Servo.build_broadband_v2(%{})
 
-      v1_instances = Diffo.Provider.find_instances_by_specification_id!(Broadband.specification()[:id])
-      v2_instances = Diffo.Provider.find_instances_by_specification_id!(BroadbandV2.specification()[:id])
+      v1_instances =
+        Diffo.Provider.find_instances_by_specification_id!(Broadband.specification()[:id])
+
+      v2_instances =
+        Diffo.Provider.find_instances_by_specification_id!(BroadbandV2.specification()[:id])
 
       assert length(v1_instances) == 1
       assert length(v2_instances) == 1
@@ -102,9 +105,10 @@ defmodule Diffo.Provider.VersioningTest do
       {:ok, v1} = Servo.build_broadband(%{})
       {:ok, instance} = Diffo.Provider.get_instance_by_id(v1.id)
 
-      {:ok, migrated} = Diffo.Provider.respecify_instance(instance, %{
-        specified_by: BroadbandV2.specification()[:id]
-      })
+      {:ok, migrated} =
+        Diffo.Provider.respecify_instance(instance, %{
+          specified_by: BroadbandV2.specification()[:id]
+        })
 
       assert migrated.specification.id == BroadbandV2.specification()[:id]
     end
@@ -112,22 +116,30 @@ defmodule Diffo.Provider.VersioningTest do
     test "migrated instance is found by V2 specification" do
       {:ok, v1} = Servo.build_broadband(%{})
       {:ok, instance} = Diffo.Provider.get_instance_by_id(v1.id)
-      {:ok, _} = Diffo.Provider.respecify_instance(instance, %{
-        specified_by: BroadbandV2.specification()[:id]
-      })
 
-      v2_instances = Diffo.Provider.find_instances_by_specification_id!(BroadbandV2.specification()[:id])
+      {:ok, _} =
+        Diffo.Provider.respecify_instance(instance, %{
+          specified_by: BroadbandV2.specification()[:id]
+        })
+
+      v2_instances =
+        Diffo.Provider.find_instances_by_specification_id!(BroadbandV2.specification()[:id])
+
       assert Enum.any?(v2_instances, &(&1.id == v1.id))
     end
 
     test "migrated instance is no longer found by V1 specification" do
       {:ok, v1} = Servo.build_broadband(%{})
       {:ok, instance} = Diffo.Provider.get_instance_by_id(v1.id)
-      {:ok, _} = Diffo.Provider.respecify_instance(instance, %{
-        specified_by: BroadbandV2.specification()[:id]
-      })
 
-      v1_instances = Diffo.Provider.find_instances_by_specification_id!(Broadband.specification()[:id])
+      {:ok, _} =
+        Diffo.Provider.respecify_instance(instance, %{
+          specified_by: BroadbandV2.specification()[:id]
+        })
+
+      v1_instances =
+        Diffo.Provider.find_instances_by_specification_id!(Broadband.specification()[:id])
+
       refute Enum.any?(v1_instances, &(&1.id == v1.id))
     end
 
@@ -137,11 +149,25 @@ defmodule Diffo.Provider.VersioningTest do
 
       {:ok, instance_a} = Diffo.Provider.get_instance_by_id(v1_a.id)
       {:ok, instance_b} = Diffo.Provider.get_instance_by_id(v1_b.id)
-      {:ok, _} = Diffo.Provider.respecify_instance(instance_a, %{specified_by: BroadbandV2.specification()[:id]})
-      {:ok, _} = Diffo.Provider.respecify_instance(instance_b, %{specified_by: BroadbandV2.specification()[:id]})
 
-      assert Diffo.Provider.find_instances_by_specification_id!(Broadband.specification()[:id]) == []
-      assert length(Diffo.Provider.find_instances_by_specification_id!(BroadbandV2.specification()[:id])) == 3
+      {:ok, _} =
+        Diffo.Provider.respecify_instance(instance_a, %{
+          specified_by: BroadbandV2.specification()[:id]
+        })
+
+      {:ok, _} =
+        Diffo.Provider.respecify_instance(instance_b, %{
+          specified_by: BroadbandV2.specification()[:id]
+        })
+
+      assert Diffo.Provider.find_instances_by_specification_id!(Broadband.specification()[:id]) ==
+               []
+
+      assert length(
+               Diffo.Provider.find_instances_by_specification_id!(
+                 BroadbandV2.specification()[:id]
+               )
+             ) == 3
     end
   end
 end

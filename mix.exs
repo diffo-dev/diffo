@@ -6,7 +6,7 @@ defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
 
-  @version "0.2.1"
+  @version "0.2.2"
   @name "Diffo"
   @description "TMF Service and Resource Manager with a difference"
   @github_url "https://github.com/diffo-dev/diffo"
@@ -26,7 +26,8 @@ defmodule Diffo.MixProject do
       docs: &docs/0,
       deps: deps(),
       aliases: aliases(),
-      consolidate_protocols: Mix.env() != :dev
+      consolidate_protocols: Mix.env() != :dev,
+      usage_rules: usage_rules()
     ]
   end
 
@@ -76,7 +77,7 @@ defmodule Diffo.MixProject do
         ]
       ],
       groups_for_extras: [
-        "DSLs": ~r/documentation\/dsls\//
+        DSLs: ~r/documentation\/dsls\//
       ]
     ]
   end
@@ -93,13 +94,31 @@ defmodule Diffo.MixProject do
     ]
   end
 
+  defp usage_rules do
+    [
+      file: "CLAUDE.md",
+      usage_rules: ["usage_rules:all"],
+      skills: [
+        location: ".claude/skills",
+        build: [
+          "diffo-framework": [
+            description:
+              "Use when working with Diffo or its underlying Ash ecosystem. Consult when making any domain, resource, or provider changes.",
+            usage_rules: [:ash, :ash_neo4j, :spark, :reactor, :igniter]
+          ]
+        ]
+      ]
+    ]
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:usage_rules, "~> 1.2", only: [:dev]},
       {:ash_outstanding, "~> 0.2.3"},
       {:ash_jason, "~> 3.0"},
       {:ash_state_machine, "~> 0.2.12"},
-      {:ash_neo4j, ash_neo4j_version("~> 0.4.1")},
+      {:ash_neo4j, ash_neo4j_version("~> 0.5")},
       {:bolty, ">= 0.0.12"},
       {:ash, ash_version("~> 3.0 and >= 3.24.2")},
       {:uuid, "~> 1.1"},

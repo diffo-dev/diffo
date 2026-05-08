@@ -148,5 +148,4 @@ defmodule Diffo.Provider.Note do
   preparations do
     prepare build(load: [:author], sort: [timestamp: :desc])
   end
-
 end

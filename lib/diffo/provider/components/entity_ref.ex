@@ -121,5 +121,4 @@ defmodule Diffo.Provider.EntityRef do
   preparations do
     prepare build(load: [:entity], sort: [created_at: :desc])
   end
-
 end

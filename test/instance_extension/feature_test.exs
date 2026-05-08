@@ -4,7 +4,7 @@
 
 defmodule Diffo.InstanceExtension.FeatureTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias Diffo.Test.Parties
 
   setup do
