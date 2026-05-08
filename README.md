@@ -34,18 +34,25 @@ Diffo is especially suited for use in organisations with loosely coupled 'entity
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `diffo` to your list of dependencies in `mix.exs`:
+The recommended way to install Diffo is with [Igniter](https://hexdocs.pm/igniter):
+
+```bash
+mix igniter.install diffo
+```
+
+This will add the dependency, configure Neo4j (via `ash_neo4j`), register the custom expression, and set up the Spark formatter.
+
+Alternatively, add `diffo` to your list of dependencies in `mix.exs` manually:
 
 ```elixir
 def deps do
   [
-    {:diffo, "~> 0.1.6"}
+    {:diffo, "~> 0.2.1"}
   ]
 end
 ```
 
-You should need [Neo4j](https://github.com/neo4j/neo4j) available. We recommend the Neo4j Community 5 latest, available at [Neo4j Deploymnent Centre](https://neo4j.com/deployment-center/) which can be installed locally. You can also configure connection to a cloud based database service such as [Neo4j AuraDB](https://neo4j.com/product/auradb/).
+You will need [Neo4j](https://github.com/neo4j/neo4j) available. We recommend the Neo4j Community 5 latest, available at [Neo4j Deploymnent Centre](https://neo4j.com/deployment-center/) which can be installed locally. You can also configure connection to a cloud based database service such as [Neo4j AuraDB](https://neo4j.com/product/auradb/).
 
 ## Tutorial
 
