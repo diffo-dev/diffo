@@ -86,7 +86,7 @@ defmodule Diffo.MixProject do
     [
       name: :diffo,
       licenses: ["MIT"],
-      files: ~w(lib .formatter.exs mix.exs README* LICENSE*),
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE* usage-rules.md),
       links: %{
         "GitHub" => @github_url,
         "Author's home page" => "https://www.diffo.dev"
