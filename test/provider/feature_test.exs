@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.FeatureTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Diffo.Type.Value
 

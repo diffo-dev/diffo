@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.PlaceRefTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   use Outstand
 
   setup do

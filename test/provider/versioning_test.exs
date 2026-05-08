@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.VersioningTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Diffo.Test.Servo
   alias Diffo.Test.Broadband
