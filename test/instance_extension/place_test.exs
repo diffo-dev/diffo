@@ -4,7 +4,7 @@
 
 defmodule Diffo.InstanceExtension.PlaceTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Diffo.Provider.Instance.Extension.Info, as: InstanceInfo
   alias Diffo.Provider.Place.Extension.Info, as: PlaceInfo

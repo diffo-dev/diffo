@@ -4,7 +4,7 @@
 
 defmodule DiffoTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Diffo
   doctest Diffo.Unwrap
   doctest Diffo.Type.Primitive

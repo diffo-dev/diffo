@@ -4,7 +4,7 @@
 
 defmodule Diffo.InstanceExtension.VerifierTest do
   @moduledoc false
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true, async: false
   alias Diffo.Test.Util
 
   describe "specification verifier" do

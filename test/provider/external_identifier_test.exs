@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.ExternalIdentifierTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias Diffo.Provider.ExternalIdentifier
   alias Diffo.Provider.Party
 

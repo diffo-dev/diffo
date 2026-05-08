@@ -4,7 +4,7 @@
 
 defmodule Diffo.Test.Util do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import ExUnit.CaptureIO
 
   def assert_compile_time_warning(module, message, fun) when is_bitstring(message) do
