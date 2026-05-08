@@ -4,7 +4,7 @@
 
 defmodule Diffo.InstanceExtension.PartyTest do
   @moduledoc false
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Diffo.Provider.Instance.Extension.Info, as: InstanceInfo
   alias Diffo.Provider.Party.Extension.Info, as: PartyInfo

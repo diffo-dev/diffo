@@ -4,7 +4,7 @@
 
 defmodule Diffo.PartyExtension.TransformerTest do
   @moduledoc false
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: true, async: true
 
   alias Diffo.Test.Organization
   alias Diffo.Test.Person
