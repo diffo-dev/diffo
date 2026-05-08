@@ -17,12 +17,36 @@ defmodule Diffo.Provider.Place.Extension.Verifiers.VerifyRoles do
     resource = Verifier.get_persisted(dsl_state, :module)
 
     errors =
-      check_section(dsl_state, [:instances], :instance_type, &InstanceInfo.instance?/1,
-        "instances", "instance_type", "BaseInstance", resource) ++
-      check_section(dsl_state, [:parties], :party_type, &PartyInfo.party?/1,
-        "parties", "party_type", "BaseParty", resource) ++
-      check_section(dsl_state, [:places], :place_type, &PlaceInfo.place?/1,
-        "places", "place_type", "BasePlace", resource)
+      check_section(
+        dsl_state,
+        [:instances],
+        :instance_type,
+        &InstanceInfo.instance?/1,
+        "instances",
+        "instance_type",
+        "BaseInstance",
+        resource
+      ) ++
+        check_section(
+          dsl_state,
+          [:parties],
+          :party_type,
+          &PartyInfo.party?/1,
+          "parties",
+          "party_type",
+          "BaseParty",
+          resource
+        ) ++
+        check_section(
+          dsl_state,
+          [:places],
+          :place_type,
+          &PlaceInfo.place?/1,
+          "places",
+          "place_type",
+          "BasePlace",
+          resource
+        )
 
     case errors do
       [] -> :ok
@@ -32,6 +56,7 @@ defmodule Diffo.Provider.Place.Extension.Verifiers.VerifyRoles do
 
   defp check_section(dsl_state, path, type_field, type_check?, section, field, base, resource) do
     entities = Verifier.get_entities(dsl_state, path)
+
     duplicate_errors(entities, section, resource) ++
       type_errors(entities, type_field, type_check?, section, field, base, resource)
   end
@@ -58,18 +83,24 @@ defmodule Diffo.Provider.Place.Extension.Verifiers.VerifyRoles do
           acc
 
         !Code.ensure_loaded?(mod) ->
-          [DslError.exception(
-            module: resource,
-            path: [String.to_atom(section)],
-            message: "#{section}: #{field} #{inspect(mod)} does not exist"
-          ) | acc]
+          [
+            DslError.exception(
+              module: resource,
+              path: [String.to_atom(section)],
+              message: "#{section}: #{field} #{inspect(mod)} does not exist"
+            )
+            | acc
+          ]
 
         !type_check?.(mod) ->
-          [DslError.exception(
-            module: resource,
-            path: [String.to_atom(section)],
-            message: "#{section}: #{field} #{inspect(mod)} does not extend #{base}"
-          ) | acc]
+          [
+            DslError.exception(
+              module: resource,
+              path: [String.to_atom(section)],
+              message: "#{section}: #{field} #{inspect(mod)} does not extend #{base}"
+            )
+            | acc
+          ]
 
         true ->
           acc

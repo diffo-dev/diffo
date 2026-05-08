@@ -36,7 +36,8 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyFeatures do
             DslError.exception(
               module: resource,
               path: [:structure, :features, feature.name, :characteristics],
-              message: "features: characteristic name #{inspect(name)} is declared more than once in #{inspect(feature.name)}"
+              message:
+                "features: characteristic name #{inspect(name)} is declared more than once in #{inspect(feature.name)}"
             )
           end)
 
@@ -50,7 +51,8 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyFeatures do
                   DslError.exception(
                     module: resource,
                     path: [:structure, :features, feature.name, :characteristics, char.name],
-                    message: "features: characteristic value_type #{inspect(module)} does not exist"
+                    message:
+                      "features: characteristic value_type #{inspect(module)} does not exist"
                   )
                   | inner_acc
                 ]

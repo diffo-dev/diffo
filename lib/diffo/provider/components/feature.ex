@@ -135,5 +135,4 @@ defmodule Diffo.Provider.Feature do
   preparations do
     prepare build(load: [:characteristics], sort: [name: :asc])
   end
-
 end

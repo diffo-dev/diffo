@@ -17,8 +17,15 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyBehaviour do
     behaviour_actions = Verifier.get_entities(dsl_state, [:behaviour, :actions])
     ash_actions = Verifier.get_entities(dsl_state, [:actions])
 
-    create_names = ash_actions |> Enum.filter(&is_struct(&1, Ash.Resource.Actions.Create)) |> MapSet.new(& &1.name)
-    update_names = ash_actions |> Enum.filter(&is_struct(&1, Ash.Resource.Actions.Update)) |> MapSet.new(& &1.name)
+    create_names =
+      ash_actions
+      |> Enum.filter(&is_struct(&1, Ash.Resource.Actions.Create))
+      |> MapSet.new(& &1.name)
+
+    update_names =
+      ash_actions
+      |> Enum.filter(&is_struct(&1, Ash.Resource.Actions.Update))
+      |> MapSet.new(& &1.name)
 
     errors =
       Enum.flat_map(behaviour_actions, fn
@@ -26,22 +33,28 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyBehaviour do
           if MapSet.member?(create_names, name) do
             []
           else
-            [DslError.exception(
-              module: resource,
-              path: [:behaviour, :actions],
-              message: "behaviour: create #{inspect(name)} does not exist as a create action on this resource"
-            )]
+            [
+              DslError.exception(
+                module: resource,
+                path: [:behaviour, :actions],
+                message:
+                  "behaviour: create #{inspect(name)} does not exist as a create action on this resource"
+              )
+            ]
           end
 
         %ActionUpdate{name: name} ->
           if MapSet.member?(update_names, name) do
             []
           else
-            [DslError.exception(
-              module: resource,
-              path: [:behaviour, :actions],
-              message: "behaviour: update #{inspect(name)} does not exist as an update action on this resource"
-            )]
+            [
+              DslError.exception(
+                module: resource,
+                path: [:behaviour, :actions],
+                message:
+                  "behaviour: update #{inspect(name)} does not exist as an update action on this resource"
+              )
+            ]
           end
       end)
 

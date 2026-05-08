@@ -144,5 +144,4 @@ defmodule Diffo.Provider.ExternalIdentifier do
   preparations do
     prepare build(load: [:owner], sort: [created_at: :desc])
   end
-
 end

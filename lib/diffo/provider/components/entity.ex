@@ -140,5 +140,4 @@ defmodule Diffo.Provider.Entity do
   preparations do
     prepare build(sort: [id: :asc])
   end
-
 end

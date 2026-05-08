@@ -22,17 +22,10 @@ defmodule Diffo.Test.Carrier do
     plural_name :carriers
   end
 
-  attributes do
-    attribute :abn, :string do
-      description "Australian Business Number"
-      allow_nil? true
-      public? true
-    end
-
-    attribute :trading_name, :string do
-      description "Trading name, distinct from legal name"
-      allow_nil? true
-      public? true
+  actions do
+    create :build do
+      accept [:id, :href, :name, :abn, :trading_name]
+      change set_attribute(:type, :Organization)
     end
   end
 
@@ -45,10 +38,17 @@ defmodule Diffo.Test.Carrier do
     expect [:id, :name, :type]
   end
 
-  actions do
-    create :build do
-      accept [:id, :href, :name, :abn, :trading_name]
-      change set_attribute(:type, :Organization)
+  attributes do
+    attribute :abn, :string do
+      description "Australian Business Number"
+      allow_nil? true
+      public? true
+    end
+
+    attribute :trading_name, :string do
+      description "Trading name, distinct from legal name"
+      allow_nil? true
+      public? true
     end
   end
 

@@ -3,33 +3,46 @@
 # SPDX-License-Identifier: MIT
 
 # Used by "mix format"
-locals_without_parens = [
-  id: 1,
+spark_locals_without_parens = [
+  calculate: 1,
   category: 1,
-  is_enabled?: 1,
   characteristic: 2,
-  pick: 1,
-  rename: 1,
-  field: 3,
-  expect: 1,
-  relate: 1,
-  guard: 1,
-  customize: 1,
-  order: 1,
-  initial_states: 1,
-  default_initial_state: 1,
-  state_attribute: 1,
-  transition: 1,
-  compact: 1,
-  label: 1
+  characteristic: 3,
+  constraints: 1,
+  create: 1,
+  create: 2,
+  description: 1,
+  feature: 1,
+  feature: 2,
+  id: 1,
+  is_enabled?: 1,
+  major_version: 1,
+  minor_version: 1,
+  name: 1,
+  parties: 2,
+  parties: 3,
+  party: 2,
+  party: 3,
+  patch_version: 1,
+  place: 2,
+  place: 3,
+  places: 2,
+  places: 3,
+  reference: 1,
+  role: 2,
+  role: 3,
+  tmf_version: 1,
+  type: 1,
+  update: 1,
+  update: 2
 ]
 
 [
   plugins: [Spark.Formatter],
   inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"],
-  import_deps: [:ash],
-  locals_without_parens: locals_without_parens,
+  import_deps: [:ash, :ash_jason, :ash_neo4j, :ash_outstanding, :ash_state_machine],
+  locals_without_parens: spark_locals_without_parens,
   export: [
-    locals_without_parens: locals_without_parens
+    locals_without_parens: spark_locals_without_parens
   ]
 ]
