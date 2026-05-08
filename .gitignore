@@ -28,3 +28,4 @@ diffo-*.tar
 
 # Agent related
 .claude/*
+CLAUDE.md
