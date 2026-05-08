@@ -11,6 +11,20 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.2.2](https://github.com/diffo-dev/diffo/compare/v0.2.1...v0.2.2) (2026-05-08)
+
+## Notable Changes
+* Updated to ash_neo4j 0.5.0 with async test support
+* Igniter installer — `mix igniter.install diffo` now sets up Neo4j config, custom expressions, and Spark DSL formatter
+* Spark DSL formatter configured for all provider extensions; `mix format` enforced across the codebase
+* `usage-rules.md` added for AI coding assistant guidance when working with Diffo
+
+## What's Changed
+* async tests by @matt-beanland in https://github.com/diffo-dev/diffo/pull/114
+* igniter by @matt-beanlanda in https://github.com/diffo-dev/diffo/pull/116
+* spark formatter by @matt-beanlanda in https://github.com/diffo-dev/diffo/pull/117
+* usage_rules by @matt-beanlanda in https://github.com/diffo-dev/diffo/pull/118
+
 ## [v0.2.1](https://github.com/diffo-dev/diffo/compare/v0.2.0...v0.2.1) (2026-05-06)
 
 ## Notable Changes
