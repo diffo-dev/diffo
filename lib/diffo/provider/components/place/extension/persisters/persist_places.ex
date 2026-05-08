@@ -13,9 +13,14 @@ defmodule Diffo.Provider.Place.Extension.Persisters.PersistPlaces do
     escaped = Macro.escape(declarations)
     dsl_state = Transformer.persist(dsl_state, :places, declarations)
 
-    {:ok, Transformer.eval(dsl_state, [], quote do
-      @doc false
-      def places, do: unquote(escaped)
-    end)}
+    {:ok,
+     Transformer.eval(
+       dsl_state,
+       [],
+       quote do
+         @doc false
+         def places, do: unquote(escaped)
+       end
+     )}
   end
 end

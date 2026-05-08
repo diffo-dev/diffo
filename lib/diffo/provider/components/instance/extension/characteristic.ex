@@ -66,7 +66,10 @@ defmodule Diffo.Provider.Instance.Characteristic do
   def relate_instance(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     characteristics = Ash.Changeset.get_argument(changeset, :characteristics)
-    Provider.relate_instance_characteristics(%Instance{id: result.id}, %{characteristics: characteristics})
+
+    Provider.relate_instance_characteristics(%Instance{id: result.id}, %{
+      characteristics: characteristics
+    })
   end
 
   @doc """

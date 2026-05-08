@@ -48,7 +48,8 @@ defmodule Diffo.Provider.Instance.Extension.Verifiers.VerifyParties do
               DslError.exception(
                 module: resource,
                 path: [:structure, :parties, party.role],
-                message: "parties: party_type #{inspect(party.party_type)} does not extend BaseParty"
+                message:
+                  "parties: party_type #{inspect(party.party_type)} does not extend BaseParty"
               )
               | acc
             ]

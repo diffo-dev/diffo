@@ -180,5 +180,4 @@ defmodule Diffo.Provider.Instance.Util do
       _ -> nil
     end
   end
-
 end

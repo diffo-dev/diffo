@@ -169,5 +169,4 @@ defmodule Diffo.Provider.PlaceRef do
               sort: [role: :asc, created_at: :desc]
             )
   end
-
 end
