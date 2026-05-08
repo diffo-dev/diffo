@@ -61,7 +61,8 @@ defmodule Diffo.Provider.Instance.Extension do
     schema: [
       id: [
         type: :string,
-        doc: "The id of the specification, a uuid4 the same in all environments, unique for name and major_version.",
+        doc:
+          "The id of the specification, a uuid4 the same in all environments, unique for name and major_version.",
         required: true
       ],
       name: [
@@ -114,7 +115,8 @@ defmodule Diffo.Provider.Instance.Extension do
         required: true
       ],
       value_type: [
-        doc: "The type of the characteristic's value. An atom module name such as an Ash.TypedStruct for a scalar value, or `{:array, module}` for an array of values of that type.",
+        doc:
+          "The type of the characteristic's value. An atom module name such as an Ash.TypedStruct for a scalar value, or `{:array, module}` for an array of values of that type.",
         type: :any
       ]
     ]
@@ -182,11 +184,13 @@ defmodule Diffo.Provider.Instance.Extension do
       required: true
     ],
     party_type: [
-      doc: "The module of the Party kind. An atom module name such as a BaseParty-derived resource.",
+      doc:
+        "The module of the Party kind. An atom module name such as a BaseParty-derived resource.",
       type: :any
     ],
     reference: [
-      doc: "If true, no direct PartyRef edge is created; the party is reachable by graph traversal.",
+      doc:
+        "If true, no direct PartyRef edge is created; the party is reachable by graph traversal.",
       type: :boolean,
       default: false
     ],
@@ -215,7 +219,8 @@ defmodule Diffo.Provider.Instance.Extension do
       @party_schema ++
         [
           constraints: [
-            doc: "Multiplicity constraints on the number of parties in this role, e.g. [min: 1, max: 3]",
+            doc:
+              "Multiplicity constraints on the number of parties in this role, e.g. [min: 1, max: 3]",
             type: :keyword_list
           ]
         ]
@@ -247,7 +252,8 @@ defmodule Diffo.Provider.Instance.Extension do
       type: :any
     ],
     reference: [
-      doc: "If true, no direct PlaceRef edge is created; the place is reachable by graph traversal.",
+      doc:
+        "If true, no direct PlaceRef edge is created; the place is reachable by graph traversal.",
       type: :boolean,
       default: false
     ],
@@ -276,7 +282,8 @@ defmodule Diffo.Provider.Instance.Extension do
       @place_schema ++
         [
           constraints: [
-            doc: "Multiplicity constraints on the number of places in this role, e.g. [min: 1, max: 3]",
+            doc:
+              "Multiplicity constraints on the number of places in this role, e.g. [min: 1, max: 3]",
             type: :keyword_list
           ]
         ]
@@ -299,7 +306,8 @@ defmodule Diffo.Provider.Instance.Extension do
 
   @structure %Spark.Dsl.Section{
     name: :structure,
-    describe: "Defines the structural shape of the Instance — its specification, characteristics, features, parties, and places",
+    describe:
+      "Defines the structural shape of the Instance — its specification, characteristics, features, parties, and places",
     examples: [
       """
       structure do
@@ -330,7 +338,8 @@ defmodule Diffo.Provider.Instance.Extension do
 
   @action_create %Spark.Dsl.Entity{
     name: :create,
-    describe: "Marks a create action for instance build wiring, injecting :specified_by, :features, and :characteristics arguments",
+    describe:
+      "Marks a create action for instance build wiring, injecting :specified_by, :features, and :characteristics arguments",
     target: Diffo.Provider.Instance.Extension.ActionCreate,
     args: [:name],
     schema: [
@@ -372,7 +381,8 @@ defmodule Diffo.Provider.Instance.Extension do
 
   @behaviour_section %Spark.Dsl.Section{
     name: :behaviour,
-    describe: "Defines the behavioural wiring for the Instance — actions, and in future triggers and tasks",
+    describe:
+      "Defines the behavioural wiring for the Instance — actions, and in future triggers and tasks",
     examples: [
       """
       behaviour do

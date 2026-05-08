@@ -131,6 +131,7 @@ defmodule Diffo.InstanceExtension.PartyTest do
         %Party{id: p3.id, role: :installer},
         %Party{id: p4.id, role: :installer}
       ]
+
       assert {:error, _} = Servo.build_shelf(%{name: "s", parties: parties})
     end
 
@@ -139,6 +140,7 @@ defmodule Diffo.InstanceExtension.PartyTest do
         %Party{id: org.id, role: :facilitator},
         %Party{id: p1.id, role: :installer}
       ]
+
       assert {:ok, shelf} = Servo.build_shelf(%{name: "s", parties: parties})
       assert length(shelf.parties) == 2
     end
@@ -149,6 +151,7 @@ defmodule Diffo.InstanceExtension.PartyTest do
         %Party{id: p2.id, role: :installer},
         %Party{id: p3.id, role: :installer}
       ]
+
       assert {:ok, _shelf} = Servo.build_shelf(%{name: "s", parties: parties})
     end
   end
@@ -166,11 +169,12 @@ defmodule Diffo.InstanceExtension.PartyTest do
 
   describe "BaseParty — complex pattern (Carrier)" do
     test "domain-specific attributes are accepted and persisted" do
-      {:ok, carrier} = Nbn.create_carrier(%{
-        name: "Acme Wholesale",
-        abn: "51824753556",
-        trading_name: "Acme"
-      })
+      {:ok, carrier} =
+        Nbn.create_carrier(%{
+          name: "Acme Wholesale",
+          abn: "51824753556",
+          trading_name: "Acme"
+        })
 
       assert carrier.name == "Acme Wholesale"
       assert carrier.type == :Organization
@@ -179,11 +183,12 @@ defmodule Diffo.InstanceExtension.PartyTest do
     end
 
     test "domain-specific attributes are readable after creation" do
-      {:ok, carrier} = Nbn.create_carrier(%{
-        name: "Acme Wholesale",
-        abn: "51824753556",
-        trading_name: "Acme"
-      })
+      {:ok, carrier} =
+        Nbn.create_carrier(%{
+          name: "Acme Wholesale",
+          abn: "51824753556",
+          trading_name: "Acme"
+        })
 
       {:ok, loaded} = Nbn.get_carrier_by_id(carrier.id)
       assert loaded.abn == "51824753556"

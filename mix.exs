@@ -76,7 +76,7 @@ defmodule Diffo.MixProject do
         ]
       ],
       groups_for_extras: [
-        "DSLs": ~r/documentation\/dsls\//
+        DSLs: ~r/documentation\/dsls\//
       ]
     ]
   end

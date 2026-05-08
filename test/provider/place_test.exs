@@ -284,7 +284,8 @@ defmodule Diffo.Provider.PlaceTest do
           type: :GeographicAddress
         })
 
-      {:error, _error} = place |> Diffo.Provider.update_place(%{referred_type: :GeographicAddress})
+      {:error, _error} =
+        place |> Diffo.Provider.update_place(%{referred_type: :GeographicAddress})
     end
 
     test "update referred_type - failure - PlaceRef requires referred_type" do
