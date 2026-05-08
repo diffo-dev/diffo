@@ -89,12 +89,13 @@ defmodule Diffo.InstanceExtension.PlaceTest do
 
   describe "BasePlace — complex pattern (ExchangeBuilding)" do
     test "domain-specific attributes are accepted and persisted" do
-      {:ok, building} = Nbn.create_exchange_building(%{
-        id: "EX-MEL-001",
-        name: "Melbourne Central Exchange",
-        nli: "MEXMELB0001",
-        access_type: :unmanned
-      })
+      {:ok, building} =
+        Nbn.create_exchange_building(%{
+          id: "EX-MEL-001",
+          name: "Melbourne Central Exchange",
+          nli: "MEXMELB0001",
+          access_type: :unmanned
+        })
 
       assert building.name == "Melbourne Central Exchange"
       assert building.type == :GeographicSite
@@ -103,12 +104,13 @@ defmodule Diffo.InstanceExtension.PlaceTest do
     end
 
     test "domain-specific attributes are readable after creation" do
-      {:ok, _building} = Nbn.create_exchange_building(%{
-        id: "EX-MEL-002",
-        name: "South Yarra Exchange",
-        nli: "MEXMELB0002",
-        access_type: :attended
-      })
+      {:ok, _building} =
+        Nbn.create_exchange_building(%{
+          id: "EX-MEL-002",
+          name: "South Yarra Exchange",
+          nli: "MEXMELB0002",
+          access_type: :attended
+        })
 
       {:ok, loaded} = Nbn.get_exchange_building_by_id("EX-MEL-002")
       assert loaded.nli == "MEXMELB0002"
@@ -116,10 +118,11 @@ defmodule Diffo.InstanceExtension.PlaceTest do
     end
 
     test "domain-specific attributes are nil when not provided" do
-      {:ok, building} = Nbn.create_exchange_building(%{
-        id: "EX-MEL-003",
-        name: "Bare Exchange"
-      })
+      {:ok, building} =
+        Nbn.create_exchange_building(%{
+          id: "EX-MEL-003",
+          name: "Bare Exchange"
+        })
 
       assert building.nli == nil
       assert building.access_type == nil

@@ -42,5 +42,4 @@ defmodule Diffo.Provider.Assignment do
       inspect(struct)
     end
   end
-
 end

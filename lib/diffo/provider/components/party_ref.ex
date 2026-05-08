@@ -200,5 +200,4 @@ defmodule Diffo.Provider.PartyRef do
       result
     end
   end
-
 end

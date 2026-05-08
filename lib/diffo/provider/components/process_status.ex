@@ -124,5 +124,4 @@ defmodule Diffo.Provider.ProcessStatus do
   preparations do
     prepare build(sort: [timestamp: :desc])
   end
-
 end

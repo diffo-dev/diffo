@@ -153,5 +153,4 @@ defmodule Diffo.Provider.Event do
       Diffo.Util.to_iso8601(record.created_at)
     )
   end
-
 end
