@@ -67,6 +67,7 @@ defmodule Diffo.MixProject do
       extras: [
         "README.md": [title: "Guide"],
         "LICENSES/MIT.md": [title: "License"],
+        "diffo.livemd": [title: "Tutorial"],
         "documentation/dsls/DSL-Diffo.Provider.Instance.Extension.md": [
           title: "DSL: Diffo.Provider.Instance.Extension",
           search_data: Spark.Docs.search_data_for(Diffo.Provider.Instance.Extension)
@@ -85,6 +86,7 @@ defmodule Diffo.MixProject do
       ],
       groups_for_extras: [
         "How-to": ~r/documentation\/how_to\//,
+        Tutorials: ~r/\.livemd$/,
         DSLs: ~r/documentation\/dsls\//
       ]
     ]
