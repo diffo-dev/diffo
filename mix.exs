@@ -74,9 +74,17 @@ defmodule Diffo.MixProject do
         "documentation/dsls/DSL-Diffo.Provider.Party.Extension.md": [
           title: "DSL: Diffo.Provider.Party.Extension",
           search_data: Spark.Docs.search_data_for(Diffo.Provider.Party.Extension)
+        ],
+        "documentation/how_to/use_diffo_type.livemd": [title: "Using Diffo.Type"],
+        "documentation/how_to/use_diffo_provider_extension.livemd": [
+          title: "Using the Diffo Provider Instance Extension"
+        ],
+        "documentation/how_to/use_diffo_provider_versioning.livemd": [
+          title: "Instance Versioning with the Diffo Provider"
         ]
       ],
       groups_for_extras: [
+        "How-to": ~r/documentation\/how_to\//,
         DSLs: ~r/documentation\/dsls\//
       ]
     ]
