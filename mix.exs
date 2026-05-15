@@ -67,6 +67,7 @@ defmodule Diffo.MixProject do
       extras: [
         "README.md": [title: "Guide"],
         "LICENSES/MIT.md": [title: "License"],
+        "diffo.livemd": [title: "Tutorial"],
         "documentation/dsls/DSL-Diffo.Provider.Instance.Extension.md": [
           title: "DSL: Diffo.Provider.Instance.Extension",
           search_data: Spark.Docs.search_data_for(Diffo.Provider.Instance.Extension)
@@ -74,9 +75,18 @@ defmodule Diffo.MixProject do
         "documentation/dsls/DSL-Diffo.Provider.Party.Extension.md": [
           title: "DSL: Diffo.Provider.Party.Extension",
           search_data: Spark.Docs.search_data_for(Diffo.Provider.Party.Extension)
+        ],
+        "documentation/how_to/use_diffo_type.livemd": [title: "Using Diffo.Type"],
+        "documentation/how_to/use_diffo_provider_extension.livemd": [
+          title: "Using the Diffo Provider Instance Extension"
+        ],
+        "documentation/how_to/use_diffo_provider_versioning.livemd": [
+          title: "Instance Versioning with the Diffo Provider"
         ]
       ],
       groups_for_extras: [
+        "How-to": ~r/documentation\/how_to\//,
+        Tutorials: ~r/\.livemd$/,
         DSLs: ~r/documentation\/dsls\//
       ]
     ]
@@ -86,7 +96,7 @@ defmodule Diffo.MixProject do
     [
       name: :diffo,
       licenses: ["MIT"],
-      files: ~w(lib .formatter.exs mix.exs README* LICENSE*),
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE* usage-rules.md),
       links: %{
         "GitHub" => @github_url,
         "Author's home page" => "https://www.diffo.dev"
