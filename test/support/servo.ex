@@ -19,6 +19,7 @@ defmodule Diffo.Test.Servo do
   alias Diffo.Test.Characteristic.Shelf, as: ShelfCharacteristic
   alias Diffo.Test.Characteristic.Card, as: CardCharacteristic
   alias Diffo.Test.Characteristic.DeploymentClass
+  alias Diffo.Provider.AssignableCharacteristic
 
   domain do
     description "service and resource management"
@@ -54,5 +55,6 @@ defmodule Diffo.Test.Servo do
     resource ShelfCharacteristic
     resource CardCharacteristic
     resource DeploymentClass
+    resource AssignableCharacteristic
   end
 end
