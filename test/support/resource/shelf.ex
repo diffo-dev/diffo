@@ -11,7 +11,7 @@ defmodule Diffo.Test.Shelf do
 
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
-  alias Diffo.Provider.Instance.Characteristic
+  alias Diffo.Provider.Extension.Characteristic
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.AssignableValue
@@ -29,7 +29,7 @@ defmodule Diffo.Test.Shelf do
     plural_name :Shelves
   end
 
-  structure do
+  provider do
     specification do
       id "ef016d85-9dbd-429c-84da-1df56cc7dda5"
       name "shelf"
@@ -59,20 +59,20 @@ defmodule Diffo.Test.Shelf do
     parties do
       party :facilitator, Diffo.Test.Organization
       party :overseer, Diffo.Test.Person
-      party :provider, Diffo.Test.Organization, reference: true
+      party_ref :provider, Diffo.Test.Organization
       party :manager, Diffo.Test.Organization, calculate: :manager_calc
       parties :installer, Diffo.Test.Person, constraints: [min: 1, max: 3]
     end
 
     places do
       place :installation_site, Diffo.Provider.Place
-      place :billing_address, Diffo.Provider.Place, reference: true
+      place_ref :billing_address, Diffo.Provider.Place
     end
-  end
 
-  behaviour do
-    actions do
-      create :build
+    behaviour do
+      actions do
+        create :build
+      end
     end
   end
 

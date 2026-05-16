@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.InstanceExtension.VerifierTest do
+defmodule Diffo.Provider.Extension.InstanceVerifierTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: false
   alias Diffo.Test.Util
@@ -21,7 +21,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with invalid spec id"
             end
 
-            structure do
+            provider do
               specification do
                 id "ef016d85-9dbd-429c-04da-1df56cc7dda5"
                 name "invalid"
@@ -45,7 +45,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-camelCase specification name"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "not camel case"
@@ -69,7 +69,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with invalid specification type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -94,7 +94,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with negative major_version"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -119,7 +119,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with tmf_version below minimum"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -146,7 +146,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with duplicate characteristic name"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -175,7 +175,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-existent characteristic value_type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -203,7 +203,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-existent array characteristic value_type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -233,7 +233,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with duplicate feature names"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -265,7 +265,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with duplicate feature characteristic names"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -296,7 +296,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-existent feature characteristic value_type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -329,7 +329,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with duplicate party roles"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -358,7 +358,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-existent party_type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -386,7 +386,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with party_type that is not a BaseParty"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -416,16 +416,16 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with behaviour referencing a missing create action"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
               end
-            end
 
-            behaviour do
-              actions do
-                create :nonexistent
+              behaviour do
+                actions do
+                  create :nonexistent
+                end
               end
             end
           end
@@ -446,16 +446,16 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with behaviour referencing a missing update action"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
               end
-            end
 
-            behaviour do
-              actions do
-                update :nonexistent
+              behaviour do
+                actions do
+                  update :nonexistent
+                end
               end
             end
           end

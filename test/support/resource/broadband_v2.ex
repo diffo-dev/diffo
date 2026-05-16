@@ -22,7 +22,7 @@ defmodule Diffo.Test.BroadbandV2 do
     plural_name :broadband_v2s
   end
 
-  structure do
+  provider do
     specification do
       id "f6e5d4c3-b2a1-4f0e-9d8c-7b6a5f4e3d2c"
       name "broadband"
@@ -31,11 +31,11 @@ defmodule Diffo.Test.BroadbandV2 do
       description "A broadband access service — :fttb technology retired"
       category "Access"
     end
-  end
 
-  behaviour do
-    actions do
-      create :build
+    behaviour do
+      actions do
+        create :build
+      end
     end
   end
 

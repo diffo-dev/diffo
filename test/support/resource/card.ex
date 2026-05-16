@@ -10,7 +10,7 @@ defmodule Diffo.Test.Card do
   """
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
-  alias Diffo.Provider.Instance.Characteristic
+  alias Diffo.Provider.Extension.Characteristic
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.AssignableValue
@@ -26,7 +26,7 @@ defmodule Diffo.Test.Card do
     plural_name :Cards
   end
 
-  structure do
+  provider do
     specification do
       id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
       name "card"
@@ -39,11 +39,11 @@ defmodule Diffo.Test.Card do
       characteristic :card, CardValue
       characteristic :ports, AssignableValue
     end
-  end
 
-  behaviour do
-    actions do
-      create :build
+    behaviour do
+      actions do
+        create :build
+      end
     end
   end
 

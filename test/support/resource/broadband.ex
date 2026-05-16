@@ -22,7 +22,7 @@ defmodule Diffo.Test.Broadband do
     plural_name :broadbands
   end
 
-  structure do
+  provider do
     specification do
       id "a1b2c3d4-e5f6-4a7b-8c9d-e0f1a2b3c4d5"
       name "broadband"
@@ -31,11 +31,11 @@ defmodule Diffo.Test.Broadband do
       description "A broadband access service"
       category "Access"
     end
-  end
 
-  behaviour do
-    actions do
-      create :build
+    behaviour do
+      actions do
+        create :build
+      end
     end
   end
 

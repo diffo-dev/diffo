@@ -2,16 +2,16 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.InstanceExtension.TransformerTest do
+defmodule Diffo.Provider.Extension.InstanceTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
 
   alias Diffo.Test.Shelf
   alias Diffo.Test.Card
-  alias Diffo.Provider.Instance.Characteristic
-  alias Diffo.Provider.Instance.Feature
+  alias Diffo.Provider.Extension.Characteristic
+  alias Diffo.Provider.Extension.Feature
+  alias Diffo.Provider.Extension.PlaceDeclaration
   alias Diffo.Provider.Instance.Info
-  alias Diffo.Provider.Instance.Extension.PlaceDeclaration
 
   describe "PersistSpecification" do
     test "bakes specification/0 onto the resource" do
