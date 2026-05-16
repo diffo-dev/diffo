@@ -68,17 +68,13 @@ defmodule Diffo.MixProject do
         "README.md": [title: "Guide"],
         "LICENSES/MIT.md": [title: "License"],
         "diffo.livemd": [title: "Tutorial"],
-        "documentation/dsls/DSL-Diffo.Provider.Instance.Extension.md": [
-          title: "DSL: Diffo.Provider.Instance.Extension",
-          search_data: Spark.Docs.search_data_for(Diffo.Provider.Instance.Extension)
-        ],
-        "documentation/dsls/DSL-Diffo.Provider.Party.Extension.md": [
-          title: "DSL: Diffo.Provider.Party.Extension",
-          search_data: Spark.Docs.search_data_for(Diffo.Provider.Party.Extension)
+        "documentation/dsls/DSL-Diffo.Provider.Extension.md": [
+          title: "DSL: Diffo.Provider.Extension",
+          search_data: Spark.Docs.search_data_for(Diffo.Provider.Extension)
         ],
         "documentation/how_to/use_diffo_type.livemd": [title: "Using Diffo.Type"],
         "documentation/how_to/use_diffo_provider_extension.livemd": [
-          title: "Using the Diffo Provider Instance Extension"
+          title: "Using the Diffo Provider Extension"
         ],
         "documentation/how_to/use_diffo_provider_versioning.livemd": [
           title: "Instance Versioning with the Diffo Provider"
@@ -148,9 +144,9 @@ defmodule Diffo.MixProject do
         "spark.replace_doc_links"
       ],
       "spark.cheat_sheets":
-        "spark.cheat_sheets --extensions Diffo.Provider.Instance.Extension,Diffo.Provider.Party.Extension",
+        "spark.cheat_sheets --extensions Diffo.Provider.Extension",
       "spark.formatter": [
-        "spark.formatter --extensions Diffo.Provider.Instance.Extension,Diffo.Provider.Party.Extension",
+        "spark.formatter --extensions Diffo.Provider.Extension",
         "format .formatter.exs"
       ]
     ]
