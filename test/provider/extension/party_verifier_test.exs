@@ -204,7 +204,7 @@ defmodule Diffo.Provider.Extension.PartyVerifierTest do
         Spark.Error.DslError,
         "places: place_type Diffo.Test.Organization does not extend BasePlace",
         fn ->
-          defmodule WrongPlaceRoleType do
+          defmodule WrongPartyPlaceRoleType do
             alias Diffo.Provider.BaseParty
             use Ash.Resource, fragments: [BaseParty], domain: Diffo.Test.Nbn
 
@@ -215,6 +215,54 @@ defmodule Diffo.Provider.Extension.PartyVerifierTest do
             provider do
               places do
                 role :headquarters, Diffo.Test.Organization
+              end
+            end
+          end
+        end
+      )
+    end
+  end
+
+  describe "instance_ref verifier" do
+    test "non-existent instance_type on instance_ref warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "instances: instance_type NonExistent.RefInstance does not exist",
+        fn ->
+          defmodule InvalidPartyInstanceRefType do
+            alias Diffo.Provider.BaseParty
+            use Ash.Resource, fragments: [BaseParty], domain: Diffo.Test.Nbn
+
+            resource do
+              description "party with instance_ref pointing to a non-existent module"
+            end
+
+            provider do
+              instances do
+                instance_ref :manages, NonExistent.RefInstance
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "instance_ref with non-BaseInstance type warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "instances: instance_type Diffo.Test.Organization does not extend BaseInstance",
+        fn ->
+          defmodule InvalidPartyInstanceRefBaseType do
+            alias Diffo.Provider.BaseParty
+            use Ash.Resource, fragments: [BaseParty], domain: Diffo.Test.Nbn
+
+            resource do
+              description "party with instance_ref pointing to a non-instance module"
+            end
+
+            provider do
+              instances do
+                instance_ref :manages, Diffo.Test.Organization
               end
             end
           end
