@@ -54,11 +54,13 @@ defmodule Diffo.Test.ExchangeBuilding do
     end
   end
 
-  parties do
-    role :operator, Diffo.Test.Carrier
-  end
+  provider do
+    instances do
+      role :host, Diffo.Provider.Instance
+    end
 
-  instances do
-    role :host, Diffo.Provider.Instance
+    parties do
+      role :operator, Diffo.Test.Carrier
+    end
   end
 end

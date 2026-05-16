@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.PlaceExtension.VerifierTest do
+defmodule Diffo.Provider.Extension.PlaceVerifierTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: false
   alias Diffo.Test.Util
@@ -21,9 +21,11 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with duplicate instance role"
             end
 
-            instances do
-              role :site_for, Diffo.Provider.Instance
-              role :site_for, Diffo.Provider.Instance
+            provider do
+              instances do
+                role :site_for, Diffo.Provider.Instance
+                role :site_for, Diffo.Provider.Instance
+              end
             end
           end
         end
@@ -43,8 +45,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with non-existent instance type"
             end
 
-            instances do
-              role :site_for, NonExistent.InstanceModule
+            provider do
+              instances do
+                role :site_for, NonExistent.InstanceModule
+              end
             end
           end
         end
@@ -64,8 +68,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with party as instance type"
             end
 
-            instances do
-              role :site_for, Diffo.Test.Organization
+            provider do
+              instances do
+                role :site_for, Diffo.Test.Organization
+              end
             end
           end
         end
@@ -87,9 +93,11 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with duplicate party role"
             end
 
-            parties do
-              role :managed_by, Diffo.Test.Organization
-              role :managed_by, Diffo.Test.Organization
+            provider do
+              parties do
+                role :managed_by, Diffo.Test.Organization
+                role :managed_by, Diffo.Test.Organization
+              end
             end
           end
         end
@@ -109,8 +117,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with non-existent party type"
             end
 
-            parties do
-              role :managed_by, NonExistent.PartyModule
+            provider do
+              parties do
+                role :managed_by, NonExistent.PartyModule
+              end
             end
           end
         end
@@ -130,8 +140,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with instance as party type"
             end
 
-            parties do
-              role :managed_by, Diffo.Provider.Instance
+            provider do
+              parties do
+                role :managed_by, Diffo.Provider.Instance
+              end
             end
           end
         end
@@ -153,9 +165,11 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with duplicate place role"
             end
 
-            places do
-              role :contained_in, Diffo.Provider.Place
-              role :contained_in, Diffo.Provider.Place
+            provider do
+              places do
+                role :contained_in, Diffo.Provider.Place
+                role :contained_in, Diffo.Provider.Place
+              end
             end
           end
         end
@@ -175,8 +189,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with non-existent place type"
             end
 
-            places do
-              role :contained_in, NonExistent.PlaceModule
+            provider do
+              places do
+                role :contained_in, NonExistent.PlaceModule
+              end
             end
           end
         end
@@ -196,8 +212,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with party as place type"
             end
 
-            places do
-              role :contained_in, Diffo.Test.Organization
+            provider do
+              places do
+                role :contained_in, Diffo.Test.Organization
+              end
             end
           end
         end

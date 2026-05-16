@@ -2,15 +2,15 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.PartyExtension.TransformerTest do
+defmodule Diffo.Provider.Extension.PartyTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
 
   alias Diffo.Test.Organization
   alias Diffo.Test.Person
-  alias Diffo.Provider.Party.Extension.InstanceRole
-  alias Diffo.Provider.Party.Extension.PartyRole
-  alias Diffo.Provider.Party.Extension.PlaceRole
+  alias Diffo.Provider.Extension.InstanceRole
+  alias Diffo.Provider.Extension.PartyRole
+  alias Diffo.Provider.Extension.PlaceRole
   alias Diffo.Provider.Party.Extension.Info
 
   describe "PersistInstances" do

@@ -52,11 +52,13 @@ defmodule Diffo.Test.Carrier do
     end
   end
 
-  instances do
-    role :provider, Diffo.Provider.Instance
-  end
+  provider do
+    instances do
+      role :provider, Diffo.Provider.Instance
+    end
 
-  places do
-    role :exchange, Diffo.Provider.Place
+    places do
+      role :exchange, Diffo.Provider.Place
+    end
   end
 end

@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.PartyExtension.VerifierTest do
+defmodule Diffo.Provider.Extension.PartyVerifierTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: false
   alias Diffo.Test.Util
@@ -21,9 +21,11 @@ defmodule Diffo.PartyExtension.VerifierTest do
               description "resource with duplicate instance role"
             end
 
-            instances do
-              role :operator, Diffo.Provider.Instance
-              role :operator, Diffo.Provider.Instance
+            provider do
+              instances do
+                role :operator, Diffo.Provider.Instance
+                role :operator, Diffo.Provider.Instance
+              end
             end
           end
         end
@@ -43,8 +45,10 @@ defmodule Diffo.PartyExtension.VerifierTest do
               description "resource with non-existent instance type"
             end
 
-            instances do
-              role :operator, NonExistent.InstanceModule
+            provider do
+              instances do
+                role :operator, NonExistent.InstanceModule
+              end
             end
           end
         end
@@ -64,8 +68,10 @@ defmodule Diffo.PartyExtension.VerifierTest do
               description "resource with party as instance type"
             end
 
-            instances do
-              role :operator, Diffo.Test.Organization
+            provider do
+              instances do
+                role :operator, Diffo.Test.Organization
+              end
             end
           end
         end
@@ -87,9 +93,11 @@ defmodule Diffo.PartyExtension.VerifierTest do
               description "resource with duplicate party role"
             end
 
-            parties do
-              role :employer, Diffo.Test.Organization
-              role :employer, Diffo.Test.Organization
+            provider do
+              parties do
+                role :employer, Diffo.Test.Organization
+                role :employer, Diffo.Test.Organization
+              end
             end
           end
         end
@@ -109,8 +117,10 @@ defmodule Diffo.PartyExtension.VerifierTest do
               description "resource with non-existent party type"
             end
 
-            parties do
-              role :employer, NonExistent.PartyModule
+            provider do
+              parties do
+                role :employer, NonExistent.PartyModule
+              end
             end
           end
         end
@@ -130,8 +140,10 @@ defmodule Diffo.PartyExtension.VerifierTest do
               description "resource with instance as party type"
             end
 
-            parties do
-              role :employer, Diffo.Provider.Instance
+            provider do
+              parties do
+                role :employer, Diffo.Provider.Instance
+              end
             end
           end
         end
@@ -153,9 +165,11 @@ defmodule Diffo.PartyExtension.VerifierTest do
               description "resource with duplicate place role"
             end
 
-            places do
-              role :headquarters, Diffo.Provider.Place
-              role :headquarters, Diffo.Provider.Place
+            provider do
+              places do
+                role :headquarters, Diffo.Provider.Place
+                role :headquarters, Diffo.Provider.Place
+              end
             end
           end
         end
@@ -175,8 +189,10 @@ defmodule Diffo.PartyExtension.VerifierTest do
               description "resource with non-existent place type"
             end
 
-            places do
-              role :headquarters, NonExistent.PlaceModule
+            provider do
+              places do
+                role :headquarters, NonExistent.PlaceModule
+              end
             end
           end
         end
@@ -196,8 +212,10 @@ defmodule Diffo.PartyExtension.VerifierTest do
               description "resource with party as place type"
             end
 
-            places do
-              role :headquarters, Diffo.Test.Organization
+            provider do
+              places do
+                role :headquarters, Diffo.Test.Organization
+              end
             end
           end
         end

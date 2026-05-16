@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.InstanceExtension.PlaceTest do
+defmodule Diffo.Provider.Extension.PlaceTest do
   @moduledoc false
   use ExUnit.Case, async: true
 

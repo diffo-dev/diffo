@@ -37,15 +37,17 @@ defmodule Diffo.Test.Person do
     end
   end
 
-  instances do
-    role :overseer, Diffo.Provider.Instance
-  end
+  provider do
+    instances do
+      role :overseer, Diffo.Provider.Instance
+    end
 
-  parties do
-    role :manager, Diffo.Test.Person
-  end
+    parties do
+      role :manager, Diffo.Test.Person
+    end
 
-  places do
-    role :residence, Diffo.Provider.Place
+    places do
+      role :residence, Diffo.Provider.Place
+    end
   end
 end
