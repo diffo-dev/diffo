@@ -10,7 +10,7 @@ defmodule Diffo.Provider.Characteristic do
     otp_app: :diffo,
     domain: Diffo.Provider,
     data_layer: AshNeo4j.DataLayer,
-    extensions: [AshOutstanding.Resource, AshJason.Resource]
+    extensions: [AshOutstanding.Resource, AshJason.Resource, Diffo.Provider.Characteristic.Extension]
 
   resource do
     description "An Ash Resource for a TMF Characteristic"

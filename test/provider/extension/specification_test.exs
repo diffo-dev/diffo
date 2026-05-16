@@ -6,7 +6,7 @@ defmodule Diffo.Provider.Extension.SpecificationTest do
   @moduledoc false
   use ExUnit.Case, async: true
   alias Diffo.Test.Servo
-  alias Diffo.Test.Shelf
+  alias Diffo.Test.Instance.Shelf
 
   setup do
     AshNeo4j.Sandbox.checkout()

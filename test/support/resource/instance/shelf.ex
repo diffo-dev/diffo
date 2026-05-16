@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Shelf do
+defmodule Diffo.Test.Instance.Shelf do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
@@ -17,8 +17,10 @@ defmodule Diffo.Test.Shelf do
   alias Diffo.Provider.AssignableValue
 
   alias Diffo.Test.Servo
-  alias Diffo.Test.ShelfValue
-  alias Diffo.Test.DeploymentClassValue
+  alias Diffo.Test.Characteristic.Shelf, as: ShelfCharacteristic
+  alias Diffo.Test.Characteristic.DeploymentClass
+  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Party.Person
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -45,23 +47,23 @@ defmodule Diffo.Test.Shelf do
     features do
       feature :spectralManagement do
         is_enabled? true
-        characteristic :deploymentClass, DeploymentClassValue
-        characteristic :deploymentClasses, {:array, DeploymentClassValue}
+        characteristic :deploymentClass, DeploymentClass
+        characteristic :deploymentClasses, {:array, DeploymentClass}
       end
     end
 
     characteristics do
-      characteristic :shelf, ShelfValue
+      characteristic :shelf, ShelfCharacteristic
       characteristic :slots, AssignableValue
-      characteristic :shelves, {:array, ShelfValue}
+      characteristic :shelves, {:array, ShelfCharacteristic}
     end
 
     parties do
-      party :facilitator, Diffo.Test.Organization
-      party :overseer, Diffo.Test.Person
-      party_ref :provider, Diffo.Test.Organization
-      party :manager, Diffo.Test.Organization, calculate: :manager_calc
-      parties :installer, Diffo.Test.Person, constraints: [min: 1, max: 3]
+      party :facilitator, Organization
+      party :overseer, Person
+      party_ref :provider, Organization
+      party :manager, Organization, calculate: :manager_calc
+      parties :installer, Person, constraints: [min: 1, max: 3]
     end
 
     places do
@@ -94,7 +96,8 @@ defmodule Diffo.Test.Shelf do
       argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Characteristic.update_values(result, changeset),
+               with {:ok, result} <-
+                      Characteristic.update_all(result, changeset, characteristics()),
                     {:ok, result} <- Servo.get_shelf_by_id(result.id),
                     do: {:ok, result}
              end)

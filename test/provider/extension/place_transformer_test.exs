@@ -6,7 +6,7 @@ defmodule Diffo.Provider.Extension.PlaceTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
 
-  alias Diffo.Test.GeographicSite
+  alias Diffo.Test.Place.GeographicSite
   alias Diffo.Provider.Extension.InstanceRole
   alias Diffo.Provider.Extension.PartyRole
   alias Diffo.Provider.Extension.PlaceRole

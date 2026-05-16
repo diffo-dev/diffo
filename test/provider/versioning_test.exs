@@ -7,8 +7,8 @@ defmodule Diffo.Provider.VersioningTest do
   use ExUnit.Case, async: true
 
   alias Diffo.Test.Servo
-  alias Diffo.Test.Broadband
-  alias Diffo.Test.BroadbandV2
+  alias Diffo.Test.Instance.Broadband
+  alias Diffo.Test.Instance.BroadbandV2
 
   setup do
     AshNeo4j.Sandbox.checkout()

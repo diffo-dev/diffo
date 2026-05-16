@@ -67,15 +67,77 @@ end
 
 ### `characteristics do` — Instance only
 
-Declares typed value slots. Each characteristic is backed by an `Ash.TypedStruct`. Do **not**
+Declares typed value slots. Each characteristic is a `Diffo.Provider.BaseCharacteristic`-derived
+Ash resource with direct typed attributes. A companion `<Module>.Value` TypedStruct (using
+`AshJason.TypedStruct`) drives ordered JSON encoding via a `:value` calculation. Do **not**
 add plain Ash attributes for data that belongs in a characteristic.
 
 ```elixir
 provider do
   characteristics do
-    characteristic :downstream_speed, MyApp.Speed
-    characteristic :access_technology, MyApp.AccessTechnology
-    characteristic :ports, {:array, MyApp.Port}
+    characteristic :downstream_speed, MyApp.SpeedCharacteristic
+    characteristic :access_technology, MyApp.AccessTechnologyCharacteristic
+    characteristic :ports, {:array, MyApp.PortCharacteristic}
+  end
+end
+```
+
+Each characteristic module uses `Diffo.Provider.BaseCharacteristic` as a fragment and declares
+its own attributes, a `:value` calculation, and create/update actions:
+
+```elixir
+defmodule MyApp.SpeedCharacteristic do
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BaseCharacteristic],
+    domain: MyApp.Domain
+
+  attributes do
+    attribute :downstream_mbps, :integer, public?: true
+    attribute :upstream_mbps, :integer, public?: true
+  end
+
+  calculations do
+    calculate :value, Diffo.Type.CharacteristicValue,
+              Diffo.Provider.Calculations.CharacteristicValue do
+      public? true
+    end
+  end
+
+  actions do
+    create :create do
+      accept [:name, :downstream_mbps, :upstream_mbps]
+      argument :instance_id, :uuid
+      argument :feature_id, :uuid
+      change manage_relationship(:instance_id, :instance, type: :append)
+      change manage_relationship(:feature_id, :feature, type: :append)
+    end
+
+    update :update do
+      accept [:downstream_mbps, :upstream_mbps]
+    end
+  end
+
+  preparations do
+    prepare build(load: [:value])
+  end
+
+  jason do
+    pick [:name, :value]
+    compact true
+  end
+end
+
+defmodule MyApp.SpeedCharacteristic.Value do
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+
+  typed_struct do
+    field :downstream_mbps, :integer
+    field :upstream_mbps, :integer
+  end
+
+  jason do
+    pick [:downstream_mbps, :upstream_mbps]
+    compact true
   end
 end
 ```

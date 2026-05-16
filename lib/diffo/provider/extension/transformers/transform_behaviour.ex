@@ -35,7 +35,16 @@ defmodule Diffo.Provider.Extension.Transformers.TransformBehaviour do
 
         after_body =
           quote do
-            Diffo.Provider.Instance.ActionHelper.build_after(changeset, result)
+            with {:ok, result} <-
+                   Diffo.Provider.Instance.ActionHelper.build_after(changeset, result),
+                 {:ok, result} <-
+                   Diffo.Provider.Extension.Characteristic.create_typed(result, characteristics()),
+                 {:ok, result} <-
+                   Diffo.Provider.Extension.Feature.create_typed_feature_chars(
+                     result,
+                     features()
+                   ),
+                 do: {:ok, result}
           end
 
         {before_body, after_body}

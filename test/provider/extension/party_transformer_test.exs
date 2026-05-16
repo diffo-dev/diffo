@@ -6,8 +6,8 @@ defmodule Diffo.Provider.Extension.PartyTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
 
-  alias Diffo.Test.Organization
-  alias Diffo.Test.Person
+  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Party.Person
   alias Diffo.Provider.Extension.InstanceRole
   alias Diffo.Provider.Extension.PartyRole
   alias Diffo.Provider.Extension.PlaceRole
