@@ -8,10 +8,10 @@ defmodule Diffo.Provider.Extension.PlaceTest do
 
   alias Diffo.Provider.Instance.Extension.Info, as: InstanceInfo
   alias Diffo.Provider.Place.Extension.Info, as: PlaceInfo
-  alias Diffo.Test.Organization
-  alias Diffo.Test.GeographicSite
+  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Place.GeographicSite
 
-  alias Diffo.Test.Shelf
+  alias Diffo.Test.Instance.Shelf
   alias Diffo.Test.Nbn
 
   setup do

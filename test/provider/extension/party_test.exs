@@ -8,10 +8,10 @@ defmodule Diffo.Provider.Extension.PartyTest do
 
   alias Diffo.Provider.Instance.Extension.Info, as: InstanceInfo
   alias Diffo.Provider.Party.Extension.Info, as: PartyInfo
-  alias Diffo.Test.Organization
-  alias Diffo.Test.Person
+  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Party.Person
 
-  alias Diffo.Test.Shelf
+  alias Diffo.Test.Instance.Shelf
   alias Diffo.Test.Nbn
   alias Diffo.Test.Servo
   alias Diffo.Provider.Instance.Party
@@ -41,7 +41,7 @@ defmodule Diffo.Provider.Extension.PartyTest do
       roles = PartyInfo.parties(Person)
       assert length(roles) == 1
       assert hd(roles).role == :manager
-      assert hd(roles).party_type == Diffo.Test.Person
+      assert hd(roles).party_type == Diffo.Test.Party.Person
     end
 
     test "instance roles are declared" do

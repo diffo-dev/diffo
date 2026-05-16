@@ -8,6 +8,7 @@ defmodule Diffo.Provider.Extension.Feature do
 
   alias Diffo.Provider
   alias Diffo.Provider.Instance
+  alias Diffo.Provider.Extension.Characteristic
   alias Diffo.Type.Value
 
   defstruct [:name, :is_enabled?, :characteristics, __spark_metadata__: nil]
@@ -32,8 +33,10 @@ defmodule Diffo.Provider.Extension.Feature do
       declarations,
       [],
       fn %{name: name, is_enabled?: isEnabled, characteristics: characteristics}, acc ->
+        dynamic = Enum.reject(characteristics, &Characteristic.typed?(&1.value_type))
+
         characteristic_ids =
-          Enum.reduce_while(characteristics, [], fn %{name: name, value_type: value_type}, acc ->
+          Enum.reduce_while(dynamic, [], fn %{name: name, value_type: value_type}, acc ->
             try do
               attrs =
                 case value_type do
@@ -84,6 +87,36 @@ defmodule Diffo.Provider.Extension.Feature do
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     features = Ash.Changeset.get_argument(changeset, :features)
     Provider.relate_instance_features(%Instance{id: result.id}, %{features: features})
+  end
+
+  def create_typed_feature_chars(result, declarations)
+      when is_struct(result) and is_list(declarations) do
+    Enum.reduce_while(declarations, {:ok, result}, fn %{name: name, characteristics: char_decls},
+                                                      {:ok, acc} ->
+      feature = Enum.find(acc.features, fn f -> f.name == name end)
+
+      if feature do
+        typed = Enum.filter(char_decls, &Characteristic.typed?(&1.value_type))
+
+        case create_typed_for_feature(feature, typed) do
+          :ok -> {:cont, {:ok, acc}}
+          {:error, error} -> {:halt, {:error, error}}
+        end
+      else
+        {:cont, {:ok, acc}}
+      end
+    end)
+  end
+
+  defp create_typed_for_feature(feature, typed_decls) do
+    Enum.reduce_while(typed_decls, :ok, fn %{name: char_name, value_type: module}, :ok ->
+      case module
+           |> Ash.Changeset.for_create(:create, %{name: char_name, feature_id: feature.id})
+           |> Ash.create() do
+        {:ok, _} -> {:cont, :ok}
+        {:error, error} -> {:halt, {:error, error}}
+      end
+    end)
   end
 
   defimpl String.Chars do
