@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Card do
+defmodule Diffo.Test.Instance.Card do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
@@ -15,7 +15,7 @@ defmodule Diffo.Test.Card do
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.AssignableValue
   alias Diffo.Test.Servo
-  alias Diffo.Test.CardValue
+  alias Diffo.Test.Characteristic.Card, as: CardCharacteristic
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -36,7 +36,7 @@ defmodule Diffo.Test.Card do
     end
 
     characteristics do
-      characteristic :card, CardValue
+      characteristic :card, CardCharacteristic
       characteristic :ports, AssignableValue
     end
 
@@ -65,7 +65,8 @@ defmodule Diffo.Test.Card do
       argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Characteristic.update_values(result, changeset),
+               with {:ok, result} <-
+                      Characteristic.update_all(result, changeset, characteristics()),
                     {:ok, result} <- Servo.get_card_by_id(result.id),
                     do: {:ok, result}
              end)

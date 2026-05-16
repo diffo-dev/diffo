@@ -6,8 +6,8 @@ defmodule Diffo.Provider.Extension.InstanceTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
 
-  alias Diffo.Test.Shelf
-  alias Diffo.Test.Card
+  alias Diffo.Test.Instance.Shelf
+  alias Diffo.Test.Instance.Card
   alias Diffo.Provider.Extension.Characteristic
   alias Diffo.Provider.Extension.Feature
   alias Diffo.Provider.Extension.PlaceDeclaration
@@ -241,7 +241,7 @@ defmodule Diffo.Provider.Extension.InstanceTransformerTest do
     test "characteristic/1 returns the named characteristic" do
       char = Shelf.characteristic(:shelves)
       assert char.name == :shelves
-      assert char.value_type == {:array, Diffo.Test.ShelfValue}
+      assert char.value_type == {:array, Diffo.Test.Characteristic.Shelf}
     end
 
     test "characteristic/1 returns nil for unknown name" do

@@ -12,10 +12,13 @@ defmodule Diffo.Test.Servo do
     otp_app: :diffo,
     validate_config_inclusion?: false
 
-  alias Diffo.Test.Shelf
-  alias Diffo.Test.Card
-  alias Diffo.Test.Broadband
-  alias Diffo.Test.BroadbandV2
+  alias Diffo.Test.Instance.Shelf
+  alias Diffo.Test.Instance.Card
+  alias Diffo.Test.Instance.Broadband
+  alias Diffo.Test.Instance.BroadbandV2
+  alias Diffo.Test.Characteristic.Shelf, as: ShelfCharacteristic
+  alias Diffo.Test.Characteristic.Card, as: CardCharacteristic
+  alias Diffo.Test.Characteristic.DeploymentClass
 
   domain do
     description "service and resource management"
@@ -47,5 +50,9 @@ defmodule Diffo.Test.Servo do
       define :build_broadband_v2, action: :build
       define :get_broadband_v2_by_id, action: :read, get_by: :id
     end
+
+    resource ShelfCharacteristic
+    resource CardCharacteristic
+    resource DeploymentClass
   end
 end

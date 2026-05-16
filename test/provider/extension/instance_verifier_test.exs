@@ -153,8 +153,8 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
               end
 
               characteristics do
-                characteristic :foo, Diffo.Test.ShelfValue
-                characteristic :foo, Diffo.Test.ShelfValue
+                characteristic :foo, Diffo.Test.Characteristic.Shelf
+                characteristic :foo, Diffo.Test.Characteristic.Shelf
               end
             end
           end
@@ -273,8 +273,8 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
 
               features do
                 feature :my_feature do
-                  characteristic :baz, Diffo.Test.ShelfValue
-                  characteristic :baz, Diffo.Test.ShelfValue
+                  characteristic :baz, Diffo.Test.Characteristic.Shelf
+                  characteristic :baz, Diffo.Test.Characteristic.Shelf
                 end
               end
             end
@@ -322,7 +322,7 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
         fn ->
           defmodule DuplicatePartyRole do
             alias Diffo.Provider.BaseInstance
-            alias Diffo.Test.Shelf
+            alias Diffo.Test.Instance.Shelf
             use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
 
             resource do
@@ -376,7 +376,7 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
     test "party_type not extending BaseParty warns DslError on compilation" do
       Util.assert_compile_time_warning(
         Spark.Error.DslError,
-        "parties: party_type Diffo.Test.Shelf does not extend BaseParty",
+        "parties: party_type Diffo.Test.Instance.Shelf does not extend BaseParty",
         fn ->
           defmodule InvalidPartyBaseType do
             alias Diffo.Provider.BaseInstance
@@ -393,7 +393,7 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
               end
 
               parties do
-                party :operator, Diffo.Test.Shelf
+                party :operator, Diffo.Test.Instance.Shelf
               end
             end
           end
@@ -532,7 +532,7 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
     test "party_ref with non-BaseParty type warns DslError on compilation" do
       Util.assert_compile_time_warning(
         Spark.Error.DslError,
-        "parties: party_type Diffo.Test.Shelf does not extend BaseParty",
+        "parties: party_type Diffo.Test.Instance.Shelf does not extend BaseParty",
         fn ->
           defmodule InvalidPartyRefBaseType do
             alias Diffo.Provider.BaseInstance
@@ -549,7 +549,7 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
               end
 
               parties do
-                party_ref :owner, Diffo.Test.Shelf
+                party_ref :owner, Diffo.Test.Instance.Shelf
               end
             end
           end
@@ -590,7 +590,7 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
     test "place_ref with non-BasePlace type warns DslError on compilation" do
       Util.assert_compile_time_warning(
         Spark.Error.DslError,
-        "places: place_type Diffo.Test.Shelf does not extend BasePlace",
+        "places: place_type Diffo.Test.Instance.Shelf does not extend BasePlace",
         fn ->
           defmodule InvalidPlaceRefBaseType do
             alias Diffo.Provider.BaseInstance
@@ -607,7 +607,7 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
               end
 
               places do
-                place_ref :billing, Diffo.Test.Shelf
+                place_ref :billing, Diffo.Test.Instance.Shelf
               end
             end
           end

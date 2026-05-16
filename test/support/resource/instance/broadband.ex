@@ -2,13 +2,13 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.BroadbandV2 do
+defmodule Diffo.Test.Instance.Broadband do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  BroadbandV2 - V2 broadband service. Breaking change from V1: :fttb has been
-  removed from supported technology types, requiring data remediation on any V1
-  instance with technology: :fttb before respecification.
+  Broadband - V1 broadband service, demonstrating the simple BaseInstance pattern.
+  Technology options include :fttb. The breaking change in BroadbandV2 is the
+  removal of :fttb from the supported technology types.
   """
   alias Diffo.Provider.BaseInstance
   alias Diffo.Test.Servo
@@ -18,17 +18,17 @@ defmodule Diffo.Test.BroadbandV2 do
     domain: Servo
 
   resource do
-    description "A Broadband Service Instance (V2)"
-    plural_name :broadband_v2s
+    description "A Broadband Service Instance (V1)"
+    plural_name :broadbands
   end
 
   provider do
     specification do
-      id "f6e5d4c3-b2a1-4f0e-9d8c-7b6a5f4e3d2c"
+      id "a1b2c3d4-e5f6-4a7b-8c9d-e0f1a2b3c4d5"
       name "broadband"
       type :serviceSpecification
-      major_version 2
-      description "A broadband access service — :fttb technology retired"
+      major_version 1
+      description "A broadband access service"
       category "Access"
     end
 

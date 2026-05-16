@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.GeographicSite do
+defmodule Diffo.Test.Place.GeographicSite do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
@@ -44,7 +44,7 @@ defmodule Diffo.Test.GeographicSite do
     end
 
     parties do
-      role :managed_by, Diffo.Test.Organization
+      role :managed_by, Diffo.Test.Party.Organization
     end
 
     places do

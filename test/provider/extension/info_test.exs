@@ -10,7 +10,7 @@ defmodule Diffo.Provider.Extension.InfoTest do
 
   describe "instance?/1" do
     test "returns true for a BaseInstance-derived resource" do
-      assert Info.instance?(Diffo.Test.Shelf) == true
+      assert Info.instance?(Diffo.Test.Instance.Shelf) == true
     end
 
     test "returns true for the base Instance resource" do
@@ -18,11 +18,11 @@ defmodule Diffo.Provider.Extension.InfoTest do
     end
 
     test "returns false for a BaseParty-derived resource" do
-      assert Info.instance?(Diffo.Test.Organization) == false
+      assert Info.instance?(Diffo.Test.Party.Organization) == false
     end
 
     test "returns false for a BasePlace-derived resource" do
-      assert Info.instance?(Diffo.Test.GeographicSite) == false
+      assert Info.instance?(Diffo.Test.Place.GeographicSite) == false
     end
 
     test "returns false for a non-existent module" do
@@ -32,7 +32,7 @@ defmodule Diffo.Provider.Extension.InfoTest do
 
   describe "party?/1" do
     test "returns true for a BaseParty-derived resource" do
-      assert Info.party?(Diffo.Test.Organization) == true
+      assert Info.party?(Diffo.Test.Party.Organization) == true
     end
 
     test "returns true for the base Party resource" do
@@ -40,11 +40,11 @@ defmodule Diffo.Provider.Extension.InfoTest do
     end
 
     test "returns false for a BaseInstance-derived resource" do
-      assert Info.party?(Diffo.Test.Shelf) == false
+      assert Info.party?(Diffo.Test.Instance.Shelf) == false
     end
 
     test "returns false for a BasePlace-derived resource" do
-      assert Info.party?(Diffo.Test.GeographicSite) == false
+      assert Info.party?(Diffo.Test.Place.GeographicSite) == false
     end
 
     test "returns false for a non-existent module" do
@@ -54,7 +54,7 @@ defmodule Diffo.Provider.Extension.InfoTest do
 
   describe "place?/1" do
     test "returns true for a BasePlace-derived resource" do
-      assert Info.place?(Diffo.Test.GeographicSite) == true
+      assert Info.place?(Diffo.Test.Place.GeographicSite) == true
     end
 
     test "returns true for the base Place resource" do
@@ -62,11 +62,11 @@ defmodule Diffo.Provider.Extension.InfoTest do
     end
 
     test "returns false for a BaseInstance-derived resource" do
-      assert Info.place?(Diffo.Test.Shelf) == false
+      assert Info.place?(Diffo.Test.Instance.Shelf) == false
     end
 
     test "returns false for a BaseParty-derived resource" do
-      assert Info.place?(Diffo.Test.Organization) == false
+      assert Info.place?(Diffo.Test.Party.Organization) == false
     end
 
     test "returns false for a non-existent module" do
