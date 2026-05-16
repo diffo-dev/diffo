@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Carrier do
+defmodule Diffo.Test.Party.Carrier do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 

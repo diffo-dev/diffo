@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Person do
+defmodule Diffo.Test.Party.Person do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
@@ -43,7 +43,7 @@ defmodule Diffo.Test.Person do
     end
 
     parties do
-      role :manager, Diffo.Test.Person
+      role :manager, Diffo.Test.Party.Person
     end
 
     places do

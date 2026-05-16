@@ -12,11 +12,11 @@ defmodule Diffo.Test.Nbn do
     otp_app: :diffo,
     validate_config_inclusion?: false
 
-  alias Diffo.Test.Organization
-  alias Diffo.Test.Person
-  alias Diffo.Test.Carrier
-  alias Diffo.Test.GeographicSite
-  alias Diffo.Test.ExchangeBuilding
+  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Party.Person
+  alias Diffo.Test.Party.Carrier
+  alias Diffo.Test.Place.GeographicSite
+  alias Diffo.Test.Place.ExchangeBuilding
 
   domain do
     description "NBN party and place domain"

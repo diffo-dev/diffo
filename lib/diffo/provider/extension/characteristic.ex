@@ -12,9 +12,13 @@ defmodule Diffo.Provider.Extension.Characteristic do
 
   defstruct [:name, :value_type, __spark_metadata__: nil]
 
+  # ── build_before: dynamic characteristics only ─────────────────────────────
+
   def set_characteristics_argument(changeset, declarations)
       when is_struct(changeset, Ash.Changeset) and is_list(declarations) do
-    case characteristics = create_characteristics_from_declarations(declarations, :instance) do
+    dynamic = Enum.reject(declarations, &typed?(&1.value_type))
+
+    case characteristics = create_characteristics_from_declarations(dynamic, :instance) do
       [] ->
         changeset
 
@@ -54,6 +58,8 @@ defmodule Diffo.Provider.Extension.Characteristic do
     end)
   end
 
+  # ── build_after: relate dynamic, create typed ──────────────────────────────
+
   def relate_instance(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     characteristics = Ash.Changeset.get_argument(changeset, :characteristics)
@@ -63,72 +69,134 @@ defmodule Diffo.Provider.Extension.Characteristic do
     })
   end
 
+  def create_typed(result, declarations) when is_struct(result) and is_list(declarations) do
+    typed = Enum.filter(declarations, &typed?(&1.value_type))
+
+    Enum.reduce_while(typed, {:ok, result}, fn %{name: name, value_type: module}, {:ok, acc} ->
+      case module
+           |> Ash.Changeset.for_create(:create, %{name: name, instance_id: acc.id})
+           |> Ash.create() do
+        {:ok, _} -> {:cont, {:ok, acc}}
+        {:error, error} -> {:halt, {:error, error}}
+      end
+    end)
+  end
+
+  # ── update: handle both typed and dynamic characteristics ──────────────────
+
   def update_values(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
+    update_all(result, changeset, [])
+  end
+
+  def update_all(result, changeset, declarations)
+      when is_struct(result) and is_struct(changeset, Ash.Changeset) and is_list(declarations) do
     characteristic_value_updates =
       Ash.Changeset.get_argument(changeset, :characteristic_value_updates)
 
     case characteristic_value_updates do
-      nil ->
-        {:ok, result}
+      nil -> {:ok, result}
+      [] -> {:ok, result}
+      _ -> apply_updates(result, characteristic_value_updates, declarations)
+    end
+  end
 
-      [] ->
-        {:ok, result}
+  defp apply_updates(result, updates, declarations) do
+    Enum.reduce_while(updates, {:ok, result}, fn {name, update}, {:ok, acc} ->
+      decl = Enum.find(declarations, &(&1.name == name))
 
-      _ ->
-        characteristic_updates =
-          Enum.reduce(characteristic_value_updates, [], fn {name, update}, acc ->
-            characteristic =
-              Enum.find(changeset.data.characteristics, fn %{name: n} -> n == name end)
+      if decl && typed?(decl.value_type) do
+        apply_typed_update(acc, name, decl.value_type, update)
+      else
+        apply_dynamic_update(acc, name, update)
+      end
+    end)
+  end
 
-            if characteristic do
-              cond do
-                is_list(update) ->
-                  unwrapped = Diffo.Unwrap.unwrap(characteristic.value)
-                  value_type = unwrapped.__struct__
+  defp apply_typed_update(result, name, module, field_updates) do
+    case module
+         |> Ash.Query.new()
+         |> Ash.Query.filter_input(instance_id: result.id, name: name)
+         |> Ash.read_one() do
+      {:ok, nil} ->
+        Logger.warning("couldn't find typed characteristic #{name}")
+        {:cont, {:ok, result}}
 
-                  updated =
-                    Enum.reduce(update, unwrapped, fn {field, val}, acc ->
-                      Map.put(acc, field, val)
-                    end)
+      {:ok, char} ->
+        attrs = if is_list(field_updates), do: Map.new(field_updates), else: field_updates
 
-                  new_value = Value.dynamic(struct(value_type, Map.from_struct(updated)))
-                  [{characteristic, new_value} | acc]
-
-                true ->
-                  [{characteristic, update} | acc]
-              end
-            else
-              Logger.warning("couldn't find characteristic #{name}")
-              acc
-            end
-          end)
-
-        characteristics =
-          Enum.reduce_while(characteristic_updates, [], fn {characteristic, value}, acc ->
-            case Provider.update_characteristic(characteristic, %{value: value}) do
-              {:ok, characteristic} ->
-                {:cont, [characteristic | acc]}
-
-              {:error, error} ->
-                {:halt, {:error, error}}
-            end
-          end)
-
-        case characteristics do
-          {:error, error} ->
-            {:error, error}
-
-          [] ->
-            {:error, "couldn't update characteristics"}
-
-          _ ->
-            {:ok, Map.put(result, :characteristics, characteristics)}
+        case char
+             |> Ash.Changeset.for_update(:update, attrs)
+             |> Ash.update() do
+          {:ok, _} -> {:cont, {:ok, result}}
+          {:error, error} -> {:halt, {:error, error}}
         end
+
+      {:error, error} ->
+        {:halt, {:error, error}}
+    end
+  end
+
+  defp apply_dynamic_update(result, name, update) do
+    characteristic = Enum.find(result.characteristics, fn %{name: n} -> n == name end)
+
+    if characteristic do
+      new_value =
+        cond do
+          is_list(update) ->
+            unwrapped = Diffo.Unwrap.unwrap(characteristic.value)
+            value_type = unwrapped.__struct__
+
+            updated =
+              Enum.reduce(update, unwrapped, fn {field, val}, acc ->
+                Map.put(acc, field, val)
+              end)
+
+            Value.dynamic(struct(value_type, Map.from_struct(updated)))
+
+          true ->
+            update
+        end
+
+      case Provider.update_characteristic(characteristic, %{value: new_value}) do
+        {:ok, updated_char} ->
+          updated_chars =
+            Enum.map(result.characteristics, fn c ->
+              if c.id == updated_char.id, do: updated_char, else: c
+            end)
+
+          {:cont, {:ok, %{result | characteristics: updated_chars}}}
+
+        {:error, error} ->
+          {:halt, {:error, error}}
+      end
+    else
+      Logger.warning("couldn't find characteristic #{name}")
+      {:cont, {:ok, result}}
     end
   end
 
   defimpl String.Chars do
     def to_string(struct), do: inspect(struct)
   end
+
+  # ── helpers ────────────────────────────────────────────────────────────────
+
+  def typed?(module) when is_atom(module) and not is_nil(module) do
+    case Code.ensure_loaded(module) do
+      {:module, _} ->
+        try do
+          module != Diffo.Provider.Characteristic and
+            Diffo.Provider.Characteristic.Extension in Ash.Resource.Info.extensions(module)
+        rescue
+          _ -> false
+        end
+
+      _ ->
+        false
+    end
+  end
+
+  def typed?(_), do: false
+
 end

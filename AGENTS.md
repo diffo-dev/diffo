@@ -40,6 +40,9 @@ lib/diffo/provider/
   base_party.ex                 # Ash Fragment for Party resources
   base_place.ex                 # Ash Fragment for Place resources
   components/
+    base_characteristic.ex      # Ash Fragment for typed characteristic resources
+    calculations/
+      characteristic_value.ex   # Calculation: builds .Value TypedStruct from record fields
     instance/extension.ex       # Thin marker (sections: []) — kind identification
     party/extension.ex          # Thin marker
     place/extension.ex          # Thin marker
@@ -82,8 +85,8 @@ provider do
   end
 
   characteristics do
-    characteristic :slot_value, MyApp.SlotValue
-    characteristic :ports, {:array, MyApp.Port}
+    characteristic :slot_value, MyApp.SlotCharacteristic
+    characteristic :ports, {:array, MyApp.PortCharacteristic}
   end
 
   features do
@@ -144,6 +147,7 @@ mix test --max-failures 5         # stop early
 
 - Using old `structure do` / top-level `instances do` — use `provider do` only.
 - Using `party :role, Type, reference: true` — use `party_ref :role, Type`.
+- Using a plain `Ash.TypedStruct` as a `characteristic` DSL target — use a `BaseCharacteristic`-derived resource instead; the TypedStruct belongs in `<Module>.Value`.
 - Calling `build_before/1` or `build_after/2` in actions — these run automatically.
 - Declaring `:specified_by`, `:features`, `:characteristics` as action arguments.
 - Editing `documentation/dsls/DSL-Diffo.Provider.Extension.md` — it is Spark-generated;
