@@ -44,10 +44,18 @@ defmodule Diffo.Provider.Relationship do
       list_name =
         Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(target_type)
 
-      result
-      |> Diffo.Util.set(target_type, reference)
-      |> Diffo.Util.suppress_rename(:characteristics, list_name)
-      |> Diffo.Util.suppress(:alias)
+      if record.type == :assignedTo and not is_nil(record.assigned) do
+        result
+        |> Diffo.Util.set(target_type, reference)
+        |> Diffo.Util.remove(:alias)
+        |> Diffo.Util.remove(:characteristics)
+        |> Diffo.Util.set(list_name, [%{name: record.thing, value: record.assigned}])
+      else
+        result
+        |> Diffo.Util.set(target_type, reference)
+        |> Diffo.Util.suppress_rename(:characteristics, list_name)
+        |> Diffo.Util.suppress(:alias)
+      end
     end
 
     order [
@@ -80,6 +88,19 @@ defmodule Diffo.Provider.Relationship do
       change manage_relationship(:characteristics, type: :append)
       change Diffo.Changes.DetailRelationship
       change load [:characteristics]
+    end
+
+    create :create_assignment do
+      description "creates an assignment relationship with pool/thing/assigned attributes"
+      accept [:pool, :thing, :assigned]
+
+      argument :source_id, :uuid
+      argument :target_id, :string
+
+      change set_attribute(:type, :assignedTo)
+      change manage_relationship(:source_id, :source, type: :append)
+      change manage_relationship(:target_id, :target, type: :append)
+      change Diffo.Changes.DetailRelationship
     end
 
     read :list do
@@ -148,6 +169,24 @@ defmodule Diffo.Provider.Relationship do
       public? true
     end
 
+    attribute :pool, :atom do
+      description "the pool name on the source instance (assignedTo relationships only)"
+      allow_nil? true
+      public? true
+    end
+
+    attribute :thing, :atom do
+      description "the kind of thing being assigned within the pool (assignedTo relationships only)"
+      allow_nil? true
+      public? true
+    end
+
+    attribute :assigned, :integer do
+      description "the assigned value from the pool (assignedTo relationships only)"
+      allow_nil? true
+      public? true
+    end
+
     create_timestamp :created_at
 
     update_timestamp :updated_at
@@ -174,6 +213,10 @@ defmodule Diffo.Provider.Relationship do
 
   identities do
     identity :unique_source_and_target, [:source_id, :target_id]
+
+    identity :unique_assignment, [:source_id, :target_id, :pool, :thing, :assigned] do
+      where expr(type == :assignedTo)
+    end
   end
 
   validations do

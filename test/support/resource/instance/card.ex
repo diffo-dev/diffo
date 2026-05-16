@@ -13,7 +13,7 @@ defmodule Diffo.Test.Instance.Card do
   alias Diffo.Provider.Extension.Characteristic
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
-  alias Diffo.Provider.AssignableValue
+  alias Diffo.Provider.AssignableCharacteristic
   alias Diffo.Test.Servo
   alias Diffo.Test.Characteristic.Card, as: CardCharacteristic
 
@@ -37,7 +37,7 @@ defmodule Diffo.Test.Instance.Card do
 
     characteristics do
       characteristic :card, CardCharacteristic
-      characteristic :ports, AssignableValue
+      characteristic :ports, AssignableCharacteristic
     end
 
     behaviour do

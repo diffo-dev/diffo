@@ -9,7 +9,6 @@ defmodule Diffo.Provider.Extension.AssignerTest do
   alias Diffo.Provider.Characteristic
   alias Diffo.Provider.Assignment
 
-  alias Diffo.Test.Characteristics
   alias Diffo.Test.Parties
   alias Diffo.Test.Servo
   alias Diffo.Test.Instance.Card
@@ -24,10 +23,8 @@ defmodule Diffo.Provider.Extension.AssignerTest do
     test "create a card" do
       {:ok, card} = Servo.build_card(%{})
 
-      # check the instance is a Card
       assert is_struct(card, Card)
 
-      # check specification resource enrichment and node relationship
       refute is_nil(card.specification_id)
       assert is_struct(card.specification, Specification)
 
@@ -40,10 +37,9 @@ defmodule Diffo.Provider.Extension.AssignerTest do
                :outgoing
              )
 
-      # check dynamic characteristic resource enrichment and node relationships
-      # :card is now a typed CardValue node (not in characteristics); only :ports remains dynamic
+      # both :card and :ports are now typed (BaseCharacteristic), not in dynamic characteristics
       assert is_list(card.characteristics)
-      assert length(card.characteristics) == 1
+      assert length(card.characteristics) == 0
 
       Enum.each(card.characteristics, fn characteristic ->
         assert is_struct(characteristic, Characteristic)
@@ -61,7 +57,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":1,\"free\":1,\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"}})
     end
 
     test "define card" do
@@ -69,7 +65,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
-        ports: [first: 1, last: 48, free: 48, assignable_type: "ADSL2+"]
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
@@ -87,7 +83,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"}})
     end
 
     test "auto assign port to resource" do
@@ -97,7 +93,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
-        ports: [first: 1, last: 48, free: 48, assignable_type: "ADSL2+"]
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
@@ -107,12 +103,13 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
-      Characteristics.check_values([ports: [free: 47]], card)
+      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
+      assert length(assigned_rels) == 1
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]}],\"resourceCharacteristic\":[{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":47,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]}]})
     end
 
     test "auto assign two ports to same resource" do
@@ -122,7 +119,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
-        ports: [first: 1, last: 48, free: 48, assignable_type: "ADSL2+"]
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
@@ -137,12 +134,13 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
-      Characteristics.check_values([ports: [free: 46]], card)
+      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
+      assert length(assigned_rels) == 2
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]},{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":2}]}],\"resourceCharacteristic\":[{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":46,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]},{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":2}]}]})
     end
 
     test "specific assignment rejects duplicate request" do
@@ -152,7 +150,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
-        ports: [first: 1, last: 48, free: 48, assignable_type: "ADSL2+"]
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
@@ -167,12 +165,13 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           assignment: %Assignment{id: 5, assignee_id: assignee.id, operation: :assign}
         })
 
-      Characteristics.check_values([ports: [free: 47]], card)
+      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
+      assert length(assigned_rels) == 1
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":5}]}],\"resourceCharacteristic\":[{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":47,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":5}]}]})
     end
 
     test "unassign an auto-assigned port from a resource" do
@@ -182,7 +181,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
-        ports: [first: 1, last: 48, free: 48, assignable_type: "ADSL2+"]
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
@@ -192,14 +191,12 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
-      Characteristics.check_values([ports: [free: 47]], card)
+      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
+      assert length(assigned_rels) == 1
 
       assigned_port =
         Enum.find(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
-        |> Map.get(:characteristics)
-        |> Enum.find(fn char -> char.name == :port end)
-        |> Map.get(:value)
-        |> Diffo.Unwrap.unwrap()
+        |> Map.get(:assigned)
 
       {:ok, card} =
         Servo.assign_port(card, %{
@@ -210,12 +207,13 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           }
         })
 
-      Characteristics.check_values([ports: [free: 48]], card)
+      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
+      assert length(assigned_rels) == 0
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"resourceCharacteristic\":[{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"free\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"}})
     end
   end
 end
