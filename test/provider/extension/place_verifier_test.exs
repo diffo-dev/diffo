@@ -204,7 +204,7 @@ defmodule Diffo.Provider.Extension.PlaceVerifierTest do
         Spark.Error.DslError,
         "places: place_type Diffo.Test.Organization does not extend BasePlace",
         fn ->
-          defmodule WrongPlacePlaceType do
+          defmodule WrongPlacePlaceRoleType do
             alias Diffo.Provider.BasePlace
             use Ash.Resource, fragments: [BasePlace], domain: Diffo.Test.Nbn
 
@@ -215,6 +215,54 @@ defmodule Diffo.Provider.Extension.PlaceVerifierTest do
             provider do
               places do
                 role :contained_in, Diffo.Test.Organization
+              end
+            end
+          end
+        end
+      )
+    end
+  end
+
+  describe "instance_ref verifier" do
+    test "non-existent instance_type on instance_ref warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "instances: instance_type NonExistent.RefInstance does not exist",
+        fn ->
+          defmodule InvalidPlaceInstanceRefType do
+            alias Diffo.Provider.BasePlace
+            use Ash.Resource, fragments: [BasePlace], domain: Diffo.Test.Nbn
+
+            resource do
+              description "place with instance_ref pointing to a non-existent module"
+            end
+
+            provider do
+              instances do
+                instance_ref :site_for, NonExistent.RefInstance
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "instance_ref with non-BaseInstance type warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "instances: instance_type Diffo.Test.Organization does not extend BaseInstance",
+        fn ->
+          defmodule InvalidPlaceInstanceRefBaseType do
+            alias Diffo.Provider.BasePlace
+            use Ash.Resource, fragments: [BasePlace], domain: Diffo.Test.Nbn
+
+            resource do
+              description "place with instance_ref pointing to a non-instance module"
+            end
+
+            provider do
+              instances do
+                instance_ref :site_for, Diffo.Test.Organization
               end
             end
           end
