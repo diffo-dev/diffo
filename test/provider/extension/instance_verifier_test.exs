@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.InstanceExtension.VerifierTest do
+defmodule Diffo.Provider.Extension.InstanceVerifierTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: false
   alias Diffo.Test.Util
@@ -21,7 +21,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with invalid spec id"
             end
 
-            structure do
+            provider do
               specification do
                 id "ef016d85-9dbd-429c-04da-1df56cc7dda5"
                 name "invalid"
@@ -45,7 +45,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-camelCase specification name"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "not camel case"
@@ -69,7 +69,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with invalid specification type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -94,7 +94,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with negative major_version"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -119,7 +119,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with tmf_version below minimum"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -146,7 +146,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with duplicate characteristic name"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -175,7 +175,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-existent characteristic value_type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -203,7 +203,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-existent array characteristic value_type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -233,7 +233,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with duplicate feature names"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -265,7 +265,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with duplicate feature characteristic names"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -296,7 +296,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-existent feature characteristic value_type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -329,7 +329,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with duplicate party roles"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -358,7 +358,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with non-existent party_type"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -386,7 +386,7 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with party_type that is not a BaseParty"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
@@ -416,16 +416,16 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with behaviour referencing a missing create action"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
               end
-            end
 
-            behaviour do
-              actions do
-                create :nonexistent
+              behaviour do
+                actions do
+                  create :nonexistent
+                end
               end
             end
           end
@@ -446,16 +446,168 @@ defmodule Diffo.InstanceExtension.VerifierTest do
               description "resource with behaviour referencing a missing update action"
             end
 
-            structure do
+            provider do
               specification do
                 id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
                 name "invalid"
               end
+
+              behaviour do
+                actions do
+                  update :nonexistent
+                end
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "create declared for an update action warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "behaviour: create :define does not exist as a create action on this resource",
+        fn ->
+          defmodule BehaviourWrongActionType do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with create behaviour pointing at an update action"
             end
 
-            behaviour do
-              actions do
-                update :nonexistent
+            provider do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+              end
+
+              behaviour do
+                actions do
+                  create :define
+                end
+              end
+            end
+
+            actions do
+              update :define do
+                accept []
+              end
+            end
+          end
+        end
+      )
+    end
+  end
+
+  describe "party_ref verifier" do
+    test "non-existent party_type on party_ref warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "parties: party_type NonExistent.RefParty does not exist",
+        fn ->
+          defmodule InvalidPartyRefType do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with party_ref pointing to a non-existent module"
+            end
+
+            provider do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+              end
+
+              parties do
+                party_ref :owner, NonExistent.RefParty
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "party_ref with non-BaseParty type warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "parties: party_type Diffo.Test.Shelf does not extend BaseParty",
+        fn ->
+          defmodule InvalidPartyRefBaseType do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with party_ref pointing to a non-party module"
+            end
+
+            provider do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+              end
+
+              parties do
+                party_ref :owner, Diffo.Test.Shelf
+              end
+            end
+          end
+        end
+      )
+    end
+  end
+
+  describe "place_ref verifier" do
+    test "non-existent place_type on place_ref warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "places: place_type NonExistent.RefPlace does not exist",
+        fn ->
+          defmodule InvalidPlaceRefType do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with place_ref pointing to a non-existent module"
+            end
+
+            provider do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+              end
+
+              places do
+                place_ref :billing, NonExistent.RefPlace
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "place_ref with non-BasePlace type warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "places: place_type Diffo.Test.Shelf does not extend BasePlace",
+        fn ->
+          defmodule InvalidPlaceRefBaseType do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with place_ref pointing to a non-place module"
+            end
+
+            provider do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+              end
+
+              places do
+                place_ref :billing, Diffo.Test.Shelf
               end
             end
           end

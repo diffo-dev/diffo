@@ -10,17 +10,20 @@ SPDX-License-Identifier: MIT
 
 Diffo is an Ash Framework layer that models [TM Forum](https://www.tmforum.org/) (TMF) Service
 and Resource Management domains on top of a Neo4j graph database. It provides three base
-fragments — `BaseInstance`, `BaseParty`, `BasePlace` — plus the `Diffo.Provider.Instance.Extension`
-and `Diffo.Provider.Party.Extension` DSLs. Read these rules and the Ash/AshNeo4j usage rules
-**before** writing any domain code.
+fragments — `BaseInstance`, `BaseParty`, `BasePlace` — plus the unified `Diffo.Provider.Extension`
+DSL. Read these rules and the Ash/AshNeo4j usage rules **before** writing any domain code.
 
 ## The three kinds of domain resource
 
-| Kind | Base fragment | DSL extension |
+| Kind | Base fragment | Marker extension |
 |---|---|---|
 | Instance (service or resource) | `Diffo.Provider.BaseInstance` | `Diffo.Provider.Instance.Extension` |
 | Party (organisation, person, entity) | `Diffo.Provider.BaseParty` | `Diffo.Provider.Party.Extension` |
-| Place (site, address, location) | `Diffo.Provider.BasePlace` | `Diffo.Provider.Party.Extension` |
+| Place (site, address, location) | `Diffo.Provider.BasePlace` | `Diffo.Provider.Place.Extension` |
+
+All three kinds use the same unified `Diffo.Provider.Extension` DSL with a single `provider do`
+section. The marker extensions are zero-section extensions used only for kind identification
+via `Ash.Resource.Info.extensions/1` — they carry no DSL of their own.
 
 Do **not** use plain `Ash.Resource` + `AshNeo4j.DataLayer` directly for domain resources.
 Always start from the appropriate base fragment:
@@ -32,19 +35,25 @@ defmodule MyApp.BroadbandService do
 end
 ```
 
-## Instance Extension DSL
+## The unified `provider do` DSL
 
-Every resource using `BaseInstance` gains two top-level DSL sections: `structure do` and
-`behaviour do`.
+All DSL declarations live inside a single `provider do` block. The sections available
+depend on the resource kind:
 
-### structure
+- **Instance** — `specification`, `characteristics`, `features`, `parties`, `places`, `behaviour`
+- **Party** — `instances`, `parties`, `places`
+- **Place** — `instances`, `parties`, `places`
 
-`specification do` — declares the TMF Specification for this Instance kind. The `id` is a
-**stable UUID4 that must be the same in every environment** — generate it once and never
-change it. A new major version requires a new module with a new `id`.
+Verifiers enforce that each kind uses only the sections relevant to it.
+
+### `specification do` — Instance only
+
+Declares the TMF Specification for this Instance kind. The `id` is a **stable UUID4 that
+must be the same in every environment** — generate it once and never change it. A new major
+version requires a new module with a new `id`.
 
 ```elixir
-structure do
+provider do
   specification do
     id "da9b207a-26c3-451d-8abd-0640c6349979"
     name "DSL Access Service"
@@ -56,64 +65,123 @@ structure do
 end
 ```
 
-`characteristics do` — declares typed value slots. Each characteristic is backed by an
-`Ash.TypedStruct`. Do **not** add plain Ash attributes for data that belongs in a characteristic.
+### `characteristics do` — Instance only
+
+Declares typed value slots. Each characteristic is backed by an `Ash.TypedStruct`. Do **not**
+add plain Ash attributes for data that belongs in a characteristic.
 
 ```elixir
-characteristics do
-  characteristic :downstream_speed, MyApp.Speed
-  characteristic :access_technology, MyApp.AccessTechnology
-end
-```
-
-`features do` — declares optional capabilities, each with an enabled/disabled default and
-optionally its own typed characteristic payload:
-
-```elixir
-features do
-  feature :voice, is_enabled?: false
-  feature :static_ip, is_enabled?: false do
-    characteristic :ip_address, MyApp.IpAddress
+provider do
+  characteristics do
+    characteristic :downstream_speed, MyApp.Speed
+    characteristic :access_technology, MyApp.AccessTechnology
+    characteristic :ports, {:array, MyApp.Port}
   end
 end
 ```
 
-`parties do` — declares party roles. Use `party` for singular (at most one) and `parties`
-for plural relationships:
+### `features do` — Instance only
+
+Declares optional capabilities, each with an enabled/disabled default and optionally its
+own typed characteristic payload.
 
 ```elixir
-parties do
-  party :provider, MyApp.RSP
-  parties :installer, MyApp.Engineer, constraints: [min: 1, max: 3]
-  party :owner, MyApp.Organization, reference: true
-  party :operator, MyApp.RSP, calculate: :derive_operator
+provider do
+  features do
+    feature :voice, is_enabled?: false
+    feature :static_ip, is_enabled?: false do
+      characteristic :ip_address, MyApp.IpAddress
+    end
+  end
 end
 ```
 
-- `reference: true` — no direct `PartyRef` edge is created; the party is reachable by graph
-  traversal. Do not add a `PartyRef` relationship manually when `reference: true` is set.
+### `parties do` — all kinds, different keywords per kind
+
+**For Instance kinds** use `party`, `parties`, and `party_ref`:
+
+```elixir
+provider do
+  parties do
+    party :provider, MyApp.RSP              # singular, direct edge
+    parties :installer, MyApp.Engineer, constraints: [min: 1, max: 3]  # plural
+    party_ref :owner, MyApp.Organization    # reference — no direct edge
+    party :operator, MyApp.RSP, calculate: :derive_operator  # calculated
+  end
+end
+```
+
+- `party` — singular (at most one); creates a `PartyRef` edge on build.
+- `parties` — plural; accepts `constraints: [min: n, max: m]`.
+- `party_ref` — no direct `PartyRef` edge is created; the party is reachable by graph
+  traversal. Do not add a `PartyRef` relationship manually when `party_ref` is declared.
 - `calculate:` — names an Ash calculation on this resource that produces the party struct at
-  build time. The calculation runs inside `build_before/1`; do not call it manually.
+  build time. Runs inside `build_before/1`; do not call it manually.
 
-`places do` — mirrors `parties do` in structure and options:
+**For Party and Place kinds** use `role`:
 
 ```elixir
-places do
-  place :installation_site, MyApp.GeographicSite
-  places :coverage_areas, MyApp.GeographicLocation, constraints: [min: 1]
+provider do
+  parties do
+    role :employer, MyApp.Organization
+  end
 end
 ```
 
-### behaviour
+### `places do` — all kinds, different keywords per kind
 
-`behaviour do actions do create :name end end` — marks a named create action for build
-wiring. This injects the `:specified_by`, `:features`, and `:characteristics` Ash action
-arguments automatically. Do **not** declare these arguments in the action body.
+Mirrors `parties do` in structure. For Instance kinds: `place`, `places`, `place_ref`.
+For Party/Place kinds: `role`.
 
 ```elixir
-behaviour do
-  actions do
-    create :build
+# Instance
+provider do
+  places do
+    place :installation_site, MyApp.GeographicSite
+    places :coverage_areas, MyApp.GeographicLocation, constraints: [min: 1]
+    place_ref :billing_address, MyApp.GeographicAddress
+  end
+end
+
+# Party or Place
+provider do
+  places do
+    role :headquarters, MyApp.GeographicSite
+  end
+end
+```
+
+### `instances do` — Party and Place only
+
+Declares the Instance kinds this Party or Place kind plays a role with respect to.
+Use `role` for a direct relationship, `instance_ref` for a reference (no direct edge).
+
+```elixir
+provider do
+  instances do
+    role :provider, MyApp.BroadbandService
+    role :provider, MyApp.VoiceService
+    instance_ref :manages, MyApp.InternalService
+  end
+end
+```
+
+Role names are domain nouns from the party's/place's perspective — timeless,
+`snake_case` atoms. Use `camelCase` atoms for multi-word names that follow TMF
+conventions (e.g. `:dataCentre`, not `:data_centre`).
+
+### `behaviour do` — Instance only
+
+Marks a named create action for build wiring. Declaring `create :name` injects the
+`:specified_by`, `:features`, and `:characteristics` Ash action arguments automatically.
+Do **not** declare these arguments in the action body.
+
+```elixir
+provider do
+  behaviour do
+    actions do
+      create :build
+    end
   end
 end
 ```
@@ -134,6 +202,21 @@ functions:
 They are wired to every create action via global `BuildBefore` and `BuildAfter` changes on
 `BaseInstance`.
 
+## Runtime introspection
+
+Use `Diffo.Provider.Extension.Info` to introspect any provider resource at runtime:
+
+```elixir
+Diffo.Provider.Extension.Info.provider_parties(MyApp.BroadbandService)
+Diffo.Provider.Extension.Info.provider_places(MyApp.BroadbandService)
+Diffo.Provider.Extension.Info.provider_instances(MyApp.RSP)
+Diffo.Provider.Extension.Info.instance?(MyApp.BroadbandService)  # true
+Diffo.Provider.Extension.Info.party?(MyApp.RSP)                  # true
+```
+
+The old `Instance.Extension.Info`, `Party.Extension.Info`, and `Place.Extension.Info`
+modules are still available as thin delegating wrappers for backwards compatibility.
+
 ## Instance versioning
 
 - **Minor/patch version bumps** — update `minor_version` or `patch_version` in `specification do`.
@@ -143,31 +226,115 @@ They are wired to every create action via global `BuildBefore` and `BuildAfter` 
 - **Never change the `id`** of an existing specification. It is a stable cross-environment
   identity; changing it orphans existing instances.
 
-## Party and Place resources
-
-Party and Place resources use `BaseParty`/`BasePlace` and the Party Extension DSL to declare
-the Instance and Party roles they participate in:
+## Complete example
 
 ```elixir
+# Instance resource
+defmodule MyApp.BroadbandService do
+  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.Domain
+
+  resource do
+    description "An ADSL broadband service"
+    plural_name :broadband_services
+  end
+
+  provider do
+    specification do
+      id "da9b207a-26c3-451d-8abd-0640c6349979"
+      name "broadbandService"
+      type :serviceSpecification
+      major_version 1
+      category "Network Service"
+    end
+
+    characteristics do
+      characteristic :circuit, MyApp.CircuitValue
+    end
+
+    parties do
+      party :provider, MyApp.RSP
+      party_ref :owner, MyApp.Organization
+    end
+
+    places do
+      place :installation_site, MyApp.GeographicSite
+    end
+
+    behaviour do
+      actions do
+        create :build
+      end
+    end
+  end
+
+  actions do
+    create :build do
+      accept [:name]
+      argument :parties, {:array, :struct}
+      argument :places, {:array, :struct}
+    end
+  end
+end
+
+# Party resource
 defmodule MyApp.RSP do
   use Ash.Resource, fragments: [Diffo.Provider.BaseParty], domain: MyApp.Domain
 
-  instances do
-    role :provider, MyApp.BroadbandService
-    role :provider, MyApp.VoiceService
+  resource do
+    description "A Retail Service Provider"
+    plural_name :rsps
   end
 
-  parties do
-    role :employer, MyApp.Organization
+  provider do
+    instances do
+      role :provider, MyApp.BroadbandService
+    end
+    parties do
+      role :employer, MyApp.Organization
+    end
+  end
+
+  actions do
+    create :build do
+      accept [:id, :name]
+      change set_attribute(:type, :Organization)
+    end
+  end
+end
+
+# Place resource
+defmodule MyApp.GeographicSite do
+  use Ash.Resource, fragments: [Diffo.Provider.BasePlace], domain: MyApp.Domain
+
+  resource do
+    description "A geographic site"
+    plural_name :geographic_sites
+  end
+
+  provider do
+    instances do
+      role :installation_site, MyApp.BroadbandService
+    end
+    parties do
+      role :managed_by, MyApp.RSP
+    end
+  end
+
+  actions do
+    create :build do
+      accept [:id, :name]
+      change set_attribute(:type, :GeographicSite)
+    end
   end
 end
 ```
 
-Role names are domain nouns from the party's perspective — timeless, `camelCase` when
-multi-word (e.g. `:dataCentre`, not `:data_centre`).
-
 ## Common mistakes
 
+- **Do not use `structure do` or top-level `instances do`/`parties do`/`places do`** — these
+  are the old pre-0.3.0 syntax. All declarations belong inside `provider do`.
+- **Do not use `party :role, Type, reference: true`** — use `party_ref :role, Type` instead.
+- **Do not use `place :role, Type, reference: true`** — use `place_ref :role, Type` instead.
 - **Do not add raw Ash attributes for TMF-modelled data** — use `characteristics`, `features`,
   `parties`, and `places` in the DSL instead.
 - **Do not declare `:specified_by`, `:features`, or `:characteristics` Ash action arguments**
@@ -177,5 +344,3 @@ multi-word (e.g. `:dataCentre`, not `:data_centre`).
   managed entirely by the `build_before/1` generated function.
 - **Do not use `party/1` in place of `parties/3`** (and vice versa) — `party` declares a
   singular role; `parties` declares a plural role. Mismatching causes compile-time errors.
-- **Do not set a `referred_type` without also setting `type: :PartyRef`** — TMF requires
-  both fields when using a party reference.

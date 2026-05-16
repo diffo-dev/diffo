@@ -38,15 +38,17 @@ defmodule Diffo.Test.GeographicSite do
     end
   end
 
-  instances do
-    role :installed_at, Diffo.Provider.Instance
-  end
+  provider do
+    instances do
+      role :installed_at, Diffo.Provider.Instance
+    end
 
-  parties do
-    role :managed_by, Diffo.Test.Organization
-  end
+    parties do
+      role :managed_by, Diffo.Test.Organization
+    end
 
-  places do
-    role :contained_in, Diffo.Provider.Place
+    places do
+      role :contained_in, Diffo.Provider.Place
+    end
   end
 end

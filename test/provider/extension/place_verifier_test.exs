@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.PlaceExtension.VerifierTest do
+defmodule Diffo.Provider.Extension.PlaceVerifierTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: false
   alias Diffo.Test.Util
@@ -21,9 +21,11 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with duplicate instance role"
             end
 
-            instances do
-              role :site_for, Diffo.Provider.Instance
-              role :site_for, Diffo.Provider.Instance
+            provider do
+              instances do
+                role :site_for, Diffo.Provider.Instance
+                role :site_for, Diffo.Provider.Instance
+              end
             end
           end
         end
@@ -43,8 +45,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with non-existent instance type"
             end
 
-            instances do
-              role :site_for, NonExistent.InstanceModule
+            provider do
+              instances do
+                role :site_for, NonExistent.InstanceModule
+              end
             end
           end
         end
@@ -64,8 +68,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with party as instance type"
             end
 
-            instances do
-              role :site_for, Diffo.Test.Organization
+            provider do
+              instances do
+                role :site_for, Diffo.Test.Organization
+              end
             end
           end
         end
@@ -87,9 +93,11 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with duplicate party role"
             end
 
-            parties do
-              role :managed_by, Diffo.Test.Organization
-              role :managed_by, Diffo.Test.Organization
+            provider do
+              parties do
+                role :managed_by, Diffo.Test.Organization
+                role :managed_by, Diffo.Test.Organization
+              end
             end
           end
         end
@@ -109,8 +117,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with non-existent party type"
             end
 
-            parties do
-              role :managed_by, NonExistent.PartyModule
+            provider do
+              parties do
+                role :managed_by, NonExistent.PartyModule
+              end
             end
           end
         end
@@ -130,8 +140,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with instance as party type"
             end
 
-            parties do
-              role :managed_by, Diffo.Provider.Instance
+            provider do
+              parties do
+                role :managed_by, Diffo.Provider.Instance
+              end
             end
           end
         end
@@ -153,9 +165,11 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with duplicate place role"
             end
 
-            places do
-              role :contained_in, Diffo.Provider.Place
-              role :contained_in, Diffo.Provider.Place
+            provider do
+              places do
+                role :contained_in, Diffo.Provider.Place
+                role :contained_in, Diffo.Provider.Place
+              end
             end
           end
         end
@@ -175,8 +189,10 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with non-existent place type"
             end
 
-            places do
-              role :contained_in, NonExistent.PlaceModule
+            provider do
+              places do
+                role :contained_in, NonExistent.PlaceModule
+              end
             end
           end
         end
@@ -188,7 +204,7 @@ defmodule Diffo.PlaceExtension.VerifierTest do
         Spark.Error.DslError,
         "places: place_type Diffo.Test.Organization does not extend BasePlace",
         fn ->
-          defmodule WrongPlacePlaceType do
+          defmodule WrongPlacePlaceRoleType do
             alias Diffo.Provider.BasePlace
             use Ash.Resource, fragments: [BasePlace], domain: Diffo.Test.Nbn
 
@@ -196,8 +212,58 @@ defmodule Diffo.PlaceExtension.VerifierTest do
               description "place with party as place type"
             end
 
-            places do
-              role :contained_in, Diffo.Test.Organization
+            provider do
+              places do
+                role :contained_in, Diffo.Test.Organization
+              end
+            end
+          end
+        end
+      )
+    end
+  end
+
+  describe "instance_ref verifier" do
+    test "non-existent instance_type on instance_ref warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "instances: instance_type NonExistent.RefInstance does not exist",
+        fn ->
+          defmodule InvalidPlaceInstanceRefType do
+            alias Diffo.Provider.BasePlace
+            use Ash.Resource, fragments: [BasePlace], domain: Diffo.Test.Nbn
+
+            resource do
+              description "place with instance_ref pointing to a non-existent module"
+            end
+
+            provider do
+              instances do
+                instance_ref :site_for, NonExistent.RefInstance
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "instance_ref with non-BaseInstance type warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "instances: instance_type Diffo.Test.Organization does not extend BaseInstance",
+        fn ->
+          defmodule InvalidPlaceInstanceRefBaseType do
+            alias Diffo.Provider.BasePlace
+            use Ash.Resource, fragments: [BasePlace], domain: Diffo.Test.Nbn
+
+            resource do
+              description "place with instance_ref pointing to a non-instance module"
+            end
+
+            provider do
+              instances do
+                instance_ref :site_for, Diffo.Test.Organization
+              end
             end
           end
         end
