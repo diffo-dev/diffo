@@ -174,6 +174,7 @@ defmodule Diffo.Provider.BaseInstance do
       AshOutstanding.Resource,
       AshJason.Resource,
       AshStateMachine,
+      Diffo.Provider.Extension,
       Diffo.Provider.Instance.Extension
     ]
 

@@ -120,6 +120,7 @@ defmodule Diffo.Provider.BaseParty do
     extensions: [
       AshOutstanding.Resource,
       AshJason.Resource,
+      Diffo.Provider.Extension,
       Diffo.Provider.Party.Extension
     ]
 

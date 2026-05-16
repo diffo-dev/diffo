@@ -37,15 +37,17 @@ defmodule Diffo.Test.Organization do
     end
   end
 
-  instances do
-    role :facilitator, Diffo.Provider.Instance
-  end
+  provider do
+    instances do
+      role :facilitator, Diffo.Provider.Instance
+    end
 
-  parties do
-    role :employer, Diffo.Test.Person
-  end
+    parties do
+      role :employer, Diffo.Test.Person
+    end
 
-  places do
-    role :headquarters, Diffo.Provider.Place
+    places do
+      role :headquarters, Diffo.Provider.Place
+    end
   end
 end

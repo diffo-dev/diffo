@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.InstanceExtension.PartyTest do
+defmodule Diffo.Provider.Extension.PartyTest do
   @moduledoc false
   use ExUnit.Case, async: true
 
@@ -26,7 +26,7 @@ defmodule Diffo.InstanceExtension.PartyTest do
       roles = PartyInfo.instances(Organization)
       assert length(roles) == 1
       assert hd(roles).role == :facilitator
-      assert hd(roles).party_type == Diffo.Provider.Instance
+      assert hd(roles).instance_type == Diffo.Provider.Instance
     end
 
     test "party roles are declared" do

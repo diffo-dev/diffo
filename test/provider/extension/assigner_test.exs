@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.InstanceExtension.AssignerTest do
+defmodule Diffo.Provider.Extension.AssignerTest do
   @moduledoc false
   use ExUnit.Case, async: true
   alias Diffo.Provider.Specification

@@ -2,14 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.PlaceExtension.TransformerTest do
+defmodule Diffo.Provider.Extension.PlaceTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
 
   alias Diffo.Test.GeographicSite
-  alias Diffo.Provider.Place.Extension.InstanceRole
-  alias Diffo.Provider.Place.Extension.PartyRole
-  alias Diffo.Provider.Place.Extension.PlaceRole
+  alias Diffo.Provider.Extension.InstanceRole
+  alias Diffo.Provider.Extension.PartyRole
+  alias Diffo.Provider.Extension.PlaceRole
   alias Diffo.Provider.Place.Extension.Info
 
   describe "PersistInstances" do

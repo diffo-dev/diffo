@@ -3,14 +3,18 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Party.Extension.Info do
-  use Spark.InfoGenerator,
-    extension: Diffo.Provider.Party.Extension,
-    sections: [:instances, :parties, :places]
+  alias Diffo.Provider.Extension.Info, as: ExtInfo
 
   @doc "Returns true if the module is a BaseParty-derived resource"
   @spec party?(module()) :: boolean()
-  def party?(module) do
-    Code.ensure_loaded?(module) and
-      Diffo.Provider.Party.Extension in Ash.Resource.Info.extensions(module)
-  end
+  defdelegate party?(module), to: ExtInfo
+
+  @doc false
+  defdelegate instances(module), to: ExtInfo, as: :provider_instances
+
+  @doc false
+  defdelegate parties(module), to: ExtInfo, as: :provider_parties
+
+  @doc false
+  defdelegate places(module), to: ExtInfo, as: :provider_places
 end

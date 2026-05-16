@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.InstanceExtension.CharacteristicTest do
+defmodule Diffo.Provider.Extension.CharacteristicTest do
   @moduledoc false
   use ExUnit.Case, async: true
   alias Diffo.Test.Parties
