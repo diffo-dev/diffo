@@ -137,7 +137,7 @@ The `provider do` section contains:
 **`specification do`** — the TMF Specification (id, name, type, version, description, category).
 The id is a stable UUID4, the same in every environment for this Instance kind.
 
-**`characteristics do`** — typed value slots backed by `Ash.TypedStruct`.
+**`characteristics do`** — typed value slots backed by `Diffo.Provider.BaseCharacteristic`-derived resources.
 
 **`features do`** — optional capabilities with their own typed characteristic payload.
 
@@ -149,7 +149,7 @@ The id is a stable UUID4, the same in every environment for this Instance kind.
 Declaring `create :name` injects `:specified_by`, `:features`, and `:characteristics`
 arguments automatically onto that action.
 
-Feature and Instance Characteristics can have payloads defined by [Ash.TypedStruct](https://hexdocs.pm/ash/Ash.TypedStruct.html). TypedStruct are DSL specified types which are effectively lightweight embedded resources. We've extended both [AshJason](https://hexdocs.pm/ash_jason/) and [AshOutstanding](https://hexdocs.pm/ash_outstanding/) to support Ash.TypedStruct.
+Each characteristic is a dedicated Ash resource using the `Diffo.Provider.BaseCharacteristic` fragment. It carries direct typed attributes and a `:value` calculation that builds a companion `<Module>.Value` TypedStruct for ordered JSON encoding. The TypedStruct uses [AshJason.TypedStruct](https://hexdocs.pm/ash_jason/) to control field order in the JSON output.
 
 For partial resource allocation and assignment we've created Diffo.Provider.Assigner. It is used by the host resource, which declares a characteristic with a `Diffo.Provider.AssignableValue` TypedStruct. Allocation is managed within the Provider domain using this characteristic. Assignment to Services or Resources is via 'reverse' type: "assignedTo" relationships enriched by relationship characteristics.
 
@@ -165,6 +165,73 @@ We'll define all the resources first, then declare the `Diffo.Compute` domain on
 
 We will start by declaring the Cluster Resource. It is going to be a composite resource, where it can be assigned individual GPU and NPU cores via resource relationships. It is an Ash.Resource incorporating the `Diffo.Provider.BaseInstance` fragment.
 
+First we define the `ClusterCharacteristic` typed resource and its companion `Value` TypedStruct:
+
+```elixir
+defmodule Diffo.Compute.ClusterCharacteristic do
+  @moduledoc "Typed characteristic carrying cluster composition fields."
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BaseCharacteristic],
+    domain: Diffo.Compute
+
+  resource do
+    plural_name :cluster_characteristics
+  end
+
+  attributes do
+    attribute :gpu_cores, :integer, public?: true, default: 0, constraints: [min: 0]
+    attribute :npu_cores, :integer, public?: true, default: 0, constraints: [min: 0]
+  end
+
+  calculations do
+    calculate :value, Diffo.Type.CharacteristicValue,
+              Diffo.Provider.Calculations.CharacteristicValue do
+      public? true
+    end
+  end
+
+  actions do
+    create :create do
+      accept [:name, :gpu_cores, :npu_cores]
+      argument :instance_id, :uuid
+      argument :feature_id, :uuid
+      change manage_relationship(:instance_id, :instance, type: :append)
+      change manage_relationship(:feature_id, :feature, type: :append)
+    end
+
+    update :update do
+      accept [:gpu_cores, :npu_cores]
+    end
+  end
+
+  preparations do
+    prepare build(load: [:value])
+  end
+
+  jason do
+    pick [:name, :value]
+    compact true
+  end
+end
+
+defmodule Diffo.Compute.ClusterCharacteristic.Value do
+  @moduledoc "Value struct for ClusterCharacteristic — controls JSON field order."
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+
+  typed_struct do
+    field :gpu_cores, :integer
+    field :npu_cores, :integer
+  end
+
+  jason do
+    pick [:gpu_cores, :npu_cores]
+    compact true
+  end
+end
+```
+
+Now the Cluster resource itself. It declares `ClusterCharacteristic` as the `:cluster` characteristic — updates to it are made directly on the characteristic resource, so no `update :define` is needed here:
+
 ```elixir
 defmodule Diffo.Compute.Cluster do
   @moduledoc """
@@ -173,9 +240,8 @@ defmodule Diffo.Compute.Cluster do
 
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
-  alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Compute
-  alias Diffo.Compute.ClusterValue
+  alias Diffo.Compute.ClusterCharacteristic
   alias Diffo.Compute.Tenant
   alias Diffo.Compute.Engineer
 
@@ -198,7 +264,7 @@ defmodule Diffo.Compute.Cluster do
     end
 
     characteristics do
-      characteristic :cluster, ClusterValue
+      characteristic :cluster, ClusterCharacteristic
     end
 
     parties do
@@ -230,17 +296,6 @@ defmodule Diffo.Compute.Cluster do
       upsert? false
     end
 
-    update :define do
-      description "defines the cluster"
-      argument :characteristic_value_updates, {:array, :term}
-
-      change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Characteristic.update_values(result, changeset),
-                    {:ok, cluster} <- Compute.get_cluster_by_id(result.id),
-                    do: {:ok, cluster}
-             end)
-    end
-
     update :relate do
       description "relates the cluster with other instances"
       argument :relationships, {:array, :struct}
@@ -255,49 +310,78 @@ defmodule Diffo.Compute.Cluster do
 end
 ```
 
-And of course we'll need a ClusterValue TypedStruct for the Cluster Resource's cluster characteristic:
+### Using the Assigner
+
+We'll now define a GPU Resource which uses the `Diffo.Provider.Assigner` functionality.
+
+First define the `GpuCharacteristic` typed resource and its `Value` TypedStruct:
 
 ```elixir
-defmodule Diffo.Compute.ClusterValue do
-  @moduledoc """
-  AshTyped Struct for Cluster Characteristic Value
-  """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
+defmodule Diffo.Compute.GpuCharacteristic do
+  @moduledoc "Typed characteristic carrying GPU identity fields."
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BaseCharacteristic],
+    domain: Diffo.Compute
+
+  resource do
+    plural_name :gpu_characteristics
+  end
+
+  attributes do
+    attribute :family, :atom, public?: true, description: "the GPU family name"
+    attribute :model, :string, public?: true, description: "the GPU model name"
+    attribute :technology, :atom, public?: true, description: "the GPU technology"
+  end
+
+  calculations do
+    calculate :value, Diffo.Type.CharacteristicValue,
+              Diffo.Provider.Calculations.CharacteristicValue do
+      public? true
+    end
+  end
+
+  actions do
+    create :create do
+      accept [:name, :family, :model, :technology]
+      argument :instance_id, :uuid
+      argument :feature_id, :uuid
+      change manage_relationship(:instance_id, :instance, type: :append)
+      change manage_relationship(:feature_id, :feature, type: :append)
+    end
+
+    update :update do
+      accept [:family, :model, :technology]
+    end
+  end
+
+  preparations do
+    prepare build(load: [:value])
+  end
 
   jason do
-    pick [:name, :gpu_cores, :npu_cores]
+    pick [:name, :value]
     compact true
   end
+end
 
-  outstanding do
-    expect [:gpu_cores]
-  end
+defmodule Diffo.Compute.GpuCharacteristic.Value do
+  @moduledoc "Value struct for GpuCharacteristic — controls JSON field order."
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do
-    field :name, :string, description: "the cluster name"
-
-    field :gpu_cores, :integer,
-      default: 0,
-      constraints: [min: 0],
-      description: "the number of GPU cores in the cluster"
-
-    field :npu_cores, :integer,
-      default: 0,
-      constraints: [min: 0],
-      description: "the number of NPU cores in the cluster"
+    field :family, :atom
+    field :model, :string
+    field :technology, :atom
   end
 
-  defimpl String.Chars do
-    def to_string(struct) do
-      inspect(struct)
-    end
+  jason do
+    pick [:family, :model, :technology]
+    compact true
   end
 end
 ```
 
-### Using the Assigner
-
-We'll now define a GPU Resource which uses the `Diffo.Provider.Assigner` functionality.
+The GPU resource declares `GpuCharacteristic` for the typed `:gpu` slot and keeps `AssignableValue` for the `:cores` allocation pool (the assigner still uses the dynamic characteristic pattern). The `update :define` action now only needs to handle the dynamic `:cores` update — the typed `:gpu` characteristic is updated directly on the characteristic resource:
 
 ```elixir
 defmodule Diffo.Compute.GPU do
@@ -312,7 +396,7 @@ defmodule Diffo.Compute.GPU do
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.AssignableValue
   alias Diffo.Compute
-  alias Diffo.Compute.GPUValue
+  alias Diffo.Compute.GpuCharacteristic
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -333,7 +417,7 @@ defmodule Diffo.Compute.GPU do
     end
 
     characteristics do
-      characteristic :gpu, GPUValue
+      characteristic :gpu, GpuCharacteristic
       characteristic :cores, AssignableValue
     end
 
@@ -358,7 +442,7 @@ defmodule Diffo.Compute.GPU do
     end
 
     update :define do
-      description "defines the GPU"
+      description "allocates the GPU cores (AssignableValue)"
       argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
@@ -392,41 +476,6 @@ defmodule Diffo.Compute.GPU do
   end
 end
 ```
-
-And we must define the GPUValue TypedStruct, used in the GPU's gpu characteristic:
-
-```elixir
-defmodule Diffo.Compute.GPUValue do
-  @moduledoc """
-  AshTyped Struct for GPU Characteristic Value
-  """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
-
-  jason do
-    pick [:name, :family, :model, :technology]
-    compact true
-  end
-
-  outstanding do
-    expect [:name]
-  end
-
-  typed_struct do
-    field :name, :string, description: "the GPU name"
-
-    field :family, :atom, description: "the GPU family name"
-
-    field :model, :string, description: "the GPU model name"
-
-    field :technology, :atom, description: "the GPU technology"
-  end
-
-  defimpl String.Chars do
-    def to_string(struct) do
-      inspect(struct)
-    end
-  end
-end
 ```
 
 ## Party Extension
@@ -579,8 +628,10 @@ defmodule Diffo.Compute do
     validate_config_inclusion?: false
 
   alias Diffo.Compute.GPU
+  alias Diffo.Compute.GpuCharacteristic
   #alias Diffo.Compute.NPU
   alias Diffo.Compute.Cluster
+  alias Diffo.Compute.ClusterCharacteristic
   alias Diffo.Compute.Tenant
   alias Diffo.Compute.Engineer
   alias Diffo.Compute.DataCentre
@@ -594,6 +645,10 @@ defmodule Diffo.Compute do
       define :assign_gpu_core, action: :assign_core
     end
 
+    resource GpuCharacteristic do
+      define :update_gpu_characteristic, action: :update
+    end
+
     #resource NPU do
       #define :get_npu_by_id, action: :read, get_by: :id
       #define :build_npu, action: :build
@@ -605,8 +660,11 @@ defmodule Diffo.Compute do
     resource Cluster do
       define :get_cluster_by_id, action: :read, get_by: :id
       define :build_cluster, action: :build
-      define :define_cluster, action: :define
       define :relate_cluster, action: :relate
+    end
+
+    resource ClusterCharacteristic do
+      define :update_cluster_characteristic, action: :update
     end
 
     resource Tenant do
@@ -687,19 +745,27 @@ gpu_1 = Compute.build_gpu!(%{name: "GPU 1"})
 gpu_2 = Compute.build_gpu!(%{name: "GPU 2"})
 ```
 
-We need to define each GPU instance, in this case defining the gpu Characteristic AssignableValue performs the allocation - in this case setting how many GPU cores are available.
+We set the typed `:gpu` characteristic directly on the characteristic resource, then allocate the `:cores` AssignableValue via `update :define`:
 
 ```elixir
-updates = [
-  gpu: [family: :nvidia, model: "GeForce RTX5090", technology: :blackwell],
-  cores: [first: 1, last: 680, free: 680, assignable_type: "tensor"]
-]
+# Update the typed GpuCharacteristic on each GPU
+[gpu_char_1] = Enum.filter(gpu_1.characteristics, fn c -> c.name == :gpu end)
+[gpu_char_2] = Enum.filter(gpu_2.characteristics, fn c -> c.name == :gpu end)
 
-gpu_1 = Compute.define_gpu!(gpu_1, %{characteristic_value_updates: updates})
-gpu_2 = Compute.define_gpu!(gpu_2, %{characteristic_value_updates: updates})
+gpu_attrs = %{family: :nvidia, model: "GeForce RTX5090", technology: :blackwell}
+Compute.update_gpu_characteristic!(gpu_char_1, gpu_attrs)
+Compute.update_gpu_characteristic!(gpu_char_2, gpu_attrs)
 ```
 
-The GPU's core characteristic is an AssignableValue, now we've allocated it we can use it to keep track of how many cores are free (unassigned). We can render one as json:
+```elixir
+# Allocate the cores pool (AssignableValue — dynamic characteristic)
+core_updates = [cores: [first: 1, last: 680, free: 680, assignable_type: "tensor"]]
+
+gpu_1 = Compute.define_gpu!(gpu_1, %{characteristic_value_updates: core_updates})
+gpu_2 = Compute.define_gpu!(gpu_2, %{characteristic_value_updates: core_updates})
+```
+
+The GPU's `:cores` characteristic is an AssignableValue that tracks how many cores are free (unassigned). We can render one as json:
 
 ```elixir
 Jason.encode!(gpu_1, pretty: true) |> IO.puts
