@@ -103,8 +103,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
-      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
-      assert length(assigned_rels) == 1
+      assert length(card.assignments) == 1
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
@@ -134,8 +133,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
-      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
-      assert length(assigned_rels) == 2
+      assert length(card.assignments) == 2
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
@@ -165,8 +163,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           assignment: %Assignment{id: 5, assignee_id: assignee.id, operation: :assign}
         })
 
-      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
-      assert length(assigned_rels) == 1
+      assert length(card.assignments) == 1
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
@@ -191,12 +188,9 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
         })
 
-      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
-      assert length(assigned_rels) == 1
+      assert length(card.assignments) == 1
 
-      assigned_port =
-        Enum.find(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
-        |> Map.get(:assigned)
+      assigned_port = hd(card.assignments).assigned
 
       {:ok, card} =
         Servo.assign_port(card, %{
@@ -207,8 +201,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
           }
         })
 
-      assigned_rels = Enum.filter(card.forward_relationships, fn rel -> rel.type == :assignedTo end)
-      assert length(assigned_rels) == 0
+      assert length(card.assignments) == 0
 
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
