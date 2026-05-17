@@ -22,6 +22,13 @@ on [Ash Framework](https://www.ash-hq.org/) + [AshNeo4j](https://github.com/diff
 ## Project structure
 
 ```
+lib/diffo/type/
+  primitive.ex             # Diffo.Type.Primitive — discriminated union of primitive Elixir types
+  value.ex                 # Diffo.Type.Value — union of Primitive and Dynamic
+  dynamic.ex               # Diffo.Type.Dynamic — runtime-typed value (NewType with map storage)
+  name_value_primitive.ex        # Diffo.Type.NameValuePrimitive — name/Primitive pair TypedStruct
+  name_value_array_primitive.ex  # Diffo.Type.NameValueArrayPrimitive — name/[Primitive] pair TypedStruct
+
 lib/diffo/provider/
   extension.ex                  # Unified Spark DSL extension (provider do)
   extension/
@@ -46,13 +53,18 @@ lib/diffo/provider/
   base_place.ex                 # Ash Fragment for Place resources
   components/
     base_characteristic.ex      # Ash Fragment for typed characteristic resources
-    base_relationship.ex          # Ash Fragment for shared Relationship structure
+    base_relationship.ex        # Ash Fragment for shared Relationship structure
+    defined_simple_relationship.ex    # DefinedSimpleRelationship — relationship with one optional embedded characteristic, frozen at creation
+    relationship.ex                   # Relationship — mutable TMF service/resource relationship with graph Characteristic nodes
     calculations/
       characteristic_value.ex   # Calculation: builds .Value TypedStruct from record fields
       assigned_values.ex        # Calculation: returns list of assigned integers for a pool+thing
     instance/extension.ex       # Thin marker (sections: []) — kind identification
     party/extension.ex          # Thin marker
     place/extension.ex          # Thin marker
+
+test/provider/
+  defined_simple_relationship_test.exs # Integration: DefinedSimpleRelationship create/destroy + DefinedCharacteristic encoding
 
 test/provider/extension/        # All provider extension tests
   instance_transformer_test.exs
