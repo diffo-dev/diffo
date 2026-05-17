@@ -4,13 +4,13 @@
 
 defmodule Diffo.Provider.Assigner do
   @moduledoc """
-  Helper to perform Assignment using Relationship attributes.
+  Helper to perform Assignment using `Diffo.Provider.AssignedToRelationship`.
 
-  Assignment state is stored directly on `Diffo.Provider.Relationship` nodes
-  (pool, thing, assigned) rather than creating a separate Characteristic node.
+  Assignment state is stored on `AssignedToRelationship` nodes (pool, thing, assigned),
+  distinct from regular TMF `Diffo.Provider.Relationship` nodes.
   """
   alias Diffo.Provider.AssignableCharacteristic
-  alias Diffo.Provider.Relationship
+  alias Diffo.Provider.AssignedToRelationship
 
   @doc """
   Assign a thing using the pool declared via `pools do` on the instance module.
@@ -66,7 +66,7 @@ defmodule Diffo.Provider.Assigner do
   defp relate_is_assigned(result, pool, thing, value, assignee_id)
        when is_struct(result) and is_atom(pool) and is_atom(thing) and is_integer(value) and
               is_bitstring(assignee_id) do
-    case Diffo.Provider.create_assignment_relationship(%{
+    case Diffo.Provider.create_assigned_to_relationship(%{
            pool: pool,
            thing: thing,
            assigned: value,
@@ -103,15 +103,14 @@ defmodule Diffo.Provider.Assigner do
   end
 
   defp find_assignment(source_id, target_id, pool, thing, value) do
-    Relationship
+    AssignedToRelationship
     |> Ash.Query.new()
     |> Ash.Query.filter_input(
       source_id: source_id,
       target_id: target_id,
       pool: pool,
       thing: thing,
-      assigned: value,
-      type: :assignedTo
+      assigned: value
     )
     |> Ash.read_one(domain: Diffo.Provider)
   end

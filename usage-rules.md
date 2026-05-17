@@ -465,3 +465,8 @@ end
 - **Do not call `Assigner.assign/4` when a pool declaration exists** — prefer `Assigner.assign/3`
   which looks up the thing name from the pool automatically. `assign/4` is still available for
   cases without a `pools do` declaration.
+- **Do not query `Diffo.Provider.Relationship` for `type: :assignedTo` records** — assignment
+  relationships live on `Diffo.Provider.AssignedToRelationship`. Access them via `instance.assignments`.
+- **Do not filter `instance.forward_relationships` for `type == :assignedTo`** — those records no
+  longer exist there. `forward_relationships` contains only regular TMF relationships;
+  `assignments` contains pool assignment relationships.

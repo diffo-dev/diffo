@@ -153,7 +153,7 @@ arguments automatically onto that action.
 
 Each characteristic is a dedicated Ash resource using the `Diffo.Provider.BaseCharacteristic` fragment. It carries direct typed attributes and a `:value` calculation that builds a companion `<Module>.Value` TypedStruct for ordered JSON encoding. The TypedStruct uses [AshJason.TypedStruct](https://hexdocs.pm/ash_jason/) to control field order in the JSON output.
 
-For partial resource allocation and assignment we've created `Diffo.Provider.Assigner`. The host resource declares a `pools do` section listing each assignable pool by name and the kind of thing being assigned. Pool bounds (first/last value, algorithm) are set via a `:define` action. Assignment to Services or Resources is via `type: :assignedTo` Relationships that carry the assigned value directly on the Relationship node.
+For partial resource allocation and assignment we've created `Diffo.Provider.Assigner`. The host resource declares a `pools do` section listing each assignable pool by name and the kind of thing being assigned. Pool bounds (first/last value, algorithm) are set via a `:define` action. Each assignment is stored as a `Diffo.Provider.AssignedToRelationship` node (Neo4j label `:AssignmentRelationship`) carrying `pool`, `thing`, and the `assigned` value. These are distinct from regular TMF `Diffo.Provider.Relationship` nodes and are accessible on an instance via `instance.assignments`.
 
 Let's imagine a Compute domain which operates GPU and NPU resources. We want to expose a Cluster composite resource which can be dynamically composed of a number of GPU and NPU cores.
 
@@ -763,7 +763,7 @@ gpu_1 = Compute.define_gpu!(gpu_1, %{characteristic_value_updates: gpu_attrs})
 gpu_2 = Compute.define_gpu!(gpu_2, %{characteristic_value_updates: gpu_attrs})
 ```
 
-The `:cores` pool is backed by an `AssignableCharacteristic` node that records the range bounds and algorithm. Free cores are computed at assignment time from the count of existing `:assignedTo` relationships — there is no stored `free` counter. We can render one as json:
+The `:cores` pool is backed by an `AssignableCharacteristic` node that records the range bounds and algorithm. Free cores are computed at assignment time from the count of existing `AssignmentRelationship` records — there is no stored `free` counter. We can render one as json:
 
 ```elixir
 Jason.encode!(gpu_1, pretty: true) |> IO.puts
@@ -783,16 +783,16 @@ gpu_1 = Compute.assign_gpu_core!(gpu_1, assignment)
 gpu_2 = Compute.assign_gpu_core!(gpu_2, assignment)
 ```
 
-Now our cluster should have a core from each GPU. Check in the Neo4j browser for `:assignedTo` Relationship nodes from `gpu_1` and `gpu_2` to `cluster_1`. There should be four — each Relationship carries `pool: :cores`, `thing: :core`, and the `assigned` integer value (e.g. 1, 2, 3 from gpu_1 and 1 from gpu_2).
+Now our cluster should have a core from each GPU. Check in the Neo4j browser for `:AssignmentRelationship` nodes from `gpu_1` and `gpu_2` to `cluster_1`. There should be four — each carries `pool: :cores`, `thing: :core`, and the `assigned` integer value (e.g. 1, 2, 3 from gpu_1 and 1 from gpu_2).
 
-The GPU's `forward_relationships` include each `:assignedTo` relationship, showing the assigned core number in the JSON encoding as a `resourceRelationshipCharacteristic`:
+The GPU's `assignments` hold each assignment, showing the assigned core number in the JSON encoding as a `resourceRelationshipCharacteristic`:
 
 ```elixir
 Jason.encode!(gpu_1, pretty: true) |> IO.puts
 ```
 
-Make sure you have a look at it in the neo4j browser. There should be Relationship nodes with a role of :assignedTo from each GPU resource instance to the cluster_1 resource instance. Each Relationship should be defined by a Characteristic with the assigned core number.
-There is no central assignment table, rather the relationships ARE the assignments.
+Make sure you have a look at it in the neo4j browser. There should be `:AssignmentRelationship` nodes from each GPU resource instance to the `cluster_1` resource instance, each carrying the assigned core number.
+There is no central assignment table — the `AssignedToRelationship` nodes ARE the assignments. They are separate from the regular `:Relationship` nodes used for TMF service/resource relationships, and are accessible in Elixir via `instance.assignments`.
 
 As an exercise, clone the GPU resource to create an NPU resource and assign some NPU cores from it to your cluster. Check that the assigned NPU cores are unique.
 
@@ -805,7 +805,7 @@ In this tutorial you've used Diffo's unified `provider do` extension to define a
 
 - A composite Cluster resource that receives GPU cores via `Diffo.Provider.Assigner`
 - A GPU resource using `pools do` to declare the `:cores` assignable pool — `pool :cores, :core` replaces the old `characteristic :cores, AssignableValue` pattern
-- Assignment stored directly on `:assignedTo` Relationship nodes (no separate Characteristic nodes for assignments)
+- Assignments stored on `Diffo.Provider.AssignedToRelationship` nodes (Neo4j label `:AssignmentRelationship`, distinct from TMF `:Relationship` nodes); accessible via `instance.assignments`
 - `Tenant` and `Engineer` Party kinds declared with `provider do` that express which instances they operate and manage
 - A `DataCentre` Place kind that declares the instances located at it
 

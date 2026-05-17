@@ -40,11 +40,13 @@ lib/diffo/provider/
   assigner/
     assigner.ex                 # Diffo.Provider.Assigner — assign/3 (pools do) and assign/4
     assignable_characteristic.ex # AssignableCharacteristic — pool bounds + algorithm
+    assigned_to_relationship.ex # AssignedToRelationship — assignedTo edges (pool/thing/assigned)
   base_instance.ex              # Ash Fragment for Instance resources
   base_party.ex                 # Ash Fragment for Party resources
   base_place.ex                 # Ash Fragment for Place resources
   components/
     base_characteristic.ex      # Ash Fragment for typed characteristic resources
+    base_relationship.ex          # Ash Fragment for shared Relationship structure
     calculations/
       characteristic_value.ex   # Calculation: builds .Value TypedStruct from record fields
       assigned_values.ex        # Calculation: returns list of assigned integers for a pool+thing
@@ -162,6 +164,9 @@ mix test --max-failures 5         # stop early
 - Using the removed `AssignableValue` TypedStruct — it no longer exists; use `pools do`.
 - Calling `Assigner.assign/4` when a `pools do` declaration exists — prefer `Assigner.assign/3` which looks up the thing automatically.
 - Forgetting to call `Pool.update_pools/3` in `:define` actions when the resource has `pools do` — pool bounds (`first`, `last`, `algorithm`) are set here.
+- Using `characteristic :pool_name, Diffo.Provider.AssignedToRelationship` — `AssignedToRelationship` is not a characteristic; use `pools do / pool :name, :thing / end` instead.
+- Querying `Diffo.Provider.Relationship` for assignment records — assignment relationships are on `Diffo.Provider.AssignedToRelationship`; access them via `instance.assignments`.
+- Filtering `instance.forward_relationships` for `type == :assignedTo` — those records no longer exist there; use `instance.assignments` directly.
 - Calling `build_before/1` or `build_after/2` in actions — these run automatically.
 - Declaring `:specified_by`, `:features`, `:characteristics` as action arguments.
 - Editing `documentation/dsls/DSL-Diffo.Provider.Extension.md` — it is Spark-generated;
