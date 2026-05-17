@@ -93,6 +93,7 @@ defmodule Diffo.Provider.BasePlace do
     extensions: [
       AshOutstanding.Resource,
       AshJason.Resource,
+      Diffo.Provider.Extension,
       Diffo.Provider.Place.Extension
     ]
 

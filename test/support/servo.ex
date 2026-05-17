@@ -12,17 +12,21 @@ defmodule Diffo.Test.Servo do
     otp_app: :diffo,
     validate_config_inclusion?: false
 
-  alias Diffo.Test.Shelf
-  alias Diffo.Test.Card
-  alias Diffo.Test.Broadband
-  alias Diffo.Test.BroadbandV2
+  alias Diffo.Test.Instance.ShelfInstance
+  alias Diffo.Test.Instance.CardInstance
+  alias Diffo.Test.Instance.Broadband
+  alias Diffo.Test.Instance.BroadbandV2
+  alias Diffo.Test.Characteristic.ShelfCharacteristic
+  alias Diffo.Test.Characteristic.CardCharacteristic
+  alias Diffo.Test.Characteristic.DeploymentClass
+  alias Diffo.Provider.AssignableCharacteristic
 
   domain do
     description "service and resource management"
   end
 
   resources do
-    resource Shelf do
+    resource ShelfInstance do
       define :get_shelf_by_id, action: :read, get_by: :id
       define :build_shelf, action: :build
       define :define_shelf, action: :define
@@ -30,7 +34,7 @@ defmodule Diffo.Test.Servo do
       define :assign_slot, action: :assign_slot
     end
 
-    resource Card do
+    resource CardInstance do
       define :get_card_by_id, action: :read, get_by: :id
       define :build_card, action: :build
       define :define_card, action: :define
@@ -47,5 +51,10 @@ defmodule Diffo.Test.Servo do
       define :build_broadband_v2, action: :build
       define :get_broadband_v2_by_id, action: :read, get_by: :id
     end
+
+    resource ShelfCharacteristic
+    resource CardCharacteristic
+    resource DeploymentClass
+    resource AssignableCharacteristic
   end
 end

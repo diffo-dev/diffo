@@ -8,7 +8,7 @@ defmodule Diffo.Type.DynamicTest do
   use Outstand
   alias Diffo.Type.Dynamic
   alias Diffo.Test.Patch
-  alias Diffo.Test.CardValue
+  alias Diffo.Test.Characteristic.CardCharacteristic, as: CardValue
 
   describe "dynamic type validation" do
     test "cast_input rejects non-NewType scalar Ash type" do

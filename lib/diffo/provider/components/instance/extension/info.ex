@@ -3,14 +3,21 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Instance.Extension.Info do
-  use Spark.InfoGenerator,
-    extension: Diffo.Provider.Instance.Extension,
-    sections: [:structure]
+  alias Diffo.Provider.Extension.Info, as: ExtInfo
 
   @doc "Returns true if the module is a BaseInstance-derived resource"
   @spec instance?(module()) :: boolean()
-  def instance?(module) do
-    Code.ensure_loaded?(module) and
-      Diffo.Provider.Instance.Extension in Ash.Resource.Info.extensions(module)
-  end
+  defdelegate instance?(module), to: ExtInfo
+
+  @doc false
+  defdelegate structure_parties(module), to: ExtInfo, as: :provider_parties
+
+  @doc false
+  defdelegate structure_places(module), to: ExtInfo, as: :provider_places
+
+  @doc false
+  defdelegate structure_characteristics(module), to: ExtInfo, as: :provider_characteristics
+
+  @doc false
+  defdelegate structure_features(module), to: ExtInfo, as: :provider_features
 end

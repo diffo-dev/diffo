@@ -77,6 +77,19 @@ defmodule Diffo.Provider do
       define :delete_relationship, action: :destroy
     end
 
+    resource Diffo.Provider.AssignedToRelationship do
+      define :create_assigned_to_relationship, action: :create_assignment
+      define :get_assigned_to_relationship_by_id, action: :read, get_by: :id
+      define :delete_assigned_to_relationship, action: :destroy
+    end
+
+    resource Diffo.Provider.AssignableCharacteristic do
+      define :create_assignable_characteristic, action: :create
+      define :get_assignable_characteristic_by_id, action: :read, get_by: :id
+      define :update_assignable_characteristic, action: :update
+      define :delete_assignable_characteristic, action: :destroy
+    end
+
     resource Diffo.Provider.Characteristic do
       define :create_characteristic, action: :create
       define :get_characteristic_by_id, action: :read, get_by: :id
