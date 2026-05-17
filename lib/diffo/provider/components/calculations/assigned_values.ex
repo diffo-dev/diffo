@@ -14,15 +14,11 @@ defmodule Diffo.Provider.Calculations.AssignedValues do
     thing = context.arguments[:thing]
 
     Enum.map(records, fn record ->
-      Diffo.Provider.AssignedToRelationship
-      |> Ash.Query.new()
-      |> Ash.Query.filter_input(
-        source_id: record.instance_id,
-        pool: record.name,
-        thing: thing
-      )
+      Diffo.Provider.DefinedSimpleRelationship
+      |> Ash.Query.filter_input(source_id: record.instance_id, type: :assignedTo)
       |> Ash.read!(domain: Diffo.Provider)
-      |> Enum.map(& &1.assigned)
+      |> Enum.filter(fn rel -> rel.characteristic && rel.characteristic.name == thing end)
+      |> Enum.map(fn rel -> Diffo.Unwrap.unwrap(rel.characteristic.value) end)
     end)
   end
 end
