@@ -104,11 +104,12 @@ defmodule Diffo.Provider.Extension.Characteristic do
   defp apply_updates(result, updates, declarations) do
     Enum.reduce_while(updates, {:ok, result}, fn {name, update}, {:ok, acc} ->
       decl = Enum.find(declarations, &(&1.name == name))
+      dynamic = Enum.find(acc.characteristics, fn %{name: n} -> n == name end)
 
-      if decl && typed?(decl.value_type) do
-        apply_typed_update(acc, name, decl.value_type, update)
-      else
-        apply_dynamic_update(acc, name, update)
+      cond do
+        decl && typed?(decl.value_type) -> apply_typed_update(acc, name, decl.value_type, update)
+        decl || dynamic -> apply_dynamic_update(acc, name, update)
+        true -> {:cont, {:ok, acc}}
       end
     end)
   end

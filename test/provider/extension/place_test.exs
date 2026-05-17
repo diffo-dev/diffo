@@ -11,7 +11,7 @@ defmodule Diffo.Provider.Extension.PlaceTest do
   alias Diffo.Test.Party.Organization
   alias Diffo.Test.Place.GeographicSite
 
-  alias Diffo.Test.Instance.Shelf
+  alias Diffo.Test.Instance.ShelfInstance
   alias Diffo.Test.Nbn
 
   setup do
@@ -44,33 +44,33 @@ defmodule Diffo.Provider.Extension.PlaceTest do
 
   describe "Instance DSL — Shelf places" do
     test "place declarations are accessible via info" do
-      places = InstanceInfo.structure_places(Shelf)
+      places = InstanceInfo.structure_places(ShelfInstance)
       roles = Enum.map(places, & &1.role)
       assert :installation_site in roles
       assert :billing_address in roles
     end
 
     test "place types are correct" do
-      places = InstanceInfo.structure_places(Shelf)
+      places = InstanceInfo.structure_places(ShelfInstance)
       installation_site = Enum.find(places, &(&1.role == :installation_site))
       assert installation_site.place_type == Diffo.Provider.Place
     end
 
     test "singular place defaults to multiple: false" do
-      places = InstanceInfo.structure_places(Shelf)
+      places = InstanceInfo.structure_places(ShelfInstance)
       installation_site = Enum.find(places, &(&1.role == :installation_site))
       assert installation_site.multiple == false
     end
 
     test "reference: true is declared" do
-      places = InstanceInfo.structure_places(Shelf)
+      places = InstanceInfo.structure_places(ShelfInstance)
       billing = Enum.find(places, &(&1.role == :billing_address))
       assert billing.reference == true
       assert billing.multiple == false
     end
 
     test "reference defaults to false" do
-      places = InstanceInfo.structure_places(Shelf)
+      places = InstanceInfo.structure_places(ShelfInstance)
       installation_site = Enum.find(places, &(&1.role == :installation_site))
       assert installation_site.reference == false
     end

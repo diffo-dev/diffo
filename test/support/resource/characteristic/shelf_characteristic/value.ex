@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Characteristic.Shelf.Value do
+defmodule Diffo.Test.Characteristic.ShelfCharacteristic.Value do
   @moduledoc "Typed value struct for a Shelf characteristic."
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 

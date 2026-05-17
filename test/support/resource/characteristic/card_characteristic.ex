@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Characteristic.Card do
+defmodule Diffo.Test.Characteristic.CardCharacteristic do
   @moduledoc "Typed characteristic for a Card's identity."
   use Ash.Resource,
     fragments: [Diffo.Provider.BaseCharacteristic],
