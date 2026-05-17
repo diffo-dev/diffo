@@ -11,6 +11,31 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.3.0](https://github.com/diffo-dev/diffo/compare/v0.2.2...v0.3.0) (2026-05-17)
+
+### Breaking Changes
+
+* `Diffo.Provider.Relationship` no longer stores assignment records. Assignment relationships are now on `Diffo.Provider.AssignedToRelationship`. Any existing graph data with `type: :assignedTo` on `Relationship` nodes will need to be migrated.
+* `instance.forward_relationships` no longer contains assignment records — use `instance.assignments` instead.
+* `Diffo.Provider.create_assignment_relationship` removed — use `Diffo.Provider.create_assigned_to_relationship`.
+
+### Notable Changes
+
+* `Diffo.Provider.BaseRelationship` — new Ash Resource Fragment providing common attributes and behaviour for all relationship types
+* `Diffo.Provider.AssignedToRelationship` — new dedicated resource for pool assignment relationships, split out from `Diffo.Provider.Relationship`
+* `Diffo.Provider.Relationship` — now TMF-only; `pool`, `thing`, `assigned` attributes and `:create_assignment` action removed
+* `instance.assignments` — new `has_many` on `BaseInstance` for pool assignment relationships; included in JSON encoding and default loads
+* `Diffo.Provider.BaseCharacteristic` — new Ash Resource Fragment for typed characteristic resources; `ShelfCharacteristic`, `CardCharacteristic` etc. now extend this rather than using plain `Ash.TypedStruct`
+* `pools do` DSL — new section on Instance resources replacing the old `characteristic :name, AssignableValue` pattern; generates `pools/0` and `pool/1` introspection functions
+* Module naming convention — Instance resources must be suffixed `…Instance`, Characteristic resources `…Characteristic` to avoid Neo4j label collisions (documented in `usage-rules.md` and `AGENTS.md`)
+* `Diffo.Provider.Extension` — unified Spark DSL extension consolidating the prior per-kind extensions
+
+### What's Changed
+
+* provider extension consolidation by @matt-beanland in https://github.com/diffo-dev/diffo/pull/130
+* base characteristic by @matt-beanland in https://github.com/diffo-dev/diffo/pull/133
+* assigner refactor — BaseRelationship, AssignedToRelationship, pools DSL, resource naming by @matt-beanland in https://github.com/diffo-dev/diffo/pull/135
+
 ## [v0.2.2](https://github.com/diffo-dev/diffo/compare/v0.2.1...v0.2.2) (2026-05-08)
 
 ## Notable Changes
