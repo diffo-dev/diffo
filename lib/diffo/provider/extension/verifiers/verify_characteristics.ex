@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Extension.Verifiers.VerifyCharacteristics do
-  @moduledoc "Verifies characteristic names are unique and value_type modules exist"
+  @moduledoc "Verifies characteristic names are unique and value_type modules exist and extend BaseCharacteristic"
   use Spark.Dsl.Verifier
 
   alias Spark.Dsl.Verifier
   alias Spark.Error.DslError
+  alias Diffo.Provider.Extension.Info
 
   @impl true
   def verify(dsl_state) do
@@ -30,17 +31,30 @@ defmodule Diffo.Provider.Extension.Verifiers.VerifyCharacteristics do
       Enum.reduce(characteristics, [], fn char, acc ->
         case module_from_value_type(char.value_type) do
           {:ok, module} ->
-            if Code.ensure_loaded?(module) do
-              acc
-            else
-              [
-                DslError.exception(
-                  module: resource,
-                  path: [:provider, :characteristics, char.name],
-                  message: "characteristics: value_type #{inspect(module)} does not exist"
-                )
-                | acc
-              ]
+            cond do
+              !Code.ensure_loaded?(module) ->
+                [
+                  DslError.exception(
+                    module: resource,
+                    path: [:provider, :characteristics, char.name],
+                    message: "characteristics: value_type #{inspect(module)} does not exist"
+                  )
+                  | acc
+                ]
+
+              !Info.characteristic?(module) ->
+                [
+                  DslError.exception(
+                    module: resource,
+                    path: [:provider, :characteristics, char.name],
+                    message:
+                      "characteristics: value_type #{inspect(module)} does not extend BaseCharacteristic"
+                  )
+                  | acc
+                ]
+
+              true ->
+                acc
             end
 
           :error ->

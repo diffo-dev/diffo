@@ -10,9 +10,9 @@ defmodule Diffo.Provider.Extension.Pool do
 
   @doc "Creates AssignableCharacteristic nodes for each declared pool during the build action"
   def create_pools(result, pools) when is_struct(result) and is_list(pools) do
-    Enum.reduce_while(pools, {:ok, result}, fn %__MODULE__{name: name}, {:ok, acc} ->
+    Enum.reduce_while(pools, {:ok, result}, fn %__MODULE__{name: name, thing: thing}, {:ok, acc} ->
       case Diffo.Provider.AssignableCharacteristic
-           |> Ash.Changeset.for_create(:create, %{name: name, instance_id: acc.id})
+           |> Ash.Changeset.for_create(:create, %{name: name, thing: thing, instance_id: acc.id})
            |> Ash.create() do
         {:ok, _} -> {:cont, {:ok, acc}}
         {:error, error} -> {:halt, {:error, error}}

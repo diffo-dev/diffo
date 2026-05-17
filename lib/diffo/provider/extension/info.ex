@@ -27,4 +27,11 @@ defmodule Diffo.Provider.Extension.Info do
     Code.ensure_loaded?(module) and
       Diffo.Provider.Place.Extension in Ash.Resource.Info.extensions(module)
   end
+
+  @doc "Returns true if the module is a BaseCharacteristic-derived resource (or Characteristic itself)"
+  @spec characteristic?(module()) :: boolean()
+  def characteristic?(module) do
+    Code.ensure_loaded?(module) and
+      Diffo.Provider.Characteristic.Extension in Ash.Resource.Info.extensions(module)
+  end
 end

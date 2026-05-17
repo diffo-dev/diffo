@@ -217,6 +217,34 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
         end
       )
     end
+
+    test "value_type not extending BaseCharacteristic warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "characteristics: value_type Diffo.Test.Instance.ShelfInstance does not extend BaseCharacteristic",
+        fn ->
+          defmodule InvalidCharBaseType do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with characteristic value_type that is not a BaseCharacteristic"
+            end
+
+            provider do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+              end
+
+              characteristics do
+                characteristic :foo, Diffo.Test.Instance.ShelfInstance
+              end
+            end
+          end
+        end
+      )
+    end
   end
 
   describe "features verifier" do
@@ -305,6 +333,36 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
               features do
                 feature :my_feature do
                   characteristic :baz, NonExistent.FeatureValue
+                end
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "feature characteristic value_type not extending BaseCharacteristic warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "features: characteristic value_type Diffo.Test.Instance.ShelfInstance does not extend BaseCharacteristic",
+        fn ->
+          defmodule InvalidFeatureCharBaseType do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with feature characteristic value_type that is not a BaseCharacteristic"
+            end
+
+            provider do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "invalid"
+              end
+
+              features do
+                feature :my_feature do
+                  characteristic :baz, Diffo.Test.Instance.ShelfInstance
                 end
               end
             end
