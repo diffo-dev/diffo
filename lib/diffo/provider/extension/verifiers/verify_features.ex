@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Extension.Verifiers.VerifyFeatures do
-  @moduledoc "Verifies feature names are unique and feature characteristic value_type modules exist"
+  @moduledoc "Verifies feature names are unique and feature characteristic value_type modules exist and extend BaseCharacteristic"
   use Spark.Dsl.Verifier
 
   alias Spark.Dsl.Verifier
   alias Spark.Error.DslError
+  alias Diffo.Provider.Extension.Info
 
   @impl true
   def verify(dsl_state) do
@@ -45,18 +46,31 @@ defmodule Diffo.Provider.Extension.Verifiers.VerifyFeatures do
           Enum.reduce(feature.characteristics || [], [], fn char, inner_acc ->
             case module_from_value_type(char.value_type) do
               {:ok, module} ->
-                if Code.ensure_loaded?(module) do
-                  inner_acc
-                else
-                  [
-                    DslError.exception(
-                      module: resource,
-                      path: [:provider, :features, feature.name, :characteristics, char.name],
-                      message:
-                        "features: characteristic value_type #{inspect(module)} does not exist"
-                    )
-                    | inner_acc
-                  ]
+                cond do
+                  !Code.ensure_loaded?(module) ->
+                    [
+                      DslError.exception(
+                        module: resource,
+                        path: [:provider, :features, feature.name, :characteristics, char.name],
+                        message:
+                          "features: characteristic value_type #{inspect(module)} does not exist"
+                      )
+                      | inner_acc
+                    ]
+
+                  !Info.characteristic?(module) ->
+                    [
+                      DslError.exception(
+                        module: resource,
+                        path: [:provider, :features, feature.name, :characteristics, char.name],
+                        message:
+                          "features: characteristic value_type #{inspect(module)} does not extend BaseCharacteristic"
+                      )
+                      | inner_acc
+                    ]
+
+                  true ->
+                    inner_acc
                 end
 
               :error ->

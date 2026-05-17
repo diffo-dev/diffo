@@ -47,6 +47,12 @@ defmodule Diffo.Provider.AssignableCharacteristic do
       default :lowest
       constraints one_of: [:lowest, :highest, :random]
     end
+
+    attribute :thing, :atom do
+      description "the kind of item being assigned (e.g. :slot, :port); set from the pool declaration at build time"
+      public? true
+      allow_nil? true
+    end
   end
 
   calculations do
@@ -60,11 +66,15 @@ defmodule Diffo.Provider.AssignableCharacteristic do
       public? true
       argument :thing, :atom, allow_nil?: false
     end
+
+    calculate :free, :integer, Diffo.Provider.Calculations.FreeValues do
+      public? true
+    end
   end
 
   actions do
     create :create do
-      accept [:name, :first, :last, :assignable_type, :algorithm]
+      accept [:name, :first, :last, :assignable_type, :algorithm, :thing]
       argument :instance_id, :uuid
       argument :feature_id, :uuid
       change manage_relationship(:instance_id, :instance, type: :append)
@@ -77,7 +87,7 @@ defmodule Diffo.Provider.AssignableCharacteristic do
   end
 
   preparations do
-    prepare build(load: [:value])
+    prepare build(load: [:value, :free])
   end
 
   jason do
