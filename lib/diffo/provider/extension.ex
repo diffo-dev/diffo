@@ -31,6 +31,10 @@ defmodule Diffo.Provider.Extension do
           end
         end
 
+        pools do
+          pool :ports, :port
+        end
+
         parties do
           party :provider, MyApp.Provider
           party_ref :owner, MyApp.InfrastructureCo

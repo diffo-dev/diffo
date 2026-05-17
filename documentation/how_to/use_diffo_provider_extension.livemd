@@ -141,6 +141,8 @@ The id is a stable UUID4, the same in every environment for this Instance kind.
 
 **`features do`** — optional capabilities with their own typed characteristic payload.
 
+**`pools do`** — assignable pools for partial resource allocation. Each `pool :name, :thing` declaration creates an `AssignableCharacteristic` node during `build` and generates `pools/0` / `pool/1` on the module. Pool bounds (`first`, `last`, `algorithm`, `assignable_type`) are set in a `:define` action via `Pool.update_pools/3`. Assignment actions use `Assigner.assign/3` — the thing name is looked up from the pool declaration.
+
 **`parties do`** — party roles: `party` (singular), `parties` (plural), `party_ref` (reference, no direct edge).
 
 **`places do`** — place roles: `place` (singular), `places` (plural), `place_ref` (reference).
@@ -151,7 +153,7 @@ arguments automatically onto that action.
 
 Each characteristic is a dedicated Ash resource using the `Diffo.Provider.BaseCharacteristic` fragment. It carries direct typed attributes and a `:value` calculation that builds a companion `<Module>.Value` TypedStruct for ordered JSON encoding. The TypedStruct uses [AshJason.TypedStruct](https://hexdocs.pm/ash_jason/) to control field order in the JSON output.
 
-For partial resource allocation and assignment we've created Diffo.Provider.Assigner. It is used by the host resource, which declares a characteristic with a `Diffo.Provider.AssignableValue` TypedStruct. Allocation is managed within the Provider domain using this characteristic. Assignment to Services or Resources is via 'reverse' type: "assignedTo" relationships enriched by relationship characteristics.
+For partial resource allocation and assignment we've created `Diffo.Provider.Assigner`. The host resource declares a `pools do` section listing each assignable pool by name and the kind of thing being assigned. Pool bounds (first/last value, algorithm) are set via a `:define` action. Assignment to Services or Resources is via `type: :assignedTo` Relationships that carry the assigned value directly on the Relationship node.
 
 Let's imagine a Compute domain which operates GPU and NPU resources. We want to expose a Cluster composite resource which can be dynamically composed of a number of GPU and NPU cores.
 
@@ -381,7 +383,7 @@ defmodule Diffo.Compute.GpuCharacteristic.Value do
 end
 ```
 
-The GPU resource declares `GpuCharacteristic` for the typed `:gpu` slot and keeps `AssignableValue` for the `:cores` allocation pool (the assigner still uses the dynamic characteristic pattern). The `update :define` action now only needs to handle the dynamic `:cores` update — the typed `:gpu` characteristic is updated directly on the characteristic resource:
+The GPU resource declares `GpuCharacteristic` for the typed `:gpu` slot and uses `pools do` to declare the `:cores` assignable pool. The `update :define` action updates both the typed characteristic and the pool bounds. The `update :assign_core` action uses `Assigner.assign/3` — the thing name (`:core`) is looked up from the pool declaration automatically:
 
 ```elixir
 defmodule Diffo.Compute.GPU do
@@ -391,10 +393,10 @@ defmodule Diffo.Compute.GPU do
 
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
-  alias Diffo.Provider.Instance.Characteristic
+  alias Diffo.Provider.Extension.Characteristic
+  alias Diffo.Provider.Extension.Pool
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
-  alias Diffo.Provider.AssignableValue
   alias Diffo.Compute
   alias Diffo.Compute.GpuCharacteristic
 
@@ -418,7 +420,10 @@ defmodule Diffo.Compute.GPU do
 
     characteristics do
       characteristic :gpu, GpuCharacteristic
-      characteristic :cores, AssignableValue
+    end
+
+    pools do
+      pool :cores, :core
     end
 
     behaviour do
@@ -442,11 +447,13 @@ defmodule Diffo.Compute.GPU do
     end
 
     update :define do
-      description "allocates the GPU cores (AssignableValue)"
+      description "sets GPU identity and allocates the cores pool"
       argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Characteristic.update_values(result, changeset),
+               with {:ok, result} <-
+                      Characteristic.update_all(result, changeset, characteristics()),
+                    {:ok, result} <- Pool.update_pools(result, changeset, pools()),
                     {:ok, result} <- Compute.get_gpu_by_id(result.id),
                     do: {:ok, result}
              end)
@@ -464,18 +471,17 @@ defmodule Diffo.Compute.GPU do
     end
 
     update :assign_core do
-      description "relates the GPU with an instance by assigning a core"
+      description "assigns a core from this GPU to another instance"
       argument :assignment, :struct, constraints: [instance_of: Assignment]
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Assigner.assign(result, changeset, :cores, :core),
+               with {:ok, result} <- Assigner.assign(result, changeset, :cores),
                     {:ok, result} <- Compute.get_gpu_by_id(result.id),
                     do: {:ok, result}
              end)
     end
   end
 end
-```
 ```
 
 ## Party Extension
@@ -745,27 +751,19 @@ gpu_1 = Compute.build_gpu!(%{name: "GPU 1"})
 gpu_2 = Compute.build_gpu!(%{name: "GPU 2"})
 ```
 
-We set the typed `:gpu` characteristic directly on the characteristic resource, then allocate the `:cores` AssignableValue via `update :define`:
+We define each GPU: setting its typed `:gpu` characteristic fields and allocating the `:cores` pool bounds. Both are passed via `characteristic_value_updates` to the `:define` action — `Characteristic.update_all` handles the typed `:gpu` update and `Pool.update_pools` handles the `:cores` pool bounds:
 
 ```elixir
-# Update the typed GpuCharacteristic on each GPU
-[gpu_char_1] = Enum.filter(gpu_1.characteristics, fn c -> c.name == :gpu end)
-[gpu_char_2] = Enum.filter(gpu_2.characteristics, fn c -> c.name == :gpu end)
+gpu_attrs = [
+  gpu: [family: :nvidia, model: "GeForce RTX5090", technology: :blackwell],
+  cores: [first: 1, last: 680, assignable_type: "tensor"]
+]
 
-gpu_attrs = %{family: :nvidia, model: "GeForce RTX5090", technology: :blackwell}
-Compute.update_gpu_characteristic!(gpu_char_1, gpu_attrs)
-Compute.update_gpu_characteristic!(gpu_char_2, gpu_attrs)
+gpu_1 = Compute.define_gpu!(gpu_1, %{characteristic_value_updates: gpu_attrs})
+gpu_2 = Compute.define_gpu!(gpu_2, %{characteristic_value_updates: gpu_attrs})
 ```
 
-```elixir
-# Allocate the cores pool (AssignableValue — dynamic characteristic)
-core_updates = [cores: [first: 1, last: 680, free: 680, assignable_type: "tensor"]]
-
-gpu_1 = Compute.define_gpu!(gpu_1, %{characteristic_value_updates: core_updates})
-gpu_2 = Compute.define_gpu!(gpu_2, %{characteristic_value_updates: core_updates})
-```
-
-The GPU's `:cores` characteristic is an AssignableValue that tracks how many cores are free (unassigned). We can render one as json:
+The `:cores` pool is backed by an `AssignableCharacteristic` node that records the range bounds and algorithm. Free cores are computed at assignment time from the count of existing `:assignedTo` relationships — there is no stored `free` counter. We can render one as json:
 
 ```elixir
 Jason.encode!(gpu_1, pretty: true) |> IO.puts
@@ -785,9 +783,9 @@ gpu_1 = Compute.assign_gpu_core!(gpu_1, assignment)
 gpu_2 = Compute.assign_gpu_core!(gpu_2, assignment)
 ```
 
-Now our cluster should have a core from each gpu. Check in the neo4j browser for the type: :assignedTo Relationship from the gpu_1 and gpu_2 to the clusters. There should be four, each with a Relationship Characteristic of core, with a value of the assigned core, e.g. 1, 2.
+Now our cluster should have a core from each GPU. Check in the Neo4j browser for `:assignedTo` Relationship nodes from `gpu_1` and `gpu_2` to `cluster_1`. There should be four — each Relationship carries `pool: :cores`, `thing: :core`, and the `assigned` integer value (e.g. 1, 2, 3 from gpu_1 and 1 from gpu_2).
 
-Also the gpu will show each assignedTo relationship, since these are forward relationships. These should also show the relationship characteristic:
+The GPU's `forward_relationships` include each `:assignedTo` relationship, showing the assigned core number in the JSON encoding as a `resourceRelationshipCharacteristic`:
 
 ```elixir
 Jason.encode!(gpu_1, pretty: true) |> IO.puts
@@ -805,7 +803,9 @@ What happens when I request a specific assignment from an instance to which the 
 
 In this tutorial you've used Diffo's unified `provider do` extension to define a Compute domain with:
 
-- A composite Cluster resource with GPU core assignment via `Diffo.Provider.Assigner`
+- A composite Cluster resource that receives GPU cores via `Diffo.Provider.Assigner`
+- A GPU resource using `pools do` to declare the `:cores` assignable pool — `pool :cores, :core` replaces the old `characteristic :cores, AssignableValue` pattern
+- Assignment stored directly on `:assignedTo` Relationship nodes (no separate Characteristic nodes for assignments)
 - `Tenant` and `Engineer` Party kinds declared with `provider do` that express which instances they operate and manage
 - A `DataCentre` Place kind that declares the instances located at it
 
