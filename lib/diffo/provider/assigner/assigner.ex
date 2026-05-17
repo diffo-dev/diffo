@@ -13,6 +13,18 @@ defmodule Diffo.Provider.Assigner do
   alias Diffo.Provider.Relationship
 
   @doc """
+  Assign a thing using the pool declared via `pools do` on the instance module.
+  The thing name is looked up from the pool declaration.
+  """
+  def assign(result, changeset, pool_name)
+      when is_struct(result) and is_struct(changeset, Ash.Changeset) and is_atom(pool_name) do
+    case result.__struct__.pool(pool_name) do
+      nil -> {:error, "pool #{pool_name} not declared on #{result.__struct__}"}
+      pool -> assign(result, changeset, pool_name, pool.thing)
+    end
+  end
+
+  @doc """
   Assign a thing using the instance changeset assignment.
   """
   def assign(result, changeset, pool, thing)

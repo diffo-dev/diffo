@@ -11,9 +11,9 @@ defmodule Diffo.Test.Instance.Card do
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
   alias Diffo.Provider.Extension.Characteristic
+  alias Diffo.Provider.Extension.Pool
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
-  alias Diffo.Provider.AssignableCharacteristic
   alias Diffo.Test.Servo
   alias Diffo.Test.Characteristic.Card, as: CardCharacteristic
 
@@ -37,7 +37,10 @@ defmodule Diffo.Test.Instance.Card do
 
     characteristics do
       characteristic :card, CardCharacteristic
-      characteristic :ports, AssignableCharacteristic
+    end
+
+    pools do
+      pool :ports, :port
     end
 
     behaviour do
@@ -67,6 +70,7 @@ defmodule Diffo.Test.Instance.Card do
       change after_action(fn changeset, result, _context ->
                with {:ok, result} <-
                       Characteristic.update_all(result, changeset, characteristics()),
+                    {:ok, result} <- Pool.update_pools(result, changeset, pools()),
                     {:ok, result} <- Servo.get_card_by_id(result.id),
                     do: {:ok, result}
              end)
@@ -88,7 +92,7 @@ defmodule Diffo.Test.Instance.Card do
       argument :assignment, :struct, constraints: [instance_of: Assignment]
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Assigner.assign(result, changeset, :ports, :port),
+               with {:ok, result} <- Assigner.assign(result, changeset, :ports),
                     {:ok, result} <- Servo.get_card_by_id(result.id),
                     do: {:ok, result}
              end)

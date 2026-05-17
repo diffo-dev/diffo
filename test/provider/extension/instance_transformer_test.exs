@@ -55,7 +55,8 @@ defmodule Diffo.Provider.Extension.InstanceTransformerTest do
 
     test "characteristics are also accessible via Info" do
       assert length(Info.characteristics(Shelf)) == 3
-      assert length(Info.characteristics(Card)) == 2
+      # Card has :card characteristic; :ports moved to pools do
+      assert length(Info.characteristics(Card)) == 1
     end
 
     test "Info.characteristic/2 returns the named characteristic" do

@@ -92,7 +92,8 @@ defmodule Diffo.Provider.Extension do
     PartyDeclaration,
     PartyRole,
     PlaceDeclaration,
-    PlaceRole
+    PlaceRole,
+    Pool
   }
 
   # ── specification ──────────────────────────────────────────────────────────
@@ -425,6 +426,40 @@ defmodule Diffo.Provider.Extension do
     entities: [@instance_role_entity, @instance_ref_entity]
   }
 
+  # ── pools ──────────────────────────────────────────────────────────────────
+
+  @pool_entity %Spark.Dsl.Entity{
+    name: :pool,
+    describe: "Declares an assignable pool — a named range of values for auto-assignment",
+    target: Pool,
+    args: [:name, :thing],
+    schema: [
+      name: [
+        type: :atom,
+        doc: "The pool name (matches the AssignableCharacteristic name).",
+        required: true
+      ],
+      thing: [
+        type: :atom,
+        doc: "The name of the thing being assigned within the pool (e.g. :port).",
+        required: true
+      ]
+    ]
+  }
+
+  @pools %Spark.Dsl.Section{
+    name: :pools,
+    describe: "Assignable pools on this Instance — each pool maps to an AssignableCharacteristic",
+    examples: [
+      """
+      pools do
+        pool :ports, :port
+      end
+      """
+    ],
+    entities: [@pool_entity]
+  }
+
   # ── behaviour ──────────────────────────────────────────────────────────────
 
   @action_create_entity %Spark.Dsl.Entity{
@@ -485,6 +520,7 @@ defmodule Diffo.Provider.Extension do
       @specification,
       @characteristics,
       @features,
+      @pools,
       @parties,
       @places,
       @instances,
@@ -498,6 +534,7 @@ defmodule Diffo.Provider.Extension do
       Diffo.Provider.Extension.Persisters.PersistSpecification,
       Diffo.Provider.Extension.Persisters.PersistCharacteristics,
       Diffo.Provider.Extension.Persisters.PersistFeatures,
+      Diffo.Provider.Extension.Persisters.PersistPools,
       Diffo.Provider.Extension.Persisters.PersistParties,
       Diffo.Provider.Extension.Persisters.PersistPlaces,
       Diffo.Provider.Extension.Persisters.PersistInstances,
@@ -507,6 +544,7 @@ defmodule Diffo.Provider.Extension do
       Diffo.Provider.Extension.Verifiers.VerifySpecification,
       Diffo.Provider.Extension.Verifiers.VerifyCharacteristics,
       Diffo.Provider.Extension.Verifiers.VerifyFeatures,
+      Diffo.Provider.Extension.Verifiers.VerifyPools,
       Diffo.Provider.Extension.Verifiers.VerifyParties,
       Diffo.Provider.Extension.Verifiers.VerifyPlaces,
       Diffo.Provider.Extension.Verifiers.VerifyInstances,
