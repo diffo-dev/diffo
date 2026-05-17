@@ -106,12 +106,12 @@ defmodule Diffo.Provider.Assigner do
 
   defp next(instance, pool, thing)
        when is_struct(instance) and is_atom(pool) and is_atom(thing) do
-    case pool_characteristic(instance.id, pool) do
+    case pool_characteristic(instance.id, pool, thing) do
       {:ok, nil} ->
         {:error, "pool #{pool} not found on instance #{instance.id}"}
 
       {:ok, char} ->
-        free = free_values(instance.id, pool, thing, char.first, char.last)
+        free = Enum.to_list(char.first..char.last) -- char.assigned_values
 
         case free do
           [] ->
@@ -132,33 +132,18 @@ defmodule Diffo.Provider.Assigner do
 
   defp assignable?(instance, pool, thing, value)
        when is_struct(instance) and is_atom(pool) and is_atom(thing) and is_integer(value) do
-    case pool_characteristic(instance.id, pool) do
+    case pool_characteristic(instance.id, pool, thing) do
       {:ok, nil} -> false
-      {:ok, char} -> value in free_values(instance.id, pool, thing, char.first, char.last)
+      {:ok, char} -> value in Enum.to_list(char.first..char.last) -- char.assigned_values
       {:error, _} -> false
     end
   end
 
-  defp pool_characteristic(instance_id, pool) do
+  defp pool_characteristic(instance_id, pool, thing) do
     AssignableCharacteristic
     |> Ash.Query.new()
     |> Ash.Query.filter_input(instance_id: instance_id, name: pool)
+    |> Ash.Query.load(assigned_values: [thing: thing])
     |> Ash.read_one(domain: Diffo.Provider)
-  end
-
-  defp free_values(source_id, pool, thing, first, last) do
-    assigned =
-      Relationship
-      |> Ash.Query.new()
-      |> Ash.Query.filter_input(
-        source_id: source_id,
-        pool: pool,
-        thing: thing,
-        type: :assignedTo
-      )
-      |> Ash.read!(domain: Diffo.Provider)
-      |> Enum.map(& &1.assigned)
-
-    Enum.to_list(first..last) -- assigned
   end
 end
