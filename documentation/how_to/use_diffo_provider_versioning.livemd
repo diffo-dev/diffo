@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.2.1"}
+    {:diffo, "~> 0.3.0"}
   ],
   config: [
     diffo: [ash_domains: [Diffo.Provider]]
