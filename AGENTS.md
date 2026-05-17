@@ -155,6 +155,19 @@ mix test path/to/test.exs:LINE    # single test
 mix test --max-failures 5         # stop early
 ```
 
+## Module naming and Neo4j labels
+
+AshNeo4j derives a node label from the **last segment** of the module name. Two resources
+whose names end in the same word get the same label, which causes read collisions.
+
+**Rule:** suffix every resource module with its kind so the last segment is unique:
+- Instance resources: `MyApp.Instance.WidgetInstance` (not `MyApp.Instance.Widget`)
+- Characteristic resources: `MyApp.Characteristic.WidgetCharacteristic` (not `MyApp.Characteristic.Widget`)
+- Party/Place resources: follow the same convention if ambiguity is possible.
+
+E.g. `Diffo.Test.Instance.CardInstance` → label `:CardInstance`,
+and `Diffo.Test.Characteristic.CardCharacteristic` → label `:CardCharacteristic` — no collision.
+
 ## Common agent mistakes
 
 - Using old `structure do` / top-level `instances do` — use `provider do` only.

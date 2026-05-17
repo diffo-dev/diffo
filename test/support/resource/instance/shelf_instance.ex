@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Instance.Shelf do
+defmodule Diffo.Test.Instance.ShelfInstance do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
@@ -15,9 +15,8 @@ defmodule Diffo.Test.Instance.Shelf do
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.AssignableValue
-
   alias Diffo.Test.Servo
-  alias Diffo.Test.Characteristic.Shelf, as: ShelfCharacteristic
+  alias Diffo.Test.Characteristic.ShelfCharacteristic
   alias Diffo.Test.Characteristic.DeploymentClass
   alias Diffo.Test.Party.Organization
   alias Diffo.Test.Party.Person

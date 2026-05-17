@@ -11,7 +11,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
 
   alias Diffo.Test.Parties
   alias Diffo.Test.Servo
-  alias Diffo.Test.Instance.Card
+  alias Diffo.Test.Instance.CardInstance
 
   setup do
     AshNeo4j.Sandbox.checkout()
@@ -23,7 +23,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
     test "create a card" do
       {:ok, card} = Servo.build_card(%{})
 
-      assert is_struct(card, Card)
+      assert is_struct(card, CardInstance)
 
       refute is_nil(card.specification_id)
       assert is_struct(card.specification, Specification)
@@ -71,7 +71,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
 
       {:ok, card_value} =
-        Diffo.Test.Characteristic.Card
+        Diffo.Test.Characteristic.CardCharacteristic
         |> Ash.Query.new()
         |> Ash.Query.filter_input(instance_id: card.id)
         |> Ash.read_one()

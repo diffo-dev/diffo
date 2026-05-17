@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Characteristic.Shelf do
+defmodule Diffo.Test.Characteristic.ShelfCharacteristic do
   @moduledoc "Typed characteristic for a Shelf's identity."
   use Ash.Resource,
     fragments: [Diffo.Provider.BaseCharacteristic],

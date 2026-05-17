@@ -340,6 +340,24 @@ modules are still available as thin delegating wrappers for backwards compatibil
 - **Never change the `id`** of an existing specification. It is a stable cross-environment
   identity; changing it orphans existing instances.
 
+## Neo4j label naming convention
+
+AshNeo4j derives each resource's primary node label from the **last segment** of the module
+name. If two different resource kinds share the same last segment, all reads and writes for
+one will also match nodes belonging to the other — a silent data corruption.
+
+**Always suffix the module with its resource kind** so the derived label is unique:
+
+| Kind | Pattern | Example |
+|------|---------|---------|
+| Instance | `…Instance` | `MyApp.Instance.WidgetInstance` → `:WidgetInstance` |
+| Characteristic | `…Characteristic` | `MyApp.Characteristic.SpeedCharacteristic` → `:SpeedCharacteristic` |
+| Party | `…Party` or unique name | `MyApp.Party.ProviderOrganization` → `:ProviderOrganization` |
+| Place | `…Place` or unique name | `MyApp.Place.InstallationSite` → `:InstallationSite` |
+
+If a domain has both `MyApp.Instance.Card` and `MyApp.Characteristic.Card`, both resolve to
+label `:Card` and queries are ambiguous. Rename to `CardInstance` and `CardCharacteristic`.
+
 ## Complete example
 
 ```elixir
