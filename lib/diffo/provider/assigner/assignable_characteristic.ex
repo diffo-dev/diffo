@@ -54,6 +54,12 @@ defmodule Diffo.Provider.AssignableCharacteristic do
               Diffo.Provider.Calculations.CharacteristicValue do
       public? true
     end
+
+    calculate :assigned_values, {:array, :integer},
+              Diffo.Provider.Calculations.AssignedValues do
+      public? true
+      argument :thing, :atom, allow_nil?: false
+    end
   end
 
   actions do
