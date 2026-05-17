@@ -10,7 +10,7 @@ defmodule Diffo.Provider.Extension.InfoTest do
 
   describe "instance?/1" do
     test "returns true for a BaseInstance-derived resource" do
-      assert Info.instance?(Diffo.Test.Instance.Shelf) == true
+      assert Info.instance?(Diffo.Test.Instance.ShelfInstance) == true
     end
 
     test "returns true for the base Instance resource" do
@@ -40,7 +40,7 @@ defmodule Diffo.Provider.Extension.InfoTest do
     end
 
     test "returns false for a BaseInstance-derived resource" do
-      assert Info.party?(Diffo.Test.Instance.Shelf) == false
+      assert Info.party?(Diffo.Test.Instance.ShelfInstance) == false
     end
 
     test "returns false for a BasePlace-derived resource" do
@@ -62,7 +62,7 @@ defmodule Diffo.Provider.Extension.InfoTest do
     end
 
     test "returns false for a BaseInstance-derived resource" do
-      assert Info.place?(Diffo.Test.Instance.Shelf) == false
+      assert Info.place?(Diffo.Test.Instance.ShelfInstance) == false
     end
 
     test "returns false for a BaseParty-derived resource" do

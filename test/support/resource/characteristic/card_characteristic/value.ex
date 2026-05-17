@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Characteristic.Card.Value do
+defmodule Diffo.Test.Characteristic.CardCharacteristic.Value do
   @moduledoc "Typed value struct for a Card characteristic."
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 

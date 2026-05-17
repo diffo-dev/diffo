@@ -44,6 +44,8 @@ defmodule Diffo.Provider.Extension.Transformers.TransformBehaviour do
                      result,
                      features()
                    ),
+                 {:ok, result} <-
+                   Diffo.Provider.Extension.Pool.create_pools(result, pools()),
                  do: {:ok, result}
           end
 
@@ -76,6 +78,9 @@ defmodule Diffo.Provider.Extension.Transformers.TransformBehaviour do
              f -> Enum.find(f.characteristics, &(&1.name == char_name))
            end
          end
+
+         @doc false
+         def pool(name), do: Enum.find(pools(), &(&1.name == name))
 
          @doc false
          def party(role), do: Enum.find(parties(), &(&1.role == role))
@@ -127,6 +132,7 @@ defmodule Diffo.Provider.Extension.Transformers.TransformBehaviour do
   def after?(Diffo.Provider.Extension.Persisters.PersistSpecification), do: true
   def after?(Diffo.Provider.Extension.Persisters.PersistCharacteristics), do: true
   def after?(Diffo.Provider.Extension.Persisters.PersistFeatures), do: true
+  def after?(Diffo.Provider.Extension.Persisters.PersistPools), do: true
   def after?(Diffo.Provider.Extension.Persisters.PersistParties), do: true
   def after?(Diffo.Provider.Extension.Persisters.PersistPlaces), do: true
   def after?(_), do: false

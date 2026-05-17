@@ -40,7 +40,7 @@ end
 All DSL declarations live inside a single `provider do` block. The sections available
 depend on the resource kind:
 
-- **Instance** — `specification`, `characteristics`, `features`, `parties`, `places`, `behaviour`
+- **Instance** — `specification`, `characteristics`, `features`, `pools`, `parties`, `places`, `behaviour`
 - **Party** — `instances`, `parties`, `places`
 - **Place** — `instances`, `parties`, `places`
 
@@ -232,6 +232,58 @@ Role names are domain nouns from the party's/place's perspective — timeless,
 `snake_case` atoms. Use `camelCase` atoms for multi-word names that follow TMF
 conventions (e.g. `:dataCentre`, not `:data_centre`).
 
+### `pools do` — Instance only
+
+Declares named assignable pools. Each pool maps to a `Diffo.Provider.AssignableCharacteristic`
+node that is created automatically during the `build` action. Use this instead of declaring
+`characteristic :name, AssignableCharacteristic` in `characteristics do`.
+
+```elixir
+provider do
+  pools do
+    pool :cores, :core   # pool name :cores, thing name :core
+    pool :ports, :port
+  end
+end
+```
+
+- **`pool name, thing`** — `name` is the pool atom (also the AssignableCharacteristic name);
+  `thing` is the atom identifying what is being assigned within the pool (stored on assignment
+  Relationships as the `thing` attribute).
+- Pool bounds (`first`, `last`, `algorithm`, `assignable_type`) are set via `Pool.update_pools/3`
+  in a `:define` action; they are not declared in the DSL.
+- Each Instance module gets `pools/0` (list of declarations) and `pool/1` (lookup by name)
+  generated at compile time.
+
+In the `:define` action, apply updates for both characteristics and pools:
+
+```elixir
+update :define do
+  argument :characteristic_value_updates, {:array, :term}
+
+  change after_action(fn changeset, result, _context ->
+    with {:ok, result} <- Characteristic.update_all(result, changeset, characteristics()),
+         {:ok, result} <- Pool.update_pools(result, changeset, pools()),
+         {:ok, result} <- MyDomain.get_by_id(result.id),
+         do: {:ok, result}
+  end)
+end
+```
+
+In assignment actions, use `Assigner.assign/3` (thing is looked up from the pool declaration):
+
+```elixir
+update :assign_core do
+  argument :assignment, :struct, constraints: [instance_of: Assignment]
+
+  change after_action(fn changeset, result, _context ->
+    with {:ok, result} <- Assigner.assign(result, changeset, :cores),
+         {:ok, result} <- MyDomain.get_by_id(result.id),
+         do: {:ok, result}
+  end)
+end
+```
+
 ### `behaviour do` — Instance only
 
 Marks a named create action for build wiring. Declaring `create :name` injects the
@@ -253,8 +305,8 @@ end
 Every resource with a complete `specification do` block gets these compile-time generated
 functions:
 
-- `specification/0`, `characteristics/0`, `features/0`, `parties/0`, `places/0`
-- `characteristic/1`, `feature/1`, `feature_characteristic/2`, `party/1`, `place/1`
+- `specification/0`, `characteristics/0`, `features/0`, `pools/0`, `parties/0`, `places/0`
+- `characteristic/1`, `feature/1`, `feature_characteristic/2`, `pool/1`, `party/1`, `place/1`
 - `build_before/1` — upserts the Specification node; creates Feature, Characteristic, and
   Party nodes; sets action argument ids. Called automatically before every create action.
 - `build_after/2` — relates the created TMF entities to the new instance node. Called
@@ -287,6 +339,24 @@ modules are still available as thin delegating wrappers for backwards compatibil
   and `major_version 2`. The original module and all its instances remain untouched.
 - **Never change the `id`** of an existing specification. It is a stable cross-environment
   identity; changing it orphans existing instances.
+
+## Neo4j label naming convention
+
+AshNeo4j derives each resource's primary node label from the **last segment** of the module
+name. If two different resource kinds share the same last segment, all reads and writes for
+one will also match nodes belonging to the other — a silent data corruption.
+
+**Always suffix the module with its resource kind** so the derived label is unique:
+
+| Kind | Pattern | Example |
+|------|---------|---------|
+| Instance | `…Instance` | `MyApp.Instance.WidgetInstance` → `:WidgetInstance` |
+| Characteristic | `…Characteristic` | `MyApp.Characteristic.SpeedCharacteristic` → `:SpeedCharacteristic` |
+| Party | `…Party` or unique name | `MyApp.Party.ProviderOrganization` → `:ProviderOrganization` |
+| Place | `…Place` or unique name | `MyApp.Place.InstallationSite` → `:InstallationSite` |
+
+If a domain has both `MyApp.Instance.Card` and `MyApp.Characteristic.Card`, both resolve to
+label `:Card` and queries are ambiguous. Rename to `CardInstance` and `CardCharacteristic`.
 
 ## Complete example
 
@@ -406,3 +476,15 @@ end
   managed entirely by the `build_before/1` generated function.
 - **Do not use `party/1` in place of `parties/3`** (and vice versa) — `party` declares a
   singular role; `parties` declares a plural role. Mismatching causes compile-time errors.
+- **Do not use `characteristic :name, Diffo.Provider.AssignableCharacteristic`** for assignable
+  pools — use `pools do / pool :name, :thing / end` instead. The `pools do` section creates the
+  `AssignableCharacteristic` node automatically during `build` and generates `pools/0` / `pool/1`.
+- **Do not use the old `AssignableValue` TypedStruct** — it is removed. Use `pools do`.
+- **Do not call `Assigner.assign/4` when a pool declaration exists** — prefer `Assigner.assign/3`
+  which looks up the thing name from the pool automatically. `assign/4` is still available for
+  cases without a `pools do` declaration.
+- **Do not query `Diffo.Provider.Relationship` for `type: :assignedTo` records** — assignment
+  relationships live on `Diffo.Provider.AssignedToRelationship`. Access them via `instance.assignments`.
+- **Do not filter `instance.forward_relationships` for `type == :assignedTo`** — those records no
+  longer exist there. `forward_relationships` contains only regular TMF relationships;
+  `assignments` contains pool assignment relationships.
