@@ -47,7 +47,6 @@ lib/diffo/provider/
   assigner/
     assigner.ex                 # Diffo.Provider.Assigner — assign/3 (pools do) and assign/4
     assignable_characteristic.ex # AssignableCharacteristic — pool bounds + algorithm
-    assigned_to_relationship.ex # AssignedToRelationship — assignedTo edges (pool/thing/assigned)
   base_instance.ex              # Ash Fragment for Instance resources
   base_party.ex                 # Ash Fragment for Party resources
   base_place.ex                 # Ash Fragment for Place resources
