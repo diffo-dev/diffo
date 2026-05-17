@@ -4,12 +4,12 @@ SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/di
 SPDX-License-Identifier: MIT
 -->
 
-# Using the Diffo Provider Instance Extension
+# Using the Diffo Provider Extension
 
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.2.1"}
+    {:diffo, "~> 0.3.0"}
   ],
   config: [
     diffo: [ash_domains: [Diffo.Provider]]
@@ -27,19 +27,19 @@ If you are not already familiar with Ash then please explore [Ash Get Started](h
 
 First ensure you've explored the Diffo Livebook for an introduction to Diffo: [![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Fdiffo%2Ddev%2Fdiffo%2Fblob%2Fdev%2Fdiffo.livemd)
 
-In this 'Diffo Provider Instance Extension' livebook you will learn about:
+In this livebook you will learn about:
 
 * TMF Services and Resources
 * Building your own Domain
-* Declaring a Composite Resource using the Instance Extension
-* Using the Assigner
+* Declaring Instance resources with the unified `provider do` DSL
+* Using the Assigner for partial resource allocation and assignment
 * Composing a Resource from partially assigned Resources
-* Declaring domain Parties using the Party Extension
-* Declaring domain Places using the Place Extension
+* Declaring Party kinds with `provider do`
+* Declaring Place kinds with `provider do`
 
 ### Installing Neo4j and Configuring Bolty
 
-Diffo uses the [Ash Neo4j DataLayer](https://github.com/diffo-dev/ash_neo4j), which requires Neo4j to be installed
+Diffo uses the [Ash Neo4j DataLayer](https://github.com/diffo-dev/ash_neo4j), which requires Neo4j to be installed.
 
 While [Neo4j community edition](https://github.com/neo4j/neo4j) is open source and you can build from source it is likely that you'll use an installation.
 
@@ -110,7 +110,7 @@ When a Provider creates a pool of resources this is known as 'allocation'. For i
 
 When a Consumer is leased a resource this is assignment.
 
-Assigment is effectively a request for a relationship from a Provider Resource 'back up' to a Consumer Service or Resource. There are different variants on this:
+Assignment is effectively a request for a relationship from a Provider Resource 'back up' to a Consumer Service or Resource. There are different variants on this:
 
 * Specific Resource assignment - the specific resource requested by the Consumer is assigned
 * 'To specification' Resource assignment - an entire resource is assigned by the Provider, allocation may be 'just in time'
@@ -121,41 +121,39 @@ In all cases the assignment is only successful if the Provider allows the reques
 
 Partial resource assignment uses a relationship characteristic to indicate which part of the resource is optionally requested and ultimately assigned.
 
-## Instance Extension
+## Provider Extension
 
-Diffo.Provider.Instance models either a Service or Resource. It actually uses the Diffo.Provider.BaseInstance [Spark.Dsl.Fragment](https://hexdocs.pm/spark/Spark.Dsl.Fragment.html). There is no need to evaluate the Diffo.Provider.Instance below, it is already defined.
+`Diffo.Provider.BaseInstance` is an Ash Resource Fragment for domain-specific Instance kinds
+(services and resources). It provides a rich set of base attributes — `id`, `href`, `name`,
+`type`, `state` and more — plus the unified `Diffo.Provider.Extension` DSL.
 
-```elixir
-defmodule Diffo.Provider.Instance do
-  @moduledoc """
-  Ash Resource for a TMF Service or Resource Instance
-  """
-  alias Diffo.Provider.BaseInstance
+The extension provides a single `provider do` section containing everything needed to
+describe and wire an Instance kind. Declarations are baked into the module at compile time
+and introspectable at runtime via generated functions (`specification/0`, `characteristics/0`,
+`features/0`, `parties/0`, `places/0`) and `Diffo.Provider.Extension.Info`.
 
-  use Ash.Resource,
-    fragments: [BaseInstance],
-    domain: Diffo.Provider
+The `provider do` section contains:
 
-  resource do
-    description "An Ash Resource for a TMF Service or Resource Instance"
-    plural_name :instances
-  end
-end
-```
+**`specification do`** — the TMF Specification (id, name, type, version, description, category).
+The id is a stable UUID4, the same in every environment for this Instance kind.
 
-Diffo also has an inbuilt Spark DSL extension [Diffo.Provider.Instance.Extension](https://hexdocs.pm/diffo/Diffo.Provider.Instance.Extension.html) which provides DSL and functions for use in building and operating domain specific services and resources.
+**`characteristics do`** — typed value slots backed by `Diffo.Provider.BaseCharacteristic`-derived resources.
 
-The extension has two top-level sections:
+**`features do`** — optional capabilities with their own typed characteristic payload.
 
-**`structure do`** — describes the static shape of the Instance kind: its TMF Specification, Characteristics, Features, Party roles, and Place roles. All declarations are baked into the module at compile time and introspectable at runtime via generated functions (`specification/0`, `characteristics/0`, `features/0`, `parties/0`, `places/0`) and `Diffo.Provider.Instance.Info`.
+**`pools do`** — assignable pools for partial resource allocation. Each `pool :name, :thing` declaration creates an `AssignableCharacteristic` node during `build` and generates `pools/0` / `pool/1` on the module. Pool bounds (`first`, `last`, `algorithm`, `assignable_type`) are set in a `:define` action via `Pool.update_pools/3`. Assignment actions use `Assigner.assign/3` — the thing name is looked up from the pool declaration.
 
-**`behaviour do`** — declares which Ash actions should be wired for instance lifecycle management. Declaring `create :name` injects `:specified_by`, `:features`, and `:characteristics` arguments onto that action, and the `BuildBefore`/`BuildAfter` changes registered on `BaseInstance` automatically handle specification upsert, feature and characteristic creation, party validation, and graph relationship wiring for every create action. You write the action body for your domain-specific accepts and arguments; the structural wiring is handled for you.
+**`parties do`** — party roles: `party` (singular), `parties` (plural), `party_ref` (reference, no direct edge).
 
-Feature and Instance Characteristics can have payloads defined by [Ash.TypedStruct](https://hexdocs.pm/ash/Ash.TypedStruct.html). TypedStruct are DSL specified types which are effectively lightweight embedded resources. We've extended both [AshJason](https://hexdocs.pm/ash_jason/) and [AshOutstanding](https://hexdocs.pm/ash_outstanding/) to support Ash.TypedStruct.
+**`places do`** — place roles: `place` (singular), `places` (plural), `place_ref` (reference).
 
-For partial resource allocation and assignment we've created Diffo.Provider.Assigner. It is used by the host resource, which declares a characteristic with an Diffo.Provider.AssignableValue TypedStruct. Allocation is managed within the Provider domain using this characteristic. Assignment to Services or Resources is via 'reverse' type: "assignedTo" relationships enriched by relationship characteristics.
+**`behaviour do`** — declares which Ash create actions to wire for build lifecycle management.
+Declaring `create :name` injects `:specified_by`, `:features`, and `:characteristics`
+arguments automatically onto that action.
 
-We can still use the Diffo.Provider API's noting that they will return Diffo.Provider.Instance rather than our specific domain resource, but we'll use our own domain API linked to specific actions.
+Each characteristic is a dedicated Ash resource using the `Diffo.Provider.BaseCharacteristic` fragment. It carries direct typed attributes and a `:value` calculation that builds a companion `<Module>.Value` TypedStruct for ordered JSON encoding. The TypedStruct uses [AshJason.TypedStruct](https://hexdocs.pm/ash_jason/) to control field order in the JSON output.
+
+For partial resource allocation and assignment we've created `Diffo.Provider.Assigner`. The host resource declares a `pools do` section listing each assignable pool by name and the kind of thing being assigned. Pool bounds (first/last value, algorithm) are set via a `:define` action. Each assignment is stored as a `Diffo.Provider.AssignedToRelationship` node (Neo4j label `:AssignmentRelationship`) carrying `pool`, `thing`, and the `assigned` value. These are distinct from regular TMF `Diffo.Provider.Relationship` nodes and are accessible on an instance via `instance.assignments`.
 
 Let's imagine a Compute domain which operates GPU and NPU resources. We want to expose a Cluster composite resource which can be dynamically composed of a number of GPU and NPU cores.
 
@@ -167,7 +165,74 @@ We'll define all the resources first, then declare the `Diffo.Compute` domain on
 
 ### Declaring a Composite Resource
 
-We will start by declaring the Cluster Resource. It is going to be a composite resource, where it can be assigned individual GPU and NPU cores via resource relationships. It is an Ash.Resource incorporating the Diffo.Provider.BaseInstance fragment.
+We will start by declaring the Cluster Resource. It is going to be a composite resource, where it can be assigned individual GPU and NPU cores via resource relationships. It is an Ash.Resource incorporating the `Diffo.Provider.BaseInstance` fragment.
+
+First we define the `ClusterCharacteristic` typed resource and its companion `Value` TypedStruct:
+
+```elixir
+defmodule Diffo.Compute.ClusterCharacteristic do
+  @moduledoc "Typed characteristic carrying cluster composition fields."
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BaseCharacteristic],
+    domain: Diffo.Compute
+
+  resource do
+    plural_name :cluster_characteristics
+  end
+
+  attributes do
+    attribute :gpu_cores, :integer, public?: true, default: 0, constraints: [min: 0]
+    attribute :npu_cores, :integer, public?: true, default: 0, constraints: [min: 0]
+  end
+
+  calculations do
+    calculate :value, Diffo.Type.CharacteristicValue,
+              Diffo.Provider.Calculations.CharacteristicValue do
+      public? true
+    end
+  end
+
+  actions do
+    create :create do
+      accept [:name, :gpu_cores, :npu_cores]
+      argument :instance_id, :uuid
+      argument :feature_id, :uuid
+      change manage_relationship(:instance_id, :instance, type: :append)
+      change manage_relationship(:feature_id, :feature, type: :append)
+    end
+
+    update :update do
+      accept [:gpu_cores, :npu_cores]
+    end
+  end
+
+  preparations do
+    prepare build(load: [:value])
+  end
+
+  jason do
+    pick [:name, :value]
+    compact true
+  end
+end
+
+defmodule Diffo.Compute.ClusterCharacteristic.Value do
+  @moduledoc "Value struct for ClusterCharacteristic — controls JSON field order."
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
+
+  typed_struct do
+    field :gpu_cores, :integer
+    field :npu_cores, :integer
+  end
+
+  jason do
+    pick [:gpu_cores, :npu_cores]
+    compact true
+  end
+end
+```
+
+Now the Cluster resource itself. It declares `ClusterCharacteristic` as the `:cluster` characteristic — updates to it are made directly on the characteristic resource, so no `update :define` is needed here:
 
 ```elixir
 defmodule Diffo.Compute.Cluster do
@@ -177,9 +242,8 @@ defmodule Diffo.Compute.Cluster do
 
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
-  alias Diffo.Provider.Instance.Characteristic
   alias Diffo.Compute
-  alias Diffo.Compute.ClusterValue
+  alias Diffo.Compute.ClusterCharacteristic
   alias Diffo.Compute.Tenant
   alias Diffo.Compute.Engineer
 
@@ -192,7 +256,7 @@ defmodule Diffo.Compute.Cluster do
     plural_name :Clusters
   end
 
-  structure do
+  provider do
     specification do
       id "4bcfc4c9-e776-4878-a658-e8d81857bed7"
       name "cluster"
@@ -202,7 +266,7 @@ defmodule Diffo.Compute.Cluster do
     end
 
     characteristics do
-      characteristic :cluster, ClusterValue
+      characteristic :cluster, ClusterCharacteristic
     end
 
     parties do
@@ -213,11 +277,11 @@ defmodule Diffo.Compute.Cluster do
     places do
       place :data_centre, Diffo.Compute.DataCentre
     end
-  end
 
-  behaviour do
-    actions do
-      create :build
+    behaviour do
+      actions do
+        create :build
+      end
     end
   end
 
@@ -234,17 +298,6 @@ defmodule Diffo.Compute.Cluster do
       upsert? false
     end
 
-    update :define do
-      description "defines the cluster"
-      argument :characteristic_value_updates, {:array, :term}
-
-      change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Characteristic.update_values(result, changeset),
-                    {:ok, cluster} <- Compute.get_cluster_by_id(result.id),
-                    do: {:ok, cluster}
-             end)
-    end
-
     update :relate do
       description "relates the cluster with other instances"
       argument :relationships, {:array, :struct}
@@ -259,49 +312,78 @@ defmodule Diffo.Compute.Cluster do
 end
 ```
 
-And of course we'll need a ClusterValue TypedStruct for the Cluster Resource's cluster characteristic:
+### Using the Assigner
+
+We'll now define a GPU Resource which uses the `Diffo.Provider.Assigner` functionality.
+
+First define the `GpuCharacteristic` typed resource and its `Value` TypedStruct:
 
 ```elixir
-defmodule Diffo.Compute.ClusterValue do
-  @moduledoc """
-  AshTyped Struct for Cluster Characteristic Value
-  """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
+defmodule Diffo.Compute.GpuCharacteristic do
+  @moduledoc "Typed characteristic carrying GPU identity fields."
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BaseCharacteristic],
+    domain: Diffo.Compute
+
+  resource do
+    plural_name :gpu_characteristics
+  end
+
+  attributes do
+    attribute :family, :atom, public?: true, description: "the GPU family name"
+    attribute :model, :string, public?: true, description: "the GPU model name"
+    attribute :technology, :atom, public?: true, description: "the GPU technology"
+  end
+
+  calculations do
+    calculate :value, Diffo.Type.CharacteristicValue,
+              Diffo.Provider.Calculations.CharacteristicValue do
+      public? true
+    end
+  end
+
+  actions do
+    create :create do
+      accept [:name, :family, :model, :technology]
+      argument :instance_id, :uuid
+      argument :feature_id, :uuid
+      change manage_relationship(:instance_id, :instance, type: :append)
+      change manage_relationship(:feature_id, :feature, type: :append)
+    end
+
+    update :update do
+      accept [:family, :model, :technology]
+    end
+  end
+
+  preparations do
+    prepare build(load: [:value])
+  end
 
   jason do
-    pick [:name, :gpu_cores, :npu_cores]
+    pick [:name, :value]
     compact true
   end
+end
 
-  outstanding do
-    expect [:gpu_cores]
-  end
+defmodule Diffo.Compute.GpuCharacteristic.Value do
+  @moduledoc "Value struct for GpuCharacteristic — controls JSON field order."
+  use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
   typed_struct do
-    field :name, :string, description: "the cluster name"
-
-    field :gpu_cores, :integer,
-      default: 0,
-      constraints: [min: 0],
-      description: "the number of GPU cores in the cluster"
-
-    field :npu_cores, :integer,
-      default: 0,
-      constraints: [min: 0],
-      description: "the number of NPU cores in the cluster"
+    field :family, :atom
+    field :model, :string
+    field :technology, :atom
   end
 
-  defimpl String.Chars do
-    def to_string(struct) do
-      inspect(struct)
-    end
+  jason do
+    pick [:family, :model, :technology]
+    compact true
   end
 end
 ```
 
-### Using the Assigner
-
-We'll now define a GPU Resource which uses the Diffo.Provider.Assigner functionality.
+The GPU resource declares `GpuCharacteristic` for the typed `:gpu` slot and uses `pools do` to declare the `:cores` assignable pool. The `update :define` action updates both the typed characteristic and the pool bounds. The `update :assign_core` action uses `Assigner.assign/3` — the thing name (`:core`) is looked up from the pool declaration automatically:
 
 ```elixir
 defmodule Diffo.Compute.GPU do
@@ -311,12 +393,12 @@ defmodule Diffo.Compute.GPU do
 
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
-  alias Diffo.Provider.Instance.Characteristic
+  alias Diffo.Provider.Extension.Characteristic
+  alias Diffo.Provider.Extension.Pool
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
-  alias Diffo.Provider.AssignableValue
   alias Diffo.Compute
-  alias Diffo.Compute.GPUValue
+  alias Diffo.Compute.GpuCharacteristic
 
   use Ash.Resource,
     fragments: [BaseInstance],
@@ -327,7 +409,7 @@ defmodule Diffo.Compute.GPU do
     plural_name :gpus
   end
 
-  structure do
+  provider do
     specification do
       id "ad50073f-17e0-45cb-b9b1-aa4296876156"
       name "gpu"
@@ -337,14 +419,17 @@ defmodule Diffo.Compute.GPU do
     end
 
     characteristics do
-      characteristic :gpu, GPUValue
-      characteristic :cores, AssignableValue
+      characteristic :gpu, GpuCharacteristic
     end
-  end
 
-  behaviour do
-    actions do
-      create :build
+    pools do
+      pool :cores, :core
+    end
+
+    behaviour do
+      actions do
+        create :build
+      end
     end
   end
 
@@ -362,11 +447,13 @@ defmodule Diffo.Compute.GPU do
     end
 
     update :define do
-      description "defines the GPU"
+      description "sets GPU identity and allocates the cores pool"
       argument :characteristic_value_updates, {:array, :term}
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Characteristic.update_values(result, changeset),
+               with {:ok, result} <-
+                      Characteristic.update_all(result, changeset, characteristics()),
+                    {:ok, result} <- Pool.update_pools(result, changeset, pools()),
                     {:ok, result} <- Compute.get_gpu_by_id(result.id),
                     do: {:ok, result}
              end)
@@ -384,11 +471,11 @@ defmodule Diffo.Compute.GPU do
     end
 
     update :assign_core do
-      description "relates the GPU with an instance by assigning a core"
+      description "assigns a core from this GPU to another instance"
       argument :assignment, :struct, constraints: [instance_of: Assignment]
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Assigner.assign(result, changeset, :cores, :core),
+               with {:ok, result} <- Assigner.assign(result, changeset, :cores),
                     {:ok, result} <- Compute.get_gpu_by_id(result.id),
                     do: {:ok, result}
              end)
@@ -397,49 +484,13 @@ defmodule Diffo.Compute.GPU do
 end
 ```
 
-And we must define the GPUValue TypedStruct, used in the GPU's gpu characteristic:
-
-```elixir
-defmodule Diffo.Compute.GPUValue do
-  @moduledoc """
-  AshTyped Struct for GPU Characteristic Value
-  """
-  use Ash.TypedStruct, extensions: [AshJason.TypedStruct, AshOutstanding.TypedStruct]
-
-  jason do
-    pick [:name, :family, :model, :technology]
-    compact true
-  end
-
-  outstanding do
-    expect [:name]
-  end
-
-  typed_struct do
-    field :name, :string, description: "the GPU name"
-
-    field :family, :atom, description: "the GPU family name"
-
-    field :model, :string, description: "the GPU model name"
-
-    field :technology, :atom, description: "the GPU technology"
-  end
-
-  defimpl String.Chars do
-    def to_string(struct) do
-      inspect(struct)
-    end
-  end
-end
-```
-
 ## Party Extension
 
-`Diffo.Provider.BaseParty` is an Ash Resource Fragment for domain-specific Party kinds, mirroring `BaseInstance`. It provides common Party attributes — `id`, `href`, `name`, `type`, `referred_type` — and the `Diffo.Provider.Party.Extension` DSL, which lets a Party kind declare the roles it plays with respect to Instances and other Parties.
+`Diffo.Provider.BaseParty` is an Ash Resource Fragment for domain-specific Party kinds, mirroring `BaseInstance`. It provides common Party attributes — `id`, `href`, `name`, `type`, `referred_type` — and the unified `Diffo.Provider.Extension` DSL. Within `provider do`, a Party kind uses `instances do`, `parties do`, and `places do` sections to declare the roles it plays.
 
 `type` defaults to `:PartyRef` and can be set to `:Individual`, `:Organization`, or `:Entity`. Domain party kinds typically set `type` in their `build` action. The `id` defaults to a generated uuid but can be set to any meaningful string (such as an ABN or a data centre identifier).
 
-The `Diffo.Provider.Party.Extension` DSL cheat sheet is at [DSL-Diffo.Provider.Party.Extension](https://hexdocs.pm/diffo/DSL-Diffo.Provider.Party.Extension.html).
+The `Diffo.Provider.Extension` DSL cheat sheet is at [DSL-Diffo.Provider.Extension](https://hexdocs.pm/diffo/DSL-Diffo.Provider.Extension.html).
 
 ### Defining Party kinds
 
@@ -470,9 +521,11 @@ defmodule Diffo.Compute.Tenant do
     end
   end
 
-  instances do
-    role :operator, Diffo.Compute.Cluster
-    role :operator, Diffo.Compute.GPU
+  provider do
+    instances do
+      role :operator, Diffo.Compute.Cluster
+      role :operator, Diffo.Compute.GPU
+    end
   end
 end
 ```
@@ -502,23 +555,22 @@ defmodule Diffo.Compute.Engineer do
     end
   end
 
-  instances do
-    role :manager, Diffo.Compute.Cluster
-  end
-
-  parties do
-    role :employer, Diffo.Compute.Tenant
+  provider do
+    instances do
+      role :manager, Diffo.Compute.Cluster
+    end
+    parties do
+      role :employer, Diffo.Compute.Tenant
+    end
   end
 end
 ```
 
 ## Place Extension
 
-`Diffo.Provider.BasePlace` is an Ash Resource Fragment for domain-specific Place kinds, mirroring `BaseInstance` and `BaseParty`. It provides common Place attributes — `id`, `href`, `name`, `type`, `referred_type` — and the `Diffo.Provider.Place.Extension` DSL, which lets a Place kind declare the roles it plays with respect to Instances, Parties, and other Places.
+`Diffo.Provider.BasePlace` is an Ash Resource Fragment for domain-specific Place kinds, mirroring `BaseInstance` and `BaseParty`. It provides common Place attributes — `id`, `href`, `name`, `type`, `referred_type` — and the unified `Diffo.Provider.Extension` DSL. Within `provider do`, a Place kind uses `instances do`, `parties do`, and `places do` sections to declare the roles it plays.
 
 `type` defaults to `:PlaceRef` and is typically set in the `build` action to the concrete place type (`:GeographicSite`, `:GeographicLocation`, or `:GeographicAddress`). When `referred_type` is present, `type` must be `:PlaceRef` — meaning this Place is a reference rather than a physical location.
-
-The `Diffo.Provider.Place.Extension` DSL cheat sheet is at [DSL-Diffo.Provider.Place.Extension](https://hexdocs.pm/diffo/DSL-Diffo.Provider.Place.Extension.html).
 
 ### Defining Place kinds
 
@@ -559,9 +611,11 @@ defmodule Diffo.Compute.DataCentre do
     end
   end
 
-  instances do
-    role :data_centre, Diffo.Compute.Cluster
-    role :data_centre, Diffo.Compute.GPU
+  provider do
+    instances do
+      role :data_centre, Diffo.Compute.Cluster
+      role :data_centre, Diffo.Compute.GPU
+    end
   end
 end
 ```
@@ -580,8 +634,10 @@ defmodule Diffo.Compute do
     validate_config_inclusion?: false
 
   alias Diffo.Compute.GPU
+  alias Diffo.Compute.GpuCharacteristic
   #alias Diffo.Compute.NPU
   alias Diffo.Compute.Cluster
+  alias Diffo.Compute.ClusterCharacteristic
   alias Diffo.Compute.Tenant
   alias Diffo.Compute.Engineer
   alias Diffo.Compute.DataCentre
@@ -595,6 +651,10 @@ defmodule Diffo.Compute do
       define :assign_gpu_core, action: :assign_core
     end
 
+    resource GpuCharacteristic do
+      define :update_gpu_characteristic, action: :update
+    end
+
     #resource NPU do
       #define :get_npu_by_id, action: :read, get_by: :id
       #define :build_npu, action: :build
@@ -606,8 +666,11 @@ defmodule Diffo.Compute do
     resource Cluster do
       define :get_cluster_by_id, action: :read, get_by: :id
       define :build_cluster, action: :build
-      define :define_cluster, action: :define
       define :relate_cluster, action: :relate
+    end
+
+    resource ClusterCharacteristic do
+      define :update_cluster_characteristic, action: :update
     end
 
     resource Tenant do
@@ -688,19 +751,19 @@ gpu_1 = Compute.build_gpu!(%{name: "GPU 1"})
 gpu_2 = Compute.build_gpu!(%{name: "GPU 2"})
 ```
 
-We need to define each GPU instance, in this case defining the gpu Characteristic AssignableValue performs the allocation - in this case setting how many GPU cores are available.
+We define each GPU: setting its typed `:gpu` characteristic fields and allocating the `:cores` pool bounds. Both are passed via `characteristic_value_updates` to the `:define` action — `Characteristic.update_all` handles the typed `:gpu` update and `Pool.update_pools` handles the `:cores` pool bounds:
 
 ```elixir
-updates = [
+gpu_attrs = [
   gpu: [family: :nvidia, model: "GeForce RTX5090", technology: :blackwell],
-  cores: [first: 1, last: 680, free: 680, assignable_type: "tensor"]
+  cores: [first: 1, last: 680, assignable_type: "tensor"]
 ]
 
-gpu_1 = Compute.define_gpu!(gpu_1, %{characteristic_value_updates: updates})
-gpu_2 = Compute.define_gpu!(gpu_2, %{characteristic_value_updates: updates})
+gpu_1 = Compute.define_gpu!(gpu_1, %{characteristic_value_updates: gpu_attrs})
+gpu_2 = Compute.define_gpu!(gpu_2, %{characteristic_value_updates: gpu_attrs})
 ```
 
-The GPU's core characteristic is an AssignableValue, now we've allocated it we can use it to keep track of how many cores are free (unassigned). We can render one as json:
+The `:cores` pool is backed by an `AssignableCharacteristic` node that records the range bounds and algorithm. Free cores are computed at assignment time from the count of existing `AssignmentRelationship` records — there is no stored `free` counter. We can render one as json:
 
 ```elixir
 Jason.encode!(gpu_1, pretty: true) |> IO.puts
@@ -720,16 +783,16 @@ gpu_1 = Compute.assign_gpu_core!(gpu_1, assignment)
 gpu_2 = Compute.assign_gpu_core!(gpu_2, assignment)
 ```
 
-Now our cluster should have a core from each gpu. Check in the neo4j browser for the type: :assignedTo Relationship from the gpu_1 and gpu_2 to the clusters. There should be four, each with a Relationship Characteristic of core, with a value of the assigned core, e.g. 1, 2.
+Now our cluster should have a core from each GPU. Check in the Neo4j browser for `:AssignmentRelationship` nodes from `gpu_1` and `gpu_2` to `cluster_1`. There should be four — each carries `pool: :cores`, `thing: :core`, and the `assigned` integer value (e.g. 1, 2, 3 from gpu_1 and 1 from gpu_2).
 
-Also the gpu will show each assignedTo relationship, since these are forward relationships. These should also show the relationship characteristic:
+The GPU's `assignments` hold each assignment, showing the assigned core number in the JSON encoding as a `resourceRelationshipCharacteristic`:
 
 ```elixir
 Jason.encode!(gpu_1, pretty: true) |> IO.puts
 ```
 
-Make sure you have a look at it in the neo4j browser. There should be Relationship nodes with a role of :assignedTo from each GPU resource instance to the cluster_1 resource instance. Each Relationship should be defined by a Characteristic with the assigned core number.
-There is no central assignment table, rather the relationships ARE the assignments.
+Make sure you have a look at it in the neo4j browser. There should be `:AssignmentRelationship` nodes from each GPU resource instance to the `cluster_1` resource instance, each carrying the assigned core number.
+There is no central assignment table — the `AssignedToRelationship` nodes ARE the assignments. They are separate from the regular `:Relationship` nodes used for TMF service/resource relationships, and are accessible in Elixir via `instance.assignments`.
 
 As an exercise, clone the GPU resource to create an NPU resource and assign some NPU cores from it to your cluster. Check that the assigned NPU cores are unique.
 
@@ -738,10 +801,16 @@ What happens when I request a specific assignment from an instance to which the 
 
 ### What Next?
 
-In this tutorial you've used Diffo's Provider Instance Extension to define a Compute domain with a composite Cluster resource comprised of assigned GPU cores, the Provider Party Extension to define Tenant and Engineer party kinds that operate and manage those resources, and the Provider Place Extension to declare where instances and parties exist geographically.
+In this tutorial you've used Diffo's unified `provider do` extension to define a Compute domain with:
 
-`BaseParty` and `BasePlace` follow the same pattern as `BaseInstance` — domain-specific resources use them as fragments and write their own actions for domain-specific attributes. No manual wiring is needed.
+- A composite Cluster resource that receives GPU cores via `Diffo.Provider.Assigner`
+- A GPU resource using `pools do` to declare the `:cores` assignable pool — `pool :cores, :core` replaces the old `characteristic :cores, AssignableValue` pattern
+- Assignments stored on `Diffo.Provider.AssignedToRelationship` nodes (Neo4j label `:AssignmentRelationship`, distinct from TMF `:Relationship` nodes); accessible via `instance.assignments`
+- `Tenant` and `Engineer` Party kinds declared with `provider do` that express which instances they operate and manage
+- A `DataCentre` Place kind that declares the instances located at it
 
-Domain-specific Place kinds (such as a DataCentre with its own attributes) use `BasePlace` as a fragment and declare their roles via `instances do`, `parties do`, and `places do` sections on `Diffo.Provider.Place.Extension`. Party kinds similarly declare their place roles via `places do` on `Diffo.Provider.Party.Extension`.
+`BaseParty` and `BasePlace` follow the same `provider do` pattern as `BaseInstance` — domain-specific resources use them as fragments, write their own actions for domain-specific attributes, and declare their roles via the unified DSL sections.
+
+The full DSL reference is at [DSL-Diffo.Provider.Extension](https://hexdocs.pm/diffo/DSL-Diffo.Provider.Extension.html).
 
 If you find Diffo useful please visit and star on [github](https://github.com/diffo-dev/diffo/). Feel free to join discussions and raise issues to discuss PR's.

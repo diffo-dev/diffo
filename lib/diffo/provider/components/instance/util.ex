@@ -74,40 +74,40 @@ defmodule Diffo.Provider.Instance.Util do
 
   @doc false
   def relationships(result) do
-    if relationships = Diffo.Util.get(result, :forward_relationships) do
+    fwd = Diffo.Util.get(result, :forward_relationships)
+    asgn = Diffo.Util.get(result, :assignments)
+
+    if fwd != nil or asgn != nil do
+      all_relationships = List.wrap(fwd) ++ List.wrap(asgn)
+
       service_relationships =
-        relationships
-        |> Enum.filter(fn relationship ->
-          relationship.target != nil && relationship.target_type == :service
+        Enum.filter(all_relationships, fn rel ->
+          rel.target != nil && rel.target_type == :service
         end)
 
       resource_relationships =
-        relationships
-        |> Enum.filter(fn relationship ->
-          relationship.target != nil && relationship.target_type == :resource
+        Enum.filter(all_relationships, fn rel ->
+          rel.target != nil && rel.target_type == :resource
         end)
 
       supporting_services =
         service_relationships
-        |> Enum.filter(fn relationship ->
-          relationship.alias != nil
-        end)
-        |> Enum.into([], fn aliased ->
+        |> Enum.filter(fn rel -> Map.get(rel, :alias) != nil end)
+        |> Enum.map(fn aliased ->
           %Diffo.Provider.Reference{id: aliased.alias, href: Map.get(aliased, :target_href)}
         end)
 
       supporting_resources =
         resource_relationships
-        |> Enum.filter(fn relationship ->
-          relationship.alias != nil
-        end)
-        |> Enum.into([], fn aliased ->
+        |> Enum.filter(fn rel -> Map.get(rel, :alias) != nil end)
+        |> Enum.map(fn aliased ->
           %Diffo.Provider.Reference{id: aliased.alias, href: Map.get(aliased, :target_href)}
         end)
 
       result
       |> Diffo.Util.remove(:forward_relationships)
       |> Diffo.Util.remove(:reverse_relationships)
+      |> Diffo.Util.remove(:assignments)
       |> Diffo.Util.set(:serviceRelationship, service_relationships)
       |> Diffo.Util.set(:resourceRelationship, resource_relationships)
       |> Diffo.Util.set(:supportingService, supporting_services)
@@ -116,6 +116,7 @@ defmodule Diffo.Provider.Instance.Util do
       result
       |> Diffo.Util.remove(:forward_relationships)
       |> Diffo.Util.remove(:reverse_relationships)
+      |> Diffo.Util.remove(:assignments)
     end
   end
 

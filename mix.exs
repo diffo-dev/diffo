@@ -6,7 +6,7 @@ defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
 
-  @version "0.2.2"
+  @version "0.3.0"
   @name "Diffo"
   @description "TMF Service and Resource Manager with a difference"
   @github_url "https://github.com/diffo-dev/diffo"
@@ -67,16 +67,22 @@ defmodule Diffo.MixProject do
       extras: [
         "README.md": [title: "Guide"],
         "LICENSES/MIT.md": [title: "License"],
-        "documentation/dsls/DSL-Diffo.Provider.Instance.Extension.md": [
-          title: "DSL: Diffo.Provider.Instance.Extension",
-          search_data: Spark.Docs.search_data_for(Diffo.Provider.Instance.Extension)
+        "diffo.livemd": [title: "Tutorial"],
+        "documentation/dsls/DSL-Diffo.Provider.Extension.md": [
+          title: "DSL: Diffo.Provider.Extension",
+          search_data: Spark.Docs.search_data_for(Diffo.Provider.Extension)
         ],
-        "documentation/dsls/DSL-Diffo.Provider.Party.Extension.md": [
-          title: "DSL: Diffo.Provider.Party.Extension",
-          search_data: Spark.Docs.search_data_for(Diffo.Provider.Party.Extension)
+        "documentation/how_to/use_diffo_type.livemd": [title: "Using Diffo.Type"],
+        "documentation/how_to/use_diffo_provider_extension.livemd": [
+          title: "Using the Diffo Provider Extension"
+        ],
+        "documentation/how_to/use_diffo_provider_versioning.livemd": [
+          title: "Instance Versioning with the Diffo Provider"
         ]
       ],
       groups_for_extras: [
+        "How-to": ~r/documentation\/how_to\//,
+        Tutorials: ~r/\.livemd$/,
         DSLs: ~r/documentation\/dsls\//
       ]
     ]
@@ -138,9 +144,9 @@ defmodule Diffo.MixProject do
         "spark.replace_doc_links"
       ],
       "spark.cheat_sheets":
-        "spark.cheat_sheets --extensions Diffo.Provider.Instance.Extension,Diffo.Provider.Party.Extension",
+        "spark.cheat_sheets --extensions Diffo.Provider.Extension",
       "spark.formatter": [
-        "spark.formatter --extensions Diffo.Provider.Instance.Extension,Diffo.Provider.Party.Extension",
+        "spark.formatter --extensions Diffo.Provider.Extension",
         "format .formatter.exs"
       ]
     ]
