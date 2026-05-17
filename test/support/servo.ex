@@ -12,12 +12,12 @@ defmodule Diffo.Test.Servo do
     otp_app: :diffo,
     validate_config_inclusion?: false
 
-  alias Diffo.Test.Instance.Shelf
-  alias Diffo.Test.Instance.Card
+  alias Diffo.Test.Instance.ShelfInstance
+  alias Diffo.Test.Instance.CardInstance
   alias Diffo.Test.Instance.Broadband
   alias Diffo.Test.Instance.BroadbandV2
-  alias Diffo.Test.Characteristic.Shelf, as: ShelfCharacteristic
-  alias Diffo.Test.Characteristic.Card, as: CardCharacteristic
+  alias Diffo.Test.Characteristic.ShelfCharacteristic
+  alias Diffo.Test.Characteristic.CardCharacteristic
   alias Diffo.Test.Characteristic.DeploymentClass
   alias Diffo.Provider.AssignableCharacteristic
 
@@ -26,7 +26,7 @@ defmodule Diffo.Test.Servo do
   end
 
   resources do
-    resource Shelf do
+    resource ShelfInstance do
       define :get_shelf_by_id, action: :read, get_by: :id
       define :build_shelf, action: :build
       define :define_shelf, action: :define
@@ -34,7 +34,7 @@ defmodule Diffo.Test.Servo do
       define :assign_slot, action: :assign_slot
     end
 
-    resource Card do
+    resource CardInstance do
       define :get_card_by_id, action: :read, get_by: :id
       define :build_card, action: :build
       define :define_card, action: :define

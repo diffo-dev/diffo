@@ -6,7 +6,7 @@ defmodule Diffo.Provider.Extension.SpecificationTest do
   @moduledoc false
   use ExUnit.Case, async: true
   alias Diffo.Test.Servo
-  alias Diffo.Test.Instance.Shelf
+  alias Diffo.Test.Instance.ShelfInstance
 
   setup do
     AshNeo4j.Sandbox.checkout()
@@ -15,8 +15,8 @@ defmodule Diffo.Provider.Extension.SpecificationTest do
 
   describe "specification" do
     test "description declared in specification DSL roundtrips to the persisted specification" do
-      spec_id = Shelf.specification()[:id]
-      description = Shelf.specification()[:description]
+      spec_id = ShelfInstance.specification()[:id]
+      description = ShelfInstance.specification()[:description]
 
       Servo.build_shelf(%{name: "s"})
 
@@ -27,22 +27,22 @@ defmodule Diffo.Provider.Extension.SpecificationTest do
     test "minor_version declared in specification DSL roundtrips to the persisted specification" do
       Servo.build_shelf(%{name: "s"})
 
-      {:ok, specification} = Diffo.Provider.get_specification_by_id(Shelf.specification()[:id])
-      assert specification.minor_version == Shelf.specification()[:minor_version]
+      {:ok, specification} = Diffo.Provider.get_specification_by_id(ShelfInstance.specification()[:id])
+      assert specification.minor_version == ShelfInstance.specification()[:minor_version]
     end
 
     test "patch_version declared in specification DSL roundtrips to the persisted specification" do
       Servo.build_shelf(%{name: "s"})
 
-      {:ok, specification} = Diffo.Provider.get_specification_by_id(Shelf.specification()[:id])
-      assert specification.patch_version == Shelf.specification()[:patch_version]
+      {:ok, specification} = Diffo.Provider.get_specification_by_id(ShelfInstance.specification()[:id])
+      assert specification.patch_version == ShelfInstance.specification()[:patch_version]
     end
 
     test "tmf_version declared in specification DSL roundtrips to the persisted specification" do
       Servo.build_shelf(%{name: "s"})
 
-      {:ok, specification} = Diffo.Provider.get_specification_by_id(Shelf.specification()[:id])
-      assert specification.tmf_version == Shelf.specification()[:tmf_version]
+      {:ok, specification} = Diffo.Provider.get_specification_by_id(ShelfInstance.specification()[:id])
+      assert specification.tmf_version == ShelfInstance.specification()[:tmf_version]
     end
   end
 end

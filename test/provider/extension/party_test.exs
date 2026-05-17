@@ -11,7 +11,7 @@ defmodule Diffo.Provider.Extension.PartyTest do
   alias Diffo.Test.Party.Organization
   alias Diffo.Test.Party.Person
 
-  alias Diffo.Test.Instance.Shelf
+  alias Diffo.Test.Instance.ShelfInstance
   alias Diffo.Test.Nbn
   alias Diffo.Test.Servo
   alias Diffo.Provider.Instance.Party
@@ -53,14 +53,14 @@ defmodule Diffo.Provider.Extension.PartyTest do
 
   describe "Instance DSL — Shelf parties" do
     test "party declarations are accessible via info" do
-      parties = InstanceInfo.structure_parties(Shelf)
+      parties = InstanceInfo.structure_parties(ShelfInstance)
       roles = Enum.map(parties, & &1.role)
       assert :facilitator in roles
       assert :overseer in roles
     end
 
     test "party types are correct" do
-      parties = InstanceInfo.structure_parties(Shelf)
+      parties = InstanceInfo.structure_parties(ShelfInstance)
       facilitator = Enum.find(parties, &(&1.role == :facilitator))
       overseer = Enum.find(parties, &(&1.role == :overseer))
       assert facilitator.party_type == Organization
@@ -68,38 +68,38 @@ defmodule Diffo.Provider.Extension.PartyTest do
     end
 
     test "singular party defaults to multiple: false" do
-      parties = InstanceInfo.structure_parties(Shelf)
+      parties = InstanceInfo.structure_parties(ShelfInstance)
       facilitator = Enum.find(parties, &(&1.role == :facilitator))
       assert facilitator.multiple == false
     end
 
     test "reference: true is declared" do
-      parties = InstanceInfo.structure_parties(Shelf)
+      parties = InstanceInfo.structure_parties(ShelfInstance)
       provider = Enum.find(parties, &(&1.role == :provider))
       assert provider.reference == true
       assert provider.multiple == false
     end
 
     test "reference defaults to false" do
-      parties = InstanceInfo.structure_parties(Shelf)
+      parties = InstanceInfo.structure_parties(ShelfInstance)
       facilitator = Enum.find(parties, &(&1.role == :facilitator))
       assert facilitator.reference == false
     end
 
     test "calculate: is declared" do
-      parties = InstanceInfo.structure_parties(Shelf)
+      parties = InstanceInfo.structure_parties(ShelfInstance)
       manager = Enum.find(parties, &(&1.role == :manager))
       assert manager.calculate == :manager_calc
     end
 
     test "parties (plural) sets multiple: true" do
-      parties = InstanceInfo.structure_parties(Shelf)
+      parties = InstanceInfo.structure_parties(ShelfInstance)
       installer = Enum.find(parties, &(&1.role == :installer))
       assert installer.multiple == true
     end
 
     test "parties (plural) constraints are declared" do
-      parties = InstanceInfo.structure_parties(Shelf)
+      parties = InstanceInfo.structure_parties(ShelfInstance)
       installer = Enum.find(parties, &(&1.role == :installer))
       assert installer.constraints == [min: 1, max: 3]
     end

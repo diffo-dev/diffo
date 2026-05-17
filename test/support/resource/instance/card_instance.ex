@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Instance.Card do
+defmodule Diffo.Test.Instance.CardInstance do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
@@ -15,7 +15,7 @@ defmodule Diffo.Test.Instance.Card do
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
   alias Diffo.Test.Servo
-  alias Diffo.Test.Characteristic.Card, as: CardCharacteristic
+  alias Diffo.Test.Characteristic.CardCharacteristic
 
   use Ash.Resource,
     fragments: [BaseInstance],
