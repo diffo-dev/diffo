@@ -30,6 +30,10 @@ the sections relevant to it, and verifiers enforce correct usage.
         end
       end
 
+      pools do
+        pool :ports, :port
+      end
+
       parties do
         party :provider, MyApp.Provider
         party_ref :owner, MyApp.InfrastructureCo
@@ -92,6 +96,8 @@ Provider DSL — structure, roles, and behaviour for this resource kind
  * [features](#provider-features)
    * feature
      * characteristic
+ * [pools](#provider-pools)
+   * pool
  * [parties](#provider-parties)
    * party
    * parties
@@ -268,6 +274,50 @@ Adds a Characteristic
 
 
 
+
+
+
+
+
+
+
+
+### provider.pools
+Assignable pools on this Instance — each pool maps to an AssignableCharacteristic
+
+### Nested DSLs
+ * [pool](#provider-pools-pool)
+
+
+### Examples
+```
+pools do
+  pool :ports, :port
+end
+
+```
+
+
+
+
+### provider.pools.pool
+```elixir
+pool name, thing
+```
+
+
+Declares an assignable pool — a named range of values for auto-assignment
+
+
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`name`](#provider-pools-pool-name){: #provider-pools-pool-name .spark-required} | `atom` |  | The pool name (matches the AssignableCharacteristic name). |
+| [`thing`](#provider-pools-pool-thing){: #provider-pools-pool-thing .spark-required} | `atom` |  | The name of the thing being assigned within the pool (e.g. :port). |
 
 
 

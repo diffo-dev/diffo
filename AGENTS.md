@@ -28,6 +28,7 @@ lib/diffo/provider/
     info.ex                     # Runtime introspection via Spark.InfoGenerator
     characteristic.ex           # Characteristic build helpers
     feature.ex                  # Feature build helpers
+    pool.ex                     # Pool struct + create_pools/2 + update_pools/3
     instance_role.ex            # InstanceRole struct
     party_declaration.ex        # PartyDeclaration struct
     place_declaration.ex        # PlaceDeclaration struct
@@ -36,6 +37,9 @@ lib/diffo/provider/
     persisters/                 # Spark transformers — bake DSL state into module
     transformers/               # TransformBehaviour — action argument injection
     verifiers/                  # Compile-time DSL correctness checks
+  assigner/
+    assigner.ex                 # Diffo.Provider.Assigner — assign/3 (pools do) and assign/4
+    assignable_characteristic.ex # AssignableCharacteristic — pool bounds + algorithm
   base_instance.ex              # Ash Fragment for Instance resources
   base_party.ex                 # Ash Fragment for Party resources
   base_place.ex                 # Ash Fragment for Place resources
@@ -43,6 +47,7 @@ lib/diffo/provider/
     base_characteristic.ex      # Ash Fragment for typed characteristic resources
     calculations/
       characteristic_value.ex   # Calculation: builds .Value TypedStruct from record fields
+      assigned_values.ex        # Calculation: returns list of assigned integers for a pool+thing
     instance/extension.ex       # Thin marker (sections: []) — kind identification
     party/extension.ex          # Thin marker
     place/extension.ex          # Thin marker
@@ -87,6 +92,11 @@ provider do
   characteristics do
     characteristic :slot_value, MyApp.SlotCharacteristic
     characteristic :ports, {:array, MyApp.PortCharacteristic}
+  end
+
+  pools do
+    pool :cores, :core   # assignable pool; thing name is :core
+    pool :vlans, :vlan
   end
 
   features do
@@ -148,6 +158,10 @@ mix test --max-failures 5         # stop early
 - Using old `structure do` / top-level `instances do` — use `provider do` only.
 - Using `party :role, Type, reference: true` — use `party_ref :role, Type`.
 - Using a plain `Ash.TypedStruct` as a `characteristic` DSL target — use a `BaseCharacteristic`-derived resource instead; the TypedStruct belongs in `<Module>.Value`.
+- Using `characteristic :name, Diffo.Provider.AssignableCharacteristic` for pools — use `pools do / pool :name, :thing / end` instead.
+- Using the removed `AssignableValue` TypedStruct — it no longer exists; use `pools do`.
+- Calling `Assigner.assign/4` when a `pools do` declaration exists — prefer `Assigner.assign/3` which looks up the thing automatically.
+- Forgetting to call `Pool.update_pools/3` in `:define` actions when the resource has `pools do` — pool bounds (`first`, `last`, `algorithm`) are set here.
 - Calling `build_before/1` or `build_after/2` in actions — these run automatically.
 - Declaring `:specified_by`, `:features`, `:characteristics` as action arguments.
 - Editing `documentation/dsls/DSL-Diffo.Provider.Extension.md` — it is Spark-generated;
