@@ -13,7 +13,12 @@ defmodule Diffo.Provider.Extension.Persisters.PersistSpecification do
       id: Transformer.get_option(dsl_state, [:provider, :specification], :id),
       name: Transformer.get_option(dsl_state, [:provider, :specification], :name),
       type:
-        Transformer.get_option(dsl_state, [:provider, :specification], :type, :serviceSpecification),
+        Transformer.get_option(
+          dsl_state,
+          [:provider, :specification],
+          :type,
+          :serviceSpecification
+        ),
       major_version:
         Transformer.get_option(dsl_state, [:provider, :specification], :major_version, 1),
       minor_version:

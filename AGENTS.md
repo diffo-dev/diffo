@@ -41,9 +41,14 @@ lib/diffo/provider/
     place_declaration.ex        # PlaceDeclaration struct
     party_role.ex               # PartyRole struct (Party/Place kinds)
     place_role.ex               # PlaceRole struct (Party/Place kinds)
-    persisters/                 # Spark transformers — bake DSL state into module
-    transformers/               # TransformBehaviour — action argument injection
-    verifiers/                  # Compile-time DSL correctness checks
+    relationship_step.ex        # RelationshipStep struct — pipeline step for relationships do
+    persisters/                 # Terminal bakers — run after all transformers; only read DSL state and bake module functions
+    transformers/
+      transform_relationships.ex  # TransformRelationships — resolves relationships pipeline, bakes permitted_source_roles/0 and permitted_target_roles/0
+    verifiers/
+      verify_relationships.ex     # Verifies relationship role declarations are atoms
+  changes/
+    validate_relationship_permitted.ex  # ValidateRelationshipPermitted — enforces relationships do policy on relate actions
   assigner/
     assigner.ex                 # Diffo.Provider.Assigner — assign/3 (pools do) and assign/4
     assignable_characteristic.ex # AssignableCharacteristic — pool bounds + algorithm
@@ -72,6 +77,7 @@ test/provider/extension/        # All provider extension tests
   instance_verifier_test.exs
   party_verifier_test.exs
   place_verifier_test.exs
+  relationship_dsl_test.exs     # Transformer baking, verifier errors, integration enforcement
   party_test.exs                # Integration: parties enforcement
   place_test.exs                # Integration: places enforcement
   specification_test.exs        # Integration: spec roundtrip
@@ -110,6 +116,11 @@ provider do
   pools do
     pool :cores, :core   # assignable pool; thing name is :core
     pool :vlans, :vlan
+  end
+
+  relationships do
+    source [:provides, :requires]   # pipeline — last step wins; omitting defaults to :none
+    target :all
   end
 
   features do
@@ -179,6 +190,22 @@ whose names end in the same word get the same label, which causes read collision
 E.g. `Diffo.Test.Instance.CardInstance` → label `:CardInstance`,
 and `Diffo.Test.Characteristic.CardCharacteristic` → label `:CardCharacteristic` — no collision.
 
+## Spark transformer vs persister pipeline
+
+Spark runs two separate pipelines during compilation, in this order:
+
+1. **Transformers** (`transformers:` in the extension) — run in dependency order via `before?`/`after?`. Can read and modify DSL state. May also call `Transformer.persist/3` to bake results — a transformer that had to compute something to do its job should persist that result rather than delegating to a separate persister.
+2. **Persisters** (`persisters:` in the extension) — always run after ALL transformers from ALL extensions. `before?`/`after?` ordering works relative to other persisters only — ordering declarations targeting transformers are silently ignored.
+3. **Verifiers** — read-only, run last.
+
+**Rules:**
+- A module that injects into actions, modifies DSL state, or needs to order itself relative to Ash's own transformers belongs in `transformers:`.
+- A module that only reads final DSL state and bakes module functions belongs in `persisters:`.
+- A transformer that needs to expose baked state does not need a separate persister — call `Transformer.persist/3` inline and emit the module function via `Transformer.eval/3`.
+- Do not put a transformer in `persisters:` hoping `after?` declarations will order it relative to transformers — those declarations are silently ignored across pipeline boundaries.
+
+**Current state:** `TransformBehaviour` is misregistered under `persisters:` — a known issue tracked for refactoring. New transformers go under `transformers:`.
+
 ## Common agent mistakes
 
 - Using old `structure do` / top-level `instances do` — use `provider do` only.
@@ -188,12 +215,18 @@ and `Diffo.Test.Characteristic.CardCharacteristic` → label `:CardCharacteristi
 - Using the removed `AssignableValue` TypedStruct — it no longer exists; use `pools do`.
 - Calling `Assigner.assign/4` when a `pools do` declaration exists — prefer `Assigner.assign/3` which looks up the thing automatically.
 - Forgetting to call `Pool.update_pools/3` in `:define` actions when the resource has `pools do` — pool bounds (`first`, `last`, `algorithm`) are set here.
-- Using `characteristic :pool_name, Diffo.Provider.AssignedToRelationship` — `AssignedToRelationship` is not a characteristic; use `pools do / pool :name, :thing / end` instead.
-- Querying `Diffo.Provider.Relationship` for assignment records — assignment relationships are on `Diffo.Provider.AssignedToRelationship`; access them via `instance.assignments`.
+- Using `characteristic :pool_name, Diffo.Provider.AssignedToRelationship` — `AssignedToRelationship` no longer exists; use `pools do / pool :name, :thing / end` instead.
+- Querying `Diffo.Provider.Relationship` for assignment records — assignments are stored as `Diffo.Provider.DefinedSimpleRelationship`; access them via `instance.assignments`.
 - Filtering `instance.forward_relationships` for `type == :assignedTo` — those records no longer exist there; use `instance.assignments` directly.
 - Calling `build_before/1` or `build_after/2` in actions — these run automatically.
 - Declaring `:specified_by`, `:features`, `:characteristics` as action arguments.
+- Using module names (e.g. `MyApp.CardInstance`) as role values in `relationships do` — roles are atoms like `:provides`, not module references.
+- Forgetting that `relationships do` omitted means `:none` for both source and target — any update action with `argument :relationships, {:array, :struct}` will fail unless the resource declares permissions.
+- Thinking the Assigner requires `relationships do` permissions — it does not. The Assigner writes `DefinedSimpleRelationship` records directly via the Provider domain; `ValidateRelationshipPermitted` only runs on actions that carry `argument :relationships, {:array, :struct}`, which the Assigner's `assign_*` actions do not.
 - Editing `documentation/dsls/DSL-Diffo.Provider.Extension.md` — it is Spark-generated;
-  run `mix spark.cheat_sheets` to regenerate it.
+  run `mix spark.cheat_sheets` to regenerate it. Whenever you add, rename, or remove a DSL
+  entity or section, also check `.formatter.exs` — new entity names must be added to
+  `spark_locals_without_parens` (with each arity) so the Spark formatter omits parentheses.
+  Run `mix format` afterward to verify.
 - Editing content between `<!-- usage-rules-start -->` markers in `CLAUDE.md` — that is
   auto-generated by `mix usage_rules.sync`.

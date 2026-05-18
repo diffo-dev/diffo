@@ -97,7 +97,8 @@ defmodule Diffo.Provider.Extension do
     PartyRole,
     PlaceDeclaration,
     PlaceRole,
-    Pool
+    Pool,
+    RelationshipStep
   }
 
   # ── specification ──────────────────────────────────────────────────────────
@@ -177,8 +178,7 @@ defmodule Diffo.Provider.Extension do
       ],
       value_type: [
         type: :any,
-        doc:
-          "The type of the characteristic value — a module or `{:array, module}` for an array."
+        doc: "The type of the characteristic value — a module or `{:array, module}` for an array."
       ]
     ]
   }
@@ -464,6 +464,55 @@ defmodule Diffo.Provider.Extension do
     entities: [@pool_entity]
   }
 
+  # ── relationships ──────────────────────────────────────────────────────────
+
+  @source_entity %Spark.Dsl.Entity{
+    name: :source,
+    describe:
+      "Declares permitted source relationship roles — pipeline step, last declaration wins",
+    target: RelationshipStep,
+    args: [:roles],
+    auto_set_fields: [direction: :source],
+    schema: [
+      roles: [
+        type: :any,
+        doc: "`:all`, `:none`, or a list of role name atoms.",
+        required: true
+      ]
+    ]
+  }
+
+  @target_entity %Spark.Dsl.Entity{
+    name: :target,
+    describe:
+      "Declares permitted target relationship roles — pipeline step, last declaration wins",
+    target: RelationshipStep,
+    args: [:roles],
+    auto_set_fields: [direction: :target],
+    schema: [
+      roles: [
+        type: :any,
+        doc: "`:all`, `:none`, or a list of role name atoms.",
+        required: true
+      ]
+    ]
+  }
+
+  @relationships_section %Spark.Dsl.Section{
+    name: :relationships,
+    describe:
+      "Relationship role permissions for this Instance — declares which aliases it may participate in as source or target. Omitting defaults to `:none` per direction.",
+    examples: [
+      """
+      relationships do
+        source [:provides, :requires]
+        target :all
+      end
+      """
+    ],
+    entities: [@source_entity, @target_entity]
+  }
+
   # ── behaviour ──────────────────────────────────────────────────────────────
 
   @action_create_entity %Spark.Dsl.Entity{
@@ -528,12 +577,16 @@ defmodule Diffo.Provider.Extension do
       @parties,
       @places,
       @instances,
+      @relationships_section,
       @behaviour_section
     ]
   }
 
   use Spark.Dsl.Extension,
     sections: [@provider],
+    transformers: [
+      Diffo.Provider.Extension.Transformers.TransformRelationships
+    ],
     persisters: [
       Diffo.Provider.Extension.Persisters.PersistSpecification,
       Diffo.Provider.Extension.Persisters.PersistCharacteristics,
@@ -552,6 +605,7 @@ defmodule Diffo.Provider.Extension do
       Diffo.Provider.Extension.Verifiers.VerifyParties,
       Diffo.Provider.Extension.Verifiers.VerifyPlaces,
       Diffo.Provider.Extension.Verifiers.VerifyInstances,
-      Diffo.Provider.Extension.Verifiers.VerifyBehaviour
+      Diffo.Provider.Extension.Verifiers.VerifyBehaviour,
+      Diffo.Provider.Extension.Verifiers.VerifyRelationships
     ]
 end

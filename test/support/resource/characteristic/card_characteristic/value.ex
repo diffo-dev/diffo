@@ -6,14 +6,14 @@ defmodule Diffo.Test.Characteristic.CardCharacteristic.Value do
   @moduledoc "Typed value struct for a Card characteristic."
   use Ash.TypedStruct, extensions: [AshJason.TypedStruct]
 
+  jason do
+    pick [:family, :model, :technology]
+    compact true
+  end
+
   typed_struct do
     field :family, :atom, description: "the card family name"
     field :model, :string, description: "the card model name"
     field :technology, :atom, description: "the card technology"
-  end
-
-  jason do
-    pick [:family, :model, :technology]
-    compact true
   end
 end
