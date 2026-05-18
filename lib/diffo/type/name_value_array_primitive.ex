@@ -17,6 +17,9 @@ defmodule Diffo.Type.NameValueArrayPrimitive do
 
   typed_struct do
     field :name, :atom, allow_nil?: false, description: "the name"
-    field :values, {:array, Diffo.Type.Primitive}, default: [], description: "the primitive values"
+
+    field :values, {:array, Diffo.Type.Primitive},
+      default: [],
+      description: "the primitive values"
   end
 end

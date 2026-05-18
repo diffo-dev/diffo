@@ -143,8 +143,7 @@ defmodule Diffo.MixProject do
         "docs",
         "spark.replace_doc_links"
       ],
-      "spark.cheat_sheets":
-        "spark.cheat_sheets --extensions Diffo.Provider.Extension",
+      "spark.cheat_sheets": "spark.cheat_sheets --extensions Diffo.Provider.Extension",
       "spark.formatter": [
         "spark.formatter --extensions Diffo.Provider.Extension",
         "format .formatter.exs"

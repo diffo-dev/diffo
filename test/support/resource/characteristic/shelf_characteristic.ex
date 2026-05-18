@@ -13,18 +13,6 @@ defmodule Diffo.Test.Characteristic.ShelfCharacteristic do
     plural_name :shelf_values
   end
 
-  attributes do
-    attribute :family, :atom, public?: true, description: "the shelf family name"
-    attribute :model, :string, public?: true, description: "the shelf model name"
-    attribute :technology, :atom, public?: true, description: "the shelf technology"
-  end
-
-  calculations do
-    calculate :value, Diffo.Type.CharacteristicValue, Diffo.Provider.Calculations.CharacteristicValue do
-      public? true
-    end
-  end
-
   actions do
     create :create do
       accept [:name, :family, :model, :technology]
@@ -36,6 +24,20 @@ defmodule Diffo.Test.Characteristic.ShelfCharacteristic do
 
     update :update do
       accept [:family, :model, :technology]
+    end
+  end
+
+  attributes do
+    attribute :family, :atom, public?: true, description: "the shelf family name"
+    attribute :model, :string, public?: true, description: "the shelf model name"
+    attribute :technology, :atom, public?: true, description: "the shelf technology"
+  end
+
+  calculations do
+    calculate :value,
+              Diffo.Type.CharacteristicValue,
+              Diffo.Provider.Calculations.CharacteristicValue do
+      public? true
     end
   end
 

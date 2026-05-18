@@ -40,7 +40,7 @@ end
 All DSL declarations live inside a single `provider do` block. The sections available
 depend on the resource kind:
 
-- **Instance** — `specification`, `characteristics`, `features`, `pools`, `parties`, `places`, `behaviour`
+- **Instance** — `specification`, `characteristics`, `features`, `pools`, `parties`, `places`, `relationships`, `behaviour`
 - **Party** — `instances`, `parties`, `places`
 - **Place** — `instances`, `parties`, `places`
 
@@ -284,6 +284,40 @@ update :assign_core do
 end
 ```
 
+### `relationships do` — Instance only
+
+Declares which relationship roles this Instance kind may participate in as a **source** or
+**target** in TMF `Relationship` records. Omitting the section defaults both directions to
+`:none`, which blocks any update action that passes `argument :relationships, {:array, :struct}`.
+
+Declarations form a pipeline — `source` and `target` steps may each be repeated; **the last
+declaration per direction wins**.
+
+```elixir
+provider do
+  relationships do
+    source [:provides, :requires]   # last step overrides earlier ones
+    target :all
+  end
+end
+```
+
+Each step accepts `:all`, `:none`, or a non-empty list of role-name atoms (relationship aliases):
+
+| Value | Meaning |
+|---|---|
+| `:all` | any alias is permitted in this direction |
+| `:none` | no relationships are permitted (default when section is omitted) |
+| `[:provides, :requires]` | only these alias atoms are permitted |
+
+`ValidateRelationshipPermitted` is automatically injected by the DSL into every update action
+that carries `argument :relationships, {:array, :struct}`. It enforces `permitted_source_roles/0`
+on the source resource before the action runs.
+
+**The Assigner is not affected** — assignment actions use `argument :assignment`, not
+`argument :relationships`, and write `DefinedSimpleRelationship` records directly via the
+Provider domain. `relationships do` permissions are never checked during assignment.
+
 ### `behaviour do` — Instance only
 
 Marks a named create action for build wiring. Declaring `create :name` injects the
@@ -307,6 +341,8 @@ functions:
 
 - `specification/0`, `characteristics/0`, `features/0`, `pools/0`, `parties/0`, `places/0`
 - `characteristic/1`, `feature/1`, `feature_characteristic/2`, `pool/1`, `party/1`, `place/1`
+- `relationships/0` — raw ordered list of `RelationshipStep` pipeline entries
+- `permitted_source_roles/0`, `permitted_target_roles/0` — resolved permission (`:all`, `:none`, or list of atoms)
 - `build_before/1` — upserts the Specification node; creates Feature, Characteristic, and
   Party nodes; sets action argument ids. Called automatically before every create action.
 - `build_after/2` — relates the created TMF entities to the new instance node. Called
@@ -484,7 +520,12 @@ end
   which looks up the thing name from the pool automatically. `assign/4` is still available for
   cases without a `pools do` declaration.
 - **Do not query `Diffo.Provider.Relationship` for `type: :assignedTo` records** — assignment
-  relationships live on `Diffo.Provider.AssignedToRelationship`. Access them via `instance.assignments`.
+  records live on `Diffo.Provider.DefinedSimpleRelationship`. Access them via `instance.assignments`.
 - **Do not filter `instance.forward_relationships` for `type == :assignedTo`** — those records no
-  longer exist there. `forward_relationships` contains only regular TMF relationships;
-  `assignments` contains pool assignment relationships.
+  longer exist there. `forward_relationships` contains only regular TMF `Relationship` nodes;
+  `instance.assignments` contains `DefinedSimpleRelationship` pool assignment records.
+- **Do not write `update :relate` actions without a `relationships do` section** — omitting the
+  section defaults `permitted_source_roles` to `:none`, causing all calls to that action to fail.
+  Add `relationships do source :all end` (or a specific list of roles) to permit relates.
+- **Do not add `relationships do` to Party or Place resources** — the section is for Instance
+  kinds only; it is not enforced on Party/Place resources and has no effect there.
