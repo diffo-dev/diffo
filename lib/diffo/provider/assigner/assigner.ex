@@ -154,7 +154,7 @@ defmodule Diffo.Provider.Assigner do
        when is_struct(instance) and is_atom(pool) and is_atom(thing) and is_integer(value) do
     case pool_characteristic(instance.id, pool, thing) do
       {:ok, nil} -> false
-      {:ok, char} -> value in Enum.to_list(char.first..char.last) -- char.assigned_values
+      {:ok, char} -> value in (Enum.to_list(char.first..char.last) -- char.assigned_values)
       {:error, _} -> false
     end
   end

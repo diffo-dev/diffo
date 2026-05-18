@@ -111,6 +111,9 @@ Provider DSL — structure, roles, and behaviour for this resource kind
  * [instances](#provider-instances)
    * role
    * instance_ref
+ * [relationships](#provider-relationships)
+   * source
+   * target
  * [behaviour](#provider-behaviour)
    * actions
      * create
@@ -710,6 +713,75 @@ Declares a reference instance role — no direct edge created, reachable by grap
 ### Introspection
 
 Target: `Diffo.Provider.Extension.InstanceRole`
+
+
+### provider.relationships
+Relationship role permissions for this Instance — declares which aliases it may participate in as source or target. Omitting defaults to `:none` per direction.
+
+### Nested DSLs
+ * [source](#provider-relationships-source)
+ * [target](#provider-relationships-target)
+
+
+### Examples
+```
+relationships do
+  source [:provides, :requires]
+  target :all
+end
+
+```
+
+
+
+
+### provider.relationships.source
+```elixir
+source roles
+```
+
+
+Declares permitted source relationship roles — pipeline step, last declaration wins
+
+
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`roles`](#provider-relationships-source-roles){: #provider-relationships-source-roles .spark-required} | `any` |  | `:all`, `:none`, or a list of role name atoms. |
+
+
+
+
+
+
+
+### provider.relationships.target
+```elixir
+target roles
+```
+
+
+Declares permitted target relationship roles — pipeline step, last declaration wins
+
+
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`roles`](#provider-relationships-target-roles){: #provider-relationships-target-roles .spark-required} | `any` |  | `:all`, `:none`, or a list of role name atoms. |
+
+
+
+
+
+
 
 
 ### provider.behaviour

@@ -461,6 +461,7 @@ defmodule Diffo.Provider.BaseInstance do
   changes do
     change Diffo.Provider.Instance.Extension.Changes.BuildBefore, on: [:create]
     change Diffo.Provider.Instance.Extension.Changes.BuildAfter, on: [:create]
+    change Diffo.Provider.Changes.ValidateRelationshipPermitted, on: [:update]
   end
 
   actions do
