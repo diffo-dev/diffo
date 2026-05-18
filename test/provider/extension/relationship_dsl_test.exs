@@ -180,5 +180,19 @@ defmodule Diffo.Provider.Extension.RelationshipDslTest do
       assert {:error, error} = result
       assert Exception.message(error) =~ "not permitted as source"
     end
+
+    test "relate action fails when target permits :none" do
+      {:ok, shelf1} = Parties.build_shelf_with_installer()
+      {:ok, shelf2} = Parties.build_shelf_with_installer()
+
+      # ShelfInstance has target :none — being related to as target should fail
+      rel = %RelStruct{id: shelf2.id, alias: :connects, type: :service, direction: :forward}
+
+      result = Diffo.Test.Servo.relate_shelf(shelf1, %{relationships: [rel]})
+
+      assert {:error, error} = result
+      assert Exception.message(error) =~ "not permitted as target"
+    end
+
   end
 end
