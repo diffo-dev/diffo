@@ -199,5 +199,4 @@ defmodule Diffo.Provider.Extension.Characteristic do
   end
 
   def typed?(_), do: false
-
 end

@@ -73,6 +73,10 @@ defmodule Diffo.Test.Instance.ShelfInstance do
       place_ref :billing_address, Diffo.Provider.Place
     end
 
+    relationships do
+      source :all
+    end
+
     behaviour do
       actions do
         create :build
