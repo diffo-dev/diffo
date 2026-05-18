@@ -206,6 +206,25 @@ Spark runs two separate pipelines during compilation, in this order:
 
 **Current state:** `TransformBehaviour` is misregistered under `persisters:` — a known issue tracked for refactoring. New transformers go under `transformers:`.
 
+## Raising upstream bugs
+
+When a bug is found in a dependency (e.g. AshNeo4j, Bolty), raise a GitHub issue on that
+repository. Use **diffo issue #125** as the style reference:
+
+- **## Description** — explain what the system does, what the code path is, and where it
+  breaks. Include a short code snippet if it makes the failure concrete.
+- **## What we need** — state the correct behaviour plainly.
+- **## Why it matters** — explain the practical impact on Diffo and why fixing it unblocks
+  real work.
+- Optionally add **## A possible direction** if there is a plausible fix worth suggesting.
+
+Do not use a step-by-step reproduction template; write in the same explanatory prose style
+as #125.
+
+Once the issue is raised, stop. Do not attempt to locate or fix the root cause in the
+dependency — the upstream maintainers have the full context of their own codebase; you do
+not. Add any useful hypotheses as a follow-up comment on the issue, then leave it with them.
+
 ## Common agent mistakes
 
 - Using old `structure do` / top-level `instances do` — use `provider do` only.
