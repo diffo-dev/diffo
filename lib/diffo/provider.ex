@@ -47,6 +47,7 @@ defmodule Diffo.Provider do
       define :suspend_service, action: :suspend
       define :terminate_service, action: :terminate
       define :status_service, action: :status
+      define :lifecycle_resource, action: :lifecycle
       define :respecify_instance, action: :specify
       define :relate_instance_features, action: :relate_features
       define :unrelate_instance_features, action: :unrelate_features

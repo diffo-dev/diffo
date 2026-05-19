@@ -19,9 +19,11 @@ defmodule Diffo.Provider.Assigner do
   """
   def assign(result, changeset, pool_name)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) and is_atom(pool_name) do
-    case result.__struct__.pool(pool_name) do
-      nil -> {:error, "pool #{pool_name} not declared on #{result.__struct__}"}
-      pool -> assign(result, changeset, pool_name, pool.thing)
+    with :ok <- check_lifecycle(result) do
+      case result.__struct__.pool(pool_name) do
+        nil -> {:error, "pool #{pool_name} not declared on #{result.__struct__}"}
+        pool -> assign(result, changeset, pool_name, pool.thing)
+      end
     end
   end
 
@@ -57,6 +59,15 @@ defmodule Diffo.Provider.Assigner do
         end
     end
   end
+
+  defp check_lifecycle(%{type: :resource, resource_state: state}) when state != :operating,
+    do: {:error, "cannot assign: resource lifecycle state is #{inspect(state)}, must be :operating"}
+
+  defp check_lifecycle(%{type: :service, service_state: state})
+       when state not in [:active, :inactive],
+       do: {:error, "cannot assign: service state is #{inspect(state)}, must be :active or :inactive"}
+
+  defp check_lifecycle(_), do: :ok
 
   defp create_assignment(result, pool, thing, value, assignee_id)
        when is_struct(result) and is_atom(pool) and is_atom(thing) and is_integer(value) and

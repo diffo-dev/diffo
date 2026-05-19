@@ -64,7 +64,10 @@ defmodule Diffo.Provider.Instance.Util do
         |> Diffo.Util.set(:operatingStatus, record.service_operating_status)
 
       :resource ->
-        result
+        case record.resource_state do
+          nil -> result
+          state -> Diffo.Util.set(result, :lifecycleState, state)
+        end
         # |> Diffo.Util.ensure_not_nil(:administrativeState, record.resource_administrative_state)
         # |> Diffo.Util.ensure_not_nil(:operationalState, record.resource_operational_state)
         # |> Diffo.Util.ensure_not_nil(:resourceStatus, record.resource_status)
