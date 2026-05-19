@@ -191,7 +191,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
 
       assert length(card.assignments) == 1
 
-      assigned_port = Diffo.Unwrap.unwrap(hd(card.assignments).characteristic.value)
+      assigned_port = hd(card.assignments).value
 
       {:ok, card} =
         Servo.assign_port(card, %{

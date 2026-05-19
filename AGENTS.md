@@ -66,6 +66,7 @@ lib/diffo/provider/
     base_characteristic.ex      # Ash Fragment for typed characteristic resources
     base_relationship.ex        # Ash Fragment for shared Relationship structure
     defined_simple_relationship.ex    # DefinedSimpleRelationship — relationship with one optional embedded characteristic, frozen at creation
+    assignment_relationship.ex        # AssignmentRelationship — pool assignment relationship with top-level pool/thing/value scalar attributes
     relationship.ex                   # Relationship — mutable TMF service/resource relationship with graph Characteristic nodes
     calculations/
       characteristic_value.ex   # Calculation: builds .Value TypedStruct from record fields

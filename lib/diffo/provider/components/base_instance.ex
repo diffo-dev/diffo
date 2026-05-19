@@ -188,7 +188,7 @@ defmodule Diffo.Provider.BaseInstance do
       {:process_statuses, :STATUSES, :incoming, :ProcessStatus},
       {:forward_relationships, :RELATES, :outgoing, :Relationship},
       {:reverse_relationships, :RELATES, :incoming, :Relationship},
-      {:assignments, :RELATES, :outgoing, :DefinedSimpleRelationship},
+      {:assignments, :RELATES, :outgoing, :AssignmentRelationship},
       {:features, :HAS, :outgoing, :Feature},
       {:characteristics, :HAS, :outgoing, :Characteristic},
       {:entities, :RELATES, :outgoing, :EntityRef},
@@ -409,7 +409,7 @@ defmodule Diffo.Provider.BaseInstance do
       public? true
     end
 
-    has_many :assignments, Diffo.Provider.DefinedSimpleRelationship do
+    has_many :assignments, Diffo.Provider.AssignmentRelationship do
       description "the instance's outgoing pool assignment relationships"
       destination_attribute :source_id
       public? true
