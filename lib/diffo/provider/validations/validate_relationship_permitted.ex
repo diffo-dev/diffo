@@ -2,55 +2,60 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Provider.Changes.ValidateRelationshipPermitted do
+defmodule Diffo.Provider.Validations.ValidateRelationshipPermitted do
   @moduledoc false
-  use Ash.Resource.Change
+  use Ash.Resource.Validation
 
   @impl true
-  def change(changeset, _opts, _context) do
+  def init(opts), do: {:ok, opts}
+
+  @impl true
+  def validate(changeset, _opts, _context) do
     case Ash.Changeset.get_argument(changeset, :relationships) do
-      nil -> changeset
-      [] -> changeset
-      rels -> changeset |> validate_source_roles(rels) |> validate_target_roles(rels)
+      nil -> :ok
+      [] -> :ok
+      rels -> check(changeset, rels)
     end
   end
 
-  defp validate_source_roles(changeset, rels) do
+  defp check(changeset, rels) do
+    case source_errors(changeset, rels) ++ target_errors(changeset, rels) do
+      [] -> :ok
+      errors -> {:error, errors}
+    end
+  end
+
+  defp source_errors(changeset, rels) do
     permitted = changeset.resource.permitted_source_roles()
 
-    Enum.reduce(rels, changeset, fn rel, cs ->
+    Enum.flat_map(rels, fn rel ->
       case check_permitted(rel_alias(rel), permitted, :source) do
-        :ok -> cs
-        {:error, msg} -> Ash.Changeset.add_error(cs, msg)
+        :ok -> []
+        {:error, msg} -> [[field: :relationships, message: msg]]
       end
     end)
   end
 
-  defp validate_target_roles(changeset, rels) do
+  defp target_errors(changeset, rels) do
     spec_id_to_module = build_spec_id_map(changeset.domain)
 
-    Enum.reduce(rels, changeset, fn rel, cs ->
+    Enum.flat_map(rels, fn rel ->
       target_id = Map.get(rel, :id) || Map.get(rel, "id")
 
-      case resolve_target_module(target_id, spec_id_to_module, changeset.domain) do
+      case resolve_target_module(target_id, spec_id_to_module) do
         {:ok, module} ->
           case check_permitted(rel_alias(rel), module.permitted_target_roles(), :target) do
-            :ok -> cs
-            {:error, msg} -> Ash.Changeset.add_error(cs, msg)
+            :ok -> []
+            {:error, msg} -> [[field: :relationships, message: msg]]
           end
 
         :error ->
-          Ash.Changeset.add_error(
-            cs,
-            "could not resolve target resource for id #{inspect(target_id)}"
-          )
+          [[field: :relationships, message: "could not resolve target resource for id #{inspect(target_id)}"]
+          ]
       end
     end)
   end
 
-  # Builds a map of %{spec_uuid => module} from all Instance resource modules in the
-  # domain that have both permitted_target_roles/0 and specification/0 baked by the
-  # provider extension. Used for O(1) module lookup after resolving the target's spec id.
   defp build_spec_id_map(domain) do
     domain
     |> Ash.Domain.Info.resources()
@@ -61,9 +66,7 @@ defmodule Diffo.Provider.Changes.ValidateRelationshipPermitted do
     |> Map.new(fn module -> {module.specification()[:id], module} end)
   end
 
-  # Fetches the specification UUID for the target instance via a direct Cypher query,
-  # then does an O(1) lookup in spec_id_to_module to find the resource module.
-  defp resolve_target_module(id, spec_id_to_module, _domain) do
+  defp resolve_target_module(id, spec_id_to_module) do
     case AshNeo4j.Cypher.run(
            "MATCH (n:Instance {uuid: $uuid})-[:SPECIFIED_BY]->(s) RETURN s.uuid AS spec_id",
            %{"uuid" => id}
@@ -96,8 +99,7 @@ defmodule Diffo.Provider.Changes.ValidateRelationshipPermitted do
     if role in roles do
       :ok
     else
-      {:error,
-       "relationship role #{inspect(role)} is not permitted as #{direction} on this resource"}
+      {:error, "relationship role #{inspect(role)} is not permitted as #{direction} on this resource"}
     end
   end
 end
