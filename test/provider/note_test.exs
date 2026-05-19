@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.NoteTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :provider_only
   alias Diffo.Provider.Party
   alias Diffo.Provider.Instance
 

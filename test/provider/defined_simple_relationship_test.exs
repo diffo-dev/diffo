@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.DefinedSimpleRelationshipTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :provider_extended
 
   alias Diffo.Type.NameValuePrimitive
   alias Diffo.Type.Primitive
