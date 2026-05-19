@@ -21,21 +21,21 @@ defmodule Diffo.Provider.Instance.Characteristic do
   """
   def set_characteristics_argument(changeset, declarations)
       when is_struct(changeset, Ash.Changeset) and is_list(declarations) do
-    case characteristics = create_characteristics_from_declarations(declarations, :instance) do
-      [] ->
+    case create_characteristics_from_declarations(declarations, :instance) do
+      {:ok, []} ->
         changeset
+
+      {:ok, characteristics} ->
+        characteristic_ids = Enum.map(characteristics, &Map.get(&1, :id))
+        Ash.Changeset.force_set_argument(changeset, :characteristics, characteristic_ids)
 
       {:error, error} ->
         Ash.Changeset.add_error(changeset, error)
-
-      _ ->
-        characteristic_ids = Enum.map(characteristics, &Map.get(&1, :id))
-        Ash.Changeset.force_set_argument(changeset, :characteristics, characteristic_ids)
     end
   end
 
   defp create_characteristics_from_declarations(declarations, type) do
-    Enum.reduce_while(declarations, [], fn %{name: name, value_type: value_type}, acc ->
+    Enum.reduce_while(declarations, {:ok, []}, fn %{name: name, value_type: value_type}, {:ok, acc} ->
       try do
         attrs =
           case value_type do
@@ -48,7 +48,7 @@ defmodule Diffo.Provider.Instance.Characteristic do
 
         case Provider.create_characteristic(attrs) do
           {:ok, result} ->
-            {:cont, [result | acc]}
+            {:cont, {:ok, [result | acc]}}
 
           {:error, error} ->
             {:halt, {:error, error}}
@@ -148,26 +148,25 @@ defmodule Diffo.Provider.Instance.Characteristic do
           end)
 
         characteristics =
-          Enum.reduce_while(characteristic_updates, [], fn {characteristic, value}, acc ->
+          Enum.reduce_while(characteristic_updates, {:ok, []}, fn {characteristic, value}, {:ok, acc} ->
             case Provider.update_characteristic(characteristic, %{value: value}) do
               {:ok, characteristic} ->
-                {:cont, [characteristic | acc]}
+                {:cont, {:ok, [characteristic | acc]}}
 
               {:error, error} ->
-                # preserve the error
                 {:halt, {:error, error}}
             end
           end)
 
         case characteristics do
-          {:error, error} ->
-            {:error, error}
-
-          [] ->
+          {:ok, []} ->
             {:error, "couldn't update characteristics"}
 
-          _ ->
-            {:ok, Map.put(result, :characteristics, characteristics)}
+          {:ok, updated} ->
+            {:ok, Map.put(result, :characteristics, updated)}
+
+          {:error, error} ->
+            {:error, error}
         end
     end
   end
