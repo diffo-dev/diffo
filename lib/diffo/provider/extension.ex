@@ -585,7 +585,8 @@ defmodule Diffo.Provider.Extension do
   use Spark.Dsl.Extension,
     sections: [@provider],
     transformers: [
-      Diffo.Provider.Extension.Transformers.TransformRelationships
+      Diffo.Provider.Extension.Transformers.TransformRelationships,
+      Diffo.Provider.Extension.Transformers.TransformBehaviour
     ],
     persisters: [
       Diffo.Provider.Extension.Persisters.PersistSpecification,
@@ -594,8 +595,7 @@ defmodule Diffo.Provider.Extension do
       Diffo.Provider.Extension.Persisters.PersistPools,
       Diffo.Provider.Extension.Persisters.PersistParties,
       Diffo.Provider.Extension.Persisters.PersistPlaces,
-      Diffo.Provider.Extension.Persisters.PersistInstances,
-      Diffo.Provider.Extension.Transformers.TransformBehaviour
+      Diffo.Provider.Extension.Persisters.PersistInstances
     ],
     verifiers: [
       Diffo.Provider.Extension.Verifiers.VerifySpecification,
