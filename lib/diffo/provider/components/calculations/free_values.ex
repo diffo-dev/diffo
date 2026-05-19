@@ -17,12 +17,10 @@ defmodule Diffo.Provider.Calculations.FreeValues do
 
       record ->
         count =
-          Diffo.Provider.DefinedSimpleRelationship
-          |> Ash.Query.filter_input(source_id: record.instance_id, type: :assignedTo)
+          Diffo.Provider.AssignmentRelationship
+          |> Ash.Query.filter_input(source_id: record.instance_id, thing: record.thing)
           |> Ash.read!(domain: Diffo.Provider)
-          |> Enum.count(fn rel ->
-            rel.characteristic && rel.characteristic.name == record.thing
-          end)
+          |> length()
 
         record.last - record.first + 1 - count
     end)
