@@ -26,24 +26,15 @@ defmodule Diffo.Provider.Instance.Place do
         {:ok, result}
 
       _ ->
-        place_refs =
-          Enum.reduce_while(places, [], fn %{id: id, role: role}, acc ->
-            case Provider.create_place_ref(%{instance_id: result.id, place_id: id, role: role}) do
-              {:ok, place_ref} ->
-                {:cont, [place_ref | acc]}
-
-              {:error, _error} ->
-                {:halt, []}
-            end
-          end)
-
-        case place_refs do
-          [] ->
-            {:error, "couldn't relate places"}
-
-          _ ->
-            # sorted = Ash.Sort.runtime_sort(place_refs, [role: :asc, created_at: :desc])
-            {:ok, result |> Map.put(:places, place_refs)}
+        Enum.reduce_while(places, {:ok, []}, fn %{id: id, role: role}, {:ok, acc} ->
+          case Provider.create_place_ref(%{instance_id: result.id, place_id: id, role: role}) do
+            {:ok, place_ref} -> {:cont, {:ok, [place_ref | acc]}}
+            {:error, error} -> {:halt, {:error, error}}
+          end
+        end)
+        |> case do
+          {:ok, place_refs} -> {:ok, Map.put(result, :places, place_refs)}
+          {:error, error} -> {:error, error}
         end
     end
   end

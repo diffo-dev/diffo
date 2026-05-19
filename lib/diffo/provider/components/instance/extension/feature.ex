@@ -21,27 +21,26 @@ defmodule Diffo.Provider.Instance.Feature do
   """
   def set_features_argument(changeset, declarations)
       when is_struct(changeset, Ash.Changeset) and is_list(declarations) do
-    case features = create_features_from_declarations(declarations) do
-      [] ->
+    case create_features_from_declarations(declarations) do
+      {:ok, []} ->
         changeset
+
+      {:ok, features} ->
+        feature_ids = Enum.map(features, &Map.get(&1, :id))
+        Ash.Changeset.force_set_argument(changeset, :features, feature_ids)
 
       {:error, error} ->
         Ash.Changeset.add_error(changeset, error)
-
-      _ ->
-        feature_ids = Enum.map(features, &Map.get(&1, :id))
-        Ash.Changeset.force_set_argument(changeset, :features, feature_ids)
     end
   end
 
   defp create_features_from_declarations(declarations) do
     Enum.reduce_while(
       declarations,
-      [],
-      # create any feature characteristics
-      fn %{name: name, is_enabled?: isEnabled, characteristics: characteristics}, acc ->
+      {:ok, []},
+      fn %{name: name, is_enabled?: isEnabled, characteristics: characteristics}, {:ok, acc} ->
         characteristic_ids =
-          Enum.reduce_while(characteristics, [], fn %{name: name, value_type: value_type}, acc ->
+          Enum.reduce_while(characteristics, {:ok, []}, fn %{name: name, value_type: value_type}, {:ok, ids} ->
             try do
               attrs =
                 case value_type do
@@ -54,7 +53,7 @@ defmodule Diffo.Provider.Instance.Feature do
 
               case Provider.create_characteristic(attrs) do
                 {:ok, result} ->
-                  {:cont, [result.id | acc]}
+                  {:cont, {:ok, [result.id | ids]}}
 
                 {:error, error} ->
                   {:halt, {:error, error}}
@@ -71,15 +70,14 @@ defmodule Diffo.Provider.Instance.Feature do
           {:error, error} ->
             {:halt, {:error, error}}
 
-          _ ->
-            # create feature with feature characteristics
+          {:ok, ids} ->
             case Provider.create_feature(%{
                    name: name,
                    isEnabled: isEnabled,
-                   characteristics: characteristic_ids
+                   characteristics: ids
                  }) do
               {:ok, result} ->
-                {:cont, [result | acc]}
+                {:cont, {:ok, [result | acc]}}
 
               {:error, error} ->
                 {:halt, {:error, error}}
