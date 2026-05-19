@@ -7,7 +7,6 @@ defmodule Diffo.Provider.Instance.Specification do
   require Logger
 
   alias Diffo.Provider
-  alias Diffo.Provider.Instance
 
   @doc """
   Struct for a Specification
@@ -48,7 +47,13 @@ defmodule Diffo.Provider.Instance.Specification do
   def relate_instance(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     specified_by = Ash.Changeset.get_argument(changeset, :specified_by)
-    Provider.respecify_instance(%Instance{id: result.id}, %{specified_by: specified_by})
+
+    # Clear specification_id so manage_relationship sees nil→id (add only, no spurious remove).
+    # action_helper pre-sets specification_id before calling us, which would make
+    # Ash treat old==new and generate an empty-argument remove that fails.
+    %{result | specification_id: nil}
+    |> Ash.Changeset.for_update(:specify, %{specified_by: specified_by})
+    |> Ash.update()
   end
 
   defimpl String.Chars do

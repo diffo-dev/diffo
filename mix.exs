@@ -124,7 +124,7 @@ defmodule Diffo.MixProject do
       {:ash_outstanding, "~> 0.2.3"},
       {:ash_jason, "~> 3.0"},
       {:ash_state_machine, "~> 0.2.12"},
-      {:ash_neo4j, ash_neo4j_version("~> 0.5")},
+      {:ash_neo4j, ash_neo4j_version("~> 0.6")},
       {:bolty, ">= 0.0.12"},
       {:ash, ash_version("~> 3.0 and >= 3.24.2")},
       {:uuid, "~> 1.1"},

@@ -51,17 +51,11 @@ defmodule Diffo.Provider.PartyRef do
 
     create :create do
       description "creates a party ref, relating an instance, place or source party to a party"
-      accept [:role]
-
-      argument :instance_id, :uuid
-      argument :place_id, :string
-      argument :source_party_id, :string
-      argument :party_id, :string
-
-      change manage_relationship(:instance_id, :instance, type: :append_and_remove)
-      change manage_relationship(:place_id, :place, type: :append_and_remove)
-      change manage_relationship(:source_party_id, :source_party, type: :append_and_remove)
-      change manage_relationship(:party_id, :party, type: :append_and_remove)
+      # IDs accepted directly as attributes so AshNeo4j's create_from_attributes path
+      # builds graph edges using the single labels in the relate DSL (:Instance, :Party, :Place).
+      # manage_relationship would fail: it looks up the generic Diffo.Provider.Instance/Party
+      # by label_pair, which doesn't match domain-specific subtypes (ShelfInstance, Person, etc.).
+      accept [:role, :instance_id, :place_id, :source_party_id, :party_id]
     end
 
     read :list do
