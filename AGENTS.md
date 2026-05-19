@@ -19,6 +19,13 @@ on [Ash Framework](https://www.ash-hq.org/) + [AshNeo4j](https://github.com/diff
 2. Read `CLAUDE.md` — dependency usage rules (Ash, Elixir, OTP, AshNeo4j, Spark).
 3. Consult the skill at `.claude/skills/diffo-framework/` for Ash ecosystem patterns.
 
+## Updating dependencies
+
+When updating a dependency (e.g. bumping `ash_neo4j`, `ash`, `spark` in `mix.exs`), always
+run `mix usage_rules.sync` immediately after `mix deps.get`. Dependencies publish their own
+usage rules; syncing pulls those changes into `CLAUDE.md` so you are working from the
+up-to-date guidance before touching any code.
+
 ## Project structure
 
 ```

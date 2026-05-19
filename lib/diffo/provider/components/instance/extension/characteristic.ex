@@ -7,8 +7,9 @@ defmodule Diffo.Provider.Instance.Characteristic do
   require Logger
 
   alias Diffo.Provider
-  alias Diffo.Provider.Instance
   alias Diffo.Type.Value
+  alias AshNeo4j.Resource.Info, as: Neo4jInfo
+  alias AshNeo4j.Neo4jHelper
 
   @doc """
   Struct for a Characteristic
@@ -66,10 +67,35 @@ defmodule Diffo.Provider.Instance.Characteristic do
   def relate_instance(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     characteristics = Ash.Changeset.get_argument(changeset, :characteristics)
+    relate_to_instance(result, characteristics)
+  end
 
-    Provider.relate_instance_characteristics(%Instance{id: result.id}, %{
-      characteristics: characteristics
-    })
+  # Directly create HAS edges in Neo4j rather than going through manage_relationship.
+  # manage_relationship on a has_many triggers accessing_from updates on each
+  # Characteristic, which break because Ash.Resource.Info.reverse_relationship
+  # finds no path back to the concrete resource (ShelfInstance etc.) — Characteristic's
+  # belongs_to :instance targets the generic Diffo.Provider.Instance, not the
+  # domain-specific subtype.
+  defp relate_to_instance(result, nil), do: {:ok, result}
+  defp relate_to_instance(result, []), do: {:ok, result}
+
+  defp relate_to_instance(result, char_ids) do
+    instance_label_pair = Neo4jInfo.label_pair(result.__struct__)
+    char_label = Neo4jInfo.label(Diffo.Provider.Characteristic)
+
+    Enum.reduce_while(char_ids, {:ok, result}, fn char_id, acc ->
+      case Neo4jHelper.relate_nodes(
+             instance_label_pair,
+             %{uuid: result.id},
+             char_label,
+             %{uuid: char_id},
+             :HAS,
+             :outgoing
+           ) do
+        {:ok, _} -> {:cont, acc}
+        {:error, error} -> {:halt, {:error, error}}
+      end
+    end)
   end
 
   @doc """
