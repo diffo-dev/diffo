@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Extension.InstanceVerifierTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: false
+  @moduletag :domain_extended
   alias Diffo.Test.Util
 
   describe "specification verifier" do

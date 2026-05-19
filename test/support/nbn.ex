@@ -10,7 +10,8 @@ defmodule Diffo.Test.Nbn do
   """
   use Ash.Domain,
     otp_app: :diffo,
-    validate_config_inclusion?: false
+    validate_config_inclusion?: false,
+    fragments: [Diffo.Provider.DomainFragment]
 
   alias Diffo.Test.Party.Organization
   alias Diffo.Test.Party.Person

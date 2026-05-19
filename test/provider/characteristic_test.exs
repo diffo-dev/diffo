@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.CharacteristicTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :provider_only
   alias Diffo.Test.Patch
   alias Diffo.Type.Value
 

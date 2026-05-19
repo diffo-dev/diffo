@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Extension.RelationshipDslTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :domain_extended
   alias Diffo.Test.Util
   alias Diffo.Test.Instance.ShelfInstance
   alias Diffo.Test.Instance.CardInstance

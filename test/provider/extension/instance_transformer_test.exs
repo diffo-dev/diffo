@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Extension.InstanceTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
+  @moduletag :domain_extended
 
   alias Diffo.Test.Instance.ShelfInstance
   alias Diffo.Test.Instance.CardInstance
