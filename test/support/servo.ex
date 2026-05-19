@@ -41,6 +41,7 @@ defmodule Diffo.Test.Servo do
       define :define_card, action: :define
       define :relate_card, action: :relate
       define :assign_port, action: :assign_port
+      define :lifecycle_card, action: :lifecycle
     end
 
     resource Broadband do
