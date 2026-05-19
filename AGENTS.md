@@ -54,7 +54,7 @@ lib/diffo/provider/
       transform_relationships.ex  # TransformRelationships — resolves relationships pipeline, bakes permitted_source_roles/0 and permitted_target_roles/0
     verifiers/
       verify_relationships.ex     # Verifies relationship role declarations are atoms
-  changes/
+  validations/
     validate_relationship_permitted.ex  # ValidateRelationshipPermitted — enforces relationships do policy on relate actions
   assigner/
     assigner.ex                 # Diffo.Provider.Assigner — assign/3 (pools do) and assign/4
@@ -320,3 +320,12 @@ not. Add any useful hypotheses as a follow-up comment on the issue, then leave i
 - Bypassing `manage_relationship` by replacing `argument + manage_relationship` with bare
   `accept` for relationship IDs in scenario 3 resources — the correct fix is the domain
   fragment, not removing the relationship management.
+- Writing `Ash.Resource.Validation` with fail-fast short-circuits between independent checks —
+  Ash uses Splode to accumulate errors, so all independent validations should run and all
+  errors should be collected before returning. Resist the imperative instinct to return on
+  the first failure; instead collect errors from every check and return the full list in one
+  `{:error, errors}`. Only short-circuit when a later check genuinely cannot run without the
+  earlier one succeeding (e.g. the earlier check resolves data the later check depends on).
+- Using `Ash.Resource.Change` for pure permission or constraint checks — anything that only
+  decides valid/invalid with no side effects belongs in `Ash.Resource.Validation`, not a
+  change. Changes are for mutations.
