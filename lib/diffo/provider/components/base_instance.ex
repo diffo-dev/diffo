@@ -261,6 +261,7 @@ defmodule Diffo.Provider.BaseInstance do
       :endOperatingDate,
       :state,
       :operatingStatus,
+      :lifecycleState,
       :administrativeState,
       :operationalState,
       :resourceStatus,
@@ -364,6 +365,14 @@ defmodule Diffo.Provider.BaseInstance do
       public? true
       default nil
       constraints one_of: Diffo.Provider.Service.service_operating_statuses()
+    end
+
+    attribute :resource_state, :atom do
+      description "the TMF lifecycleState for resource instances: planning, installing, operating, or retiring"
+      allow_nil? true
+      public? true
+      default nil
+      constraints one_of: [:planning, :installing, :operating, :retiring]
     end
 
     create_timestamp :created_at
@@ -603,6 +612,13 @@ defmodule Diffo.Provider.BaseInstance do
       require_atomic? false
       validate attribute_equals(:type, :service)
       accept [:service_operating_status]
+    end
+
+    update :lifecycle do
+      description "sets the TMF lifecycleState for a resource instance"
+      require_atomic? false
+      validate attribute_equals(:type, :resource)
+      accept [:resource_state]
     end
 
     update :relate_features do
