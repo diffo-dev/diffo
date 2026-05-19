@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Extension.InfoTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :domain_extended
 
   alias Diffo.Provider.Extension.Info
 

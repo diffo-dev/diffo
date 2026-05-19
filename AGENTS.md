@@ -19,6 +19,13 @@ on [Ash Framework](https://www.ash-hq.org/) + [AshNeo4j](https://github.com/diff
 2. Read `CLAUDE.md` — dependency usage rules (Ash, Elixir, OTP, AshNeo4j, Spark).
 3. Consult the skill at `.claude/skills/diffo-framework/` for Ash ecosystem patterns.
 
+## Updating dependencies
+
+When updating a dependency (e.g. bumping `ash_neo4j`, `ash`, `spark` in `mix.exs`), always
+run `mix usage_rules.sync` immediately after `mix deps.get`. Dependencies publish their own
+usage rules; syncing pulls those changes into `CLAUDE.md` so you are working from the
+up-to-date guidance before touching any code.
+
 ## Project structure
 
 ```
@@ -47,7 +54,7 @@ lib/diffo/provider/
       transform_relationships.ex  # TransformRelationships — resolves relationships pipeline, bakes permitted_source_roles/0 and permitted_target_roles/0
     verifiers/
       verify_relationships.ex     # Verifies relationship role declarations are atoms
-  changes/
+  validations/
     validate_relationship_permitted.ex  # ValidateRelationshipPermitted — enforces relationships do policy on relate actions
   assigner/
     assigner.ex                 # Diffo.Provider.Assigner — assign/3 (pools do) and assign/4
@@ -166,15 +173,72 @@ provider do
 end
 ```
 
+## Three usage scenarios
+
+Diffo supports three distinct usage patterns. Every test is tagged with one or more of these
+atoms — absence of all three means the test has not yet been classified.
+
+| Tag | Scenario | Description |
+|-----|----------|-------------|
+| `:provider_only` | Vanilla Provider | Uses `Diffo.Provider` resources as-is. No custom domains, no extensions. Good for basic TMF inventory and for introducing Diffo incrementally. |
+| `:provider_extended` | Extended within Provider | New resource types defined inside `Diffo.Provider` itself, extending base fragments (e.g. `DefinedSimpleRelationship`). Pain point: external users can't add to the Provider domain without forking Diffo. |
+| `:domain_extended` | True domain extension | The **recommended pattern**. An external domain (e.g. `MyApp.SRM`) owns resources using `BaseInstance`, `BaseParty`, `BasePlace`, and `BaseCharacteristic` fragments. Exposes its own API; consumers need not know about Diffo internals. |
+
+Tests may carry `:provider_extended` and `:domain_extended` together when they span both.
+`:provider_only` is mutually exclusive with the other two.
+
+## Domain extension pattern (scenario 3)
+
+Any domain whose resources carry `belongs_to :instance, Diffo.Provider.Instance` (or
+`belongs_to :party, Diffo.Provider.Party`) and use `manage_relationship` to relate them
+**must** include `Diffo.Provider.DomainFragment`:
+
+```elixir
+defmodule MyApp.SRM do
+  use Ash.Domain, fragments: [Diffo.Provider.DomainFragment]
+  ...
+end
+```
+
+**Why this is necessary.** AshNeo4j 0.6.0 matches nodes using
+`label_pair = [domain_label, module_label]`. `Ash.get(Diffo.Provider.Instance, uuid)` builds
+`MATCH (n:Provider:Instance {uuid: $uuid})`. A `ShelfInstance` node in `MyApp.SRM` has
+labels `[:SRM, :ShelfInstance, :Instance]` — `:Provider` is absent, so the lookup returns
+not-found and `manage_relationship` fails.
+
+`Diffo.Provider.DomainFragment` tells AshNeo4j to write `:Provider` as an extra label on
+every node in the domain at CREATE time. `ShelfInstance` then carries
+`[:SRM, :ShelfInstance, :Instance, :Provider]`. Neo4j matches nodes that have **all**
+specified labels regardless of extras, so `MATCH (n:Provider:Instance {uuid: $uuid})` finds
+it. `label_pair` for direct reads on `ShelfInstance` is still `[:SRM, :ShelfInstance]` —
+its own-domain reads remain correctly scoped.
+
+### has_many and the accessing_from path
+
+A separate constraint applies when a `has_many` relationship uses `manage_relationship` on
+the source side: AshNeo4j 0.6.0's `accessing_from` path calls
+`Ash.Resource.Info.reverse_relationship/2`, which does a strict type-equality check. If
+`Characteristic.belongs_to :instance` targets `Diffo.Provider.Instance` but the actual
+source is `ShelfInstance`, the check fails and the edge is not created.
+
+The fix used in Diffo's extension helpers (`Characteristic.relate_instance`,
+`Feature.relate_instance`) is to bypass `manage_relationship` on the source side entirely
+and call `AshNeo4j.Neo4jHelper.relate_nodes/6` directly, using the concrete
+`result.__struct__` label pair. See
+`lib/diffo/provider/components/instance/extension/characteristic.ex` and `feature.ex`.
+
 ## Running tests
 
 Integration tests require a running Neo4j instance.
 
 ```sh
-mix test                          # full suite
-mix test test/provider/extension/ # extension tests only
-mix test path/to/test.exs:LINE    # single test
-mix test --max-failures 5         # stop early
+mix test                              # full suite
+mix test --only domain_extended       # scenario 3 tests only
+mix test --only provider_only         # vanilla provider tests only
+mix test --only provider_extended     # extended-within-provider tests only
+mix test test/provider/extension/     # extension directory only
+mix test path/to/test.exs:LINE        # single test
+mix test --max-failures 5             # stop early
 ```
 
 ## Module naming and Neo4j labels
@@ -206,6 +270,25 @@ Spark runs two separate pipelines during compilation, in this order:
 
 **Current state:** `TransformBehaviour` is misregistered under `persisters:` — a known issue tracked for refactoring. New transformers go under `transformers:`.
 
+## Raising upstream bugs
+
+When a bug is found in a dependency (e.g. AshNeo4j, Bolty), raise a GitHub issue on that
+repository. Use **diffo issue #125** as the style reference:
+
+- **## Description** — explain what the system does, what the code path is, and where it
+  breaks. Include a short code snippet if it makes the failure concrete.
+- **## What we need** — state the correct behaviour plainly.
+- **## Why it matters** — explain the practical impact on Diffo and why fixing it unblocks
+  real work.
+- Optionally add **## A possible direction** if there is a plausible fix worth suggesting.
+
+Do not use a step-by-step reproduction template; write in the same explanatory prose style
+as #125.
+
+Once the issue is raised, stop. Do not attempt to locate or fix the root cause in the
+dependency — the upstream maintainers have the full context of their own codebase; you do
+not. Add any useful hypotheses as a follow-up comment on the issue, then leave it with them.
+
 ## Common agent mistakes
 
 - Using old `structure do` / top-level `instances do` — use `provider do` only.
@@ -230,3 +313,19 @@ Spark runs two separate pipelines during compilation, in this order:
   Run `mix format` afterward to verify.
 - Editing content between `<!-- usage-rules-start -->` markers in `CLAUDE.md` — that is
   auto-generated by `mix usage_rules.sync`.
+- Forgetting `Diffo.Provider.DomainFragment` on a scenario 3 domain — any domain whose
+  resources relate back to Provider base types (`belongs_to :instance, Diffo.Provider.Instance`
+  etc.) via `manage_relationship` will get `Ash.Error.Query.NotFound` at runtime without it.
+  See the **Domain extension pattern** section above.
+- Bypassing `manage_relationship` by replacing `argument + manage_relationship` with bare
+  `accept` for relationship IDs in scenario 3 resources — the correct fix is the domain
+  fragment, not removing the relationship management.
+- Writing `Ash.Resource.Validation` with fail-fast short-circuits between independent checks —
+  Ash uses Splode to accumulate errors, so all independent validations should run and all
+  errors should be collected before returning. Resist the imperative instinct to return on
+  the first failure; instead collect errors from every check and return the full list in one
+  `{:error, errors}`. Only short-circuit when a later check genuinely cannot run without the
+  earlier one succeeding (e.g. the earlier check resolves data the later check depends on).
+- Using `Ash.Resource.Change` for pure permission or constraint checks — anything that only
+  decides valid/invalid with no side effects belongs in `Ash.Resource.Validation`, not a
+  change. Changes are for mutations.

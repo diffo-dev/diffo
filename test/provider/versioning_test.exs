@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.VersioningTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :domain_extended
 
   alias Diffo.Test.Servo
   alias Diffo.Test.Instance.Broadband

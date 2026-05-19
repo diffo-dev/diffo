@@ -7,8 +7,9 @@ defmodule Diffo.Provider.Instance.Feature do
   require Logger
 
   alias Diffo.Provider
-  alias Diffo.Provider.Instance
   alias Diffo.Type.Value
+  alias AshNeo4j.Resource.Info, as: Neo4jInfo
+  alias AshNeo4j.Neo4jHelper
 
   @doc """
   Struct for a Feature
@@ -94,7 +95,33 @@ defmodule Diffo.Provider.Instance.Feature do
   def relate_instance(result, changeset)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) do
     features = Ash.Changeset.get_argument(changeset, :features)
-    Provider.relate_instance_features(%Instance{id: result.id}, %{features: features})
+    relate_to_instance(result, features)
+  end
+
+  # Directly create HAS edges rather than going through manage_relationship,
+  # for the same reason as Characteristic: the accessing_from path breaks because
+  # Feature's belongs_to :instance targets Diffo.Provider.Instance, not the
+  # domain-specific concrete resource (ShelfInstance etc.).
+  defp relate_to_instance(result, nil), do: {:ok, result}
+  defp relate_to_instance(result, []), do: {:ok, result}
+
+  defp relate_to_instance(result, feature_ids) do
+    instance_label_pair = Neo4jInfo.label_pair(result.__struct__)
+    feature_label = Neo4jInfo.label(Diffo.Provider.Feature)
+
+    Enum.reduce_while(feature_ids, {:ok, result}, fn feature_id, acc ->
+      case Neo4jHelper.relate_nodes(
+             instance_label_pair,
+             %{uuid: result.id},
+             feature_label,
+             %{uuid: feature_id},
+             :HAS,
+             :outgoing
+           ) do
+        {:ok, _} -> {:cont, acc}
+        {:error, error} -> {:halt, {:error, error}}
+      end
+    end)
   end
 
   defimpl String.Chars do
