@@ -83,6 +83,12 @@ defmodule Diffo.Provider do
       define :delete_defined_simple_relationship, action: :destroy
     end
 
+    resource Diffo.Provider.AssignmentRelationship do
+      define :create_assignment_relationship, action: :create
+      define :get_assignment_relationship_by_id, action: :read, get_by: :id
+      define :delete_assignment_relationship, action: :destroy
+    end
+
     resource Diffo.Provider.AssignableCharacteristic do
       define :create_assignable_characteristic, action: :create
       define :get_assignable_characteristic_by_id, action: :read, get_by: :id
