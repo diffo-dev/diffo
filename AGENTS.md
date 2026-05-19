@@ -269,7 +269,7 @@ Spark runs two separate pipelines during compilation, in this order:
 - A transformer that needs to expose baked state does not need a separate persister — call `Transformer.persist/3` inline and emit the module function via `Transformer.eval/3`.
 - Do not put a transformer in `persisters:` hoping `after?` declarations will order it relative to transformers — those declarations are silently ignored across pipeline boundaries.
 
-**Current state:** `TransformBehaviour` is misregistered under `persisters:` — a known issue tracked for refactoring. New transformers go under `transformers:`.
+New transformers go under `transformers:`. New persisters go under `persisters:`.
 
 ## Raising upstream bugs
 
