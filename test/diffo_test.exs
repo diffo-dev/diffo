@@ -5,6 +5,7 @@
 defmodule DiffoTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :provider_only
   doctest Diffo
   doctest Diffo.Unwrap
   doctest Diffo.Type.Primitive

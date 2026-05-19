@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.RelationshipTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :provider_only
 
   alias Diffo.Type.Value
 

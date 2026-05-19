@@ -10,7 +10,8 @@ defmodule Diffo.Test.Servo do
   """
   use Ash.Domain,
     otp_app: :diffo,
-    validate_config_inclusion?: false
+    validate_config_inclusion?: false,
+    fragments: [Diffo.Provider.DomainFragment]
 
   alias Diffo.Test.Instance.ShelfInstance
   alias Diffo.Test.Instance.CardInstance

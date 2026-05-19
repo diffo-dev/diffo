@@ -13,6 +13,47 @@ and Resource Management domains on top of a Neo4j graph database. It provides th
 fragments — `BaseInstance`, `BaseParty`, `BasePlace` — plus the unified `Diffo.Provider.Extension`
 DSL. Read these rules and the Ash/AshNeo4j usage rules **before** writing any domain code.
 
+## The recommended usage pattern
+
+Build your own Ash domain. Do not add your resources to `Diffo.Provider` — that domain is
+Diffo's internal plumbing and its API is intentionally closed. Your domain owns its own API,
+which it exposes to consumers who need know nothing about Diffo or TMF internals. The Diffo
+Provider is an implementation detail that your domain depends on, not something your consumers
+touch directly.
+
+```elixir
+defmodule MyApp.SRM do
+  use Ash.Domain, fragments: [Diffo.Provider.DomainFragment]
+
+  resources do
+    resource MyApp.BroadbandService
+    resource MyApp.RSP
+    resource MyApp.GeographicSite
+    resource MyApp.SpeedCharacteristic
+  end
+end
+```
+
+`Diffo.Provider.DomainFragment` is **required** for any domain whose resources use the Diffo
+base fragments. It causes AshNeo4j to write `:Provider` as an additional label on every node
+in your domain at CREATE time. Without it, Ash's relationship management cannot resolve your
+concrete resource nodes (e.g. `BroadbandService`) through the provider base type lookups
+(e.g. `Diffo.Provider.Instance`) that Diffo uses internally — the lookups will silently return
+not-found and relationships will fail to be established.
+
+See `Diffo.Provider.DomainFragment` for the technical details.
+
+### Neo4j database access policy
+
+Neo4j Browser (or Neo4j Bloom) is an excellent way to **observe** your graph — explore
+relationships, verify that nodes have the right labels and properties, debug unexpected
+structure. Use it freely for this purpose.
+
+**All data reads and writes must go through Ash and AshNeo4j.** Do not issue Cypher queries
+directly from application code, scripts, or migrations to mutate or authoritatively read data.
+AshNeo4j manages label consistency, relationship integrity, and type casting; bypassing it
+produces nodes that Ash cannot find or interpret correctly.
+
 ## The three kinds of domain resource
 
 | Kind | Base fragment | Marker extension |
@@ -30,7 +71,7 @@ Always start from the appropriate base fragment:
 
 ```elixir
 defmodule MyApp.BroadbandService do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.Domain
+  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.SRM
   ...
 end
 ```
@@ -89,7 +130,7 @@ its own attributes, a `:value` calculation, and create/update actions:
 defmodule MyApp.SpeedCharacteristic do
   use Ash.Resource,
     fragments: [Diffo.Provider.BaseCharacteristic],
-    domain: MyApp.Domain
+    domain: MyApp.SRM
 
   attributes do
     attribute :downstream_mbps, :integer, public?: true
@@ -397,9 +438,20 @@ label `:Card` and queries are ambiguous. Rename to `CardInstance` and `CardChara
 ## Complete example
 
 ```elixir
+# Domain — include the fragment so manage_relationship resolves across domains
+defmodule MyApp.SRM do
+  use Ash.Domain, fragments: [Diffo.Provider.DomainFragment]
+
+  resources do
+    resource MyApp.BroadbandService
+    resource MyApp.RSP
+    resource MyApp.GeographicSite
+  end
+end
+
 # Instance resource
 defmodule MyApp.BroadbandService do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.Domain
+  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.SRM
 
   resource do
     description "An ADSL broadband service"
@@ -446,7 +498,7 @@ end
 
 # Party resource
 defmodule MyApp.RSP do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseParty], domain: MyApp.Domain
+  use Ash.Resource, fragments: [Diffo.Provider.BaseParty], domain: MyApp.SRM
 
   resource do
     description "A Retail Service Provider"
@@ -472,7 +524,7 @@ end
 
 # Place resource
 defmodule MyApp.GeographicSite do
-  use Ash.Resource, fragments: [Diffo.Provider.BasePlace], domain: MyApp.Domain
+  use Ash.Resource, fragments: [Diffo.Provider.BasePlace], domain: MyApp.SRM
 
   resource do
     description "A geographic site"
@@ -499,6 +551,14 @@ end
 
 ## Common mistakes
 
+- **Do not add your resources to `Diffo.Provider`** — that domain is closed. Build your own
+  domain using `fragments: [Diffo.Provider.DomainFragment]` and put your resources there.
+- **Do not omit `Diffo.Provider.DomainFragment` from your domain** — without it, `manage_relationship`
+  calls on resources with `belongs_to :instance, Diffo.Provider.Instance` (and similar) will
+  fail at runtime with not-found errors because AshNeo4j cannot match your concrete nodes
+  through the provider base type label pair. See the **recommended usage pattern** section.
+- **Do not issue Cypher queries directly from application code** — all reads and writes must
+  go through Ash and AshNeo4j. Neo4j Browser is for observation only.
 - **Do not use `structure do` or top-level `instances do`/`parties do`/`places do`** — these
   are the old pre-0.3.0 syntax. All declarations belong inside `provider do`.
 - **Do not use `party :role, Type, reference: true`** — use `party_ref :role, Type` instead.

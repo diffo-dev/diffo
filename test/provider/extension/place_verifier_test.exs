@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Extension.PlaceVerifierTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: false
+  @moduletag :domain_extended
   alias Diffo.Test.Util
 
   describe "instances verifier" do
