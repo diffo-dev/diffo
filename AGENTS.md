@@ -299,6 +299,7 @@ not. Add any useful hypotheses as a follow-up comment on the issue, then leave i
 - Using the removed `AssignableValue` TypedStruct — it no longer exists; use `pools do`.
 - Calling `Assigner.assign/4` when a `pools do` declaration exists — prefer `Assigner.assign/3` which looks up the thing automatically.
 - Forgetting to call `Pool.update_pools/3` in `:define` actions when the resource has `pools do` — pool bounds (`first`, `last`, `algorithm`) are set here.
+- Calling `Assigner.assign/3` on an instance that is not in the correct lifecycle state — the assigner enforces: resource instances must have `resource_state: :operating`; service instances must have `service_state: :active` or `:inactive`. Lifecycle state transitions are an internal domain concern managed by the provider; assignment actions are external-facing. Future: consumer reads may filter out non-`:operating` resources entirely.
 - Using `characteristic :pool_name, Diffo.Provider.AssignedToRelationship` — `AssignedToRelationship` no longer exists; use `pools do / pool :name, :thing / end` instead.
 - Querying `Diffo.Provider.Relationship` for assignment records — assignments are stored as `Diffo.Provider.DefinedSimpleRelationship`; access them via `instance.assignments`.
 - Filtering `instance.forward_relationships` for `type == :assignedTo` — those records no longer exist there; use `instance.assignments` directly.
