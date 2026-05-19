@@ -16,12 +16,12 @@ defmodule Diffo.Provider.Extension.Transformers.TransformBehaviour do
 
   @impl true
   def transform(dsl_state) do
-    spec = Transformer.get_persisted(dsl_state, :specification, [])
+    spec_id = Transformer.get_option(dsl_state, [:provider, :specification], :id)
 
     dsl_state = inject_create_arguments(dsl_state)
 
     {build_before_body, build_after_body} =
-      if spec[:id] do
+      if spec_id do
         before_body =
           quote do
             changeset
@@ -128,12 +128,4 @@ defmodule Diffo.Provider.Extension.Transformers.TransformBehaviour do
     end)
   end
 
-  @impl true
-  def after?(Diffo.Provider.Extension.Persisters.PersistSpecification), do: true
-  def after?(Diffo.Provider.Extension.Persisters.PersistCharacteristics), do: true
-  def after?(Diffo.Provider.Extension.Persisters.PersistFeatures), do: true
-  def after?(Diffo.Provider.Extension.Persisters.PersistPools), do: true
-  def after?(Diffo.Provider.Extension.Persisters.PersistParties), do: true
-  def after?(Diffo.Provider.Extension.Persisters.PersistPlaces), do: true
-  def after?(_), do: false
 end
