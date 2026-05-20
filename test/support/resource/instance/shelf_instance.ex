@@ -86,10 +86,11 @@ defmodule Diffo.Test.Instance.ShelfInstance do
 
   calculations do
     calculate :linked_target_name, {:array, :string},
-      {Diffo.Provider.Calculations.FieldViaAliasedRelationship, [alias: :link, field: :name]}
+      {Diffo.Provider.Calculations.FieldViaRelationship, [alias: :link, field: :name]}
 
-    calculate :all_linked_names, {:array, :string},
-      {Diffo.Provider.Calculations.FieldViaAliasedRelationship, [field: :name]}
+    calculate :assigned_linked_name, {:array, :string},
+      {Diffo.Provider.Calculations.FieldViaRelationship,
+       [type: :assignedTo, alias: :link, field: :name]}
   end
 
   actions do
