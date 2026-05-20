@@ -103,11 +103,13 @@ Provider DSL — structure, roles, and behaviour for this resource kind
    * parties
    * party_ref
    * role
+   * inherited_party
  * [places](#provider-places)
    * place
    * places
    * place_ref
    * role
+   * inherited_place
  * [instances](#provider-instances)
    * role
    * instance_ref
@@ -330,13 +332,14 @@ Declares an assignable pool — a named range of values for auto-assignment
 
 
 ### provider.parties
-Party roles on this resource — `party`/`parties`/`party_ref` for Instance kinds; `role` for Party and Place kinds
+Party roles on this resource — `party`/`parties`/`party_ref`/`inherited_party` for Instance kinds; `role` for Party and Place kinds
 
 ### Nested DSLs
  * [party](#provider-parties-party)
  * [parties](#provider-parties-parties)
  * [party_ref](#provider-parties-party_ref)
  * [role](#provider-parties-role)
+ * [inherited_party](#provider-parties-inherited_party)
 
 
 ### Examples
@@ -346,6 +349,7 @@ parties do
   party :provider, MyApp.Provider
   party_ref :owner, MyApp.InfrastructureCo
   parties :technicians, MyApp.Technician, constraints: [min: 1]
+  inherited_party :customer, source_role: :owner
 end
 
 # Party or Place
@@ -483,15 +487,48 @@ Declares a role this Party or Place kind plays with respect to other Parties
 
 Target: `Diffo.Provider.Extension.PartyRole`
 
+### provider.parties.inherited_party
+```elixir
+inherited_party role
+```
+
+
+Declares a party derived by traversing the assignment graph — generates a calculation, no PartyRef node created
+
+
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`role`](#provider-parties-inherited_party-role){: #provider-parties-inherited_party-role .spark-required} | `atom` |  | The role name — also the default alias to follow on AssignmentRelationship. |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`source_role`](#provider-parties-inherited_party-source_role){: #provider-parties-inherited_party-source_role .spark-required} | `atom` |  | The PartyRef role to pick up on the arrived-at instance. |
+| [`via`](#provider-parties-inherited_party-via){: #provider-parties-inherited_party-via } | `list(atom)` |  | Sequence of assignment aliases to traverse. Defaults to [role] for single-hop. Use a list for multi-level. |
+
+
+
+
+
+### Introspection
+
+Target: `Diffo.Provider.Extension.InheritedPartyDeclaration`
+
 
 ### provider.places
-Place roles on this resource — `place`/`places`/`place_ref` for Instance kinds; `role` for Party and Place kinds
+Place roles on this resource — `place`/`places`/`place_ref`/`inherited_place` for Instance kinds; `role` for Party and Place kinds
 
 ### Nested DSLs
  * [place](#provider-places-place)
  * [places](#provider-places-places)
  * [place_ref](#provider-places-place_ref)
  * [role](#provider-places-role)
+ * [inherited_place](#provider-places-inherited_place)
 
 
 ### Examples
@@ -500,6 +537,8 @@ Place roles on this resource — `place`/`places`/`place_ref` for Instance kinds
 places do
   place :installation_site, MyApp.GeographicSite
   place_ref :billing_address, MyApp.GeographicAddress
+  inherited_place :a_end, source_role: :location
+  inherited_place :poi, via: [:cvc_link, :nni_link], source_role: :poi
 end
 
 # Party or Place
@@ -636,6 +675,38 @@ Declares a role this Party or Place kind plays with respect to Places
 ### Introspection
 
 Target: `Diffo.Provider.Extension.PlaceRole`
+
+### provider.places.inherited_place
+```elixir
+inherited_place role
+```
+
+
+Declares a place derived by traversing the assignment graph — generates a calculation, no PlaceRef node created
+
+
+
+
+
+### Arguments
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`role`](#provider-places-inherited_place-role){: #provider-places-inherited_place-role .spark-required} | `atom` |  | The role name — also the default alias to follow on AssignmentRelationship. |
+### Options
+
+| Name | Type | Default | Docs |
+|------|------|---------|------|
+| [`source_role`](#provider-places-inherited_place-source_role){: #provider-places-inherited_place-source_role .spark-required} | `atom` |  | The PlaceRef role to pick up on the arrived-at instance. |
+| [`via`](#provider-places-inherited_place-via){: #provider-places-inherited_place-via } | `list(atom)` |  | Sequence of assignment aliases to traverse. Defaults to [role] for single-hop. Use a list for multi-level. |
+
+
+
+
+
+### Introspection
+
+Target: `Diffo.Provider.Extension.InheritedPlaceDeclaration`
 
 
 ### provider.instances
