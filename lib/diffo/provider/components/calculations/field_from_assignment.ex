@@ -3,7 +3,34 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Calculations.FieldFromAssignment do
-  @moduledoc false
+  @moduledoc """
+  Reads a field directly from an `AssignmentRelationship` record.
+
+  Filters `AssignmentRelationship` by `target_id = current.id` and returns the named
+  field from each matching record — no second hop to the source instance. This is the
+  right choice when you want a value that lives on the relationship itself (`:value`,
+  `:thing`, `:pool`, `:alias`) rather than on the assigning instance.
+
+  Use `FieldViaAssignedRelationship` instead when you need a field from the source
+  instance (e.g. `:name`).
+
+  ## Options
+
+  - `field:` *(required)* — atom naming the field to read from the relationship record
+    (e.g. `:value`, `:thing`, `:pool`, `:alias`).
+  - `alias:` *(optional)* — atom matching the `alias` attribute on the relationship.
+    When omitted, all assignments where `target_id = current.id` are included.
+
+  ## Examples
+
+      # Port number assigned to this service under the :primary slot
+      calculate :assigned_port, {:array, :integer},
+        {Diffo.Provider.Calculations.FieldFromAssignment, [alias: :primary, field: :value]}
+
+      # Pool name for every assignment on this instance
+      calculate :assignment_pools, {:array, :atom},
+        {Diffo.Provider.Calculations.FieldFromAssignment, [field: :pool]}
+  """
   use Ash.Resource.Calculation
 
   @impl true

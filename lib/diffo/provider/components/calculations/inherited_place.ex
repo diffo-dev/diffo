@@ -3,7 +3,16 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Calculations.InheritedPlace do
-  @moduledoc false
+  @moduledoc """
+  Backing calculation for `inherited_place` DSL declarations.
+
+  Traverses `AssignmentRelationship` by alias to reach source instances, then reads
+  their `PlaceRef` records for the declared `source_role`. Injected automatically by
+  `TransformInheritedRefs` — do not reference this module directly; use the
+  `inherited_place` DSL entity instead.
+
+  See `Diffo.Provider.Extension.InheritedPlaceDeclaration` for the DSL options.
+  """
   use Ash.Resource.Calculation
 
   @impl true
