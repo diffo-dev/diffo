@@ -50,7 +50,11 @@ defmodule Diffo.Provider.Validations.ValidateRelationshipPermitted do
           end
 
         :error ->
-          [[field: :relationships, message: "could not resolve target resource for id #{inspect(target_id)}"]
+          [
+            [
+              field: :relationships,
+              message: "could not resolve target resource for id #{inspect(target_id)}"
+            ]
           ]
       end
     end)
@@ -99,7 +103,8 @@ defmodule Diffo.Provider.Validations.ValidateRelationshipPermitted do
     if role in roles do
       :ok
     else
-      {:error, "relationship role #{inspect(role)} is not permitted as #{direction} on this resource"}
+      {:error,
+       "relationship role #{inspect(role)} is not permitted as #{direction} on this resource"}
     end
   end
 end
