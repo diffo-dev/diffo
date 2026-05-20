@@ -549,6 +549,144 @@ defmodule MyApp.GeographicSite do
 end
 ```
 
+## Aliases on relationships
+
+Both `AssignmentRelationship` and `DefinedSimpleRelationship` carry an optional `:alias`
+attribute — an atom given to a relationship slot by the consuming (target) side.
+
+An alias is the consumer's stable name for a slot before (or when) the relationship is
+bound. It survives the relationship's lifetime unchanged. Think of it as a "baby name"
+for a slot: the AVC says "I have a slot called `:svlan`"; when the CVC assigns a VLAN to
+that AVC, the `AssignmentRelationship` record carries `alias: :svlan`. No matter which
+CVC fills the slot or how many times the assignment is changed, the alias stays fixed.
+
+Identity constraints enforce uniqueness:
+- `AssignmentRelationship` — `[:target_id, :alias]` — at most one assignment per
+  (target, alias) pair. This is how the consumer guarantees slot uniqueness.
+- `DefinedSimpleRelationship` — `[:source_id, :alias]` — at most one outgoing
+  relationship per (source, alias) pair.
+
+Aliases are the join key for the first-order expectation system (issue #74): an
+expectation declares an alias for a slot it expects to be filled; the actual relationship
+carries the same alias, so intent and fulfilment can be matched precisely. Without the
+expectation system in place, aliases appear to be optional metadata — with it, they are
+the primary correlation key.
+
+```elixir
+# Assigning with an alias — the AVC names its SVLAN slot :svlan
+Servo.assign_port(cvc, %{
+  assignment: %Assignment{
+    assignee_id: avc.id,
+    operation: :auto_assign,
+    alias: :svlan
+  }
+})
+```
+
+## `inherited_place` and `inherited_party` DSL
+
+Declare `inherited_place` or `inherited_party` inside `places do` / `parties do` on an
+Instance resource to generate an Ash calculation that traverses the assignment graph and
+inherits a place or party from the source instance.
+
+No `PlaceRef` or `PartyRef` edge is created on the consuming instance — the calculation
+IS the reference. The result is a list (consistent with all traversal calculations).
+
+```elixir
+provider do
+  places do
+    # Single-hop: traverses AssignmentRelationship where alias = :installation_site,
+    # reads PlaceRef with role :location from the source instance
+    inherited_place :installation_site, source_role: :location
+
+    # Explicit alias (same as above written long-form)
+    inherited_place :exchange, via: [:exchange], source_role: :location
+
+    # Multi-hop: :primary slot on this instance → :uplink slot on that instance →
+    # reads :location PlaceRef from the final source
+    inherited_place :exchange, via: [:primary, :uplink], source_role: :location
+  end
+
+  parties do
+    inherited_party :provider, source_role: :provider
+  end
+end
+```
+
+Options:
+- `source_role:` *(required)* — the `PlaceRef`/`PartyRef` role to read from the resolved
+  source instance.
+- `via:` *(optional)* — explicit list of alias atoms for multi-hop traversal. When
+  omitted, the role name itself is used as the single alias step.
+
+The DSL entity must be declared in the correct section (`places do` for `inherited_place`,
+`parties do` for `inherited_party`). The generated calculation name matches the declared role.
+
+## Field calculation modules
+
+Three general-purpose calculation modules cover reading fields across the assignment and
+relationship graph. Declare them in a `calculations do` block on any Instance resource.
+
+### `FieldFromAssignment`
+
+Reads a field directly from an `AssignmentRelationship` record — no hop to the source
+instance. Use this when you want a value that lives on the relationship itself.
+
+```elixir
+# Port number assigned to this service under the :svlan slot
+calculate :assigned_vlan, {:array, :integer},
+  {Diffo.Provider.Calculations.FieldFromAssignment, [alias: :svlan, field: :value]}
+
+# Pool name for every assignment on this instance (no alias filter)
+calculate :assignment_pools, {:array, :atom},
+  {Diffo.Provider.Calculations.FieldFromAssignment, [field: :pool]}
+```
+
+Options: `field:` (required), `alias:` (optional).
+
+### `FieldViaAssignedRelationship`
+
+Traverses `AssignmentRelationship` in reverse (target → source) and reads a field from
+each source instance. Use this when you want a field that belongs to the assigning
+instance, not the relationship record.
+
+```elixir
+# Name of the CVC holding the :svlan assignment slot on this AVC
+calculate :cvc_id, {:array, :string},
+  {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [via: [:svlan], field: :name]}
+```
+
+Options: `field:` (required), `via:` (optional list of alias steps — omit for unaliased).
+
+### `FieldViaRelationship`
+
+Traverses `DefinedSimpleRelationship` in the forward direction (source → target) filtered
+by `alias:` and/or `type:`, and reads a field from each target instance.
+
+```elixir
+# Name of the target reached via the :provides alias
+calculate :downstream_name, {:array, :string},
+  {Diffo.Provider.Calculations.FieldViaRelationship, [alias: :provides, field: :name]}
+
+# Name narrowed by both type and alias
+calculate :assigned_node_name, {:array, :string},
+  {Diffo.Provider.Calculations.FieldViaRelationship,
+   [type: :assignedTo, alias: :node, field: :name]}
+```
+
+Options: `field:` (required), `alias:` (optional), `type:` (optional). Provide at least
+one of `alias:` or `type:` — querying by `source_id` alone returns all forward
+relationships mixed together, which is rarely useful.
+
+### Choosing between the three
+
+| I want… | Use |
+|---------|-----|
+| A value stored on the assignment record itself (`:value`, `:pool`, `:alias`) | `FieldFromAssignment` |
+| A field from the instance that assigned something to me | `FieldViaAssignedRelationship` |
+| A field from the instance I have a forward relationship to | `FieldViaRelationship` |
+| A place/party inherited from the assigning instance | `inherited_place` / `inherited_party` DSL |
+
 ## Common mistakes
 
 - **Do not add your resources to `Diffo.Provider`** — that domain is closed. Build your own

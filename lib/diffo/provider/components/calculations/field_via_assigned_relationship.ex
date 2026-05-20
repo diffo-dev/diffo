@@ -3,7 +3,32 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Calculations.FieldViaAssignedRelationship do
-  @moduledoc false
+  @moduledoc """
+  Reads a field from the source instance of an `AssignmentRelationship`.
+
+  Traverses `AssignmentRelationship` in reverse — filtering by `target_id = current.id`
+  — to reach the source instances (pool owners) that assigned something to this instance,
+  then returns the named field from each.
+
+  ## Options
+
+  - `field:` *(required)* — atom naming the field to read from the source instance
+    (e.g. `:name`, `:type`).
+  - `via:` *(optional)* — list of alias atoms to step through. Each step filters
+    `AssignmentRelationship` by the alias and follows `source_id` to the next set of
+    instances. Multi-hop is supported by chaining steps. When omitted, all assignments
+    where `target_id = current.id` are traversed without alias filtering.
+
+  ## Examples
+
+      # Name of the CVC that holds the :svlan assignment slot on this AVC
+      calculate :cvc_id, {:array, :string},
+        {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [via: [:svlan], field: :name]}
+
+      # Name of every instance that has ever assigned anything to this one
+      calculate :assigner_names, {:array, :string},
+        {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [field: :name]}
+  """
   use Ash.Resource.Calculation
 
   @impl true
