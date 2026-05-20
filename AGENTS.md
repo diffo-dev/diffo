@@ -66,7 +66,7 @@ lib/diffo/provider/
     base_characteristic.ex      # Ash Fragment for typed characteristic resources
     base_relationship.ex        # Ash Fragment for shared Relationship structure
     defined_simple_relationship.ex    # DefinedSimpleRelationship — relationship with one optional embedded characteristic, frozen at creation
-    assignment_relationship.ex        # AssignmentRelationship — pool assignment relationship with top-level pool/thing/value scalar attributes
+    assignment_relationship.ex        # AssignmentRelationship — pool assignment relationship with top-level pool/thing/value/alias scalar attributes
     relationship.ex                   # Relationship — mutable TMF service/resource relationship with graph Characteristic nodes
     calculations/
       characteristic_value.ex   # Calculation: builds .Value TypedStruct from record fields
@@ -300,6 +300,7 @@ not. Add any useful hypotheses as a follow-up comment on the issue, then leave i
 - Calling `Assigner.assign/4` when a `pools do` declaration exists — prefer `Assigner.assign/3` which looks up the thing automatically.
 - Forgetting to call `Pool.update_pools/3` in `:define` actions when the resource has `pools do` — pool bounds (`first`, `last`, `algorithm`) are set here.
 - Calling `Assigner.assign/3` on an instance that is not in the correct lifecycle state — the assigner enforces: resource instances must have `resource_state: :operating`; service instances must have `service_state: :active` or `:inactive`. Lifecycle state transitions are an internal domain concern managed by the provider; assignment actions are external-facing. Future: consumer reads may filter out non-`:operating` resources entirely.
+- Wondering why `Relationship` and `AssignmentRelationship` both have an `alias` attribute with a `[:source_id, :alias]` / `[:target_id, :alias]` identity — alias is a "baby name" given to a relationship slot before (or when) the target is bound. Its full purpose becomes clear alongside the first-order expectation system (see issue #122): the expectation declares the alias for a slot it expects to be filled, and the actual relationship carries the same alias so the two can be matched. Without expectations in place, aliases look like optional metadata; with them, they are the join key between intent and fulfilment.
 - Using `characteristic :pool_name, Diffo.Provider.AssignedToRelationship` — `AssignedToRelationship` no longer exists; use `pools do / pool :name, :thing / end` instead.
 - Querying `Diffo.Provider.Relationship` for assignment records — assignments are stored as `Diffo.Provider.DefinedSimpleRelationship`; access them via `instance.assignments`.
 - Filtering `instance.forward_relationships` for `type == :assignedTo` — those records no longer exist there; use `instance.assignments` directly.
