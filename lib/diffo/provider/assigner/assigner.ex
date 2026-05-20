@@ -35,6 +35,7 @@ defmodule Diffo.Provider.Assigner do
              is_atom(thing) do
     assignment = Map.get(changeset.arguments, :assignment, %{})
     assignee_id = Map.get(assignment, :assignee_id)
+    alias_name = Map.get(assignment, :alias)
 
     case assignee_id do
       nil ->
@@ -44,12 +45,12 @@ defmodule Diffo.Provider.Assigner do
         case Map.get(assignment, :operation, :auto_assign) do
           :auto_assign ->
             with {:ok, value} <- next(result, pool, thing) do
-              create_assignment(result, pool, thing, value, assignee_id)
+              create_assignment(result, pool, thing, value, assignee_id, alias_name)
             end
 
           :assign ->
             if assignable?(result, pool, thing, assignment.id) do
-              create_assignment(result, pool, thing, assignment.id, assignee_id)
+              create_assignment(result, pool, thing, assignment.id, assignee_id, alias_name)
             else
               {:error, "#{thing} #{assignment.id} is not assignable"}
             end
@@ -69,11 +70,12 @@ defmodule Diffo.Provider.Assigner do
 
   defp check_lifecycle(_), do: :ok
 
-  defp create_assignment(result, pool, thing, value, assignee_id)
+  defp create_assignment(result, pool, thing, value, assignee_id, alias_name)
        when is_struct(result) and is_atom(pool) and is_atom(thing) and is_integer(value) and
               is_bitstring(assignee_id) do
     with {:ok, _} <-
            Diffo.Provider.create_assignment_relationship(%{
+             alias: alias_name,
              pool: pool,
              thing: thing,
              value: value,

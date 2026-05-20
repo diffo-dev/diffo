@@ -130,7 +130,9 @@ defmodule Diffo.Provider.Relationship do
   end
 
   identities do
-    identity :unique_source_and_target, [:source_id, :target_id]
+    identity :unique_source_alias, [:source_id, :alias] do
+      pre_check? true
+    end
   end
 
   preparations do

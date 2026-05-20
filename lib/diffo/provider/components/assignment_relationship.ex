@@ -47,11 +47,18 @@ defmodule Diffo.Provider.AssignmentRelationship do
       list_name =
         Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(record.target_type)
 
-      characteristic = %{name: record.thing, value: record.value}
+      characteristics =
+        [%{name: record.thing, value: record.value}]
+        |> then(fn chars ->
+          case record.alias do
+            nil -> chars
+            a -> chars ++ [%{name: :alias, value: a}]
+          end
+        end)
 
       result
       |> Diffo.Util.set(record.target_type, reference)
-      |> Diffo.Util.set(list_name, [characteristic])
+      |> Diffo.Util.set(list_name, characteristics)
     end
 
     order [:type, :resource, :service, :resourceRelationshipCharacteristic,
@@ -61,7 +68,7 @@ defmodule Diffo.Provider.AssignmentRelationship do
   actions do
     create :create do
       description "creates a pool assignment relationship between a source and target instance"
-      accept [:pool, :thing, :value]
+      accept [:alias, :pool, :thing, :value]
 
       argument :source_id, :uuid
       argument :target_id, :string
@@ -74,6 +81,12 @@ defmodule Diffo.Provider.AssignmentRelationship do
   end
 
   attributes do
+    attribute :alias, :atom do
+      description "the alias of this assignment, used by the consuming instance to name the slot"
+      allow_nil? true
+      public? true
+    end
+
     attribute :pool, :atom do
       description "the pool name this assignment belongs to (e.g. :ports)"
       allow_nil? false
@@ -96,6 +109,10 @@ defmodule Diffo.Provider.AssignmentRelationship do
 
   identities do
     identity :unique_assignment, [:source_id, :pool, :thing, :value] do
+      pre_check? true
+    end
+
+    identity :unique_alias, [:target_id, :alias] do
       pre_check? true
     end
   end
