@@ -45,6 +45,12 @@ defmodule Diffo.Test.Instance.AccessService do
 
     calculate :assigner_names, {:array, :string},
       {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [field: :name]}
+
+    calculate :assigned_port, {:array, :integer},
+      {Diffo.Provider.Calculations.FieldFromAssignment, [alias: :primary, field: :value]}
+
+    calculate :all_assignment_values, {:array, :integer},
+      {Diffo.Provider.Calculations.FieldFromAssignment, [field: :value]}
   end
 
   actions do
