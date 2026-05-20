@@ -494,6 +494,114 @@ defmodule Diffo.Compute.GPU do
 end
 ```
 
+## Aliases, Inherited DSL, and Field Calculations
+
+### Aliases on assignment slots
+
+Every `AssignmentRelationship` carries an optional `:alias` — an atom given to a slot by
+the consuming (target) side before or when the assignment is bound. Think of it as a stable
+name for the slot: the consumer says "I have a slot called `:primary_gpu`", and the producer
+assigns into it carrying `alias: :primary_gpu`. The alias never changes, even if the
+assignment is recreated.
+
+Pass the alias via `Assignment.alias` when assigning:
+
+```elixir
+# Assign a core from gpu_1 into cluster_1's :primary_gpu slot
+assignment = %{
+  assignment: %Assignment{
+    assignee_id: cluster_1.id,
+    operation: :auto_assign,
+    alias: :primary_gpu
+  }
+}
+gpu_1 = Compute.assign_gpu_core!(gpu_1, assignment)
+```
+
+The identity constraint `[:target_id, :alias]` on `AssignmentRelationship` guarantees at
+most one assignment per (cluster, alias) pair — the `:primary_gpu` slot can only hold one
+assignment at a time.
+
+### Inheriting a place from an assigned resource
+
+A service or resource can declare that it inherits a place from the instance that assigned
+something to it — without creating its own `PlaceRef` edge. The `inherited_place` DSL entity
+in `places do` generates an Ash calculation that traverses the assignment graph at read time.
+
+In our Compute example: if a `GPU` instance has a `:data_centre` place, and a `Cluster`
+wants to surface the data centre of its primary GPU, it can declare:
+
+```elixir
+provider do
+  places do
+    # Traverses AssignmentRelationship where alias = :primary_gpu,
+    # reads PlaceRef with role :data_centre from the source GPU instance.
+    inherited_place :primary_data_centre, via: [:primary_gpu], source_role: :data_centre
+  end
+end
+```
+
+Load it like any other calculation:
+
+```elixir
+cluster = Ash.load!(cluster_1, [:primary_data_centre], domain: Compute)
+# cluster.primary_data_centre => [%DataCentre{...}]
+```
+
+`inherited_party` works identically for party inheritance:
+
+```elixir
+# Cluster inherits the operating Tenant from the GPU it was assigned from
+provider do
+  parties do
+    inherited_party :operator, via: [:primary_gpu], source_role: :operator
+  end
+end
+```
+
+### Reading fields from the assignment graph
+
+Three calculation modules handle common traversal patterns. All return lists.
+
+**`FieldFromAssignment`** — reads a field directly from the `AssignmentRelationship`
+record. Use it for values that live on the relationship itself: `:value`, `:pool`,
+`:thing`, `:alias`.
+
+```elixir
+# Core number assigned to this cluster under the :primary_gpu slot
+calculate :primary_core, {:array, :integer},
+  {Diffo.Provider.Calculations.FieldFromAssignment, [alias: :primary_gpu, field: :value]}
+```
+
+**`FieldViaAssignedRelationship`** — traverses assignment in reverse (cluster → GPU)
+and reads a field from the source instance. Use it for fields that live on the assigning
+resource, not the relationship.
+
+```elixir
+# Name of the GPU holding the :primary_gpu slot on this cluster
+calculate :primary_gpu_name, {:array, :string},
+  {Diffo.Provider.Calculations.FieldViaAssignedRelationship,
+   [via: [:primary_gpu], field: :name]}
+```
+
+**`FieldViaRelationship`** — traverses `DefinedSimpleRelationship` in the forward
+direction (source → target) filtered by `alias:` and/or `type:`. Use it when this
+instance is the *source* of a named forward relationship.
+
+```elixir
+# Name of the downstream node this GPU provides to
+calculate :downstream_name, {:array, :string},
+  {Diffo.Provider.Calculations.FieldViaRelationship,
+   [type: :assignedTo, alias: :downstream, field: :name]}
+```
+
+| I want… | Use |
+|---------|-----|
+| Value on the assignment record (`:value`, `:pool`) | `FieldFromAssignment` |
+| Field from the instance that assigned to me | `FieldViaAssignedRelationship` |
+| Field from an instance I have a forward relationship to | `FieldViaRelationship` |
+| Place/party inherited via assignment | `inherited_place` / `inherited_party` |
+
 ## Party Extension
 
 `Diffo.Provider.BaseParty` is an Ash Resource Fragment for domain-specific Party kinds, mirroring `BaseInstance`. It provides common Party attributes — `id`, `href`, `name`, `type`, `referred_type` — and the unified `Diffo.Provider.Extension` DSL. Within `provider do`, a Party kind uses `instances do`, `parties do`, and `places do` sections to declare the roles it plays.

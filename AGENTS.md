@@ -51,7 +51,10 @@ lib/diffo/provider/
     relationship_step.ex        # RelationshipStep struct — pipeline step for relationships do
     persisters/                 # Terminal bakers — run after all transformers; only read DSL state and bake module functions
     transformers/
-      transform_relationships.ex  # TransformRelationships — resolves relationships pipeline, bakes permitted_source_roles/0 and permitted_target_roles/0
+      transform_relationships.ex    # TransformRelationships — resolves relationships pipeline, bakes permitted_source_roles/0 and permitted_target_roles/0
+      transform_inherited_refs.ex   # TransformInheritedRefs — injects calculations for inherited_place/inherited_party declarations
+    inherited_place_declaration.ex  # DSL entity struct for inherited_place
+    inherited_party_declaration.ex  # DSL entity struct for inherited_party
     verifiers/
       verify_relationships.ex     # Verifies relationship role declarations are atoms
   validations/
@@ -69,8 +72,13 @@ lib/diffo/provider/
     assignment_relationship.ex        # AssignmentRelationship — pool assignment relationship with top-level pool/thing/value/alias scalar attributes
     relationship.ex                   # Relationship — mutable TMF service/resource relationship with graph Characteristic nodes
     calculations/
-      characteristic_value.ex   # Calculation: builds .Value TypedStruct from record fields
-      assigned_values.ex        # Calculation: returns list of assigned integers for a pool+thing
+      characteristic_value.ex              # Calculation: builds .Value TypedStruct from record fields
+      assigned_values.ex                   # Calculation: returns list of assigned integers for a pool+thing
+      inherited_place.ex                   # Calculation: backing impl for inherited_place DSL
+      inherited_party.ex                   # Calculation: backing impl for inherited_party DSL
+      field_from_assignment.ex             # Calculation: field from AssignmentRelationship record
+      field_via_assigned_relationship.ex   # Calculation: field from source instance via assignment traversal
+      field_via_relationship.ex            # Calculation: field from target instance via DefinedSimpleRelationship
     instance/extension.ex       # Thin marker (sections: []) — kind identification
     party/extension.ex          # Thin marker
     place/extension.ex          # Thin marker
@@ -147,6 +155,10 @@ provider do
   places do
     place :installation_site, MyApp.GeographicSite
     place_ref :billing_address, MyApp.GeographicAddress
+    # Inherited — generates a calculation that traverses AssignmentRelationship
+    # by alias and reads PlaceRef from the source instance. No PlaceRef edge is created.
+    inherited_place :exchange, source_role: :location         # alias = role name (single-hop default)
+    inherited_place :nni_site, via: [:uplink], source_role: :location  # explicit alias
   end
 
   behaviour do
@@ -350,3 +362,17 @@ not. Add any useful hypotheses as a follow-up comment on the issue, then leave i
 - Using `Ash.Resource.Change` for pure permission or constraint checks — anything that only
   decides valid/invalid with no side effects belongs in `Ash.Resource.Validation`, not a
   change. Changes are for mutations.
+- Using `inherited_place` or `inherited_party` without an assignment alias in place — the
+  traversal filters by alias; if the assignment was created without an alias (or with a
+  different alias), the calculation returns an empty list. Ensure the `alias:` field on
+  `Assignment` matches the declared role (or the `via:` step) before expecting results.
+- Referencing `Diffo.Provider.Calculations.InheritedPlace` or `InheritedParty` directly in
+  `calculations do` — these are internal modules injected by the transformer. Use the
+  `inherited_place` / `inherited_party` DSL entities in `places do` / `parties do` instead.
+- Reaching for `FieldViaRelationship` to traverse an `AssignmentRelationship` — that module
+  traverses `DefinedSimpleRelationship` (forward, source → target). For assignments
+  (reverse, target → source) use `FieldViaAssignedRelationship` or `FieldFromAssignment`.
+- Querying `FieldViaRelationship` without supplying `alias:` or `type:` — a source instance
+  typically has many forward `DefinedSimpleRelationship` records pointing to unrelated things.
+  Without at least one filter the result is a noisy mix. Always supply `alias:`, `type:`, or
+  both.
