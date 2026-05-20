@@ -11,6 +11,54 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.4.0](https://github.com/diffo-dev/diffo/compare/v0.3.0...v0.4.0) (2026-05-20)
+
+### Breaking Changes
+
+* `Diffo.Provider.AssignedToRelationship` replaced by `Diffo.Provider.AssignmentRelationship` — stores pool assignments with top-level `pool`, `thing`, `value`, and `alias` scalar attributes, enabling graph-level filtering in AshNeo4j queries. Any existing graph data on `AssignedToRelationship` nodes must be migrated.
+* `create_assigned_to_relationship` code interface removed — use `create_assignment_relationship` instead.
+* `instance.assignments` now returns `AssignmentRelationship` records (struct name change only).
+
+### Features
+
+* **`DefinedSimpleRelationship`** — new resource for relationships carrying an optional single embedded `NameValuePrimitive` characteristic, frozen at creation. Used by the Assigner and available as a general-purpose committed-relationship primitive. Accessible via `instance.assignments`.
+* **`AssignmentRelationship` aliases** — the `alias` attribute on `AssignmentRelationship` (identity `[:target_id, :alias]`) gives a consuming instance a stable name for an assignment slot. Mirrors the `[:source_id, :alias]` identity on `DefinedSimpleRelationship`. Alias semantics are the foundation of the first-order expectation system (#74).
+* **`relationships do` DSL** — source and target validation pipeline for Instance resources. `ValidateRelationshipPermitted` is injected automatically into relate actions. Supports `:all`, `:none`, and explicit role-name lists.
+* **Resource lifecycle states** — `resource_state` attribute on Instance resources with standard TMF states (`:installed`, `:operating`, `:retired`, etc.). The Assigner enforces `:operating` before allowing assignment.
+* **`inherited_place` / `inherited_party` DSL** — declare inside `places do` / `parties do` on an Instance resource to generate an Ash calculation that traverses the assignment graph by alias and inherits a place or party from the source instance. No `PlaceRef`/`PartyRef` edge is created — the calculation is the reference. Supports single-hop (default: role name as alias) and multi-hop (`via:` list).
+* **`FieldFromAssignment`** (`Diffo.Provider.Calculations.FieldFromAssignment`) — reads a field directly from an `AssignmentRelationship` record (`:value`, `:pool`, `:thing`, `:alias`). Filtered by optional `alias:`. Returns a list.
+* **`FieldViaAssignedRelationship`** (`Diffo.Provider.Calculations.FieldViaAssignedRelationship`) — traverses `AssignmentRelationship` in reverse (target → source) and reads a named field from each source instance. Supports multi-hop `via:` traversal. Returns a list.
+* **`FieldViaRelationship`** (`Diffo.Provider.Calculations.FieldViaRelationship`) — traverses `DefinedSimpleRelationship` forward (source → target) filtered by optional `alias:` and/or `type:`, and reads a named field from each target instance. Returns a list.
+
+### Notable Changes
+
+* Assigner rearchitected — `AssignmentRelationship` carries `pool`, `thing`, `value`, `alias` as top-level attributes for AshNeo4j-level filtering; `assigned_values` and `free_values` use query-level filtering rather than in-memory computation where possible.
+* `TransformBehaviour` moved from persister pipeline to transformer pipeline for correct Spark ordering relative to Ash's own transformers.
+* Characteristic type verifier improved — rejects `characteristic` DSL declarations whose type module is not derived from `BaseCharacteristic`.
+
+### Documentation
+
+* `usage-rules.md` — new sections covering alias semantics, `inherited_place`/`inherited_party` DSL, and all three field calculation modules including a decision table.
+* `AGENTS.md` — updated project structure, DSL inline examples for inherited refs, and new common mistakes section entries.
+* Provider Extension livebook — new section "Aliases, Inherited DSL, and Field Calculations" with Compute-domain examples.
+
+### What's Changed
+
+* defined_simple_relationship by @matt-beanland in https://github.com/diffo-dev/diffo/pull/142
+* refactored assigner using defined_simple_relationship by @matt-beanland in https://github.com/diffo-dev/diffo/pull/143
+* relationships DSL by @matt-beanland in https://github.com/diffo-dev/diffo/pull/146
+* relationships target side validation by @matt-beanlanda in https://github.com/diffo-dev/diffo/pull/148
+* clean code by @matt-beanland in https://github.com/diffo-dev/diffo/pull/150
+* improved assigner using aggregates by @matt-beanland in https://github.com/diffo-dev/diffo/pull/151
+* refactor transformers and persisters by @matt-beanland in https://github.com/diffo-dev/diffo/pull/152
+* resource lifecycle state by @matt-beanland in https://github.com/diffo-dev/diffo/pull/154
+* inherited party and place via instance DSL by @matt-beanland in https://github.com/diffo-dev/diffo/pull/155
+* agent guidance by @matt-beanland in https://github.com/diffo-dev/diffo/pull/161
+* FieldViaAssignedRelationship calculation by @matt-beanland in https://github.com/diffo-dev/diffo/pull/162
+* FieldViaRelationship calculation by @matt-beanland in https://github.com/diffo-dev/diffo/pull/165
+* FieldFromAssignment calculation by @matt-beanland in https://github.com/diffo-dev/diffo/pull/164
+* docs pass — inherited DSL, aliases, and field calculations by @matt-beanland in https://github.com/diffo-dev/diffo/pull/166
+
 ## [v0.3.0](https://github.com/diffo-dev/diffo/compare/v0.2.2...v0.3.0) (2026-05-17)
 
 ### Breaking Changes
