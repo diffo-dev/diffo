@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Provider.Extension.FieldViaAliasedRelationshipTest do
+defmodule Diffo.Provider.Extension.FieldViaRelationshipTest do
   @moduledoc false
   use ExUnit.Case, async: true
   @moduletag :domain_extended
@@ -15,7 +15,7 @@ defmodule Diffo.Provider.Extension.FieldViaAliasedRelationshipTest do
     on_exit(&AshNeo4j.Sandbox.rollback/0)
   end
 
-  describe "FieldViaAliasedRelationship — aliased" do
+  describe "FieldViaRelationship — aliased" do
     test "returns field from target instance reached via alias" do
       {:ok, shelf} = Parties.build_shelf_with_installer()
       {:ok, card} = Servo.build_card(%{name: "target-card"})
@@ -65,8 +65,8 @@ defmodule Diffo.Provider.Extension.FieldViaAliasedRelationshipTest do
     end
   end
 
-  describe "FieldViaAliasedRelationship — unaliased (all targets)" do
-    test "returns fields from all related target instances regardless of alias" do
+  describe "FieldViaRelationship — type filter" do
+    test "type filters to only relationships of the matching type" do
       {:ok, shelf} = Parties.build_shelf_with_installer()
       {:ok, card_a} = Servo.build_card(%{name: "target-a"})
       {:ok, card_b} = Servo.build_card(%{name: "target-b"})
@@ -79,23 +79,15 @@ defmodule Diffo.Provider.Extension.FieldViaAliasedRelationshipTest do
       })
 
       Diffo.Provider.create_defined_simple_relationship!(%{
-        type: :assignedTo,
-        alias: :other,
+        type: :reliesOn,
+        alias: :link,
         source_id: shelf.id,
         target_id: card_b.id
       })
 
-      shelf = Ash.load!(shelf, [:all_linked_names], domain: Servo)
+      shelf = Ash.load!(shelf, [:assigned_linked_name], domain: Servo)
 
-      assert Enum.sort(shelf.all_linked_names) == ["target-a", "target-b"]
-    end
-
-    test "returns empty list when no relationships exist" do
-      {:ok, shelf} = Parties.build_shelf_with_installer()
-
-      shelf = Ash.load!(shelf, [:all_linked_names], domain: Servo)
-
-      assert shelf.all_linked_names == []
+      assert shelf.assigned_linked_name == ["target-a"]
     end
   end
 end
