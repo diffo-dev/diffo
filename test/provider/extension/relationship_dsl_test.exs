@@ -194,6 +194,5 @@ defmodule Diffo.Provider.Extension.RelationshipDslTest do
       assert {:error, error} = result
       assert Exception.message(error) =~ "not permitted as target"
     end
-
   end
 end

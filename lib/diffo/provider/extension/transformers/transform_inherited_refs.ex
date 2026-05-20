@@ -33,7 +33,8 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedRefs do
     calc = %Ash.Resource.Calculation{
       name: decl.role,
       type: {:array, :map},
-      calculation: {Diffo.Provider.Calculations.InheritedPlace, [via: via, source_role: decl.source_role]},
+      calculation:
+        {Diffo.Provider.Calculations.InheritedPlace, [via: via, source_role: decl.source_role]},
       description: "Inherited place via assignment alias traversal",
       arguments: [],
       public?: true,
@@ -50,7 +51,8 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedRefs do
     calc = %Ash.Resource.Calculation{
       name: decl.role,
       type: {:array, :map},
-      calculation: {Diffo.Provider.Calculations.InheritedParty, [via: via, source_role: decl.source_role]},
+      calculation:
+        {Diffo.Provider.Calculations.InheritedParty, [via: via, source_role: decl.source_role]},
       description: "Inherited party via assignment alias traversal",
       arguments: [],
       public?: true,

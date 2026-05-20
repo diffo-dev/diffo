@@ -339,7 +339,13 @@ defmodule Diffo.Provider.Extension do
       end
       """
     ],
-    entities: [@party_entity, @parties_entity, @party_ref_entity, @party_role_entity, @inherited_party_entity]
+    entities: [
+      @party_entity,
+      @parties_entity,
+      @party_ref_entity,
+      @party_role_entity,
+      @inherited_party_entity
+    ]
   }
 
   # ── places ─────────────────────────────────────────────────────────────────
@@ -441,7 +447,13 @@ defmodule Diffo.Provider.Extension do
       end
       """
     ],
-    entities: [@place_entity, @places_entity, @place_ref_entity, @place_role_entity, @inherited_place_entity]
+    entities: [
+      @place_entity,
+      @places_entity,
+      @place_ref_entity,
+      @place_role_entity,
+      @inherited_place_entity
+    ]
   }
 
   # ── instances ──────────────────────────────────────────────────────────────

@@ -40,7 +40,8 @@ defmodule Diffo.Provider.Instance.Feature do
       {:ok, []},
       fn %{name: name, is_enabled?: isEnabled, characteristics: characteristics}, {:ok, acc} ->
         characteristic_ids =
-          Enum.reduce_while(characteristics, {:ok, []}, fn %{name: name, value_type: value_type}, {:ok, ids} ->
+          Enum.reduce_while(characteristics, {:ok, []}, fn %{name: name, value_type: value_type},
+                                                           {:ok, ids} ->
             try do
               attrs =
                 case value_type do
