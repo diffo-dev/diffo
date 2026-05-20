@@ -44,7 +44,11 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
 
       {:ok, _card} =
         Servo.assign_port(card, %{
-          assignment: %Assignment{assignee_id: service.id, operation: :auto_assign, alias: :primary}
+          assignment: %Assignment{
+            assignee_id: service.id,
+            operation: :auto_assign,
+            alias: :primary
+          }
         })
 
       service = Ash.load!(service, [:primary], domain: Servo)
@@ -105,12 +109,20 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
 
       {:ok, _card_a} =
         Servo.assign_port(card_a, %{
-          assignment: %Assignment{assignee_id: service.id, operation: :auto_assign, alias: :primary}
+          assignment: %Assignment{
+            assignee_id: service.id,
+            operation: :auto_assign,
+            alias: :primary
+          }
         })
 
       {:ok, _card_b} =
         Servo.assign_port(card_b, %{
-          assignment: %Assignment{assignee_id: service.id, operation: :auto_assign, alias: :secondary}
+          assignment: %Assignment{
+            assignee_id: service.id,
+            operation: :auto_assign,
+            alias: :secondary
+          }
         })
 
       service = Ash.load!(service, [:primary], domain: Servo)

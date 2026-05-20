@@ -68,6 +68,7 @@ defmodule Diffo.Provider.Instance.Util do
           nil -> result
           state -> Diffo.Util.set(result, :lifecycleState, state)
         end
+
         # |> Diffo.Util.ensure_not_nil(:administrativeState, record.resource_administrative_state)
         # |> Diffo.Util.ensure_not_nil(:operationalState, record.resource_operational_state)
         # |> Diffo.Util.ensure_not_nil(:resourceStatus, record.resource_status)

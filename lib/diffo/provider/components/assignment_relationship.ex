@@ -45,7 +45,9 @@ defmodule Diffo.Provider.AssignmentRelationship do
       }
 
       list_name =
-        Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(record.target_type)
+        Diffo.Provider.Relationship.derive_relationship_characteristic_list_name(
+          record.target_type
+        )
 
       characteristics =
         [%{name: record.thing, value: record.value}]
@@ -61,8 +63,13 @@ defmodule Diffo.Provider.AssignmentRelationship do
       |> Diffo.Util.set(list_name, characteristics)
     end
 
-    order [:type, :resource, :service, :resourceRelationshipCharacteristic,
-           :serviceRelationshipCharacteristic]
+    order [
+      :type,
+      :resource,
+      :service,
+      :resourceRelationshipCharacteristic,
+      :serviceRelationshipCharacteristic
+    ]
   end
 
   actions do
