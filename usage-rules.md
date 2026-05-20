@@ -13,6 +13,47 @@ and Resource Management domains on top of a Neo4j graph database. It provides th
 fragments — `BaseInstance`, `BaseParty`, `BasePlace` — plus the unified `Diffo.Provider.Extension`
 DSL. Read these rules and the Ash/AshNeo4j usage rules **before** writing any domain code.
 
+## The recommended usage pattern
+
+Build your own Ash domain. Do not add your resources to `Diffo.Provider` — that domain is
+Diffo's internal plumbing and its API is intentionally closed. Your domain owns its own API,
+which it exposes to consumers who need know nothing about Diffo or TMF internals. The Diffo
+Provider is an implementation detail that your domain depends on, not something your consumers
+touch directly.
+
+```elixir
+defmodule MyApp.SRM do
+  use Ash.Domain, fragments: [Diffo.Provider.DomainFragment]
+
+  resources do
+    resource MyApp.BroadbandService
+    resource MyApp.RSP
+    resource MyApp.GeographicSite
+    resource MyApp.SpeedCharacteristic
+  end
+end
+```
+
+`Diffo.Provider.DomainFragment` is **required** for any domain whose resources use the Diffo
+base fragments. It causes AshNeo4j to write `:Provider` as an additional label on every node
+in your domain at CREATE time. Without it, Ash's relationship management cannot resolve your
+concrete resource nodes (e.g. `BroadbandService`) through the provider base type lookups
+(e.g. `Diffo.Provider.Instance`) that Diffo uses internally — the lookups will silently return
+not-found and relationships will fail to be established.
+
+See `Diffo.Provider.DomainFragment` for the technical details.
+
+### Neo4j database access policy
+
+Neo4j Browser (or Neo4j Bloom) is an excellent way to **observe** your graph — explore
+relationships, verify that nodes have the right labels and properties, debug unexpected
+structure. Use it freely for this purpose.
+
+**All data reads and writes must go through Ash and AshNeo4j.** Do not issue Cypher queries
+directly from application code, scripts, or migrations to mutate or authoritatively read data.
+AshNeo4j manages label consistency, relationship integrity, and type casting; bypassing it
+produces nodes that Ash cannot find or interpret correctly.
+
 ## The three kinds of domain resource
 
 | Kind | Base fragment | Marker extension |
@@ -30,7 +71,7 @@ Always start from the appropriate base fragment:
 
 ```elixir
 defmodule MyApp.BroadbandService do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.Domain
+  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.SRM
   ...
 end
 ```
@@ -40,7 +81,7 @@ end
 All DSL declarations live inside a single `provider do` block. The sections available
 depend on the resource kind:
 
-- **Instance** — `specification`, `characteristics`, `features`, `pools`, `parties`, `places`, `behaviour`
+- **Instance** — `specification`, `characteristics`, `features`, `pools`, `parties`, `places`, `relationships`, `behaviour`
 - **Party** — `instances`, `parties`, `places`
 - **Place** — `instances`, `parties`, `places`
 
@@ -89,7 +130,7 @@ its own attributes, a `:value` calculation, and create/update actions:
 defmodule MyApp.SpeedCharacteristic do
   use Ash.Resource,
     fragments: [Diffo.Provider.BaseCharacteristic],
-    domain: MyApp.Domain
+    domain: MyApp.SRM
 
   attributes do
     attribute :downstream_mbps, :integer, public?: true
@@ -284,6 +325,40 @@ update :assign_core do
 end
 ```
 
+### `relationships do` — Instance only
+
+Declares which relationship roles this Instance kind may participate in as a **source** or
+**target** in TMF `Relationship` records. Omitting the section defaults both directions to
+`:none`, which blocks any update action that passes `argument :relationships, {:array, :struct}`.
+
+Declarations form a pipeline — `source` and `target` steps may each be repeated; **the last
+declaration per direction wins**.
+
+```elixir
+provider do
+  relationships do
+    source [:provides, :requires]   # last step overrides earlier ones
+    target :all
+  end
+end
+```
+
+Each step accepts `:all`, `:none`, or a non-empty list of role-name atoms (relationship aliases):
+
+| Value | Meaning |
+|---|---|
+| `:all` | any alias is permitted in this direction |
+| `:none` | no relationships are permitted (default when section is omitted) |
+| `[:provides, :requires]` | only these alias atoms are permitted |
+
+`ValidateRelationshipPermitted` is automatically injected by the DSL into every update action
+that carries `argument :relationships, {:array, :struct}`. It enforces `permitted_source_roles/0`
+on the source resource before the action runs.
+
+**The Assigner is not affected** — assignment actions use `argument :assignment`, not
+`argument :relationships`, and write `DefinedSimpleRelationship` records directly via the
+Provider domain. `relationships do` permissions are never checked during assignment.
+
 ### `behaviour do` — Instance only
 
 Marks a named create action for build wiring. Declaring `create :name` injects the
@@ -307,6 +382,8 @@ functions:
 
 - `specification/0`, `characteristics/0`, `features/0`, `pools/0`, `parties/0`, `places/0`
 - `characteristic/1`, `feature/1`, `feature_characteristic/2`, `pool/1`, `party/1`, `place/1`
+- `relationships/0` — raw ordered list of `RelationshipStep` pipeline entries
+- `permitted_source_roles/0`, `permitted_target_roles/0` — resolved permission (`:all`, `:none`, or list of atoms)
 - `build_before/1` — upserts the Specification node; creates Feature, Characteristic, and
   Party nodes; sets action argument ids. Called automatically before every create action.
 - `build_after/2` — relates the created TMF entities to the new instance node. Called
@@ -361,9 +438,20 @@ label `:Card` and queries are ambiguous. Rename to `CardInstance` and `CardChara
 ## Complete example
 
 ```elixir
+# Domain — include the fragment so manage_relationship resolves across domains
+defmodule MyApp.SRM do
+  use Ash.Domain, fragments: [Diffo.Provider.DomainFragment]
+
+  resources do
+    resource MyApp.BroadbandService
+    resource MyApp.RSP
+    resource MyApp.GeographicSite
+  end
+end
+
 # Instance resource
 defmodule MyApp.BroadbandService do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.Domain
+  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.SRM
 
   resource do
     description "An ADSL broadband service"
@@ -410,7 +498,7 @@ end
 
 # Party resource
 defmodule MyApp.RSP do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseParty], domain: MyApp.Domain
+  use Ash.Resource, fragments: [Diffo.Provider.BaseParty], domain: MyApp.SRM
 
   resource do
     description "A Retail Service Provider"
@@ -436,7 +524,7 @@ end
 
 # Place resource
 defmodule MyApp.GeographicSite do
-  use Ash.Resource, fragments: [Diffo.Provider.BasePlace], domain: MyApp.Domain
+  use Ash.Resource, fragments: [Diffo.Provider.BasePlace], domain: MyApp.SRM
 
   resource do
     description "A geographic site"
@@ -461,8 +549,154 @@ defmodule MyApp.GeographicSite do
 end
 ```
 
+## Aliases on relationships
+
+Both `AssignmentRelationship` and `DefinedSimpleRelationship` carry an optional `:alias`
+attribute — an atom given to a relationship slot by the consuming (target) side.
+
+An alias is the consumer's stable name for a slot before (or when) the relationship is
+bound. It survives the relationship's lifetime unchanged. Think of it as a "baby name"
+for a slot: the AVC says "I have a slot called `:svlan`"; when the CVC assigns a VLAN to
+that AVC, the `AssignmentRelationship` record carries `alias: :svlan`. No matter which
+CVC fills the slot or how many times the assignment is changed, the alias stays fixed.
+
+Identity constraints enforce uniqueness:
+- `AssignmentRelationship` — `[:target_id, :alias]` — at most one assignment per
+  (target, alias) pair. This is how the consumer guarantees slot uniqueness.
+- `DefinedSimpleRelationship` — `[:source_id, :alias]` — at most one outgoing
+  relationship per (source, alias) pair.
+
+Aliases are the join key for the first-order expectation system (issue #74): an
+expectation declares an alias for a slot it expects to be filled; the actual relationship
+carries the same alias, so intent and fulfilment can be matched precisely. Without the
+expectation system in place, aliases appear to be optional metadata — with it, they are
+the primary correlation key.
+
+```elixir
+# Assigning with an alias — the AVC names its SVLAN slot :svlan
+Servo.assign_port(cvc, %{
+  assignment: %Assignment{
+    assignee_id: avc.id,
+    operation: :auto_assign,
+    alias: :svlan
+  }
+})
+```
+
+## `inherited_place` and `inherited_party` DSL
+
+Declare `inherited_place` or `inherited_party` inside `places do` / `parties do` on an
+Instance resource to generate an Ash calculation that traverses the assignment graph and
+inherits a place or party from the source instance.
+
+No `PlaceRef` or `PartyRef` edge is created on the consuming instance — the calculation
+IS the reference. The result is a list (consistent with all traversal calculations).
+
+```elixir
+provider do
+  places do
+    # Single-hop: traverses AssignmentRelationship where alias = :installation_site,
+    # reads PlaceRef with role :location from the source instance
+    inherited_place :installation_site, source_role: :location
+
+    # Explicit alias (same as above written long-form)
+    inherited_place :exchange, via: [:exchange], source_role: :location
+
+    # Multi-hop: :primary slot on this instance → :uplink slot on that instance →
+    # reads :location PlaceRef from the final source
+    inherited_place :exchange, via: [:primary, :uplink], source_role: :location
+  end
+
+  parties do
+    inherited_party :provider, source_role: :provider
+  end
+end
+```
+
+Options:
+- `source_role:` *(required)* — the `PlaceRef`/`PartyRef` role to read from the resolved
+  source instance.
+- `via:` *(optional)* — explicit list of alias atoms for multi-hop traversal. When
+  omitted, the role name itself is used as the single alias step.
+
+The DSL entity must be declared in the correct section (`places do` for `inherited_place`,
+`parties do` for `inherited_party`). The generated calculation name matches the declared role.
+
+## Field calculation modules
+
+Three general-purpose calculation modules cover reading fields across the assignment and
+relationship graph. Declare them in a `calculations do` block on any Instance resource.
+
+### `FieldFromAssignment`
+
+Reads a field directly from an `AssignmentRelationship` record — no hop to the source
+instance. Use this when you want a value that lives on the relationship itself.
+
+```elixir
+# Port number assigned to this service under the :svlan slot
+calculate :assigned_vlan, {:array, :integer},
+  {Diffo.Provider.Calculations.FieldFromAssignment, [alias: :svlan, field: :value]}
+
+# Pool name for every assignment on this instance (no alias filter)
+calculate :assignment_pools, {:array, :atom},
+  {Diffo.Provider.Calculations.FieldFromAssignment, [field: :pool]}
+```
+
+Options: `field:` (required), `alias:` (optional).
+
+### `FieldViaAssignedRelationship`
+
+Traverses `AssignmentRelationship` in reverse (target → source) and reads a field from
+each source instance. Use this when you want a field that belongs to the assigning
+instance, not the relationship record.
+
+```elixir
+# Name of the CVC holding the :svlan assignment slot on this AVC
+calculate :cvc_id, {:array, :string},
+  {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [via: [:svlan], field: :name]}
+```
+
+Options: `field:` (required), `via:` (optional list of alias steps — omit for unaliased).
+
+### `FieldViaRelationship`
+
+Traverses `DefinedSimpleRelationship` in the forward direction (source → target) filtered
+by `alias:` and/or `type:`, and reads a field from each target instance.
+
+```elixir
+# Name of the target reached via the :provides alias
+calculate :downstream_name, {:array, :string},
+  {Diffo.Provider.Calculations.FieldViaRelationship, [alias: :provides, field: :name]}
+
+# Name narrowed by both type and alias
+calculate :assigned_node_name, {:array, :string},
+  {Diffo.Provider.Calculations.FieldViaRelationship,
+   [type: :assignedTo, alias: :node, field: :name]}
+```
+
+Options: `field:` (required), `alias:` (optional), `type:` (optional). Provide at least
+one of `alias:` or `type:` — querying by `source_id` alone returns all forward
+relationships mixed together, which is rarely useful.
+
+### Choosing between the three
+
+| I want… | Use |
+|---------|-----|
+| A value stored on the assignment record itself (`:value`, `:pool`, `:alias`) | `FieldFromAssignment` |
+| A field from the instance that assigned something to me | `FieldViaAssignedRelationship` |
+| A field from the instance I have a forward relationship to | `FieldViaRelationship` |
+| A place/party inherited from the assigning instance | `inherited_place` / `inherited_party` DSL |
+
 ## Common mistakes
 
+- **Do not add your resources to `Diffo.Provider`** — that domain is closed. Build your own
+  domain using `fragments: [Diffo.Provider.DomainFragment]` and put your resources there.
+- **Do not omit `Diffo.Provider.DomainFragment` from your domain** — without it, `manage_relationship`
+  calls on resources with `belongs_to :instance, Diffo.Provider.Instance` (and similar) will
+  fail at runtime with not-found errors because AshNeo4j cannot match your concrete nodes
+  through the provider base type label pair. See the **recommended usage pattern** section.
+- **Do not issue Cypher queries directly from application code** — all reads and writes must
+  go through Ash and AshNeo4j. Neo4j Browser is for observation only.
 - **Do not use `structure do` or top-level `instances do`/`parties do`/`places do`** — these
   are the old pre-0.3.0 syntax. All declarations belong inside `provider do`.
 - **Do not use `party :role, Type, reference: true`** — use `party_ref :role, Type` instead.
@@ -484,7 +718,12 @@ end
   which looks up the thing name from the pool automatically. `assign/4` is still available for
   cases without a `pools do` declaration.
 - **Do not query `Diffo.Provider.Relationship` for `type: :assignedTo` records** — assignment
-  relationships live on `Diffo.Provider.AssignedToRelationship`. Access them via `instance.assignments`.
+  records live on `Diffo.Provider.DefinedSimpleRelationship`. Access them via `instance.assignments`.
 - **Do not filter `instance.forward_relationships` for `type == :assignedTo`** — those records no
-  longer exist there. `forward_relationships` contains only regular TMF relationships;
-  `assignments` contains pool assignment relationships.
+  longer exist there. `forward_relationships` contains only regular TMF `Relationship` nodes;
+  `instance.assignments` contains `DefinedSimpleRelationship` pool assignment records.
+- **Do not write `update :relate` actions without a `relationships do` section** — omitting the
+  section defaults `permitted_source_roles` to `:none`, causing all calls to that action to fail.
+  Add `relationships do source :all end` (or a specific list of roles) to permit relates.
+- **Do not add `relationships do` to Party or Place resources** — the section is for Instance
+  kinds only; it is not enforced on Party/Place resources and has no effect there.

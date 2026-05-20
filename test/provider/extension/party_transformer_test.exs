@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Extension.PartyTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
+  @moduletag :domain_extended
 
   alias Diffo.Test.Party.Organization
   alias Diffo.Test.Party.Person

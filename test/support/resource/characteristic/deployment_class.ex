@@ -13,17 +13,6 @@ defmodule Diffo.Test.Characteristic.DeploymentClass do
     plural_name :deployment_class_values
   end
 
-  attributes do
-    attribute :class, :string, public?: true, description: "the deployment class"
-    attribute :mask, :string, public?: true, description: "the mask name"
-  end
-
-  calculations do
-    calculate :value, Diffo.Type.CharacteristicValue, Diffo.Provider.Calculations.CharacteristicValue do
-      public? true
-    end
-  end
-
   actions do
     create :create do
       accept [:name, :class, :mask]
@@ -35,6 +24,19 @@ defmodule Diffo.Test.Characteristic.DeploymentClass do
 
     update :update do
       accept [:class, :mask]
+    end
+  end
+
+  attributes do
+    attribute :class, :string, public?: true, description: "the deployment class"
+    attribute :mask, :string, public?: true, description: "the mask name"
+  end
+
+  calculations do
+    calculate :value,
+              Diffo.Type.CharacteristicValue,
+              Diffo.Provider.Calculations.CharacteristicValue do
+      public? true
     end
   end
 

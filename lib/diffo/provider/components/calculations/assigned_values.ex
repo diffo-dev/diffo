@@ -14,15 +14,10 @@ defmodule Diffo.Provider.Calculations.AssignedValues do
     thing = context.arguments[:thing]
 
     Enum.map(records, fn record ->
-      Diffo.Provider.AssignedToRelationship
-      |> Ash.Query.new()
-      |> Ash.Query.filter_input(
-        source_id: record.instance_id,
-        pool: record.name,
-        thing: thing
-      )
+      Diffo.Provider.AssignmentRelationship
+      |> Ash.Query.filter_input(source_id: record.instance_id, thing: thing)
       |> Ash.read!(domain: Diffo.Provider)
-      |> Enum.map(& &1.assigned)
+      |> Enum.map(& &1.value)
     end)
   end
 end

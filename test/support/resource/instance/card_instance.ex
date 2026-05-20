@@ -43,6 +43,10 @@ defmodule Diffo.Test.Instance.CardInstance do
       pool :ports, :port
     end
 
+    relationships do
+      target :all
+    end
+
     behaviour do
       actions do
         create :build

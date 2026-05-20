@@ -4,6 +4,7 @@
 
 defmodule Diffo.Type.PrimitiveTest do
   use ExUnit.Case, async: true
+  @moduletag :provider_only
 
   use Outstand
   alias Diffo.Type.Primitive

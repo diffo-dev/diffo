@@ -25,10 +25,6 @@ defmodule Diffo.Validations.IsRelatedDifferent do
   def validate(changeset, opts, _context) do
     case Ash.Changeset.fetch_argument_or_change(changeset, opts[:related_id]) do
       :error ->
-        # related_id isn't changing
-        :ok
-        {:ok, nil}
-        # related_id is nil
         :ok
 
       {:ok, related_id} ->

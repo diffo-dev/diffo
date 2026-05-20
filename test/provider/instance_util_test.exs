@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Instance.UtilTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :provider_only
 
   alias Diffo.Provider.Instance.Util
 

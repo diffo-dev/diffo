@@ -19,6 +19,8 @@ defmodule Diffo.Provider.Assignment do
       constraints: [min: 0],
       description: "the id of the assigned thing"
 
+    field :alias, :atom, description: "the consumer's stable name for this assignment slot"
+
     field :assignable_type, :string, description: "the type of the assigned thing"
 
     field :assignee_id, :uuid, description: "the id of the assignee Ash resource"

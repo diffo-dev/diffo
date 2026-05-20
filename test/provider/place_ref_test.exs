@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.PlaceRefTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :provider_only
   use Outstand
 
   setup do

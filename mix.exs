@@ -6,7 +6,7 @@ defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.4.0"
   @name "Diffo"
   @description "TMF Service and Resource Manager with a difference"
   @github_url "https://github.com/diffo-dev/diffo"
@@ -124,7 +124,7 @@ defmodule Diffo.MixProject do
       {:ash_outstanding, "~> 0.2.3"},
       {:ash_jason, "~> 3.0"},
       {:ash_state_machine, "~> 0.2.12"},
-      {:ash_neo4j, ash_neo4j_version("~> 0.5")},
+      {:ash_neo4j, ash_neo4j_version("~> 0.6")},
       {:bolty, ">= 0.0.12"},
       {:ash, ash_version("~> 3.0 and >= 3.24.2")},
       {:uuid, "~> 1.1"},
@@ -143,8 +143,7 @@ defmodule Diffo.MixProject do
         "docs",
         "spark.replace_doc_links"
       ],
-      "spark.cheat_sheets":
-        "spark.cheat_sheets --extensions Diffo.Provider.Extension",
+      "spark.cheat_sheets": "spark.cheat_sheets --extensions Diffo.Provider.Extension",
       "spark.formatter": [
         "spark.formatter --extensions Diffo.Provider.Extension",
         "format .formatter.exs"

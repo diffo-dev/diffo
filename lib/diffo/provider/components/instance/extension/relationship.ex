@@ -26,53 +26,27 @@ defmodule Diffo.Provider.Instance.Relationship do
         {:ok, result}
 
       _ ->
-        created_relationships =
-          Enum.reduce_while(relationships, [], fn %{
-                                                    id: id,
-                                                    alias: name,
-                                                    type: type,
-                                                    direction: direction
-                                                  },
-                                                  acc ->
+        Enum.reduce_while(relationships, :ok, fn %{
+                                                   id: id,
+                                                   alias: name,
+                                                   type: type,
+                                                   direction: direction
+                                                 },
+                                                 :ok ->
+          attrs =
             case direction do
-              :reverse ->
-                case Provider.create_relationship(%{
-                       source_id: id,
-                       party_id: result.id,
-                       alias: name,
-                       type: type
-                     }) do
-                  {:ok, relationship} ->
-                    {:cont, [relationship | acc]}
-
-                  {:error, _error} ->
-                    {:halt, []}
-                end
-
-              _ ->
-                # default :forward
-                case Provider.create_relationship(%{
-                       source_id: result.id,
-                       target_id: id,
-                       alias: name,
-                       type: type
-                     }) do
-                  {:ok, relationship} ->
-                    {:cont, [relationship | acc]}
-
-                  {:error, _error} ->
-                    {:halt, []}
-                end
+              :reverse -> %{source_id: id, party_id: result.id, alias: name, type: type}
+              _ -> %{source_id: result.id, target_id: id, alias: name, type: type}
             end
-          end)
 
-        case created_relationships do
-          [] ->
-            {:error, "couldn't relate instances"}
-
-          _ ->
-            # we haven't put the relationships into the result, they might be forward_relationships or reverse_relationships
-            {:ok, result}
+          case Provider.create_relationship(attrs) do
+            {:ok, _} -> {:cont, :ok}
+            {:error, error} -> {:halt, {:error, error}}
+          end
+        end)
+        |> case do
+          :ok -> {:ok, result}
+          {:error, error} -> {:error, error}
         end
     end
   end

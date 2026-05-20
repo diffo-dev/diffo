@@ -4,13 +4,14 @@
 
 defmodule Diffo.Provider.Assigner do
   @moduledoc """
-  Helper to perform Assignment using `Diffo.Provider.AssignedToRelationship`.
+  Helper to perform Assignment using `Diffo.Provider.AssignmentRelationship`.
 
-  Assignment state is stored on `AssignedToRelationship` nodes (pool, thing, assigned),
-  distinct from regular TMF `Diffo.Provider.Relationship` nodes.
+  Each assignment is stored as an `AssignmentRelationship` with top-level `pool`,
+  `thing`, and `value` attributes. This makes them filterable at the Cypher level
+  and usable in aggregate expressions.
   """
   alias Diffo.Provider.AssignableCharacteristic
-  alias Diffo.Provider.AssignedToRelationship
+  alias Diffo.Provider.AssignmentRelationship
 
   @doc """
   Assign a thing using the pool declared via `pools do` on the instance module.
@@ -18,9 +19,11 @@ defmodule Diffo.Provider.Assigner do
   """
   def assign(result, changeset, pool_name)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) and is_atom(pool_name) do
-    case result.__struct__.pool(pool_name) do
-      nil -> {:error, "pool #{pool_name} not declared on #{result.__struct__}"}
-      pool -> assign(result, changeset, pool_name, pool.thing)
+    with :ok <- check_lifecycle(result) do
+      case result.__struct__.pool(pool_name) do
+        nil -> {:error, "pool #{pool_name} not declared on #{result.__struct__}"}
+        pool -> assign(result, changeset, pool_name, pool.thing)
+      end
     end
   end
 
@@ -32,6 +35,7 @@ defmodule Diffo.Provider.Assigner do
              is_atom(thing) do
     assignment = Map.get(changeset.arguments, :assignment, %{})
     assignee_id = Map.get(assignment, :assignee_id)
+    alias_name = Map.get(assignment, :alias)
 
     case assignee_id do
       nil ->
@@ -40,61 +44,61 @@ defmodule Diffo.Provider.Assigner do
       _ ->
         case Map.get(assignment, :operation, :auto_assign) do
           :auto_assign ->
-            case next(result, pool, thing) do
-              {:ok, assigned} ->
-                relate_is_assigned(result, pool, thing, assigned, assignee_id)
-
-              {:error, error} ->
-                {:error, error}
+            with {:ok, value} <- next(result, pool, thing) do
+              create_assignment(result, pool, thing, value, assignee_id, alias_name)
             end
 
           :assign ->
-            case assignable?(result, pool, thing, assignment.id) do
-              true ->
-                relate_is_assigned(result, pool, thing, assignment.id, assignee_id)
-
-              false ->
-                {:error, "#{thing} #{assignment.id} is not assignable"}
+            if assignable?(result, pool, thing, assignment.id) do
+              create_assignment(result, pool, thing, assignment.id, assignee_id, alias_name)
+            else
+              {:error, "#{thing} #{assignment.id} is not assignable"}
             end
 
           :unassign ->
-            unrelate_is_assigned(result, pool, thing, assignment.id, assignee_id)
+            destroy_assignment(result, pool, thing, assignment.id, assignee_id)
         end
     end
   end
 
-  defp relate_is_assigned(result, pool, thing, value, assignee_id)
+  defp check_lifecycle(%{type: :resource, resource_state: state}) when state != :operating,
+    do:
+      {:error, "cannot assign: resource lifecycle state is #{inspect(state)}, must be :operating"}
+
+  defp check_lifecycle(%{type: :service, service_state: state})
+       when state not in [:active, :inactive],
+       do:
+         {:error,
+          "cannot assign: service state is #{inspect(state)}, must be :active or :inactive"}
+
+  defp check_lifecycle(_), do: :ok
+
+  defp create_assignment(result, pool, thing, value, assignee_id, alias_name)
        when is_struct(result) and is_atom(pool) and is_atom(thing) and is_integer(value) and
               is_bitstring(assignee_id) do
-    case Diffo.Provider.create_assigned_to_relationship(%{
-           pool: pool,
-           thing: thing,
-           assigned: value,
-           source_id: result.id,
-           target_id: assignee_id
-         }) do
-      {:ok, _relationship} ->
-        {:ok, result}
-
-      {:error, error} ->
-        {:error, error}
+    with {:ok, _} <-
+           Diffo.Provider.create_assignment_relationship(%{
+             alias: alias_name,
+             pool: pool,
+             thing: thing,
+             value: value,
+             source_id: result.id,
+             target_id: assignee_id
+           }) do
+      {:ok, result}
     end
   end
 
-  defp unrelate_is_assigned(result, pool, thing, value, assignee_id)
+  defp destroy_assignment(result, pool, thing, value, assignee_id)
        when is_struct(result) and is_atom(pool) and is_atom(thing) and is_integer(value) and
               is_bitstring(assignee_id) do
     case find_assignment(result.id, assignee_id, pool, thing, value) do
       {:ok, nil} ->
         {:error, "#{thing} #{value} is not assigned to assignee #{assignee_id}"}
 
-      {:ok, relationship} ->
-        case Ash.destroy(relationship, domain: Diffo.Provider) do
-          :ok ->
-            {:ok, result}
-
-          {:error, error} ->
-            {:error, error}
+      {:ok, assignment} ->
+        with :ok <- Ash.destroy(assignment, domain: Diffo.Provider) do
+          {:ok, result}
         end
 
       {:error, error} ->
@@ -103,26 +107,26 @@ defmodule Diffo.Provider.Assigner do
   end
 
   defp find_assignment(source_id, target_id, pool, thing, value) do
-    AssignedToRelationship
-    |> Ash.Query.new()
+    AssignmentRelationship
     |> Ash.Query.filter_input(
       source_id: source_id,
       target_id: target_id,
       pool: pool,
       thing: thing,
-      assigned: value
+      value: value
     )
     |> Ash.read_one(domain: Diffo.Provider)
   end
 
   defp next(instance, pool, thing)
        when is_struct(instance) and is_atom(pool) and is_atom(thing) do
-    case pool_characteristic(instance.id, pool, thing) do
+    case pool_characteristic(instance.id, pool) do
       {:ok, nil} ->
         {:error, "pool #{pool} not found on instance #{instance.id}"}
 
       {:ok, char} ->
-        free = Enum.to_list(char.first..char.last) -- char.assigned_values
+        assigned = assigned_values_for(instance.id, thing)
+        free = Enum.to_list(char.first..char.last) -- assigned
 
         case free do
           [] ->
@@ -143,18 +147,30 @@ defmodule Diffo.Provider.Assigner do
 
   defp assignable?(instance, pool, thing, value)
        when is_struct(instance) and is_atom(pool) and is_atom(thing) and is_integer(value) do
-    case pool_characteristic(instance.id, pool, thing) do
-      {:ok, nil} -> false
-      {:ok, char} -> value in Enum.to_list(char.first..char.last) -- char.assigned_values
-      {:error, _} -> false
+    case pool_characteristic(instance.id, pool) do
+      {:ok, nil} ->
+        false
+
+      {:ok, char} ->
+        assigned = assigned_values_for(instance.id, thing)
+        value in (Enum.to_list(char.first..char.last) -- assigned)
+
+      {:error, _} ->
+        false
     end
   end
 
-  defp pool_characteristic(instance_id, pool, thing) do
+  defp assigned_values_for(instance_id, thing) do
+    AssignmentRelationship
+    |> Ash.Query.filter_input(source_id: instance_id, thing: thing)
+    |> Ash.read!(domain: Diffo.Provider)
+    |> Enum.map(& &1.value)
+  end
+
+  defp pool_characteristic(instance_id, pool) do
     AssignableCharacteristic
     |> Ash.Query.new()
     |> Ash.Query.filter_input(instance_id: instance_id, name: pool)
-    |> Ash.Query.load(assigned_values: [thing: thing])
     |> Ash.read_one(domain: Diffo.Provider)
   end
 end
