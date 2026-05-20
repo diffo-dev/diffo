@@ -84,6 +84,14 @@ defmodule Diffo.Test.Instance.ShelfInstance do
     end
   end
 
+  calculations do
+    calculate :linked_target_name, {:array, :string},
+      {Diffo.Provider.Calculations.FieldViaAliasedRelationship, [alias: :link, field: :name]}
+
+    calculate :all_linked_names, {:array, :string},
+      {Diffo.Provider.Calculations.FieldViaAliasedRelationship, [field: :name]}
+  end
+
   actions do
     create :build do
       description "creates a new Shelf resource instance for build"
