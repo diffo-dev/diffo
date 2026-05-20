@@ -39,6 +39,14 @@ defmodule Diffo.Test.Instance.AccessService do
     end
   end
 
+  calculations do
+    calculate :assigner_name, {:array, :string},
+      {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [via: [:primary], field: :name]}
+
+    calculate :assigner_names, {:array, :string},
+      {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [field: :name]}
+  end
+
   actions do
     create :build do
       accept [:id, :name, :type]
