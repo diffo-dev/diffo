@@ -3,7 +3,16 @@
 # SPDX-License-Identifier: MIT
 
 defmodule Diffo.Provider.Calculations.InheritedParty do
-  @moduledoc false
+  @moduledoc """
+  Backing calculation for `inherited_party` DSL declarations.
+
+  Traverses `AssignmentRelationship` by alias to reach source instances, then reads
+  their `PartyRef` records for the declared `source_role`. Injected automatically by
+  `TransformInheritedRefs` — do not reference this module directly; use the
+  `inherited_party` DSL entity instead.
+
+  See `Diffo.Provider.Extension.InheritedPartyDeclaration` for the DSL options.
+  """
   use Ash.Resource.Calculation
 
   @impl true
