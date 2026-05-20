@@ -27,12 +27,12 @@ defmodule Diffo.Provider.Instance.Relationship do
 
       _ ->
         Enum.reduce_while(relationships, :ok, fn %{
-                                                    id: id,
-                                                    alias: name,
-                                                    type: type,
-                                                    direction: direction
-                                                  },
-                                                  :ok ->
+                                                   id: id,
+                                                   alias: name,
+                                                   type: type,
+                                                   direction: direction
+                                                 },
+                                                 :ok ->
           attrs =
             case direction do
               :reverse -> %{source_id: id, party_id: result.id, alias: name, type: type}

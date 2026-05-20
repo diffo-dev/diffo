@@ -62,11 +62,14 @@ defmodule Diffo.Provider.Assigner do
   end
 
   defp check_lifecycle(%{type: :resource, resource_state: state}) when state != :operating,
-    do: {:error, "cannot assign: resource lifecycle state is #{inspect(state)}, must be :operating"}
+    do:
+      {:error, "cannot assign: resource lifecycle state is #{inspect(state)}, must be :operating"}
 
   defp check_lifecycle(%{type: :service, service_state: state})
        when state not in [:active, :inactive],
-       do: {:error, "cannot assign: service state is #{inspect(state)}, must be :active or :inactive"}
+       do:
+         {:error,
+          "cannot assign: service state is #{inspect(state)}, must be :active or :inactive"}
 
   defp check_lifecycle(_), do: :ok
 

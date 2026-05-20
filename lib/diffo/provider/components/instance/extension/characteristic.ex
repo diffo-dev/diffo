@@ -35,7 +35,8 @@ defmodule Diffo.Provider.Instance.Characteristic do
   end
 
   defp create_characteristics_from_declarations(declarations, type) do
-    Enum.reduce_while(declarations, {:ok, []}, fn %{name: name, value_type: value_type}, {:ok, acc} ->
+    Enum.reduce_while(declarations, {:ok, []}, fn %{name: name, value_type: value_type},
+                                                  {:ok, acc} ->
       try do
         attrs =
           case value_type do
@@ -148,7 +149,8 @@ defmodule Diffo.Provider.Instance.Characteristic do
           end)
 
         characteristics =
-          Enum.reduce_while(characteristic_updates, {:ok, []}, fn {characteristic, value}, {:ok, acc} ->
+          Enum.reduce_while(characteristic_updates, {:ok, []}, fn {characteristic, value},
+                                                                  {:ok, acc} ->
             case Provider.update_characteristic(characteristic, %{value: value}) do
               {:ok, characteristic} ->
                 {:cont, {:ok, [characteristic | acc]}}
