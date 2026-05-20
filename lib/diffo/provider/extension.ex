@@ -93,11 +93,14 @@ defmodule Diffo.Provider.Extension do
     Characteristic,
     Feature,
     InstanceRole,
+    InheritedPartyDeclaration,
+    InheritedPlaceDeclaration,
     PartyDeclaration,
     PartyRole,
     PlaceDeclaration,
     PlaceRole,
-    Pool
+    Pool,
+    RelationshipStep
   }
 
   # ── specification ──────────────────────────────────────────────────────────
@@ -177,8 +180,7 @@ defmodule Diffo.Provider.Extension do
       ],
       value_type: [
         type: :any,
-        doc:
-          "The type of the characteristic value — a module or `{:array, module}` for an array."
+        doc: "The type of the characteristic value — a module or `{:array, module}` for an array."
       ]
     ]
   }
@@ -292,10 +294,35 @@ defmodule Diffo.Provider.Extension do
     ]
   }
 
+  @inherited_party_entity %Spark.Dsl.Entity{
+    name: :inherited_party,
+    describe:
+      "Declares a party derived by traversing the assignment graph — generates a calculation, no PartyRef node created",
+    target: InheritedPartyDeclaration,
+    args: [:role],
+    schema: [
+      role: [
+        type: :atom,
+        doc: "The role name — also the default alias to follow on AssignmentRelationship.",
+        required: true
+      ],
+      via: [
+        type: {:list, :atom},
+        doc:
+          "Sequence of assignment aliases to traverse. Defaults to [role] for single-hop. Use a list for multi-level."
+      ],
+      source_role: [
+        type: :atom,
+        doc: "The PartyRef role to pick up on the arrived-at instance.",
+        required: true
+      ]
+    ]
+  }
+
   @parties %Spark.Dsl.Section{
     name: :parties,
     describe:
-      "Party roles on this resource — `party`/`parties`/`party_ref` for Instance kinds; `role` for Party and Place kinds",
+      "Party roles on this resource — `party`/`parties`/`party_ref`/`inherited_party` for Instance kinds; `role` for Party and Place kinds",
     examples: [
       """
       # Instance
@@ -303,6 +330,7 @@ defmodule Diffo.Provider.Extension do
         party :provider, MyApp.Provider
         party_ref :owner, MyApp.InfrastructureCo
         parties :technicians, MyApp.Technician, constraints: [min: 1]
+        inherited_party :customer, source_role: :owner
       end
 
       # Party or Place
@@ -311,7 +339,13 @@ defmodule Diffo.Provider.Extension do
       end
       """
     ],
-    entities: [@party_entity, @parties_entity, @party_ref_entity, @party_role_entity]
+    entities: [
+      @party_entity,
+      @parties_entity,
+      @party_ref_entity,
+      @party_role_entity,
+      @inherited_party_entity
+    ]
   }
 
   # ── places ─────────────────────────────────────────────────────────────────
@@ -368,16 +402,43 @@ defmodule Diffo.Provider.Extension do
     ]
   }
 
+  @inherited_place_entity %Spark.Dsl.Entity{
+    name: :inherited_place,
+    describe:
+      "Declares a place derived by traversing the assignment graph — generates a calculation, no PlaceRef node created",
+    target: InheritedPlaceDeclaration,
+    args: [:role],
+    schema: [
+      role: [
+        type: :atom,
+        doc: "The role name — also the default alias to follow on AssignmentRelationship.",
+        required: true
+      ],
+      via: [
+        type: {:list, :atom},
+        doc:
+          "Sequence of assignment aliases to traverse. Defaults to [role] for single-hop. Use a list for multi-level."
+      ],
+      source_role: [
+        type: :atom,
+        doc: "The PlaceRef role to pick up on the arrived-at instance.",
+        required: true
+      ]
+    ]
+  }
+
   @places %Spark.Dsl.Section{
     name: :places,
     describe:
-      "Place roles on this resource — `place`/`places`/`place_ref` for Instance kinds; `role` for Party and Place kinds",
+      "Place roles on this resource — `place`/`places`/`place_ref`/`inherited_place` for Instance kinds; `role` for Party and Place kinds",
     examples: [
       """
       # Instance
       places do
         place :installation_site, MyApp.GeographicSite
         place_ref :billing_address, MyApp.GeographicAddress
+        inherited_place :a_end, source_role: :location
+        inherited_place :poi, via: [:cvc_link, :nni_link], source_role: :poi
       end
 
       # Party or Place
@@ -386,7 +447,13 @@ defmodule Diffo.Provider.Extension do
       end
       """
     ],
-    entities: [@place_entity, @places_entity, @place_ref_entity, @place_role_entity]
+    entities: [
+      @place_entity,
+      @places_entity,
+      @place_ref_entity,
+      @place_role_entity,
+      @inherited_place_entity
+    ]
   }
 
   # ── instances ──────────────────────────────────────────────────────────────
@@ -464,6 +531,55 @@ defmodule Diffo.Provider.Extension do
     entities: [@pool_entity]
   }
 
+  # ── relationships ──────────────────────────────────────────────────────────
+
+  @source_entity %Spark.Dsl.Entity{
+    name: :source,
+    describe:
+      "Declares permitted source relationship roles — pipeline step, last declaration wins",
+    target: RelationshipStep,
+    args: [:roles],
+    auto_set_fields: [direction: :source],
+    schema: [
+      roles: [
+        type: :any,
+        doc: "`:all`, `:none`, or a list of role name atoms.",
+        required: true
+      ]
+    ]
+  }
+
+  @target_entity %Spark.Dsl.Entity{
+    name: :target,
+    describe:
+      "Declares permitted target relationship roles — pipeline step, last declaration wins",
+    target: RelationshipStep,
+    args: [:roles],
+    auto_set_fields: [direction: :target],
+    schema: [
+      roles: [
+        type: :any,
+        doc: "`:all`, `:none`, or a list of role name atoms.",
+        required: true
+      ]
+    ]
+  }
+
+  @relationships_section %Spark.Dsl.Section{
+    name: :relationships,
+    describe:
+      "Relationship role permissions for this Instance — declares which aliases it may participate in as source or target. Omitting defaults to `:none` per direction.",
+    examples: [
+      """
+      relationships do
+        source [:provides, :requires]
+        target :all
+      end
+      """
+    ],
+    entities: [@source_entity, @target_entity]
+  }
+
   # ── behaviour ──────────────────────────────────────────────────────────────
 
   @action_create_entity %Spark.Dsl.Entity{
@@ -528,12 +644,18 @@ defmodule Diffo.Provider.Extension do
       @parties,
       @places,
       @instances,
+      @relationships_section,
       @behaviour_section
     ]
   }
 
   use Spark.Dsl.Extension,
     sections: [@provider],
+    transformers: [
+      Diffo.Provider.Extension.Transformers.TransformRelationships,
+      Diffo.Provider.Extension.Transformers.TransformBehaviour,
+      Diffo.Provider.Extension.Transformers.TransformInheritedRefs
+    ],
     persisters: [
       Diffo.Provider.Extension.Persisters.PersistSpecification,
       Diffo.Provider.Extension.Persisters.PersistCharacteristics,
@@ -541,8 +663,7 @@ defmodule Diffo.Provider.Extension do
       Diffo.Provider.Extension.Persisters.PersistPools,
       Diffo.Provider.Extension.Persisters.PersistParties,
       Diffo.Provider.Extension.Persisters.PersistPlaces,
-      Diffo.Provider.Extension.Persisters.PersistInstances,
-      Diffo.Provider.Extension.Transformers.TransformBehaviour
+      Diffo.Provider.Extension.Persisters.PersistInstances
     ],
     verifiers: [
       Diffo.Provider.Extension.Verifiers.VerifySpecification,
@@ -552,6 +673,7 @@ defmodule Diffo.Provider.Extension do
       Diffo.Provider.Extension.Verifiers.VerifyParties,
       Diffo.Provider.Extension.Verifiers.VerifyPlaces,
       Diffo.Provider.Extension.Verifiers.VerifyInstances,
-      Diffo.Provider.Extension.Verifiers.VerifyBehaviour
+      Diffo.Provider.Extension.Verifiers.VerifyBehaviour,
+      Diffo.Provider.Extension.Verifiers.VerifyRelationships
     ]
 end

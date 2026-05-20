@@ -4,6 +4,7 @@
 
 defmodule Diffo.UnwrapTest do
   use ExUnit.Case, async: true
+  @moduletag :provider_only
 
   alias Diffo.Type.Primitive
   alias Diffo.Type.Value

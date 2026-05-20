@@ -10,12 +10,14 @@ defmodule Diffo.Test.Servo do
   """
   use Ash.Domain,
     otp_app: :diffo,
-    validate_config_inclusion?: false
+    validate_config_inclusion?: false,
+    fragments: [Diffo.Provider.DomainFragment]
 
   alias Diffo.Test.Instance.ShelfInstance
   alias Diffo.Test.Instance.CardInstance
   alias Diffo.Test.Instance.Broadband
   alias Diffo.Test.Instance.BroadbandV2
+  alias Diffo.Test.Instance.AccessService
   alias Diffo.Test.Characteristic.ShelfCharacteristic
   alias Diffo.Test.Characteristic.CardCharacteristic
   alias Diffo.Test.Characteristic.DeploymentClass
@@ -40,6 +42,7 @@ defmodule Diffo.Test.Servo do
       define :define_card, action: :define
       define :relate_card, action: :relate
       define :assign_port, action: :assign_port
+      define :lifecycle_card, action: :lifecycle
     end
 
     resource Broadband do
@@ -50,6 +53,11 @@ defmodule Diffo.Test.Servo do
     resource BroadbandV2 do
       define :build_broadband_v2, action: :build
       define :get_broadband_v2_by_id, action: :read, get_by: :id
+    end
+
+    resource AccessService do
+      define :build_access_service, action: :build
+      define :get_access_service_by_id, action: :read, get_by: :id
     end
 
     resource ShelfCharacteristic

@@ -89,24 +89,15 @@ defmodule Diffo.Provider.Instance.Party do
         {:ok, result}
 
       _ ->
-        party_refs =
-          Enum.reduce_while(parties, [], fn %{id: id, role: role}, acc ->
-            case Provider.create_party_ref(%{instance_id: result.id, party_id: id, role: role}) do
-              {:ok, party_ref} ->
-                {:cont, [party_ref | acc]}
-
-              {:error, _error} ->
-                {:halt, []}
-            end
-          end)
-
-        case party_refs do
-          [] ->
-            {:error, "couldn't relate parties"}
-
-          _ ->
-            # sorted = Ash.Sort.runtime_sort(party_refs, [role: :asc, created_at: :desc])
-            {:ok, result |> Map.put(:parties, party_refs)}
+        Enum.reduce_while(parties, {:ok, []}, fn %{id: id, role: role}, {:ok, acc} ->
+          case Provider.create_party_ref(%{instance_id: result.id, party_id: id, role: role}) do
+            {:ok, party_ref} -> {:cont, {:ok, [party_ref | acc]}}
+            {:error, error} -> {:halt, {:error, error}}
+          end
+        end)
+        |> case do
+          {:ok, party_refs} -> {:ok, Map.put(result, :parties, party_refs)}
+          {:error, error} -> {:error, error}
         end
     end
   end

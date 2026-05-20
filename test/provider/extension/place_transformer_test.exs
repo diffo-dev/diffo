@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Extension.PlaceTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
+  @moduletag :domain_extended
 
   alias Diffo.Test.Place.GeographicSite
   alias Diffo.Provider.Extension.InstanceRole

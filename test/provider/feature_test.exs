@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.FeatureTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :provider_only
 
   alias Diffo.Type.Value
 

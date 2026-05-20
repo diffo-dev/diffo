@@ -188,7 +188,7 @@ defmodule Diffo.Provider.BaseInstance do
       {:process_statuses, :STATUSES, :incoming, :ProcessStatus},
       {:forward_relationships, :RELATES, :outgoing, :Relationship},
       {:reverse_relationships, :RELATES, :incoming, :Relationship},
-      {:assignments, :RELATES, :outgoing, :AssignedToRelationship},
+      {:assignments, :RELATES, :outgoing, :AssignmentRelationship},
       {:features, :HAS, :outgoing, :Feature},
       {:characteristics, :HAS, :outgoing, :Characteristic},
       {:entities, :RELATES, :outgoing, :EntityRef},
@@ -261,6 +261,7 @@ defmodule Diffo.Provider.BaseInstance do
       :endOperatingDate,
       :state,
       :operatingStatus,
+      :lifecycleState,
       :administrativeState,
       :operationalState,
       :resourceStatus,
@@ -366,6 +367,14 @@ defmodule Diffo.Provider.BaseInstance do
       constraints one_of: Diffo.Provider.Service.service_operating_statuses()
     end
 
+    attribute :resource_state, :atom do
+      description "the TMF lifecycleState for resource instances: planning, installing, operating, or retiring"
+      allow_nil? true
+      public? true
+      default nil
+      constraints one_of: [:planning, :installing, :operating, :retiring]
+    end
+
     create_timestamp :created_at
 
     update_timestamp :updated_at
@@ -409,7 +418,7 @@ defmodule Diffo.Provider.BaseInstance do
       public? true
     end
 
-    has_many :assignments, Diffo.Provider.AssignedToRelationship do
+    has_many :assignments, Diffo.Provider.AssignmentRelationship do
       description "the instance's outgoing pool assignment relationships"
       destination_attribute :source_id
       public? true
@@ -461,6 +470,10 @@ defmodule Diffo.Provider.BaseInstance do
   changes do
     change Diffo.Provider.Instance.Extension.Changes.BuildBefore, on: [:create]
     change Diffo.Provider.Instance.Extension.Changes.BuildAfter, on: [:create]
+  end
+
+  validations do
+    validate Diffo.Provider.Validations.ValidateRelationshipPermitted, on: [:update]
   end
 
   actions do
@@ -599,6 +612,13 @@ defmodule Diffo.Provider.BaseInstance do
       require_atomic? false
       validate attribute_equals(:type, :service)
       accept [:service_operating_status]
+    end
+
+    update :lifecycle do
+      description "sets the TMF lifecycleState for a resource instance"
+      require_atomic? false
+      validate attribute_equals(:type, :resource)
+      accept [:resource_state]
     end
 
     update :relate_features do

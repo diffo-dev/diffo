@@ -12,9 +12,9 @@ defmodule Diffo.Test.Instance.ShelfInstance do
   alias Diffo.Provider.BaseInstance
   alias Diffo.Provider.Instance.Relationship
   alias Diffo.Provider.Extension.Characteristic
+  alias Diffo.Provider.Extension.Pool
   alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
-  alias Diffo.Provider.AssignableValue
   alias Diffo.Test.Servo
   alias Diffo.Test.Characteristic.ShelfCharacteristic
   alias Diffo.Test.Characteristic.DeploymentClass
@@ -53,8 +53,11 @@ defmodule Diffo.Test.Instance.ShelfInstance do
 
     characteristics do
       characteristic :shelf, ShelfCharacteristic
-      characteristic :slots, AssignableValue
       characteristic :shelves, {:array, ShelfCharacteristic}
+    end
+
+    pools do
+      pool :slots, :slot
     end
 
     parties do
@@ -70,11 +73,24 @@ defmodule Diffo.Test.Instance.ShelfInstance do
       place_ref :billing_address, Diffo.Provider.Place
     end
 
+    relationships do
+      source :all
+    end
+
     behaviour do
       actions do
         create :build
       end
     end
+  end
+
+  calculations do
+    calculate :linked_target_name, {:array, :string},
+      {Diffo.Provider.Calculations.FieldViaRelationship, [alias: :link, field: :name]}
+
+    calculate :assigned_linked_name, {:array, :string},
+      {Diffo.Provider.Calculations.FieldViaRelationship,
+       [type: :assignedTo, alias: :link, field: :name]}
   end
 
   actions do
@@ -97,6 +113,7 @@ defmodule Diffo.Test.Instance.ShelfInstance do
       change after_action(fn changeset, result, _context ->
                with {:ok, result} <-
                       Characteristic.update_all(result, changeset, characteristics()),
+                    {:ok, result} <- Pool.update_pools(result, changeset, pools()),
                     {:ok, result} <- Servo.get_shelf_by_id(result.id),
                     do: {:ok, result}
              end)
@@ -118,7 +135,7 @@ defmodule Diffo.Test.Instance.ShelfInstance do
       argument :assignment, :struct, constraints: [instance_of: Assignment]
 
       change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Assigner.assign(result, changeset, :slots, :slot),
+               with {:ok, result} <- Assigner.assign(result, changeset, :slots),
                     {:ok, result} <- Servo.get_shelf_by_id(result.id),
                     do: {:ok, result}
              end)

@@ -47,6 +47,7 @@ defmodule Diffo.Provider do
       define :suspend_service, action: :suspend
       define :terminate_service, action: :terminate
       define :status_service, action: :status
+      define :lifecycle_resource, action: :lifecycle
       define :respecify_instance, action: :specify
       define :relate_instance_features, action: :relate_features
       define :unrelate_instance_features, action: :unrelate_features
@@ -77,10 +78,16 @@ defmodule Diffo.Provider do
       define :delete_relationship, action: :destroy
     end
 
-    resource Diffo.Provider.AssignedToRelationship do
-      define :create_assigned_to_relationship, action: :create_assignment
-      define :get_assigned_to_relationship_by_id, action: :read, get_by: :id
-      define :delete_assigned_to_relationship, action: :destroy
+    resource Diffo.Provider.DefinedSimpleRelationship do
+      define :create_defined_simple_relationship, action: :create
+      define :get_defined_simple_relationship_by_id, action: :read, get_by: :id
+      define :delete_defined_simple_relationship, action: :destroy
+    end
+
+    resource Diffo.Provider.AssignmentRelationship do
+      define :create_assignment_relationship, action: :create
+      define :get_assignment_relationship_by_id, action: :read, get_by: :id
+      define :delete_assignment_relationship, action: :destroy
     end
 
     resource Diffo.Provider.AssignableCharacteristic do

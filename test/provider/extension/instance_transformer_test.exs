@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Extension.InstanceTransformerTest do
   @moduledoc false
   use ExUnit.Case, async: true, async: true
+  @moduletag :domain_extended
 
   alias Diffo.Test.Instance.ShelfInstance
   alias Diffo.Test.Instance.CardInstance
@@ -41,10 +42,9 @@ defmodule Diffo.Provider.Extension.InstanceTransformerTest do
     test "bakes characteristics/0 onto the resource" do
       chars = ShelfInstance.characteristics()
       assert is_list(chars)
-      assert length(chars) == 3
+      assert length(chars) == 2
       names = Enum.map(chars, & &1.name)
       assert :shelf in names
-      assert :slots in names
       assert :shelves in names
     end
 
@@ -54,7 +54,7 @@ defmodule Diffo.Provider.Extension.InstanceTransformerTest do
     end
 
     test "characteristics are also accessible via Info" do
-      assert length(Info.characteristics(ShelfInstance)) == 3
+      assert length(Info.characteristics(ShelfInstance)) == 2
       # Card has :card characteristic; :ports moved to pools do
       assert length(Info.characteristics(CardInstance)) == 1
     end

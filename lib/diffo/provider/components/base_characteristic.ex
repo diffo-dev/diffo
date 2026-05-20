@@ -81,7 +81,6 @@ defmodule Diffo.Provider.BaseCharacteristic do
       Diffo.Provider.Characteristic.Extension
     ]
 
-
   neo4j do
     relate [
       {:instance, :HAS, :incoming, :Instance},

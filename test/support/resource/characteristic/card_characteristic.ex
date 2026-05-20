@@ -13,18 +13,6 @@ defmodule Diffo.Test.Characteristic.CardCharacteristic do
     plural_name :card_values
   end
 
-  attributes do
-    attribute :family, :atom, public?: true, description: "the card family name"
-    attribute :model, :string, public?: true, description: "the card model name"
-    attribute :technology, :atom, public?: true, description: "the card technology"
-  end
-
-  calculations do
-    calculate :value, Diffo.Type.CharacteristicValue, Diffo.Provider.Calculations.CharacteristicValue do
-      public? true
-    end
-  end
-
   actions do
     create :create do
       accept [:name, :family, :model, :technology]
@@ -36,6 +24,20 @@ defmodule Diffo.Test.Characteristic.CardCharacteristic do
 
     update :update do
       accept [:family, :model, :technology]
+    end
+  end
+
+  attributes do
+    attribute :family, :atom, public?: true, description: "the card family name"
+    attribute :model, :string, public?: true, description: "the card model name"
+    attribute :technology, :atom, public?: true, description: "the card technology"
+  end
+
+  calculations do
+    calculate :value,
+              Diffo.Type.CharacteristicValue,
+              Diffo.Provider.Calculations.CharacteristicValue do
+      public? true
     end
   end
 

@@ -4,6 +4,7 @@
 
 defmodule Diffo.Type.DynamicTest do
   use ExUnit.Case, async: true
+  @moduletag :domain_extended
 
   use Outstand
   alias Diffo.Type.Dynamic

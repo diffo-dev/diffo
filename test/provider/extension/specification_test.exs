@@ -5,6 +5,7 @@
 defmodule Diffo.Provider.Extension.SpecificationTest do
   @moduledoc false
   use ExUnit.Case, async: true
+  @moduletag :domain_extended
   alias Diffo.Test.Servo
   alias Diffo.Test.Instance.ShelfInstance
 
@@ -27,21 +28,27 @@ defmodule Diffo.Provider.Extension.SpecificationTest do
     test "minor_version declared in specification DSL roundtrips to the persisted specification" do
       Servo.build_shelf(%{name: "s"})
 
-      {:ok, specification} = Diffo.Provider.get_specification_by_id(ShelfInstance.specification()[:id])
+      {:ok, specification} =
+        Diffo.Provider.get_specification_by_id(ShelfInstance.specification()[:id])
+
       assert specification.minor_version == ShelfInstance.specification()[:minor_version]
     end
 
     test "patch_version declared in specification DSL roundtrips to the persisted specification" do
       Servo.build_shelf(%{name: "s"})
 
-      {:ok, specification} = Diffo.Provider.get_specification_by_id(ShelfInstance.specification()[:id])
+      {:ok, specification} =
+        Diffo.Provider.get_specification_by_id(ShelfInstance.specification()[:id])
+
       assert specification.patch_version == ShelfInstance.specification()[:patch_version]
     end
 
     test "tmf_version declared in specification DSL roundtrips to the persisted specification" do
       Servo.build_shelf(%{name: "s"})
 
-      {:ok, specification} = Diffo.Provider.get_specification_by_id(ShelfInstance.specification()[:id])
+      {:ok, specification} =
+        Diffo.Provider.get_specification_by_id(ShelfInstance.specification()[:id])
+
       assert specification.tmf_version == ShelfInstance.specification()[:tmf_version]
     end
   end
