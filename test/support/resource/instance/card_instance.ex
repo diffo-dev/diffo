@@ -9,11 +9,8 @@ defmodule Diffo.Test.Instance.CardInstance do
   Card - Card Resource Instance
   """
   alias Diffo.Provider.BaseInstance
-  alias Diffo.Provider.Instance.Relationship
-  alias Diffo.Provider.Extension.Characteristic
-  alias Diffo.Provider.Extension.Pool
-  alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
+  alias Diffo.Provider.Changes
   alias Diffo.Test.Servo
   alias Diffo.Test.Characteristic.CardCharacteristic
 
@@ -70,36 +67,19 @@ defmodule Diffo.Test.Instance.CardInstance do
     update :define do
       description "defines the card"
       argument :characteristic_value_updates, {:array, :term}
-
-      change after_action(fn changeset, result, _context ->
-               with {:ok, result} <-
-                      Characteristic.update_all(result, changeset, characteristics()),
-                    {:ok, result} <- Pool.update_pools(result, changeset, pools()),
-                    {:ok, result} <- Servo.get_card_by_id(result.id),
-                    do: {:ok, result}
-             end)
+      change Changes.Define
     end
 
     update :relate do
       description "relates the card with other instances"
       argument :relationships, {:array, :struct}
-
-      change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Relationship.relate_instance(result, changeset),
-                    {:ok, result} <- Servo.get_card_by_id(result.id),
-                    do: {:ok, result}
-             end)
+      change Changes.Relate
     end
 
     update :assign_port do
       description "relates the card with an instance by assigning a port"
       argument :assignment, :struct, constraints: [instance_of: Assignment]
-
-      change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Assigner.assign(result, changeset, :ports),
-                    {:ok, result} <- Servo.get_card_by_id(result.id),
-                    do: {:ok, result}
-             end)
+      change {Changes.Assign, pool: :ports}
     end
   end
 end

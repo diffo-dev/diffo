@@ -124,7 +124,10 @@ end
 ```
 
 Each characteristic module uses `Diffo.Provider.BaseCharacteristic` as a fragment and declares
-its own attributes, a `:value` calculation, and create/update actions:
+its own attributes and a `:value` calculation. Default `:create` and `:update` actions
+covering all public attributes (with `:name` on `:create` only and `:instance_id` /
+`:feature_id` arguments wired to `manage_relationship`) are synthesised automatically —
+declare your own only when you need a narrower accept list:
 
 ```elixir
 defmodule MyApp.SpeedCharacteristic do
@@ -141,20 +144,6 @@ defmodule MyApp.SpeedCharacteristic do
     calculate :value, Diffo.Type.CharacteristicValue,
               Diffo.Provider.Calculations.CharacteristicValue do
       public? true
-    end
-  end
-
-  actions do
-    create :create do
-      accept [:name, :downstream_mbps, :upstream_mbps]
-      argument :instance_id, :uuid
-      argument :feature_id, :uuid
-      change manage_relationship(:instance_id, :instance, type: :append)
-      change manage_relationship(:feature_id, :feature, type: :append)
-    end
-
-    update :update do
-      accept [:downstream_mbps, :upstream_mbps]
     end
   end
 
@@ -296,34 +285,30 @@ end
 - Each Instance module gets `pools/0` (list of declarations) and `pool/1` (lookup by name)
   generated at compile time.
 
-In the `:define` action, apply updates for both characteristics and pools:
+For the `:define`, `:relate`, and `:assign_*` action patterns use the bundled change
+modules. They wrap the standard after-action plumbing and reload via the resource's
+primary `:read` action — no per-domain reader is required:
 
 ```elixir
 update :define do
   argument :characteristic_value_updates, {:array, :term}
-
-  change after_action(fn changeset, result, _context ->
-    with {:ok, result} <- Characteristic.update_all(result, changeset, characteristics()),
-         {:ok, result} <- Pool.update_pools(result, changeset, pools()),
-         {:ok, result} <- MyDomain.get_by_id(result.id),
-         do: {:ok, result}
-  end)
+  change Diffo.Provider.Changes.Define
 end
-```
 
-In assignment actions, use `Assigner.assign/3` (thing is looked up from the pool declaration):
+update :relate do
+  argument :relationships, {:array, :struct}
+  change Diffo.Provider.Changes.Relate
+end
 
-```elixir
 update :assign_core do
   argument :assignment, :struct, constraints: [instance_of: Assignment]
-
-  change after_action(fn changeset, result, _context ->
-    with {:ok, result} <- Assigner.assign(result, changeset, :cores),
-         {:ok, result} <- MyDomain.get_by_id(result.id),
-         do: {:ok, result}
-  end)
+  change {Diffo.Provider.Changes.Assign, pool: :cores}
 end
 ```
+
+If you need to do more than the standard pattern, the underlying helpers
+(`Characteristic.update_all/3`, `Pool.update_pools/3`, `Relationship.relate_instance/2`,
+`Assigner.assign/3`) remain available for a hand-written `after_action`.
 
 ### `relationships do` — Instance only
 

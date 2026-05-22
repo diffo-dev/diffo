@@ -13,20 +13,6 @@ defmodule Diffo.Test.Characteristic.ShelfCharacteristic do
     plural_name :shelf_values
   end
 
-  actions do
-    create :create do
-      accept [:name, :family, :model, :technology]
-      argument :instance_id, :uuid
-      argument :feature_id, :uuid
-      change manage_relationship(:instance_id, :instance, type: :append)
-      change manage_relationship(:feature_id, :feature, type: :append)
-    end
-
-    update :update do
-      accept [:family, :model, :technology]
-    end
-  end
-
   attributes do
     attribute :family, :atom, public?: true, description: "the shelf family name"
     attribute :model, :string, public?: true, description: "the shelf model name"
