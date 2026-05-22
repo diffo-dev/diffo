@@ -13,13 +13,26 @@ defmodule Diffo.Provider.Assigner do
   alias Diffo.Provider.AssignableCharacteristic
   alias Diffo.Provider.AssignmentRelationship
 
+  @assignable_resource_states [:installing, :operating]
+  @assignable_service_states [:feasibilityChecked, :reserved, :inactive, :active, :suspended]
+
+  @doc """
+  The resource lifecycle states from which an instance may make assignments.
+  """
+  def assignable_resource_states, do: @assignable_resource_states
+
+  @doc """
+  The service lifecycle states from which an instance may make assignments.
+  """
+  def assignable_service_states, do: @assignable_service_states
+
   @doc """
   Assign a thing using the pool declared via `pools do` on the instance module.
   The thing name is looked up from the pool declaration.
   """
   def assign(result, changeset, pool_name)
       when is_struct(result) and is_struct(changeset, Ash.Changeset) and is_atom(pool_name) do
-    with :ok <- check_lifecycle(result) do
+    with :ok <- assignable_state?(result) do
       case result.__struct__.pool(pool_name) do
         nil -> {:error, "pool #{pool_name} not declared on #{result.__struct__}"}
         pool -> assign(result, changeset, pool_name, pool.thing)
@@ -61,17 +74,23 @@ defmodule Diffo.Provider.Assigner do
     end
   end
 
-  defp check_lifecycle(%{type: :resource, resource_state: state}) when state != :operating,
-    do:
-      {:error, "cannot assign: resource lifecycle state is #{inspect(state)}, must be :operating"}
+  @doc """
+  Returns `:ok` if the instance is in a lifecycle state that permits assignment,
+  otherwise `{:error, reason}`.
+  """
+  def assignable_state?(%{type: :resource, resource_state: state})
+      when state not in @assignable_resource_states,
+      do:
+        {:error,
+         "cannot assign: resource lifecycle state is #{inspect(state)}, must be one of #{inspect(@assignable_resource_states)}"}
 
-  defp check_lifecycle(%{type: :service, service_state: state})
-       when state not in [:active, :inactive],
-       do:
-         {:error,
-          "cannot assign: service state is #{inspect(state)}, must be :active or :inactive"}
+  def assignable_state?(%{type: :service, service_state: state})
+      when state not in @assignable_service_states,
+      do:
+        {:error,
+         "cannot assign: service state is #{inspect(state)}, must be one of #{inspect(@assignable_service_states)}"}
 
-  defp check_lifecycle(_), do: :ok
+  def assignable_state?(_), do: :ok
 
   defp create_assignment(result, pool, thing, value, assignee_id, alias_name)
        when is_struct(result) and is_atom(pool) and is_atom(thing) and is_integer(value) and
