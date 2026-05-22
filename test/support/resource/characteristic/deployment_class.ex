@@ -13,20 +13,6 @@ defmodule Diffo.Test.Characteristic.DeploymentClass do
     plural_name :deployment_class_values
   end
 
-  actions do
-    create :create do
-      accept [:name, :class, :mask]
-      argument :instance_id, :uuid
-      argument :feature_id, :uuid
-      change manage_relationship(:instance_id, :instance, type: :append)
-      change manage_relationship(:feature_id, :feature, type: :append)
-    end
-
-    update :update do
-      accept [:class, :mask]
-    end
-  end
-
   attributes do
     attribute :class, :string, public?: true, description: "the deployment class"
     attribute :mask, :string, public?: true, description: "the mask name"

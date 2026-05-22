@@ -10,11 +10,8 @@ defmodule Diffo.Test.Instance.ShelfInstance do
   """
 
   alias Diffo.Provider.BaseInstance
-  alias Diffo.Provider.Instance.Relationship
-  alias Diffo.Provider.Extension.Characteristic
-  alias Diffo.Provider.Extension.Pool
-  alias Diffo.Provider.Assigner
   alias Diffo.Provider.Assignment
+  alias Diffo.Provider.Changes
   alias Diffo.Test.Servo
   alias Diffo.Test.Characteristic.ShelfCharacteristic
   alias Diffo.Test.Characteristic.DeploymentClass
@@ -84,15 +81,6 @@ defmodule Diffo.Test.Instance.ShelfInstance do
     end
   end
 
-  calculations do
-    calculate :linked_target_name, {:array, :string},
-      {Diffo.Provider.Calculations.FieldViaRelationship, [alias: :link, field: :name]}
-
-    calculate :assigned_linked_name, {:array, :string},
-      {Diffo.Provider.Calculations.FieldViaRelationship,
-       [type: :assignedTo, alias: :link, field: :name]}
-  end
-
   actions do
     create :build do
       description "creates a new Shelf resource instance for build"
@@ -109,36 +97,30 @@ defmodule Diffo.Test.Instance.ShelfInstance do
     update :define do
       description "defines the shelf"
       argument :characteristic_value_updates, {:array, :term}
-
-      change after_action(fn changeset, result, _context ->
-               with {:ok, result} <-
-                      Characteristic.update_all(result, changeset, characteristics()),
-                    {:ok, result} <- Pool.update_pools(result, changeset, pools()),
-                    {:ok, result} <- Servo.get_shelf_by_id(result.id),
-                    do: {:ok, result}
-             end)
+      change Changes.Define
     end
 
     update :relate do
       description "relates the shelf with cards"
       argument :relationships, {:array, :struct}
-
-      change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Relationship.relate_instance(result, changeset),
-                    {:ok, result} <- Servo.get_shelf_by_id(result.id),
-                    do: {:ok, result}
-             end)
+      change Changes.Relate
     end
 
     update :assign_slot do
       description "relates the shelf with an instance by assigning a slot"
       argument :assignment, :struct, constraints: [instance_of: Assignment]
-
-      change after_action(fn changeset, result, _context ->
-               with {:ok, result} <- Assigner.assign(result, changeset, :slots),
-                    {:ok, result} <- Servo.get_shelf_by_id(result.id),
-                    do: {:ok, result}
-             end)
+      change {Changes.Assign, pool: :slots}
     end
+  end
+
+  calculations do
+    calculate :linked_target_name,
+              {:array, :string},
+              {Diffo.Provider.Calculations.FieldViaRelationship, [alias: :link, field: :name]}
+
+    calculate :assigned_linked_name,
+              {:array, :string},
+              {Diffo.Provider.Calculations.FieldViaRelationship,
+               [type: :assignedTo, alias: :link, field: :name]}
   end
 end

@@ -11,6 +11,42 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.4.1](https://github.com/diffo-dev/diffo/compare/v0.4.0...v0.4.1) (2026-05-22)
+
+### Bug Fixes
+
+* **Assigner lifecycle** (#168) — broadened the lifecycle states permitted to make assignments. Services may now assign from `:feasibilityChecked`, `:reserved`, `:inactive`, `:active`, or `:suspended` (was `:active` / `:inactive` only). Resources may now assign from `:installing` or `:operating` (was `:operating` only). `Assigner.assignable_state?/1` exposes the policy directly.
+
+### Features
+
+* **`Diffo.Provider.Changes.Define` / `Relate` / `Assign`** (#170) — change modules that wrap the standard after-action patterns every Instance consumer writes. Replace the hand-written `after_action` body threading `Characteristic.update_all` / `Pool.update_pools` / `Relationship.relate_instance` / `Assigner.assign` together with a one-liner:
+
+  ```elixir
+  update :define do
+    argument :characteristic_value_updates, {:array, :term}
+    change Diffo.Provider.Changes.Define
+  end
+
+  update :relate do
+    argument :relationships, {:array, :struct}
+    change Diffo.Provider.Changes.Relate
+  end
+
+  update :assign_port do
+    argument :assignment, :struct, constraints: [instance_of: Assignment]
+    change {Diffo.Provider.Changes.Assign, pool: :ports}
+  end
+  ```
+
+  Reload happens via the resource's primary `:read` action, so no consumer-specific reader is needed.
+* **BaseCharacteristic auto-generated `:create` / `:update` actions** (#171) — `BaseCharacteristic`-derived resources now get default `:create` and `:update` actions synthesised from their public attributes. `:create` accepts `[:name | <public_attrs>]` with `:instance_id` / `:feature_id` arguments and `manage_relationship` changes; `:update` accepts `<public_attrs>`. Consumers may still declare their own actions to override the defaults.
+* **Typed characteristics and pools in Instance JSON** (#169) — `BaseInstance` now loads two new calculations (`:typed_characteristics`, `:pool_characteristics`) by default and the jason customize merges their values into the `serviceCharacteristic` / `resourceCharacteristic` array. Typed `BaseCharacteristic` records and `AssignableCharacteristic` pool records that were already present in the graph are now visible at the TMF JSON surface.
+
+### Notable Changes
+
+* `Diffo.Provider.Calculations.TypedCharacteristics` and `Diffo.Provider.Calculations.PoolCharacteristics` — new calc modules backing the JSON surfacing for #169.
+* Regression test added for #62 (characteristic update validation) — typed `BaseCharacteristic` updates now reject unknown fields and invalid types through Ash's standard changeset machinery.
+
 ## [v0.4.0](https://github.com/diffo-dev/diffo/compare/v0.3.0...v0.4.0) (2026-05-20)
 
 ### Breaking Changes
