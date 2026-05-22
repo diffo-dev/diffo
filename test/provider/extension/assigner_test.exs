@@ -6,6 +6,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
   @moduledoc false
   use ExUnit.Case, async: true
   @moduletag :domain_extended
+  alias Diffo.Provider.Assigner
   alias Diffo.Provider.Specification
   alias Diffo.Provider.Characteristic
   alias Diffo.Provider.Assignment
@@ -17,6 +18,52 @@ defmodule Diffo.Provider.Extension.AssignerTest do
   setup do
     AshNeo4j.Sandbox.checkout()
     on_exit(&AshNeo4j.Sandbox.rollback/0)
+  end
+
+  # Issue #168 — broadened lifecycle policy. Service-side now covers the full
+  # committed lifecycle (excludes :initial, :cancelled, :terminated); resource
+  # side now allows :installing in addition to :operating.
+  describe "assignable_state?/1 (#168)" do
+    test "resource: :operating is permitted" do
+      assert :ok = Assigner.assignable_state?(%{type: :resource, resource_state: :operating})
+    end
+
+    test "resource: :installing is permitted" do
+      assert :ok = Assigner.assignable_state?(%{type: :resource, resource_state: :installing})
+    end
+
+    test "resource: :planning is rejected" do
+      assert {:error, msg} =
+               Assigner.assignable_state?(%{type: :resource, resource_state: :planning})
+
+      assert msg =~ ":planning"
+    end
+
+    test "resource: :retiring is rejected" do
+      assert {:error, _} =
+               Assigner.assignable_state?(%{type: :resource, resource_state: :retiring})
+    end
+
+    test "service: committed lifecycle states are permitted" do
+      for state <- [:feasibilityChecked, :reserved, :inactive, :active, :suspended] do
+        assert :ok = Assigner.assignable_state?(%{type: :service, service_state: state}),
+               "expected service_state #{inspect(state)} to be assignable"
+      end
+    end
+
+    test "service: :initial is rejected" do
+      assert {:error, msg} =
+               Assigner.assignable_state?(%{type: :service, service_state: :initial})
+
+      assert msg =~ ":initial"
+    end
+
+    test "service: terminal states are rejected" do
+      for state <- [:cancelled, :terminated] do
+        assert {:error, _} = Assigner.assignable_state?(%{type: :service, service_state: state}),
+               "expected service_state #{inspect(state)} to be rejected"
+      end
+    end
   end
 
   describe "build card" do
@@ -212,6 +259,46 @@ defmodule Diffo.Provider.Extension.AssignerTest do
 
       assert encoding ==
                ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"lifecycleState\":\"operating\"})
+    end
+
+    test "auto assign port to resource in :installing state (#168)" do
+      {:ok, assignee} = Parties.build_shelf_with_installer()
+
+      {:ok, card} = Servo.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :installing})
+
+      {:ok, card} =
+        Servo.assign_port(card, %{
+          assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
+        })
+
+      assert length(card.assignments) == 1
+    end
+
+    test "assign rejected while resource is in :planning state (#168)" do
+      {:ok, assignee} = Parties.build_shelf_with_installer()
+
+      {:ok, card} = Servo.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :planning})
+
+      assert {:error, _} =
+               Servo.assign_port(card, %{
+                 assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
+               })
     end
   end
 end
