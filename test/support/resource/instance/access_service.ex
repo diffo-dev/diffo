@@ -39,20 +39,6 @@ defmodule Diffo.Test.Instance.AccessService do
     end
   end
 
-  calculations do
-    calculate :assigner_name, {:array, :string},
-      {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [via: [:primary], field: :name]}
-
-    calculate :assigner_names, {:array, :string},
-      {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [field: :name]}
-
-    calculate :assigned_port, {:array, :integer},
-      {Diffo.Provider.Calculations.FieldFromAssignment, [alias: :primary, field: :value]}
-
-    calculate :all_assignment_values, {:array, :integer},
-      {Diffo.Provider.Calculations.FieldFromAssignment, [field: :value]}
-  end
-
   actions do
     create :build do
       accept [:id, :name, :type]
@@ -60,5 +46,24 @@ defmodule Diffo.Test.Instance.AccessService do
       change load [:href]
       upsert? false
     end
+  end
+
+  calculations do
+    calculate :assigner_name,
+              {:array, :string},
+              {Diffo.Provider.Calculations.FieldViaAssignedRelationship,
+               [via: [:primary], field: :name]}
+
+    calculate :assigner_names,
+              {:array, :string},
+              {Diffo.Provider.Calculations.FieldViaAssignedRelationship, [field: :name]}
+
+    calculate :assigned_port,
+              {:array, :integer},
+              {Diffo.Provider.Calculations.FieldFromAssignment, [alias: :primary, field: :value]}
+
+    calculate :all_assignment_values,
+              {:array, :integer},
+              {Diffo.Provider.Calculations.FieldFromAssignment, [field: :value]}
   end
 end
