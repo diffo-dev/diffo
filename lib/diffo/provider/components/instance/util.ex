@@ -125,6 +125,22 @@ defmodule Diffo.Provider.Instance.Util do
   end
 
   @doc false
+  def merge_typed_and_pool_characteristics(result, record) do
+    typed = Map.get(record, :typed_characteristics) || []
+    pool = Map.get(record, :pool_characteristics) || []
+    extras = typed ++ pool
+
+    case extras do
+      [] ->
+        result
+
+      _ ->
+        existing = Diffo.Util.get(result, :characteristics) || []
+        Diffo.Util.set(result, :characteristics, existing ++ extras)
+    end
+  end
+
+  @doc false
   def derive_type(specification_type) do
     case specification_type do
       :serviceSpecification -> :service
