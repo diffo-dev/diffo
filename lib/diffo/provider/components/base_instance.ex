@@ -235,6 +235,7 @@ defmodule Diffo.Provider.BaseInstance do
         :features,
         Instance.derive_feature_list_name(record.type)
       )
+      |> Instance.merge_typed_and_pool_characteristics(record)
       |> Util.suppress_rename(
         :characteristics,
         Instance.derive_characteristic_list_name(record.type)
@@ -688,6 +689,8 @@ defmodule Diffo.Provider.BaseInstance do
                 :notes,
                 :features,
                 :characteristics,
+                :typed_characteristics,
+                :pool_characteristics,
                 :places,
                 :parties
               ],
@@ -698,6 +701,18 @@ defmodule Diffo.Provider.BaseInstance do
   calculations do
     calculate :href, :string, Diffo.Provider.Calculations.InstanceHref do
       description "the inventory href of the service or resource instance"
+    end
+
+    calculate :typed_characteristics,
+              {:array, :struct},
+              Diffo.Provider.Calculations.TypedCharacteristics do
+      description "typed BaseCharacteristic records declared via the characteristics DSL"
+    end
+
+    calculate :pool_characteristics,
+              {:array, :struct},
+              Diffo.Provider.Calculations.PoolCharacteristics do
+      description "AssignableCharacteristic records declared via the pools DSL"
     end
   end
 end
