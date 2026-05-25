@@ -24,6 +24,10 @@ defmodule Diffo.Provider.BasePlace do
   - `referred_type` — TMF `@referredType`. One of `:GeographicSite`, `:GeographicLocation`,
     `:GeographicAddress`. When present, indicates this is a reference to a place of that kind;
     `type` must be `:PlaceRef`.
+  - `location` — optional `AshNeo4j.Type.Point` (WGS-84 2D) for point-like Places.
+  - `bounds` — optional `AshNeo4j.Type.Box` (4-vertex straight-sided polygon) for region Places.
+    At most one of `location`/`bounds` may be set on a record, and only when
+    `type == :GeographicLocation` (per TMF675).
 
   ## Usage
 
@@ -142,6 +146,18 @@ defmodule Diffo.Provider.BasePlace do
       constraints one_of: [:GeographicSite, :GeographicLocation, :GeographicAddress]
     end
 
+    attribute :location, AshNeo4j.Type.Point do
+      description "WGS-84 2D point for point-like Places (TMF675 GeoJsonPoint)"
+      allow_nil? true
+      public? true
+    end
+
+    attribute :bounds, AshNeo4j.Type.Box do
+      description "WGS-84 2D bounding box for region Places (TMF675 GeoJsonPolygon, 4-vertex straight-sided)"
+      allow_nil? true
+      public? true
+    end
+
     create_timestamp :created_at
 
     update_timestamp :updated_at
@@ -160,13 +176,13 @@ defmodule Diffo.Provider.BasePlace do
 
     create :create do
       description "creates a place"
-      accept [:id, :href, :name, :type, :referred_type]
+      accept [:id, :href, :name, :type, :referred_type, :location, :bounds]
       upsert? true
     end
 
     update :update do
       description "updates the place"
-      accept [:href, :name, :type, :referred_type]
+      accept [:href, :name, :type, :referred_type, :location, :bounds]
     end
 
     read :list do
@@ -210,9 +226,77 @@ defmodule Diffo.Provider.BasePlace do
       where absent(:referred_type)
       message "when referred_type is absent, type must be not be PlaceRef"
     end
+
+    validate absent([:location, :bounds], at_least: 1) do
+      message "at most one of [location, bounds] may be set"
+    end
+
+    validate attribute_equals(:type, :GeographicLocation) do
+      where present([:location, :bounds], at_least: 1)
+      message "location and bounds are only allowed when type is :GeographicLocation"
+    end
   end
 
   preparations do
     prepare build(sort: [id: :asc, name: :asc])
+  end
+
+  jason do
+    pick [:id, :href, :name, :referred_type, :type, :location, :bounds]
+    compact true
+    rename referred_type: "@referredType", type: "@type"
+    customize &Diffo.Provider.BasePlace.encode_geo_json/2
+  end
+
+  outstanding do
+    expect [:id, :name, :referred_type, :type]
+  end
+
+  @doc false
+  def encode_geo_json(result, record) do
+    case {record.location, record.bounds} do
+      {nil, nil} ->
+        result
+
+      {%Bolty.Types.Point{x: lon, y: lat}, nil} ->
+        result
+        |> List.keydelete(:location, 0)
+        |> List.keydelete(:bounds, 0)
+        |> rebrand_type("GeoJsonPoint")
+        |> List.keystore("geoJson", 0,
+          {"geoJson", %{geometry: %{type: "Point", coordinates: [lon, lat]}}}
+        )
+
+      {nil, %AshNeo4j.Type.Box{sw: sw, ne: ne}} ->
+        ring = [
+          [sw.x, sw.y],
+          [ne.x, sw.y],
+          [ne.x, ne.y],
+          [sw.x, ne.y],
+          [sw.x, sw.y]
+        ]
+
+        result
+        |> List.keydelete(:location, 0)
+        |> List.keydelete(:bounds, 0)
+        |> rebrand_type("GeoJsonPolygon")
+        |> List.keystore("geoJson", 0,
+          {"geoJson", %{geometry: %{type: "Polygon", coordinates: [ring]}}}
+        )
+    end
+  end
+
+  defp rebrand_type(result, concrete) do
+    case List.keyfind(result, "@type", 0) do
+      {"@type", _} ->
+        result
+        |> List.keyreplace("@type", 0, {"@type", concrete})
+        |> List.keystore("@baseType", 0, {"@baseType", "GeographicLocation"})
+
+      nil ->
+        result
+        |> List.keystore("@baseType", 0, {"@baseType", "GeographicLocation"})
+        |> List.keystore("@type", 0, {"@type", concrete})
+    end
   end
 end
