@@ -345,6 +345,216 @@ defmodule Diffo.Provider.PlaceTest do
     end
   end
 
+  describe "Diffo.Provider spatial Places" do
+    alias AshNeo4j.Type.Box
+    alias Bolty.Types.Point
+
+    # Sydney-ish bounding box used by the box-create tests
+    @sw Point.create(:wgs_84, 151.0, -34.0)
+     # nw not needed — Box derives it from sw/ne
+    @ne Point.create(:wgs_84, 151.5, -33.5)
+    @inside_pt Point.create(:wgs_84, 151.25, -33.75)
+    @outside_pt Point.create(:wgs_84, 150.0, -30.0)
+
+    test "create a GeographicLocation with a location point - success" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "LOC-PT-1",
+          name: :locationId,
+          type: :GeographicLocation,
+          location: @inside_pt
+        })
+
+      assert place.type == :GeographicLocation
+      assert %Bolty.Types.Point{x: 151.25, y: -33.75} = place.location
+      assert place.bounds == nil
+    end
+
+    test "create a GeographicLocation with a bounds box - success" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "CSA-PG-1",
+          name: :csaId,
+          type: :GeographicLocation,
+          bounds: %Box{sw: @sw, ne: @ne}
+        })
+
+      assert place.type == :GeographicLocation
+      assert place.location == nil
+      assert %Box{sw: %Bolty.Types.Point{}, ne: %Bolty.Types.Point{}} = place.bounds
+    end
+
+    test "create with both location and bounds - failure" do
+      {:error, error} =
+        Diffo.Provider.create_place(%{
+          id: "BAD-BOTH-1",
+          name: :badId,
+          type: :GeographicLocation,
+          location: @inside_pt,
+          bounds: %Box{sw: @sw, ne: @ne}
+        })
+
+      assert is_struct(error, Ash.Error.Invalid)
+    end
+
+    test "create location on non-:GeographicLocation type - failure" do
+      {:error, error} =
+        Diffo.Provider.create_place(%{
+          id: "BAD-GA-1",
+          name: :badId,
+          type: :GeographicAddress,
+          location: @inside_pt
+        })
+
+      assert is_struct(error, Ash.Error.Invalid)
+    end
+
+    test "create bounds on non-:GeographicLocation type - failure" do
+      {:error, error} =
+        Diffo.Provider.create_place(%{
+          id: "BAD-GS-1",
+          name: :badId,
+          type: :GeographicSite,
+          bounds: %Box{sw: @sw, ne: @ne}
+        })
+
+      assert is_struct(error, Ash.Error.Invalid)
+    end
+
+    test "update from location to bounds - success" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "LOC-SWITCH-1",
+          name: :locationId,
+          type: :GeographicLocation,
+          location: @inside_pt
+        })
+
+      updated =
+        place
+        |> Diffo.Provider.update_place!(%{location: nil, bounds: %Box{sw: @sw, ne: @ne}})
+
+      assert updated.location == nil
+      assert %Box{} = updated.bounds
+    end
+
+    test "encode json GeoJsonPoint - success" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "LOC-PT-2",
+          name: :locationId,
+          type: :GeographicLocation,
+          location: @inside_pt
+        })
+
+      decoded = place |> Jason.encode!() |> Jason.decode!()
+
+      assert decoded == %{
+               "id" => "LOC-PT-2",
+               "name" => "locationId",
+               "@baseType" => "GeographicLocation",
+               "@type" => "GeoJsonPoint",
+               "geoJson" => %{
+                 "geometry" => %{"type" => "Point", "coordinates" => [151.25, -33.75]}
+               }
+             }
+    end
+
+    test "encode json GeoJsonPolygon - success" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "CSA-PG-2",
+          name: :csaId,
+          type: :GeographicLocation,
+          bounds: %Box{sw: @sw, ne: @ne}
+        })
+
+      decoded = place |> Jason.encode!() |> Jason.decode!()
+
+      assert decoded == %{
+               "id" => "CSA-PG-2",
+               "name" => "csaId",
+               "@baseType" => "GeographicLocation",
+               "@type" => "GeoJsonPolygon",
+               "geoJson" => %{
+                 "geometry" => %{
+                   "type" => "Polygon",
+                   "coordinates" => [
+                     [
+                       [151.0, -34.0],
+                       [151.5, -34.0],
+                       [151.5, -33.5],
+                       [151.0, -33.5],
+                       [151.0, -34.0]
+                     ]
+                   ]
+                 }
+               }
+             }
+    end
+
+    test "encode non-spatial Place leaves @type intact - regression" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "REG-GA-1",
+          name: :locationId,
+          href: "place/nbnco/REG-GA-1",
+          type: :GeographicAddress
+        })
+
+      decoded = place |> Jason.encode!() |> Jason.decode!()
+      assert decoded["@type"] == "GeographicAddress"
+      refute Map.has_key?(decoded, "@baseType")
+      refute Map.has_key?(decoded, "geoJson")
+    end
+
+    test "st_contains pushes down to Cypher and returns boxes containing the point" do
+      require Ash.Query
+
+      Diffo.Provider.create_place!(%{
+        id: "CSA-SQ-1",
+        name: :csaId,
+        type: :GeographicLocation,
+        bounds: %Box{sw: @sw, ne: @ne}
+      })
+
+      hits =
+        Diffo.Provider.Place
+        |> Ash.Query.filter(st_contains(bounds, ^@inside_pt))
+        |> Ash.read!()
+
+      assert Enum.any?(hits, &(&1.id == "CSA-SQ-1"))
+
+      misses =
+        Diffo.Provider.Place
+        |> Ash.Query.filter(st_contains(bounds, ^@outside_pt))
+        |> Ash.read!()
+
+      refute Enum.any?(misses, &(&1.id == "CSA-SQ-1"))
+    end
+
+    test "st_dwithin returns points near the customer point" do
+      require Ash.Query
+
+      Diffo.Provider.create_place!(%{
+        id: "LOC-NEAR-1",
+        name: :locationId,
+        type: :GeographicLocation,
+        location: @inside_pt
+      })
+
+      # within ~50 km — same suburb scale
+      near = Point.create(:wgs_84, 151.26, -33.76)
+
+      hits =
+        Diffo.Provider.Place
+        |> Ash.Query.filter(st_dwithin(location, ^near, 5_000))
+        |> Ash.read!()
+
+      assert Enum.any?(hits, &(&1.id == "LOC-NEAR-1"))
+    end
+  end
+
   describe "Diffo.Provider outstanding Places" do
     test "resolve a general expected place" do
       place =

@@ -24,6 +24,10 @@ defmodule Diffo.Provider.BasePlace do
   - `referred_type` — TMF `@referredType`. One of `:GeographicSite`, `:GeographicLocation`,
     `:GeographicAddress`. When present, indicates this is a reference to a place of that kind;
     `type` must be `:PlaceRef`.
+  - `location` — optional `AshNeo4j.Type.Point` (WGS-84 2D) for point-like Places.
+  - `bounds` — optional `AshNeo4j.Type.Box` (4-vertex straight-sided polygon) for region Places.
+    At most one of `location`/`bounds` may be set on a record, and only when
+    `type == :GeographicLocation` (per TMF675).
 
   ## Usage
 
@@ -142,6 +146,18 @@ defmodule Diffo.Provider.BasePlace do
       constraints one_of: [:GeographicSite, :GeographicLocation, :GeographicAddress]
     end
 
+    attribute :location, AshNeo4j.Type.Point do
+      description "WGS-84 2D point for point-like Places (TMF675 GeoJsonPoint)"
+      allow_nil? true
+      public? true
+    end
+
+    attribute :bounds, AshNeo4j.Type.Box do
+      description "WGS-84 2D bounding box for region Places (TMF675 GeoJsonPolygon, 4-vertex straight-sided)"
+      allow_nil? true
+      public? true
+    end
+
     create_timestamp :created_at
 
     update_timestamp :updated_at
@@ -160,13 +176,13 @@ defmodule Diffo.Provider.BasePlace do
 
     create :create do
       description "creates a place"
-      accept [:id, :href, :name, :type, :referred_type]
+      accept [:id, :href, :name, :type, :referred_type, :location, :bounds]
       upsert? true
     end
 
     update :update do
       description "updates the place"
-      accept [:href, :name, :type, :referred_type]
+      accept [:href, :name, :type, :referred_type, :location, :bounds]
     end
 
     read :list do
@@ -209,6 +225,15 @@ defmodule Diffo.Provider.BasePlace do
     validate attribute_does_not_equal(:type, :PlaceRef) do
       where absent(:referred_type)
       message "when referred_type is absent, type must be not be PlaceRef"
+    end
+
+    validate absent([:location, :bounds], at_least: 1) do
+      message "at most one of [location, bounds] may be set"
+    end
+
+    validate attribute_equals(:type, :GeographicLocation) do
+      where present([:location, :bounds], at_least: 1)
+      message "location and bounds are only allowed when type is :GeographicLocation"
     end
   end
 
