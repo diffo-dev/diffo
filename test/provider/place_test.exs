@@ -438,76 +438,6 @@ defmodule Diffo.Provider.PlaceTest do
       assert %Box{} = updated.bounds
     end
 
-    test "encode json GeoJsonPoint - success" do
-      place =
-        Diffo.Provider.create_place!(%{
-          id: "LOC-PT-2",
-          name: :locationId,
-          type: :GeographicLocation,
-          location: @inside_pt
-        })
-
-      decoded = place |> Jason.encode!() |> Jason.decode!()
-
-      assert decoded == %{
-               "id" => "LOC-PT-2",
-               "name" => "locationId",
-               "@baseType" => "GeographicLocation",
-               "@type" => "GeoJsonPoint",
-               "geoJson" => %{
-                 "geometry" => %{"type" => "Point", "coordinates" => [151.25, -33.75]}
-               }
-             }
-    end
-
-    test "encode json GeoJsonPolygon - success" do
-      place =
-        Diffo.Provider.create_place!(%{
-          id: "CSA-PG-2",
-          name: :csaId,
-          type: :GeographicLocation,
-          bounds: %Box{sw: @sw, ne: @ne}
-        })
-
-      decoded = place |> Jason.encode!() |> Jason.decode!()
-
-      assert decoded == %{
-               "id" => "CSA-PG-2",
-               "name" => "csaId",
-               "@baseType" => "GeographicLocation",
-               "@type" => "GeoJsonPolygon",
-               "geoJson" => %{
-                 "geometry" => %{
-                   "type" => "Polygon",
-                   "coordinates" => [
-                     [
-                       [151.0, -34.0],
-                       [151.5, -34.0],
-                       [151.5, -33.5],
-                       [151.0, -33.5],
-                       [151.0, -34.0]
-                     ]
-                   ]
-                 }
-               }
-             }
-    end
-
-    test "encode non-spatial Place leaves @type intact - regression" do
-      place =
-        Diffo.Provider.create_place!(%{
-          id: "REG-GA-1",
-          name: :locationId,
-          href: "place/nbnco/REG-GA-1",
-          type: :GeographicAddress
-        })
-
-      decoded = place |> Jason.encode!() |> Jason.decode!()
-      assert decoded["@type"] == "GeographicAddress"
-      refute Map.has_key?(decoded, "@baseType")
-      refute Map.has_key?(decoded, "geoJson")
-    end
-
     test "st_contains pushes down to Cypher and returns boxes containing the point" do
       require Ash.Query
 
@@ -552,6 +482,221 @@ defmodule Diffo.Provider.PlaceTest do
         |> Ash.read!()
 
       assert Enum.any?(hits, &(&1.id == "LOC-NEAR-1"))
+    end
+  end
+
+  describe "Diffo.Provider TMF675 json" do
+    alias AshNeo4j.Type.Box
+    alias Bolty.Types.Point
+
+    # Vodafone House — the GeoJsonPoint sample from TMF675 §"Json representation sample"
+    @vodafone_house_pt Point.create(:wgs_84, -1.3197581470012665, 51.41671197068097)
+    # Vodafone HQ campus bounding box — the GeoJsonPolygon sample from TMF675 §"SAMPLE USE CASES"
+    @vodafone_campus_sw Point.create(:wgs_84, -1.3236808776855469, 51.413962700391956)
+    @vodafone_campus_ne Point.create(:wgs_84, -1.3168895244598389, 51.417662927117235)
+
+    test "matches TMF675 GeoJsonPoint sample (Vodafone House) verbatim" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "10c5f5b5-e408",
+          name: "Vodafone House",
+          type: :GeographicLocation,
+          location: @vodafone_house_pt
+        })
+
+      assert place |> Jason.encode!() |> Jason.decode!() == %{
+               "id" => "10c5f5b5-e408",
+               "name" => "Vodafone House",
+               "@baseType" => "GeographicLocation",
+               "@type" => "GeoJsonPoint",
+               "geoJson" => %{
+                 "geometry" => %{
+                   "type" => "Point",
+                   "coordinates" => [-1.3197581470012665, 51.41671197068097]
+                 }
+               }
+             }
+    end
+
+    test "matches TMF675 GeoJsonPolygon sample (Vodafone HQ campus bbox), closed per RFC 7946" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "VFG-CAMPUS-BBOX",
+          name: "Vodafone HQ campus",
+          type: :GeographicLocation,
+          bounds: %Box{sw: @vodafone_campus_sw, ne: @vodafone_campus_ne}
+        })
+
+      assert place |> Jason.encode!() |> Jason.decode!() == %{
+               "id" => "VFG-CAMPUS-BBOX",
+               "name" => "Vodafone HQ campus",
+               "@baseType" => "GeographicLocation",
+               "@type" => "GeoJsonPolygon",
+               "geoJson" => %{
+                 "geometry" => %{
+                   "type" => "Polygon",
+                   "coordinates" => [
+                     [
+                       [-1.3236808776855469, 51.413962700391956],
+                       [-1.3168895244598389, 51.413962700391956],
+                       [-1.3168895244598389, 51.417662927117235],
+                       [-1.3236808776855469, 51.417662927117235],
+                       [-1.3236808776855469, 51.413962700391956]
+                     ]
+                   ]
+                 }
+               }
+             }
+    end
+
+    test "encode json GeoJsonPoint - success" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "LOC-PT-2",
+          name: :locationId,
+          type: :GeographicLocation,
+          location: Point.create(:wgs_84, 151.25, -33.75)
+        })
+
+      decoded = place |> Jason.encode!() |> Jason.decode!()
+
+      assert decoded == %{
+               "id" => "LOC-PT-2",
+               "name" => "locationId",
+               "@baseType" => "GeographicLocation",
+               "@type" => "GeoJsonPoint",
+               "geoJson" => %{
+                 "geometry" => %{"type" => "Point", "coordinates" => [151.25, -33.75]}
+               }
+             }
+    end
+
+    test "encode json GeoJsonPolygon - success" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "CSA-PG-2",
+          name: :csaId,
+          type: :GeographicLocation,
+          bounds: %Box{
+            sw: Point.create(:wgs_84, 151.0, -34.0),
+            ne: Point.create(:wgs_84, 151.5, -33.5)
+          }
+        })
+
+      decoded = place |> Jason.encode!() |> Jason.decode!()
+
+      assert decoded == %{
+               "id" => "CSA-PG-2",
+               "name" => "csaId",
+               "@baseType" => "GeographicLocation",
+               "@type" => "GeoJsonPolygon",
+               "geoJson" => %{
+                 "geometry" => %{
+                   "type" => "Polygon",
+                   "coordinates" => [
+                     [
+                       [151.0, -34.0],
+                       [151.5, -34.0],
+                       [151.5, -33.5],
+                       [151.0, -33.5],
+                       [151.0, -34.0]
+                     ]
+                   ]
+                 }
+               }
+             }
+    end
+
+    test "encode non-spatial Place leaves @type intact - regression" do
+      place =
+        Diffo.Provider.create_place!(%{
+          id: "REG-GA-1",
+          name: :locationId,
+          href: "place/nbnco/REG-GA-1",
+          type: :GeographicAddress
+        })
+
+      decoded = place |> Jason.encode!() |> Jason.decode!()
+      assert decoded["@type"] == "GeographicAddress"
+      refute Map.has_key?(decoded, "@baseType")
+      refute Map.has_key?(decoded, "geoJson")
+    end
+  end
+
+  describe "Diffo.Provider service qualification (SQ)" do
+    alias AshNeo4j.Type.Box
+    alias Bolty.Types.Point
+
+    # CSA-SYD-01 covers a chunk of Sydney
+    @sq_csa_sw Point.create(:wgs_84, 151.0, -34.0)
+    @sq_csa_ne Point.create(:wgs_84, 151.5, -33.5)
+    # NSA-FOO-01 is a black-spot box inside the CSA
+    @sq_nsa_sw Point.create(:wgs_84, 151.10, -33.90)
+    @sq_nsa_ne Point.create(:wgs_84, 151.20, -33.80)
+    # Inside CSA, outside the NSA → served
+    @sq_served_pt Point.create(:wgs_84, 151.25, -33.75)
+    # Inside CSA AND inside NSA → blocked (NSA dominates)
+    @sq_blocked_pt Point.create(:wgs_84, 151.15, -33.85)
+    # Outside any CSA → out-of-footprint
+    @sq_oof_pt Point.create(:wgs_84, 150.0, -30.0)
+
+    setup do
+      Diffo.Provider.create_place!(%{
+        id: "CSA-SYD-01",
+        name: :csa,
+        type: :GeographicLocation,
+        bounds: %Box{sw: @sq_csa_sw, ne: @sq_csa_ne}
+      })
+
+      Diffo.Provider.create_place!(%{
+        id: "NSA-FOO-01",
+        name: :nsa,
+        type: :GeographicLocation,
+        bounds: %Box{sw: @sq_nsa_sw, ne: @sq_nsa_ne}
+      })
+
+      :ok
+    end
+
+    test "served: point inside the CSA, no NSA covers it" do
+      assert {:served, %Diffo.Provider.Place{id: "CSA-SYD-01"}} = qualify(@sq_served_pt)
+    end
+
+    test "blocked: point inside the CSA AND inside an NSA — NSA dominates" do
+      assert {:blocked, %Diffo.Provider.Place{id: "NSA-FOO-01"}} = qualify(@sq_blocked_pt)
+    end
+
+    test "out_of_footprint: point outside every CSA" do
+      assert {:out_of_footprint, nil} = qualify(@sq_oof_pt)
+    end
+  end
+
+  # NSA dominates — check it first, short-circuit if hit. Discriminates CSAs from NSAs
+  # by the `name` attribute since BasePlace doesn't (yet) carry a subtype kind.
+  defp qualify(%Bolty.Types.Point{} = point) do
+    require Ash.Query
+
+    nsa_hits =
+      Diffo.Provider.Place
+      |> Ash.Query.filter(name == "nsa" and st_contains(bounds, ^point))
+      |> Ash.Query.limit(1)
+      |> Ash.read!()
+
+    case nsa_hits do
+      [nsa] ->
+        {:blocked, nsa}
+
+      [] ->
+        csa_hits =
+          Diffo.Provider.Place
+          |> Ash.Query.filter(name == "csa" and st_contains(bounds, ^point))
+          |> Ash.Query.limit(1)
+          |> Ash.read!()
+
+        case csa_hits do
+          [csa] -> {:served, csa}
+          [] -> {:out_of_footprint, nil}
+        end
     end
   end
 
