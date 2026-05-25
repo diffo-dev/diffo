@@ -260,4 +260,14 @@ defmodule Diffo.Provider.BaseParty do
   preparations do
     prepare build(sort: [id: :asc, name: :asc])
   end
+
+  jason do
+    pick [:id, :href, :name, :referred_type, :type]
+    compact true
+    rename referred_type: "@referredType", type: "@type"
+  end
+
+  outstanding do
+    expect [:id, :name, :referred_type, :type]
+  end
 end
