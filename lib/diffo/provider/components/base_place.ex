@@ -240,4 +240,63 @@ defmodule Diffo.Provider.BasePlace do
   preparations do
     prepare build(sort: [id: :asc, name: :asc])
   end
+
+  jason do
+    pick [:id, :href, :name, :referred_type, :type, :location, :bounds]
+    compact true
+    rename referred_type: "@referredType", type: "@type"
+    customize &Diffo.Provider.BasePlace.encode_geo_json/2
+  end
+
+  outstanding do
+    expect [:id, :name, :referred_type, :type]
+  end
+
+  @doc false
+  def encode_geo_json(result, record) do
+    case {record.location, record.bounds} do
+      {nil, nil} ->
+        result
+
+      {%Bolty.Types.Point{x: lon, y: lat}, nil} ->
+        result
+        |> List.keydelete(:location, 0)
+        |> List.keydelete(:bounds, 0)
+        |> rebrand_type("GeoJsonPoint")
+        |> List.keystore("geoJson", 0,
+          {"geoJson", %{geometry: %{type: "Point", coordinates: [lon, lat]}}}
+        )
+
+      {nil, %AshNeo4j.Type.Box{sw: sw, ne: ne}} ->
+        ring = [
+          [sw.x, sw.y],
+          [ne.x, sw.y],
+          [ne.x, ne.y],
+          [sw.x, ne.y],
+          [sw.x, sw.y]
+        ]
+
+        result
+        |> List.keydelete(:location, 0)
+        |> List.keydelete(:bounds, 0)
+        |> rebrand_type("GeoJsonPolygon")
+        |> List.keystore("geoJson", 0,
+          {"geoJson", %{geometry: %{type: "Polygon", coordinates: [ring]}}}
+        )
+    end
+  end
+
+  defp rebrand_type(result, concrete) do
+    case List.keyfind(result, "@type", 0) do
+      {"@type", _} ->
+        result
+        |> List.keyreplace("@type", 0, {"@type", concrete})
+        |> List.keystore("@baseType", 0, {"@baseType", "GeographicLocation"})
+
+      nil ->
+        result
+        |> List.keystore("@baseType", 0, {"@baseType", "GeographicLocation"})
+        |> List.keystore("@type", 0, {"@type", concrete})
+    end
+  end
 end

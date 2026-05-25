@@ -323,6 +323,74 @@ Spark runs two separate pipelines during compilation, in this order:
 
 New transformers go under `transformers:`. New persisters go under `persisters:`.
 
+## Resource polymorphism — the Fat* pattern
+
+Each Ash resource concept has exactly **one polymorphism budget** — the axis along
+which concrete resources differ. Diffo consistently spends that budget on the
+**extender's domain axis**, never on the TMF subtype axis.
+
+### What this means
+
+- **`BaseInstance`** — extenders define `MyApp.Avc`, `MyApp.Cvc`, `MyApp.NbnEthernet`
+  as distinct resources. TMF638/639 subtypes (`:service` vs `:resource`) live as a
+  `type` enum, with `service_state` and `resource_state` as optional attributes
+  gated by `type`. The Assigner already exploits this — `Assigner.assignable_service_states/0`
+  and `Assigner.assignable_resource_states/0` dispatch on the discriminator.
+- **`BaseParty`** — extenders define `MyApp.RSP`, individuals, organisations as
+  distinct resources. TMF632 subtypes (`:Organization`, `:Individual`) live as a
+  `type` enum.
+- **`BasePlace`** — extenders define `MyApp.CSA`, `MyApp.Warehouse`, `MyApp.HomeAddress`
+  as distinct resources. TMF673/674/675 subtypes (`:GeographicAddress`,
+  `:GeographicSite`, `:GeographicLocation`, `:PlaceRef`) live as a `type` enum, with
+  subtype-specific attribute groups (e.g. `:location` / `:bounds` for
+  `:GeographicLocation`) gated by `type` via Ash validations.
+
+These bases grow wide ("Fat*") as new TMF subtype concerns become real work, but they
+stay singular. A `:GeographicAddress` Place and a `:GeographicLocation` Place are the
+same Ash resource — the `type` enum and which attribute group is populated tells them
+apart. Storage cost is negligible: Neo4j doesn't store nil properties, so unused
+attribute groups never touch disk.
+
+### Wire-side TMF polymorphism still works
+
+TMF wire forms carry their own polymorphism (`@type`, `@baseType`, `@referredType`
+per the TMF API Design Guidelines). That polymorphism is **reconstructed at the JSON
+encoder edge** rather than represented at the resource type. `Diffo.Provider.Place`'s
+`customize/2` callback in its `jason do` block pattern-matches on which subtype
+attributes are populated and synthesises the right TMF shape — e.g.
+`@baseType: "GeographicLocation"` + `@type: "GeoJsonPoint"` + nested `geoJson` for a
+populated `:location`. Same pattern extends to TMF673/674 shapes as those subtype
+attribute groups grow on the base.
+
+### Why this commitment is durable
+
+- **Subtype-per-fragment doesn't work.** Splitting `BasePlace` into
+  `BaseGeographicLocation` / `BaseGeographicSite` / `BaseGeographicAddress` would
+  re-spend the polymorphism budget on the TMF axis. Every consumer would then have
+  to compose differently per subtype, lose the "use the base, set `:type`, you have
+  a Place" story, and face N² edge declarations for every Instance-to-Place or
+  Place-to-Place role that could accept more than one subtype.
+- **Generic edges survive.** Because the resource is singular, any Instance
+  declaring `place :role, Diffo.Provider.Place` (or a domain extender's Place)
+  can hold any TMF subtype with no combinatorial relationship explosion.
+- **Storage stays indexable.** Each attribute is its own typed Neo4j property —
+  `CREATE POINT INDEX ON (p:Place) ON p.bounds.bbSW` works for geometry; address
+  fields would be indexable in their own way. A union-typed `:geometry` attribute
+  would collapse to a JSON blob via Ash's `:ash_json` classifier and lose all
+  indexability — that's the trap of `Ash.Type.Union` for spatial data.
+
+### Implications for design work
+
+- **New TMF subtype attribute group → new attributes on the existing base**,
+  with a `validate attribute_equals(:type, :GeographicXxx), where: present([...], at_least: 1)`
+  guard. Don't reach for a new fragment.
+- **Subtype-specific behaviour → validations gated on `type` + encoder branches**, not
+  new resources.
+- **API-layer union sugar (so consumers can read/write a single `:geometry` shape)
+  → action arguments + a calculation on the resource**, with storage staying as
+  separate typed attributes underneath. Coupling AshNeo4j to that union would
+  rightly be refused — TMF concerns belong in Diffo, not the data layer.
+
 ## DSL shape changes
 
 Whenever you add, rename, or remove a DSL entity or section in `Diffo.Provider.Extension`
