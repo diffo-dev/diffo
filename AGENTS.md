@@ -18,6 +18,7 @@ on [Ash Framework](https://www.ash-hq.org/) + [AshNeo4j](https://github.com/diff
 1. Read `usage-rules.md` — Diffo-specific DSL rules.
 2. Read `CLAUDE.md` — dependency usage rules (Ash, Elixir, OTP, AshNeo4j, Spark).
 3. Consult the skill at `.claude/skills/diffo-framework/` for Ash ecosystem patterns.
+4. Run `mix test` before and after your change to confirm nothing regressed.
 
 ## Updating dependencies
 
@@ -25,6 +26,45 @@ When updating a dependency (e.g. bumping `ash_neo4j`, `ash`, `spark` in `mix.exs
 run `mix usage_rules.sync` immediately after `mix deps.get`. Dependencies publish their own
 usage rules; syncing pulls those changes into `CLAUDE.md` so you are working from the
 up-to-date guidance before touching any code.
+
+## Fixing bugs
+
+Before writing any fix, review existing test coverage for the affected behaviour. If the bug
+has no test, write the failing test first — this confirms the reproduction and guards the
+fix against regression. Only then implement the fix and verify the test passes.
+
+## Designing intricate changes — the spelunking pattern
+
+For any change that touches more than one layer (Spark DSL extension / transformers /
+persisters / verifiers / base fragments / AshNeo4j sandbox / consumer-domain resources),
+don't work top-down or bottom-up alone — work from both ends and meet in the middle
+(stalagmite + stalactite). Both ends carry unknowns that compound when you discover them
+late.
+
+**Bottom (stalagmite) — start with a focused test against the lowest layer that doesn't
+involve the consumer surface.** Examples for diffo:
+
+- A direct introspection call against `Diffo.Provider.Extension.Info` or
+  `Spark.Dsl.Extension.get_entities/2` to confirm a transformer/persister bakes the shape
+  you expect.
+- An `AshNeo4j.Sandbox` round-trip against a minimal `BaseInstance` / `BaseParty` /
+  `BasePlace` / `BaseCharacteristic`-derived resource that exercises only the primitive you
+  are changing.
+- A raw `AshNeo4j.Sandbox.run/2` (or `Bolty.query!/2`) when the surprise might be at the
+  Cypher / driver layer.
+
+This isolates DSL- and graph-level surprises before they ripple up into a consumer domain.
+
+**Top (stalactite) — write an exploratory consumer-domain test with `IO.inspect` inside
+your transformer, persister, calculation, or change callback.** Surfaces shape assumptions
+you have wrong about how DSL state arrives, what the change context contains, or what Ash
+hands the callback. Throw the test away once it has taught you the shape.
+
+**Meet in the middle.** Once both ends are settled, the connecting commit is small and
+focused — write the bridge code, run the existing end tests plus a new end-to-end one
+through a consumer-style resource.
+
+Use this pattern whenever a change spans more than one layer.
 
 ## Project structure
 
