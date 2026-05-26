@@ -391,6 +391,95 @@ attribute groups grow on the base.
   separate typed attributes underneath. Coupling AshNeo4j to that union would
   rightly be refused — TMF concerns belong in Diffo, not the data layer.
 
+## Cross-domain lookups and the `Diffo.Unknown` primitive
+
+Calculations that cross resource or domain boundaries (e.g. `inherited_characteristic`
+reading a typed characteristic from a source instance reached via the assignment graph)
+face two structural constraints:
+
+1. **The target resource may not exist at the consumer's compile time.** A generic
+   upstream resource declaring a cross-resource lookup will be consumed by downstream
+   domains whose resources don't exist yet when the upstream compiles. Compile-time
+   resolution of "which module does this role on the source map to?" is architecturally
+   wrong — not just fragile.
+2. **Failure modes are world-local.** The vocabulary for *why* a lookup didn't yield a
+   value (source not reached, role not declared on source, source not Instance-derived,
+   etc.) is domain-specific. Centralising a canonical enumeration of failure reasons in
+   a shared module would force every domain to fit its semantics into a foreign
+   vocabulary.
+
+The Diffo response is `Diffo.Unknown` — a sentinel for "we tried and couldn't determine
+this value, in this context, in this domain."
+
+### Shape
+
+```elixir
+defmodule Diffo.Unknown do
+  defstruct [:world, :reason, :context]
+
+  @type t :: %__MODULE__{
+    world: module(),  # the outermost Resource module that produced this Unknown
+    reason: atom(),   # world-local atom; vocabulary owned by the producing world
+    context: term()   # world-local diagnostic data
+  }
+end
+```
+
+`:world` is the **outermost `(Domain, Resource)` pair** the Unknown was produced under,
+stored as the Resource module since the Domain is derivable via
+`Ash.Resource.Info.domain/1`. The Domain alone is insufficient — within a single
+Domain, multiple concrete resources can extend the same base fragment (e.g.
+`Diffo.Provider.AssignmentRelationship` and `Diffo.Provider.DefinedSimpleRelationship`
+both share `Relationship` infrastructure but are distinct worlds in the same Domain).
+The Resource alone is also insufficient — the Domain anchors which polymorphism axis
+the Resource lives on. Together they identify the producer uniquely.
+
+The structure is **N-world by construction.** A node in the graph can participate in
+many `(Domain, Resource)` worlds simultaneously (one per base-fragment / concrete
+combination it carries labels for). A calc produces an Unknown stamped with its own
+outermost world; consumers see the projection. Today the practical count is two (e.g.
+Diffo's `Diffo.Provider` and a consumer's `MyApp` domains) but the shape doesn't
+encode that limit.
+
+`:reason` is `atom()` at the structural level only — no
+`@type reason :: :a | :b | ...` narrowing. Each calc moduledoc declares its own reason
+vocabulary; the central type stays open.
+
+`:context` is `term()` — each world decides what to put there. Diagnostic, not
+load-bearing.
+
+### Discipline
+
+- **Compile-time stamping of `:world`.** The transformer that injects a cross-boundary
+  calc passes the resource it's injecting into as an opt (the resource being compiled
+  is statically known to the transformer); the calc stamps that resource on every
+  Unknown it emits. No runtime resource lookup needed for the world tag.
+- **Calcs are total.** A calc that crosses a boundary never raises on missing data — it
+  returns the value, `nil`, or `%Diffo.Unknown{}`. The consumer pattern-matches.
+- **Projection across worlds, free composition within.** An outer-world calc that
+  encounters an inner-world Unknown wraps it
+  (`%Diffo.Unknown{world: OuterResource, reason: :inner_unknown, context: %{inner: original}}`);
+  calcs within the same world share vocabulary and can read each other's `:reason`
+  directly without projecting through. Worlds are determined by the outermost
+  `(Domain, Resource)` pair, so calcs on `Diffo.Provider.AssignmentRelationship`
+  vs `Diffo.Provider.DefinedSimpleRelationship` are distinct worlds even though they
+  share a Domain.
+- **No central reason registry.** Resist the urge to enumerate `Diffo.Unknown` reasons
+  anywhere shared. Each world documents its own vocabulary in the moduledocs of the
+  calcs that produce it.
+- **No permanent roles.** The structure describes states (currently-inside-a-world,
+  currently-outside) not identities. The same module may produce an Unknown in one call
+  and consume one in another; nothing in the design should bake static insider/outsider
+  distinctions.
+
+### Relationship to `Ash.NotLoaded`
+
+`Ash.NotLoaded` represents the load-lifecycle "uninitialised" state — we haven't tried
+to load this slot yet. `Diffo.Unknown` represents the post-resolution "we tried and
+couldn't determine" state — the calc ran, the answer is "not determinable in this
+context." Both are explicit values; consumers pattern-match them as distinct outcomes
+alongside concrete values and `nil`.
+
 ## DSL shape changes
 
 Whenever you add, rename, or remove a DSL entity or section in `Diffo.Provider.Extension`
