@@ -34,6 +34,7 @@ defmodule Diffo.Test.Servo do
       define :define_shelf, action: :define
       define :relate_shelf, action: :relate
       define :assign_slot, action: :assign_slot
+      define :lifecycle_shelf, action: :lifecycle
     end
 
     resource CardInstance do
