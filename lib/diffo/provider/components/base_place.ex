@@ -24,8 +24,11 @@ defmodule Diffo.Provider.BasePlace do
   - `referred_type` — TMF `@referredType`. One of `:GeographicSite`, `:GeographicLocation`,
     `:GeographicAddress`. When present, indicates this is a reference to a place of that kind;
     `type` must be `:PlaceRef`.
-  - `location` — optional `AshNeo4j.Type.Point` (WGS-84 2D) for point-like Places.
-  - `bounds` — optional `AshNeo4j.Type.Box` (4-vertex straight-sided polygon) for region Places.
+  - `location` — optional `AshGeo.GeoJson` (`:point`, WGS-84) for point-like Places.
+    Values are `%Geo.Point{coordinates: {lon, lat}, srid: 4326}`.
+  - `bounds` — optional `AshGeo.GeoJson` (`:polygon`, WGS-84) for region Places.
+    Values are `%Geo.Polygon{coordinates: [ring], srid: 4326}`. Polygon is the wire form;
+    axis-aligned-bounding-box is the conventional use today but not type-enforced.
     At most one of `location`/`bounds` may be set on a record, and only when
     `type == :GeographicLocation` (per TMF675).
 
@@ -146,14 +149,16 @@ defmodule Diffo.Provider.BasePlace do
       constraints one_of: [:GeographicSite, :GeographicLocation, :GeographicAddress]
     end
 
-    attribute :location, AshNeo4j.Type.Point do
+    attribute :location, AshGeo.GeoJson do
       description "WGS-84 2D point for point-like Places (TMF675 GeoJsonPoint)"
+      constraints geo_types: [:point], force_srid: 4326
       allow_nil? true
       public? true
     end
 
-    attribute :bounds, AshNeo4j.Type.Box do
-      description "WGS-84 2D bounding box for region Places (TMF675 GeoJsonPolygon, 4-vertex straight-sided)"
+    attribute :bounds, AshGeo.GeoJson do
+      description "WGS-84 2D polygon for region Places (TMF675 GeoJsonPolygon)"
+      constraints geo_types: [:polygon], force_srid: 4326
       allow_nil? true
       public? true
     end
@@ -258,7 +263,7 @@ defmodule Diffo.Provider.BasePlace do
       {nil, nil} ->
         result
 
-      {%Bolty.Types.Point{x: lon, y: lat}, nil} ->
+      {%Geo.Point{coordinates: {lon, lat}}, nil} ->
         result
         |> List.keydelete(:location, 0)
         |> List.keydelete(:bounds, 0)
@@ -267,21 +272,18 @@ defmodule Diffo.Provider.BasePlace do
           {"geoJson", %{geometry: %{type: "Point", coordinates: [lon, lat]}}}
         )
 
-      {nil, %AshNeo4j.Type.Box{sw: sw, ne: ne}} ->
-        ring = [
-          [sw.x, sw.y],
-          [ne.x, sw.y],
-          [ne.x, ne.y],
-          [sw.x, ne.y],
-          [sw.x, sw.y]
-        ]
+      {nil, %Geo.Polygon{coordinates: rings}} ->
+        ring_coords =
+          Enum.map(rings, fn ring ->
+            Enum.map(ring, fn {x, y} -> [x, y] end)
+          end)
 
         result
         |> List.keydelete(:location, 0)
         |> List.keydelete(:bounds, 0)
         |> rebrand_type("GeoJsonPolygon")
         |> List.keystore("geoJson", 0,
-          {"geoJson", %{geometry: %{type: "Polygon", coordinates: [ring]}}}
+          {"geoJson", %{geometry: %{type: "Polygon", coordinates: ring_coords}}}
         )
     end
   end
