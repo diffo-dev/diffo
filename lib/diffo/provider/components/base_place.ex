@@ -268,7 +268,9 @@ defmodule Diffo.Provider.BasePlace do
         |> List.keydelete(:location, 0)
         |> List.keydelete(:bounds, 0)
         |> rebrand_type("GeoJsonPoint")
-        |> List.keystore("geoJson", 0,
+        |> List.keystore(
+          "geoJson",
+          0,
           {"geoJson", %{geometry: %{type: "Point", coordinates: [lon, lat]}}}
         )
 
@@ -282,7 +284,9 @@ defmodule Diffo.Provider.BasePlace do
         |> List.keydelete(:location, 0)
         |> List.keydelete(:bounds, 0)
         |> rebrand_type("GeoJsonPolygon")
-        |> List.keystore("geoJson", 0,
+        |> List.keystore(
+          "geoJson",
+          0,
           {"geoJson", %{geometry: %{type: "Polygon", coordinates: ring_coords}}}
         )
     end
