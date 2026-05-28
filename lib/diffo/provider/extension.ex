@@ -93,8 +93,10 @@ defmodule Diffo.Provider.Extension do
     Characteristic,
     Feature,
     InstanceRole,
+    InheritedCharacteristicDeclaration,
     InheritedPartyDeclaration,
     InheritedPlaceDeclaration,
+    ReverseInheritedCharacteristicDeclaration,
     PartyDeclaration,
     PartyRole,
     PlaceDeclaration,
@@ -185,6 +187,54 @@ defmodule Diffo.Provider.Extension do
     ]
   }
 
+  @inherited_characteristic_entity %Spark.Dsl.Entity{
+    name: :inherited_characteristic,
+    describe:
+      "Declares a typed characteristic derived by traversing the assignment graph inward — generates a calculation; per-source the typed module is resolved at runtime via AshNeo4j.worlds/1",
+    target: InheritedCharacteristicDeclaration,
+    args: [:role],
+    schema: [
+      role: [
+        type: :atom,
+        doc:
+          "The characteristic role to look up on each source instance — also the default alias step and the generated calc name.",
+        required: true
+      ],
+      via: [
+        type: {:list, :atom},
+        doc:
+          "Sequence of assignment aliases to traverse inward. Defaults to [role] for single-hop. Use a list for multi-level."
+      ]
+    ]
+  }
+
+  @reverse_inherited_characteristic_entity %Spark.Dsl.Entity{
+    name: :reverse_inherited_characteristic,
+    describe:
+      "Declares a typed characteristic derived by traversing the assignment graph outward (assigner's view of assignees) — generates a calculation; per-assignee the typed module is resolved at runtime via AshNeo4j.worlds/1",
+    target: ReverseInheritedCharacteristicDeclaration,
+    args: [:name],
+    schema: [
+      name: [
+        type: :atom,
+        doc: "The name of the generated calculation on this resource.",
+        required: true
+      ],
+      assignment_alias: [
+        type: :atom,
+        doc:
+          "The outgoing AssignmentRelationship alias to follow. Named `assignment_alias` because `alias` is an Elixir special form.",
+        required: true
+      ],
+      characteristic: [
+        type: :atom,
+        doc:
+          "The characteristic role to look up on each reached assignee — may differ from the calc name on this resource.",
+        required: true
+      ]
+    ]
+  }
+
   @characteristics %Spark.Dsl.Section{
     name: :characteristics,
     describe: "List of Instance Characteristics",
@@ -193,10 +243,19 @@ defmodule Diffo.Provider.Extension do
       characteristics do
         characteristic :circuit, Diffo.Access.Circuit
         characteristic :line, Diffo.Access.Line
+        # Inherit a typed characteristic from a source instance reached
+        # by following the :port assignment-graph alias inward
+        inherited_characteristic :uni, via: [:port]
+        # Surface the typed characteristics of every assignee reached via :port
+        reverse_inherited_characteristic :unis, assignment_alias: :port, characteristic: :uni
       end
       """
     ],
-    entities: [@characteristic_entity]
+    entities: [
+      @characteristic_entity,
+      @inherited_characteristic_entity,
+      @reverse_inherited_characteristic_entity
+    ]
   }
 
   # ── features ───────────────────────────────────────────────────────────────

@@ -32,6 +32,14 @@ defmodule Diffo.Test.Instance.AccessService do
       inherited_place :primary, source_role: :location
     end
 
+    characteristics do
+      # Inherit the source instance's :card characteristic by traversing
+      # the :primary assignment alias inward (this service is the assignee
+      # of a card's port assignment). Per-source the typed module is
+      # resolved at runtime via AshNeo4j.worlds/1 — late-binding by design.
+      inherited_characteristic :card, via: [:primary]
+    end
+
     behaviour do
       actions do
         create :build
