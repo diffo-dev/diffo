@@ -32,6 +32,10 @@ defmodule Diffo.Test.Instance.AccessService do
       inherited_place :primary, source_role: :location
     end
 
+    parties do
+      inherited_party :owner, via: [:primary], source_role: :provider
+    end
+
     characteristics do
       # Inherit the source instance's :card characteristic by traversing
       # the :primary assignment alias inward (this service is the assignee
