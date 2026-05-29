@@ -58,9 +58,9 @@ produces nodes that Ash cannot find or interpret correctly.
 
 | Kind | Base fragment | Marker extension |
 |---|---|---|
-| Instance (service or resource) | `Diffo.Provider.BaseInstance` | `Diffo.Provider.Instance.Extension` |
-| Party (organisation, person, entity) | `Diffo.Provider.BaseParty` | `Diffo.Provider.Party.Extension` |
-| Place (site, address, location) | `Diffo.Provider.BasePlace` | `Diffo.Provider.Place.Extension` |
+| Instance (Service or Resource) | `Diffo.Provider.BaseInstance` | `Diffo.Provider.Instance.Extension` |
+| Party (Organization, Individual) | `Diffo.Provider.BaseParty` | `Diffo.Provider.Party.Extension` |
+| Place (GeographicAddress, Site, Location) | `Diffo.Provider.BasePlace` | `Diffo.Provider.Place.Extension` |
 
 All three kinds use the same unified `Diffo.Provider.Extension` DSL with a single `provider do`
 section. The marker extensions are zero-section extensions used only for kind identification
@@ -75,6 +75,83 @@ defmodule MyApp.BroadbandService do
   ...
 end
 ```
+
+### Place subtype fragments (TMF675 cascade)
+
+`BasePlace` composes with one of three subtype fragments to produce a TMF675
+concrete Place. Diffo ships the three subtype leaves out of the box and the
+matching consumer leaf is a sibling, not a child:
+
+| Subtype | Subtype fragment | Concrete leaf in diffo |
+|---|---|---|
+| GeographicAddress | `Diffo.Provider.BaseGeographicAddress` | `Diffo.Provider.GeographicAddress` |
+| GeographicSite | `Diffo.Provider.BaseGeographicSite` | `Diffo.Provider.GeographicSite` |
+| GeographicLocation | `Diffo.Provider.BaseGeographicLocation` | `Diffo.Provider.GeographicLocation` |
+
+```elixir
+defmodule MyApp.SydneyExchange do
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BasePlace, Diffo.Provider.BaseGeographicSite],
+    domain: MyApp.SRM
+  # consumer-specific attributes / actions here
+end
+```
+
+Action naming convention on cascade leaves: `:build` for create, `:define` for
+update, both accepting the union of base + subtype fields. `:build` sets the
+TMF `:type` discriminator automatically.
+
+### Provider.Place is plumbing — use the dispatcher API
+
+`Diffo.Provider.Place` is **kept in core minimally** as the abstract reader
+that backs projection bootstrap and PlaceRef-typed placeholders. It is *not*
+a TMF subtype recommendation. Production code should use the type-atom
+dispatcher on `Diffo.Provider`:
+
+```elixir
+# Writes — dispatch on TMF type atom
+Diffo.Provider.create_place!(:GeographicSite, %{id: "X", site_type: :exchange})
+Diffo.Provider.create_place!(:GeographicAddress, %{id: "Y", country: "AU"})
+Diffo.Provider.create_place!(:GeographicLocation, %{id: "Z", location: %Geo.Point{...}})
+Diffo.Provider.create_place!(:PlaceRef, %{id: "P", referred_type: :GeographicSite})
+
+# Reads — open-world projection via AshNeo4j.worlds/1
+Diffo.Provider.get_place_by_id!(id)          # returns concrete subtype struct
+Diffo.Provider.list_places!()                # mixed-subtype list, each projected
+
+# Update / destroy — dispatch on record's struct module
+Diffo.Provider.update_place!(record, attrs)
+Diffo.Provider.delete_place!(record)
+```
+
+### Polymorphic-source ref API
+
+`PlaceRef` and `PartyRef` use a polymorphic-source dispatcher that collapses
+the four-FK source noise into one tagged-tuple `source:` field. The schema is
+unchanged (four FK columns stay); only the API surface drops:
+
+```elixir
+Diffo.Provider.create_place_ref!(%{
+  role: :installation_site,
+  source: {:instance, "INST-001"},       # or {:party, ...}, {:place, ...}, or a struct
+  target: "LOC-001"                       # or a Place struct
+})
+
+Diffo.Provider.list_place_refs_from(source)          # struct or {tag, id}
+Diffo.Provider.list_place_refs_targeting(target)     # struct or id
+```
+
+### ProjectedRef for cross-resource refs without graph edges
+
+`Diffo.Provider.Calculations.ProjectedRef` is a reusable calculation for
+cross-resource references that don't have (and don't need) a graph edge — e.g.
+`BaseGeographicSite.address` resolves to a concrete `GeographicAddress` (or
+consumer-domain Address leaf) at read time via `AshNeo4j.worlds/1`.
+
+**It does NOT replace `belongs_to`.** AshNeo4j requires a real `belongs_to`
+relationship to maintain the Neo4j edge (`verify_relate` enforces this at
+compile time). PlaceRef/PartyRef keep all eight typed `belongs_to` intact for
+graph integrity; the dispatcher does projection on direct reads instead.
 
 ## The unified `provider do` DSL
 
