@@ -13,6 +13,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 ## Unreleased
 
+### Bug Fixes
+
+* **Eliminate fragment-override warnings on cascade leaves** (#181) — Spark's `merge_with_warning` was firing during compile time whenever a subtype fragment (`BaseGeographicAddress`/`Site`/`Location`, `BaseOrganization`/`Individual`) declared a wider `jason.pick` / `outstanding.expect` than `BasePlace` / `BaseParty`. The merge logic has no opt-out for deliberate overrides. Fix: move `jason do` and `outstanding do` off `BasePlace` and `BaseParty` entirely; each concrete leaf carries its own declaration:
+
+  - Abstract readers (`Provider.Place`, `Provider.Party`) now declare their own base-shape `jason do` and `outstanding do` (previously inherited from the base fragment)
+  - Cascade subtype fragments continue to declare their own (no change)
+  - Test-support consumer leaves were already declaring their own (audit confirmed)
+  - `BasePlace.encode_geo_json/2` stays as a static helper that subtype fragments and consumer leaves reference from their own `jason.customize`
+
+  Documented as cascade discipline in `usage-rules.md` and `AGENTS.md`. Zero behaviour change; 757 tests + 90 doctests still pass.
+
 ### Features
 
 * **Party subtype cascade — `BaseParty` → typed subtype leaves** (#186) — TMF632 Organization and Individual now ship as concrete leaves built from fragment composition (`BaseParty` + `BaseOrganization` / `BaseIndividual`). Consumer leaves (e.g. `MyApp.Carrier`) compose the same two fragments alongside their own attributes.
