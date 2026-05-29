@@ -119,6 +119,8 @@ defmodule Diffo.Provider do
     resource Diffo.Provider.GeographicAddress
     resource Diffo.Provider.GeographicSite
     resource Diffo.Provider.GeographicLocation
+    resource Diffo.Provider.Organization
+    resource Diffo.Provider.Individual
 
     resource Diffo.Provider.PlaceRef do
       define :create_place_ref, action: :create
@@ -140,15 +142,7 @@ defmodule Diffo.Provider do
       define :delete_place_ref, action: :destroy
     end
 
-    resource Diffo.Provider.Party do
-      define :create_party, action: :create
-      define :get_party_by_id, action: :read, get_by: :id
-      define :list_parties, action: :list
-      define :find_parties_by_id, action: :find_by_id, args: [:query]
-      define :find_parties_by_name, action: :find_by_name, args: [:query]
-      define :update_party, action: :update
-      define :delete_party, action: :destroy
-    end
+    resource Diffo.Provider.Party
 
     resource Diffo.Provider.PartyRef do
       define :create_party_ref, action: :create
@@ -469,6 +463,212 @@ defmodule Diffo.Provider do
   end
 
   # ============================================================================
+  # Party dispatcher API
+  #
+  # Mirrors the Place dispatcher exactly. Type-atom create, struct-dispatched
+  # update/delete, inline projection on reads via Provider.Party as the
+  # abstract reader. The dispatcher only knows TMF blessed types
+  # (`:Organization`, `:Individual`, `:PartyRef`); consumer-specific shapes
+  # (`MyApp.Carrier`) create/update through their own domain APIs but reads
+  # surface them transparently via projection.
+  # ============================================================================
+
+  @party_type_to_resource %{
+    Organization: Diffo.Provider.Organization,
+    Individual: Diffo.Provider.Individual
+  }
+
+  @typedoc """
+  TMF blessed Party type atoms accepted by the dispatcher.
+
+  `:PartyRef` and `:Entity` route to the abstract `Provider.Party`'s `:create`
+  action (no subtype-specific attributes). `:PartyRef` is the "placeholder Party"
+  type — a record with `referred_type:` set, used as the target of a `PartyRef`
+  to an externally-managed Party. `:Entity` is diffo's extension to the TMF
+  type enum for party-like aggregates that aren't strictly Organization or
+  Individual.
+  """
+  @type party_type :: :Organization | :Individual | :PartyRef | :Entity
+
+  @doc """
+  Creates a typed Party subtype by dispatching on the TMF type atom.
+
+  Raises `ArgumentError` for unknown types — consumer-specific shapes go
+  through consumer domains.
+  """
+  @spec create_party!(party_type(), map()) :: Ash.Resource.record()
+  def create_party!(:PartyRef, attrs) when is_map(attrs) do
+    Ash.create!(Diffo.Provider.Party, attrs, action: :create, domain: __MODULE__)
+  end
+
+  def create_party!(:Entity, attrs) when is_map(attrs) do
+    Ash.create!(
+      Diffo.Provider.Party,
+      Map.put(attrs, :type, :Entity),
+      action: :create,
+      domain: __MODULE__
+    )
+  end
+
+  def create_party!(type, attrs) when is_atom(type) and is_map(attrs) do
+    case Map.fetch(@party_type_to_resource, type) do
+      {:ok, resource} ->
+        Ash.create!(resource, attrs, action: :build, domain: __MODULE__)
+
+      :error ->
+        raise ArgumentError,
+              "unknown TMF Party type: #{inspect(type)}; expected one of " <>
+                inspect([:PartyRef, :Entity | Map.keys(@party_type_to_resource)])
+    end
+  end
+
+  @doc "Same as `create_party!/2` but returns `{:ok, record}` or `{:error, error}`."
+  @spec create_party(party_type(), map()) ::
+          {:ok, Ash.Resource.record()} | {:error, term()}
+  def create_party(:PartyRef, attrs) when is_map(attrs) do
+    Ash.create(Diffo.Provider.Party, attrs, action: :create, domain: __MODULE__)
+  end
+
+  def create_party(:Entity, attrs) when is_map(attrs) do
+    Ash.create(
+      Diffo.Provider.Party,
+      Map.put(attrs, :type, :Entity),
+      action: :create,
+      domain: __MODULE__
+    )
+  end
+
+  def create_party(type, attrs) when is_atom(type) and is_map(attrs) do
+    case Map.fetch(@party_type_to_resource, type) do
+      {:ok, resource} ->
+        Ash.create(resource, attrs, action: :build, domain: __MODULE__)
+
+      :error ->
+        {:error, ArgumentError.exception("unknown TMF Party type: #{inspect(type)}")}
+    end
+  end
+
+  @doc """
+  Updates a Party by dispatching on the record's struct module.
+
+  Cascade leaves (`Provider.Organization`/`Individual`) update via their
+  `:define` action; the abstract `Provider.Party` updates via its inherited
+  `:update` action.
+  """
+  @spec update_party!(Ash.Resource.record(), map()) :: Ash.Resource.record()
+  def update_party!(%Diffo.Provider.Organization{} = record, attrs),
+    do: Ash.update!(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_party!(%Diffo.Provider.Individual{} = record, attrs),
+    do: Ash.update!(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_party!(%Diffo.Provider.Party{} = record, attrs),
+    do: Ash.update!(record, attrs, action: :update, domain: __MODULE__)
+
+  @doc "Same as `update_party!/2` but returns `{:ok, record}` or `{:error, error}`."
+  @spec update_party(Ash.Resource.record(), map()) ::
+          {:ok, Ash.Resource.record()} | {:error, term()}
+  def update_party(%Diffo.Provider.Organization{} = record, attrs),
+    do: Ash.update(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_party(%Diffo.Provider.Individual{} = record, attrs),
+    do: Ash.update(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_party(%Diffo.Provider.Party{} = record, attrs),
+    do: Ash.update(record, attrs, action: :update, domain: __MODULE__)
+
+  @doc "Deletes a Party record (any subtype, dispatched on its struct module)."
+  @spec delete_party!(Ash.Resource.record()) :: :ok
+  def delete_party!(record) when is_struct(record) do
+    Ash.destroy!(record, domain: __MODULE__)
+    :ok
+  end
+
+  @doc """
+  Same as `delete_party!/1` but returns `:ok` or `{:error, error}`.
+
+  Accepts either a single record or a list of records (returns
+  `%Ash.BulkResult{}` for lists).
+  """
+  @spec delete_party(Ash.Resource.record() | [Ash.Resource.record()]) ::
+          :ok | {:error, term()} | Ash.BulkResult.t()
+  def delete_party(record) when is_struct(record) do
+    Ash.destroy(record, domain: __MODULE__)
+  end
+
+  def delete_party(records) when is_list(records) do
+    Ash.bulk_destroy(records, :destroy, %{}, domain: __MODULE__, return_errors?: true)
+  end
+
+  @doc """
+  Loads a Party by id and projects to the outermost concrete world.
+
+  Returns the concrete subtype struct (`Provider.Organization`,
+  `Provider.Individual`, `MyApp.Carrier`, etc.) or the abstract
+  `Provider.Party` if no concrete world resolves.
+  """
+  @spec get_party_by_id!(String.t()) :: Ash.Resource.record()
+  def get_party_by_id!(id) when is_binary(id) do
+    Diffo.Provider.Party
+    |> Ash.get!(id, domain: __MODULE__)
+    |> project_party()
+  end
+
+  @doc "Same as `get_party_by_id!/1` but returns `{:ok, record}` or `{:error, error}`."
+  @spec get_party_by_id(String.t()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  def get_party_by_id(id) when is_binary(id) do
+    case Ash.get(Diffo.Provider.Party, id, domain: __MODULE__) do
+      {:ok, abstract} -> {:ok, project_party(abstract)}
+      {:error, _} = err -> err
+    end
+  end
+
+  @doc "Lists all Parties, each projected to its outermost concrete world."
+  @spec list_parties!() :: [Ash.Resource.record()]
+  def list_parties! do
+    Diffo.Provider.Party
+    |> Ash.read!(action: :list, domain: __MODULE__)
+    |> Enum.map(&project_party/1)
+  end
+
+  @doc "Same as `list_parties!/0` but returns `{:ok, list}` or `{:error, error}`."
+  @spec list_parties() :: {:ok, [Ash.Resource.record()]} | {:error, term()}
+  def list_parties do
+    case Ash.read(Diffo.Provider.Party, action: :list, domain: __MODULE__) do
+      {:ok, parties} -> {:ok, Enum.map(parties, &project_party/1)}
+      {:error, _} = err -> err
+    end
+  end
+
+  @doc "Finds Parties whose id contains the query, each projected to its concrete world."
+  @spec find_parties_by_id!(String.t()) :: [Ash.Resource.record()]
+  def find_parties_by_id!(query) do
+    Diffo.Provider.Party
+    |> Ash.Query.for_read(:find_by_id, %{query: query})
+    |> Ash.read!(domain: __MODULE__)
+    |> Enum.map(&project_party/1)
+  end
+
+  @doc "Finds Parties whose name contains the query, each projected to its concrete world."
+  @spec find_parties_by_name!(String.t()) :: [Ash.Resource.record()]
+  def find_parties_by_name!(query) do
+    Diffo.Provider.Party
+    |> Ash.Query.for_read(:find_by_name, %{query: query})
+    |> Ash.read!(domain: __MODULE__)
+    |> Enum.map(&project_party/1)
+  end
+
+  defp project_party(%Diffo.Provider.Party{id: id} = abstract) do
+    case AshNeo4j.worlds(abstract) do
+      [{domain, concrete} | _] when concrete != Diffo.Provider.Party ->
+        Ash.get!(concrete, id, domain: domain)
+
+      _ ->
+        abstract
+    end
+  end
+
+  # ============================================================================
   # Polymorphic-source ref dispatcher API
   #
   # Collapses the noisy four-FK shape on PlaceRef/PartyRef into one tagged-tuple
@@ -644,6 +844,8 @@ defmodule Diffo.Provider do
   # time.
   defp source_kind_for(Diffo.Provider.Instance), do: :instance
   defp source_kind_for(Diffo.Provider.Party), do: :party
+  defp source_kind_for(Diffo.Provider.Organization), do: :party
+  defp source_kind_for(Diffo.Provider.Individual), do: :party
   defp source_kind_for(Diffo.Provider.Place), do: :place
   defp source_kind_for(Diffo.Provider.GeographicAddress), do: :place
   defp source_kind_for(Diffo.Provider.GeographicSite), do: :place

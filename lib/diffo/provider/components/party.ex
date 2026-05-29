@@ -4,15 +4,44 @@
 
 defmodule Diffo.Provider.Party do
   @moduledoc """
-  Ash Resource for a TMF Party.
+  Abstract Party reader — plumbing, not a TMF subtype recommendation.
 
-  Out-of-the-box concrete `Diffo.Provider.Party` derived from `BaseParty`. All TMF
-  surface (attributes, actions, validations, jason encoding with TMF `@type` /
-  `@referredType` mapping, outstanding) lives on the fragment so domain extenders
-  inherit the full Party behaviour by including `BaseParty` and need only add their
-  own domain-specific attributes and actions.
+  TMF632 treats Party as abstract; the concrete subtypes are
+  `Diffo.Provider.Organization` and `Diffo.Provider.Individual`. Use those
+  (or your own domain leaf composed from `BaseParty` + the matching
+  `BaseOrganization` / `BaseIndividual` fragment) for any **new** Party data.
 
-  See `Diffo.Provider.BaseParty` for full documentation.
+  This resource is kept in core minimally to serve three roles:
+
+    1. **Abstract reader for projection bootstrap.** `Diffo.Provider.get_party_by_id!/1`
+       and friends load via this resource so `AshNeo4j.worlds/1` can project
+       the loaded node to its outermost concrete world. Symmetric with how
+       `Diffo.Provider.Place` (the abstract reader for Place) and
+       `Diffo.Provider.Instance` (the abstract reader for Instance) serve
+       their respective cascades.
+    2. **PartyRef-typed placeholder.** A Party record with `type: :PartyRef`
+       and `referred_type:` set represents a reference to an externally-managed
+       Party. `Diffo.Provider.create_party!(:PartyRef, %{referred_type: :X, ...})`
+       routes to this resource's `:create` action.
+    3. **`:Entity`-typed abstract Party.** Diffo extends the TMF632 type enum
+       with `:Entity` for party-like aggregates that aren't strictly Organization
+       or Individual. `Diffo.Provider.create_party!(:Entity, %{...})` routes
+       here.
+
+  See `Diffo.Provider.BaseParty` for the underlying fragment, attributes,
+  validations, and TMF `@type` / `@referredType` wire mapping.
+
+  ## Preferred API
+
+  Production code should use the typed subtype leaves (`Organization` /
+  `Individual`) or, more ergonomically, the type-atom dispatcher on
+  `Diffo.Provider`:
+
+      Diffo.Provider.create_party!(:Organization, %{...})
+
+  Reads go through the dispatcher's projection path:
+
+      Diffo.Provider.get_party_by_id!(id)    # returns concrete subtype struct
   """
   alias Diffo.Provider.BaseParty
 

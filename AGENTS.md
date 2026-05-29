@@ -346,9 +346,13 @@ which doesn't compete with the extender's axis because fragments compose at the 
   `type` enum, with `service_state` and `resource_state` as optional attributes
   gated by `type`. The Assigner already exploits this — `Assigner.assignable_service_states/0`
   and `Assigner.assignable_resource_states/0` dispatch on the discriminator.
-- **`BaseParty`** — extenders define `MyApp.RSP`, individuals, organisations as
-  distinct resources. TMF632 subtypes (`:Organization`, `:Individual`) live as a
-  `type` enum.
+- **`BaseParty`** — extenders define `MyApp.Carrier`, `MyApp.Customer`,
+  `MyApp.NetworkOperator` as distinct resources. TMF632 subtypes
+  (`:Organization`, `:Individual`) ship as cascade leaves
+  (`Provider.Organization`, `Provider.Individual`) composing
+  `BaseParty + BaseOrganization|Individual`. Diffo also extends the TMF type
+  enum with `:Entity` (party-like aggregates) and the placeholder `:PartyRef`,
+  both routing to the abstract `Provider.Party` via the dispatcher.
 - **`BasePlace`** — extenders define `MyApp.CSA`, `MyApp.Warehouse`, `MyApp.HomeAddress`
   as distinct resources. TMF673/674/675 subtypes (`:GeographicAddress`,
   `:GeographicSite`, `:GeographicLocation`, `:PlaceRef`) live as a `type` enum, with

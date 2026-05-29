@@ -9,7 +9,7 @@ defmodule Diffo.Provider.Extension.PlaceTest do
 
   alias Diffo.Provider.Instance.Extension.Info, as: InstanceInfo
   alias Diffo.Provider.Place.Extension.Info, as: PlaceInfo
-  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Party.Enterprise
   alias Diffo.Test.Place.GeographicSite
 
   alias Diffo.Test.Instance.ShelfInstance
@@ -32,7 +32,7 @@ defmodule Diffo.Provider.Extension.PlaceTest do
       roles = PlaceInfo.parties(GeographicSite)
       assert length(roles) == 1
       assert hd(roles).role == :managed_by
-      assert hd(roles).party_type == Organization
+      assert hd(roles).party_type == Enterprise
     end
 
     test "place roles are declared" do

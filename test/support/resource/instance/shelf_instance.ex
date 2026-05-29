@@ -15,7 +15,7 @@ defmodule Diffo.Test.Instance.ShelfInstance do
   alias Diffo.Test.Servo
   alias Diffo.Test.Characteristic.ShelfCharacteristic
   alias Diffo.Test.Characteristic.DeploymentClass
-  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Party.Enterprise
   alias Diffo.Test.Party.Person
 
   use Ash.Resource,
@@ -64,10 +64,10 @@ defmodule Diffo.Test.Instance.ShelfInstance do
     end
 
     parties do
-      party :facilitator, Organization
+      party :facilitator, Enterprise
       party :overseer, Person
-      party_ref :provider, Organization
-      party :manager, Organization, calculate: :manager_calc
+      party_ref :provider, Enterprise
+      party :manager, Enterprise, calculate: :manager_calc
       parties :installer, Person, constraints: [min: 1, max: 3]
     end
 
