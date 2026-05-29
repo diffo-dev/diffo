@@ -18,11 +18,9 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
   describe "inherited_place — single-hop via alias" do
     test "service inherits place from assigned card via :primary alias" do
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicSite, %{
           id: "LOC-TEST-INHERITED-001",
-          name: "Test Exchange",
-          type: :GeographicSite
-        })
+          name: "Test Exchange"})
 
       {:ok, card} = Servo.build_card(%{})
 
@@ -67,18 +65,14 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
 
     test "service inherits only the place from the aliased assignment, not from unaliased ones" do
       place_a =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicSite, %{
           id: "LOC-TEST-INHERITED-002",
-          name: "Exchange A",
-          type: :GeographicSite
-        })
+          name: "Exchange A"})
 
       place_b =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicSite, %{
           id: "LOC-TEST-INHERITED-003",
-          name: "Exchange B",
-          type: :GeographicSite
-        })
+          name: "Exchange B"})
 
       {:ok, card_a} = Servo.build_card(%{})
       {:ok, card_b} = Servo.build_card(%{})
