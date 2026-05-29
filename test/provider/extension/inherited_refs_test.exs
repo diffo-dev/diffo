@@ -126,6 +126,95 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
     end
   end
 
+  describe "inherited_place — Diffo.Unknown emission" do
+    test "emits %Diffo.Unknown{reason: :role_not_declared} when reached source has no PlaceRef at the source_role" do
+      # Card created + assigned to the service via :primary, but the card has
+      # NO PlaceRef at `:location`. The source IS reached by the traversal —
+      # so this isn't "no assignment" (which would return []) — but the role
+      # isn't declared. Expect Unknown with the source_id and role in context.
+      {:ok, card} = Servo.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+
+      {:ok, service} = Servo.build_access_service(%{})
+
+      {:ok, _card} =
+        Servo.assign_port(card, %{
+          assignment: %Assignment{
+            assignee_id: service.id,
+            operation: :auto_assign,
+            alias: :primary
+          }
+        })
+
+      service = Ash.load!(service, [:primary], domain: Servo)
+
+      assert [
+               %Diffo.Unknown{
+                 world: Diffo.Test.Instance.AccessService,
+                 reason: :role_not_declared,
+                 context: %{source_id: source_id, role: :location}
+               }
+             ] = service.primary
+
+      assert source_id == card.id
+    end
+  end
+
+  describe "inherited_party — Diffo.Unknown emission" do
+    test "emits %Diffo.Unknown{reason: :role_not_declared} when reached source has no PartyRef at the source_role" do
+      # Symmetric to the inherited_place case: source is reached via :primary
+      # but carries no PartyRef at `:provider` (the source_role declared on
+      # AccessService's inherited_party :owner declaration).
+      {:ok, card} = Servo.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+
+      {:ok, service} = Servo.build_access_service(%{})
+
+      {:ok, _card} =
+        Servo.assign_port(card, %{
+          assignment: %Assignment{
+            assignee_id: service.id,
+            operation: :auto_assign,
+            alias: :primary
+          }
+        })
+
+      service = Ash.load!(service, [:owner], domain: Servo)
+
+      assert [
+               %Diffo.Unknown{
+                 world: Diffo.Test.Instance.AccessService,
+                 reason: :role_not_declared,
+                 context: %{source_id: source_id, role: :provider}
+               }
+             ] = service.owner
+
+      assert source_id == card.id
+    end
+
+    test "no assignment still returns empty list for inherited_party (Unknown reserved for 'tried and couldn't')" do
+      {:ok, service} = Servo.build_access_service(%{})
+
+      service = Ash.load!(service, [:owner], domain: Servo)
+
+      assert service.owner == []
+    end
+  end
+
   describe "inherited_characteristic — typed characteristic via alias traversal (inward)" do
     test "service inherits the assigning card's :card characteristic via :primary alias" do
       {:ok, card} = Servo.build_card(%{})
