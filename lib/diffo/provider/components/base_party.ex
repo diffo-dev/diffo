@@ -4,14 +4,44 @@
 
 defmodule Diffo.Provider.BaseParty do
   @moduledoc """
-  Ash Resource Fragment which is a the point of extension for your TMF Party
+  Ash Resource Fragment which is the foundation for TMF Party subtypes.
 
-  `BaseParty` is the foundation for domain-specific Party kinds such as Organization or Person.
-  Include it as a fragment on an `Ash.Resource` to get common Party attributes, Neo4j graph
-  wiring, and the `Diffo.Provider.Party.Extension` DSL.
+  `BaseParty` is the foundation for the TMF632 cascade — Party is an abstract
+  TMF concept, and concrete subtype identity lives on the fragments that
+  compose with it:
 
-  `Diffo.Provider.Party` uses `BaseParty` directly as the out-of-the-box TMF Party resource.
-  Domain-specific resources extend it for richer domain identity.
+    * `Diffo.Provider.BaseOrganization` — TMF632 Organization fields
+      (tradingName, organizationType, isLegalEntity, isHeadOffice, …)
+    * `Diffo.Provider.BaseIndividual` — TMF632 Individual fields
+      (givenName, familyName, gender, birthDate, …)
+
+  Each subtype fragment composes with `BaseParty` on a concrete leaf:
+
+      defmodule MyApp.Carrier do
+        use Ash.Resource,
+          fragments: [
+            Diffo.Provider.BaseParty,
+            Diffo.Provider.BaseOrganization
+          ],
+          domain: MyApp.Domain
+        # consumer-specific attributes here
+      end
+
+  Diffo ships the two corresponding concrete leaves out of the box:
+  `Diffo.Provider.Organization` and `Diffo.Provider.Individual`. Use them
+  directly or as templates for your own domain leaves.
+
+  `Diffo.Provider.Party` is also kept in core but is plumbing (abstract
+  reader for projection + PartyRef-typed placeholder support + `:Entity`
+  routing), not a TMF subtype recommendation. See its moduledoc for details.
+
+  ## Preferred consumer API
+
+  The `Diffo.Provider` domain exposes a type-atom dispatcher that handles
+  the subtype routing for you:
+
+      Diffo.Provider.create_party!(:Organization, %{...})
+      Diffo.Provider.get_party_by_id!(id)    # returns concrete subtype struct via projection
 
   ## Attributes
 

@@ -107,21 +107,21 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "list place refs by related party id - success" do
       party1 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "IND000000897353",
           name: :individualId,
           referred_type: :Individual
         })
 
       party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "IND000000897354",
           name: :individualId,
           referred_type: :Individual
         })
 
       party3 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "ORG000163435034",
           name: :organizationId,
           referred_type: :Organization
@@ -520,7 +520,7 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "delete place_ref with related party - success" do
       party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "IND000000897353",
           name: :individualId,
           href: "party/internal/IND000000897353",
