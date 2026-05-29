@@ -641,7 +641,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
@@ -853,7 +853,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",

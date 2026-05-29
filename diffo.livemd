@@ -228,7 +228,7 @@ Jason.encode!(parties, pretty: true) |> IO.puts
 We'll also add a CustomerSite place where the service is to be delivered to the customer. Historically this is the Z-end.
 
 ```elixir
-z_end = Provider.create_place!(%{id: "1657363", name: :addressId, href: "place/telco/1657363", referred_type: :GeographicAddress})
+z_end = Provider.create_place!(:PlaceRef, %{id: "1657363", name: :addressId, href: "place/telco/1657363", referred_type: :GeographicAddress})
 Jason.encode!(z_end, pretty: true) |> IO.puts
 ```
 
@@ -338,11 +338,11 @@ We recommend using outstanding to drive next task logic, so that the orchestrati
 ```elixir
 nbn = Provider.create_party!(%{id: "nbn", name: "NBNCo", referred_type: :Organization})
 nbn_party_ref = Provider.create_party_ref!(%{instance_id: broadband_0001.id, party_id: nbn.id, role: :Provider})
-provider_z_end = Provider.create_place!(%{id: "LOC000000899353", name: "locationId", href: "place/nbnco/LOC000000899353", referred_type: :GeographicAddress})
+provider_z_end = Provider.create_place!(:PlaceRef, %{id: "LOC000000899353", name: "locationId", href: "place/nbnco/LOC000000899353", referred_type: :GeographicAddress})
 provider_z_end_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :CustomerSite, place_id: provider_z_end.id})
-csa = Provider.create_place!(%{id: "CSA200000000685", name: "csaId", href: "place/nbnco/CSA200000000685", referred_type: :GeographicLocation})
+csa = Provider.create_place!(:PlaceRef, %{id: "CSA200000000685", name: "csaId", href: "place/nbnco/CSA200000000685", referred_type: :GeographicLocation})
 csa_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :ServingArea, place_id: csa.id})
-poi = Provider.create_place!(%{id: "2CAR", name: "poiId", href: "place/nbnco/2CAR", referred_type: :GeographicSite})
+poi = Provider.create_place!(:PlaceRef, %{id: "2CAR", name: "poiId", href: "place/nbnco/2CAR", referred_type: :GeographicSite})
 poi_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :AccessNNI, place_id: poi.id})
 
 places = Diffo.Provider.list_place_refs!()
