@@ -115,15 +115,10 @@ defmodule Diffo.Provider do
       define :delete_feature, action: :destroy
     end
 
-    resource Diffo.Provider.Place do
-      define :create_place, action: :create
-      define :get_place_by_id, action: :read, get_by: :id
-      define :list_places, action: :list
-      define :find_places_by_id, action: :find_by_id, args: [:query]
-      define :find_places_by_name, action: :find_by_name, args: [:query]
-      define :update_place, action: :update
-      define :delete_place, action: :destroy
-    end
+    resource Diffo.Provider.Place
+    resource Diffo.Provider.GeographicAddress
+    resource Diffo.Provider.GeographicSite
+    resource Diffo.Provider.GeographicLocation
 
     resource Diffo.Provider.PlaceRef do
       define :create_place_ref, action: :create
@@ -257,5 +252,406 @@ defmodule Diffo.Provider do
 
       define :delete_event, action: :destroy
     end
+  end
+
+  # ============================================================================
+  # Place dispatcher API
+  #
+  # Replaces per-subtype/per-codedef explosion with two dispatch patterns:
+  #
+  #   * Writes — dispatch by TMF type atom (create) or struct module (update,
+  #     delete). One function per CRUD verb regardless of how many subtypes the
+  #     cascade introduces.
+  #
+  #   * Reads — inline projection via `AshNeo4j.worlds/1`. Loads via
+  #     `Provider.Place` (the abstract reader kept in core for this purpose),
+  #     then projects each record to its outermost concrete world. Returns the
+  #     concrete subtype struct (or the abstract Place if no concrete world
+  #     resolves — e.g. a node created directly via `Provider.Place`).
+  #
+  # The dispatcher only knows TMF blessed types (`:GeographicAddress`,
+  # `:GeographicSite`, `:GeographicLocation`). Consumer-specific shapes
+  # (`MyApp.DataCentre`) create/update through their own domain APIs; reads
+  # still surface them transparently via projection.
+  # ============================================================================
+
+  @place_type_to_resource %{
+    GeographicAddress: Diffo.Provider.GeographicAddress,
+    GeographicSite: Diffo.Provider.GeographicSite,
+    GeographicLocation: Diffo.Provider.GeographicLocation
+  }
+
+  @typedoc """
+  TMF blessed Place type atoms accepted by the dispatcher.
+
+  `:PlaceRef` is the "placeholder Place" type — a record with `referred_type:`
+  set, used as the target of a `PlaceRef` to an externally-managed Place.
+  Dispatches to the abstract `Provider.Place`'s `:create` action (no
+  subtype-specific attributes).
+  """
+  @type place_type ::
+          :GeographicAddress | :GeographicSite | :GeographicLocation | :PlaceRef
+
+  @doc """
+  Creates a typed Place subtype by dispatching on the TMF type atom.
+
+  Raises `ArgumentError` for unknown types — consumer-specific shapes go
+  through consumer domains.
+  """
+  @spec create_place!(place_type(), map()) :: Ash.Resource.record()
+  def create_place!(:PlaceRef, attrs) when is_map(attrs) do
+    Ash.create!(Diffo.Provider.Place, attrs, action: :create, domain: __MODULE__)
+  end
+
+  def create_place!(type, attrs) when is_atom(type) and is_map(attrs) do
+    case Map.fetch(@place_type_to_resource, type) do
+      {:ok, resource} ->
+        Ash.create!(resource, attrs, action: :build, domain: __MODULE__)
+
+      :error ->
+        raise ArgumentError,
+              "unknown TMF Place type: #{inspect(type)}; expected one of " <>
+                inspect([:PlaceRef | Map.keys(@place_type_to_resource)])
+    end
+  end
+
+  @doc """
+  Same as `create_place!/2` but returns `{:ok, record}` or `{:error, error}`.
+  """
+  @spec create_place(place_type(), map()) ::
+          {:ok, Ash.Resource.record()} | {:error, term()}
+  def create_place(:PlaceRef, attrs) when is_map(attrs) do
+    Ash.create(Diffo.Provider.Place, attrs, action: :create, domain: __MODULE__)
+  end
+
+  def create_place(type, attrs) when is_atom(type) and is_map(attrs) do
+    case Map.fetch(@place_type_to_resource, type) do
+      {:ok, resource} ->
+        Ash.create(resource, attrs, action: :build, domain: __MODULE__)
+
+      :error ->
+        {:error, ArgumentError.exception("unknown TMF Place type: #{inspect(type)}")}
+    end
+  end
+
+  @doc """
+  Updates a Place by dispatching on the record's struct module.
+
+  Cascade leaves (`Provider.GeographicAddress`/`Site`/`Location`) update via
+  their `:define` action; the abstract `Provider.Place` updates via its
+  inherited `:update` action.
+  """
+  @spec update_place!(Ash.Resource.record(), map()) :: Ash.Resource.record()
+  def update_place!(%Diffo.Provider.GeographicAddress{} = record, attrs),
+    do: Ash.update!(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_place!(%Diffo.Provider.GeographicSite{} = record, attrs),
+    do: Ash.update!(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_place!(%Diffo.Provider.GeographicLocation{} = record, attrs),
+    do: Ash.update!(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_place!(%Diffo.Provider.Place{} = record, attrs),
+    do: Ash.update!(record, attrs, action: :update, domain: __MODULE__)
+
+  @doc "Same as `update_place!/2` but returns `{:ok, record}` or `{:error, error}`."
+  @spec update_place(Ash.Resource.record(), map()) ::
+          {:ok, Ash.Resource.record()} | {:error, term()}
+  def update_place(%Diffo.Provider.GeographicAddress{} = record, attrs),
+    do: Ash.update(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_place(%Diffo.Provider.GeographicSite{} = record, attrs),
+    do: Ash.update(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_place(%Diffo.Provider.GeographicLocation{} = record, attrs),
+    do: Ash.update(record, attrs, action: :define, domain: __MODULE__)
+
+  def update_place(%Diffo.Provider.Place{} = record, attrs),
+    do: Ash.update(record, attrs, action: :update, domain: __MODULE__)
+
+  @doc """
+  Deletes a Place record (any subtype, dispatched on its struct module).
+  """
+  @spec delete_place!(Ash.Resource.record()) :: :ok
+  def delete_place!(record) when is_struct(record) do
+    Ash.destroy!(record, domain: __MODULE__)
+    :ok
+  end
+
+  @doc """
+  Same as `delete_place!/1` but returns `:ok` or `{:error, error}`.
+
+  Accepts either a single record or a list of records (returns
+  `%Ash.BulkResult{}` for lists).
+  """
+  @spec delete_place(Ash.Resource.record() | [Ash.Resource.record()]) ::
+          :ok | {:error, term()} | Ash.BulkResult.t()
+  def delete_place(record) when is_struct(record) do
+    Ash.destroy(record, domain: __MODULE__)
+  end
+
+  def delete_place(records) when is_list(records) do
+    Ash.bulk_destroy(records, :destroy, %{}, domain: __MODULE__, return_errors?: true)
+  end
+
+  @doc """
+  Loads a Place by id and projects to the outermost concrete world.
+
+  Returns the concrete subtype struct (`Provider.GeographicSite`,
+  `MyApp.SydneyExchange`, etc.) or the abstract `Provider.Place` if no
+  concrete world resolves.
+  """
+  @spec get_place_by_id!(String.t()) :: Ash.Resource.record()
+  def get_place_by_id!(id) when is_binary(id) do
+    Diffo.Provider.Place
+    |> Ash.get!(id, domain: __MODULE__)
+    |> project_place()
+  end
+
+  @doc "Same as `get_place_by_id!/1` but returns `{:ok, record}` or `{:error, error}`."
+  @spec get_place_by_id(String.t()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  def get_place_by_id(id) when is_binary(id) do
+    case Ash.get(Diffo.Provider.Place, id, domain: __MODULE__) do
+      {:ok, abstract} -> {:ok, project_place(abstract)}
+      {:error, _} = err -> err
+    end
+  end
+
+  @doc """
+  Lists all Places, each projected to its outermost concrete world.
+  """
+  @spec list_places!() :: [Ash.Resource.record()]
+  def list_places! do
+    Diffo.Provider.Place
+    |> Ash.read!(action: :list, domain: __MODULE__)
+    |> Enum.map(&project_place/1)
+  end
+
+  @doc "Same as `list_places!/0` but returns `{:ok, list}` or `{:error, error}`."
+  @spec list_places() :: {:ok, [Ash.Resource.record()]} | {:error, term()}
+  def list_places do
+    case Ash.read(Diffo.Provider.Place, action: :list, domain: __MODULE__) do
+      {:ok, places} -> {:ok, Enum.map(places, &project_place/1)}
+      {:error, _} = err -> err
+    end
+  end
+
+  @doc """
+  Finds Places whose id contains the query, each projected to its concrete world.
+  """
+  @spec find_places_by_id!(String.t()) :: [Ash.Resource.record()]
+  def find_places_by_id!(query) do
+    Diffo.Provider.Place
+    |> Ash.Query.for_read(:find_by_id, %{query: query})
+    |> Ash.read!(domain: __MODULE__)
+    |> Enum.map(&project_place/1)
+  end
+
+  @doc """
+  Finds Places whose name contains the query, each projected to its concrete world.
+  """
+  @spec find_places_by_name!(String.t()) :: [Ash.Resource.record()]
+  def find_places_by_name!(query) do
+    Diffo.Provider.Place
+    |> Ash.Query.for_read(:find_by_name, %{query: query})
+    |> Ash.read!(domain: __MODULE__)
+    |> Enum.map(&project_place/1)
+  end
+
+  defp project_place(%Diffo.Provider.Place{id: id} = abstract) do
+    case AshNeo4j.worlds(abstract) do
+      [{domain, concrete} | _] when concrete != Diffo.Provider.Place ->
+        Ash.get!(concrete, id, domain: domain)
+
+      _ ->
+        abstract
+    end
+  end
+
+  # ============================================================================
+  # Polymorphic-source ref dispatcher API
+  #
+  # Collapses the noisy four-FK shape on PlaceRef/PartyRef into one tagged-tuple
+  # `source:` field, with reads expressed as intent (`_from/_targeting`) rather
+  # than per-FK (`_by_*_id`). The schema is unchanged — the four FK columns stay
+  # in the underlying resource; the dispatcher just unpacks the source tag.
+  #
+  # The source can be a tagged tuple (`{:instance, id}` / `{:party, id}` /
+  # `{:place, id}`) or a struct whose module is recognised below. Consumer
+  # leaves outside diffo's known set should use tagged tuples.
+  # ============================================================================
+
+  @doc """
+  Creates a PlaceRef from a tagged source to a target Place.
+
+  ## Source forms
+
+      source: {:instance, "INST-001"}
+      source: {:party, "PARTY-001"}
+      source: {:place, "PLACE-001"}
+      source: some_instance_struct
+      source: some_party_struct
+      source: some_place_struct
+
+  ## Target forms
+
+      target: "LOC-001"
+      target: some_place_struct
+  """
+  @spec create_place_ref!(map()) :: Ash.Resource.record()
+  def create_place_ref!(%{role: _, source: source, target: target} = attrs) do
+    attrs
+    |> Map.delete(:source)
+    |> Map.delete(:target)
+    |> place_ref_put_source(source)
+    |> Map.put(:place_id, normalize_target_id(target))
+    |> then(&Ash.create!(Diffo.Provider.PlaceRef, &1, action: :create, domain: __MODULE__))
+  end
+
+  @doc "Same as `create_place_ref!/1` but returns `{:ok, record}` or `{:error, error}`."
+  @spec create_place_ref(map()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  def create_place_ref(%{role: _, source: source, target: target} = attrs) do
+    attrs
+    |> Map.delete(:source)
+    |> Map.delete(:target)
+    |> place_ref_put_source(source)
+    |> Map.put(:place_id, normalize_target_id(target))
+    |> then(&Ash.create(Diffo.Provider.PlaceRef, &1, action: :create, domain: __MODULE__))
+  end
+
+  @doc """
+  Lists PlaceRefs whose source matches the given Instance/Party/Place.
+  """
+  @spec list_place_refs_from(tagged_source() | Ash.Resource.record()) ::
+          [Ash.Resource.record()]
+  def list_place_refs_from({:instance, id}),
+    do: list_place_refs_by_instance_id!(id)
+
+  def list_place_refs_from({:party, id}),
+    do: list_place_refs_by_party_id!(id)
+
+  def list_place_refs_from({:place, id}),
+    do: list_place_refs_by_source_place_id!(id)
+
+  def list_place_refs_from(%mod{id: id}) do
+    list_place_refs_from({source_kind_for(mod), id})
+  end
+
+  @doc """
+  Lists PlaceRefs targeting the given Place.
+  """
+  @spec list_place_refs_targeting(String.t() | Ash.Resource.record()) ::
+          [Ash.Resource.record()]
+  def list_place_refs_targeting(target) do
+    list_place_refs_by_place_id!(normalize_target_id(target))
+  end
+
+  @doc """
+  Creates a PartyRef from a tagged source to a target Party.
+
+  ## Source forms
+
+      source: {:instance, "INST-001"}
+      source: {:place, "PLACE-001"}
+      source: {:party, "PARTY-001"}
+      source: some_instance_struct
+      source: some_place_struct
+      source: some_party_struct
+  """
+  @spec create_party_ref!(map()) :: Ash.Resource.record()
+  def create_party_ref!(%{role: _, source: source, target: target} = attrs) do
+    attrs
+    |> Map.delete(:source)
+    |> Map.delete(:target)
+    |> party_ref_put_source(source)
+    |> Map.put(:party_id, normalize_target_id(target))
+    |> then(&Ash.create!(Diffo.Provider.PartyRef, &1, action: :create, domain: __MODULE__))
+  end
+
+  @doc "Same as `create_party_ref!/1` but returns `{:ok, record}` or `{:error, error}`."
+  @spec create_party_ref(map()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  def create_party_ref(%{role: _, source: source, target: target} = attrs) do
+    attrs
+    |> Map.delete(:source)
+    |> Map.delete(:target)
+    |> party_ref_put_source(source)
+    |> Map.put(:party_id, normalize_target_id(target))
+    |> then(&Ash.create(Diffo.Provider.PartyRef, &1, action: :create, domain: __MODULE__))
+  end
+
+  @doc "Lists PartyRefs whose source matches the given Instance/Place/Party."
+  @spec list_party_refs_from(tagged_source() | Ash.Resource.record()) ::
+          [Ash.Resource.record()]
+  def list_party_refs_from({:instance, id}),
+    do: list_party_refs_by_instance_id!(id)
+
+  def list_party_refs_from({:place, id}),
+    do: list_party_refs_by_place_id!(id)
+
+  def list_party_refs_from({:party, id}),
+    do: list_party_refs_by_source_party_id!(id)
+
+  def list_party_refs_from(%mod{id: id}) do
+    list_party_refs_from({source_kind_for(mod), id})
+  end
+
+  @doc "Lists PartyRefs targeting the given Party."
+  @spec list_party_refs_targeting(String.t() | Ash.Resource.record()) ::
+          [Ash.Resource.record()]
+  def list_party_refs_targeting(target) do
+    list_party_refs_by_party_id!(normalize_target_id(target))
+  end
+
+  @typedoc "Tagged source for ref dispatchers."
+  @type tagged_source :: {:instance | :party | :place, String.t()}
+
+  # Source put-fns: place the id in the right FK column based on the source tag.
+
+  defp place_ref_put_source(attrs, {:instance, id}), do: Map.put(attrs, :instance_id, id)
+  defp place_ref_put_source(attrs, {:party, id}), do: Map.put(attrs, :party_id, id)
+  defp place_ref_put_source(attrs, {:place, id}), do: Map.put(attrs, :source_place_id, id)
+
+  defp place_ref_put_source(attrs, %mod{id: id}),
+    do: place_ref_put_source(attrs, {source_kind_for(mod), id})
+
+  defp place_ref_put_source(_attrs, other) do
+    raise ArgumentError,
+          "unknown source kind for PlaceRef: #{inspect(other)}; " <>
+            "use a tagged tuple ({:instance, id} / {:party, id} / {:place, id}) " <>
+            "or a known Instance/Party/Place struct with an :id"
+  end
+
+  defp party_ref_put_source(attrs, {:instance, id}), do: Map.put(attrs, :instance_id, id)
+  defp party_ref_put_source(attrs, {:place, id}), do: Map.put(attrs, :place_id, id)
+  defp party_ref_put_source(attrs, {:party, id}), do: Map.put(attrs, :source_party_id, id)
+
+  defp party_ref_put_source(attrs, %mod{id: id}),
+    do: party_ref_put_source(attrs, {source_kind_for(mod), id})
+
+  defp party_ref_put_source(_attrs, other) do
+    raise ArgumentError,
+          "unknown source kind for PartyRef: #{inspect(other)}; " <>
+            "use a tagged tuple ({:instance, id} / {:place, id} / {:party, id}) " <>
+            "or a known Instance/Place/Party struct with an :id"
+  end
+
+  defp normalize_target_id(%{id: id}), do: id
+  defp normalize_target_id(id) when is_binary(id), do: id
+
+  # Map known struct modules to their kind tag. Consumer leaves outside this
+  # list should use tagged tuples explicitly — diffo doesn't have a registry
+  # and can't enumerate consumer-domain Places/Parties/Instances at compile
+  # time.
+  defp source_kind_for(Diffo.Provider.Instance), do: :instance
+  defp source_kind_for(Diffo.Provider.Party), do: :party
+  defp source_kind_for(Diffo.Provider.Place), do: :place
+  defp source_kind_for(Diffo.Provider.GeographicAddress), do: :place
+  defp source_kind_for(Diffo.Provider.GeographicSite), do: :place
+  defp source_kind_for(Diffo.Provider.GeographicLocation), do: :place
+
+  defp source_kind_for(mod) do
+    raise ArgumentError,
+          "unknown source kind for #{inspect(mod)}; use a tagged tuple " <>
+            "(`{:instance, id}` / `{:party, id}` / `{:place, id}`) for consumer-domain structs"
   end
 end

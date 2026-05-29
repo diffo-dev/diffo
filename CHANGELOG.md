@@ -11,6 +11,126 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## Unreleased
+
+### Features
+
+* **Place subtype cascade — `BasePlace` → typed subtype leaves** (#185) — TMF675 GeographicAddress / GeographicSite / GeographicLocation now ship as concrete leaves built from fragment composition (`BasePlace` + `BaseGeographicX`). Consumer leaves (e.g. `MyApp.SydneyExchange`) compose the same two fragments alongside their own attributes.
+
+  ```elixir
+  defmodule Diffo.Provider.GeographicSite do
+    use Ash.Resource,
+      fragments: [BasePlace, BaseGeographicSite],
+      domain: Diffo.Provider
+    # …
+  end
+  ```
+
+  Subtype fragments carry TMF-camelCase jason wire shape, tightened validations
+  (e.g. `BaseGeographicLocation` requires location-xor-bounds set), and — on
+  `BaseGeographicSite` — a projected `:address` calc that resolves to a concrete
+  `GeographicAddress` (or consumer-domain Address leaf) at read time via
+  `AshNeo4j.worlds/1`.
+
+* **`Diffo.Provider.Calculations.ProjectedRef`** (#185) — reusable calculation
+  for cross-resource references *without* a graph edge. Resolves an `id_field`
+  to the outermost concrete world's resource struct via `AshNeo4j.worlds/1`.
+  Three-state load surface: concrete struct on success, `%Diffo.Unknown{}` for
+  resolution failures (`:no_target` / `:no_concrete_world` / `:projection_failed`),
+  `%Ash.NotLoaded{}` until loaded. **Does NOT replace `belongs_to`** —
+  AshNeo4j's `verify_relate` requires real Ash relationships to maintain edges,
+  so typed `belongs_to` on PlaceRef/PartyRef stay intact (Option C).
+
+* **Place dispatcher API on `Diffo.Provider`** (#185) — replaces per-subtype
+  codedef explosion (7 codedefs × 3 subtypes = 21) with one function per CRUD
+  verb that scales to N subtypes at constant API surface:
+
+  ```elixir
+  Diffo.Provider.create_place!(:GeographicSite, %{id: "X", site_type: :exchange})
+  Diffo.Provider.create_place!(:PlaceRef, %{id: "Y", referred_type: :GeographicAddress})
+
+  Diffo.Provider.get_place_by_id!(id)        # returns concrete subtype struct via projection
+  Diffo.Provider.list_places!()              # mixed-subtype list, each projected
+
+  Diffo.Provider.update_place!(record, attrs)  # struct-dispatched to :define action
+  Diffo.Provider.delete_place!(record)
+  ```
+
+  Reads do inline projection (load via `Provider.Place` abstract reader → project
+  via `AshNeo4j.worlds/1`). Unknown TMF type atoms raise `ArgumentError`.
+
+* **Polymorphic-source ref dispatcher** (#185) — `create_place_ref!/1` /
+  `create_party_ref!/1` accept a tagged-tuple or struct `source:` field that
+  unpacks to the right FK column. `list_place_refs_from/1` /
+  `list_place_refs_targeting/1` express read intent rather than per-FK
+  (`list_place_refs_by_*_id`). Schema unchanged — the four FK columns stay.
+
+  ```elixir
+  Diffo.Provider.create_place_ref!(%{
+    role: :installation_site,
+    source: {:instance, "INST-001"},          # or {:party, ...}, {:place, ...}, or a struct
+    target: place_or_id
+  })
+
+  Diffo.Provider.list_place_refs_from(source)
+  Diffo.Provider.list_place_refs_targeting(target)
+  ```
+
+### Breaking changes
+
+* **`Diffo.Provider.create_place!/1` removed** — replaced by `create_place!/2`
+  (type-atom dispatcher). Migration:
+
+  ```elixir
+  # Before
+  Diffo.Provider.create_place!(%{type: :GeographicSite, id: "X", ...})
+  Diffo.Provider.create_place!(%{referred_type: :GeographicAddress, id: "Y"})
+
+  # After
+  Diffo.Provider.create_place!(:GeographicSite, %{id: "X", ...})
+  Diffo.Provider.create_place!(:PlaceRef, %{referred_type: :GeographicAddress, id: "Y"})
+  ```
+
+* **All per-codedef Place actions on `Diffo.Provider` domain dropped**
+  (`create_place`, `get_place_by_id`, `list_places`, `find_places_by_id`,
+  `find_places_by_name`, `update_place`, `delete_place`) — replaced by the
+  dispatcher functions of the same names (different arities for `create_place`).
+
+* **`Diffo.Provider.get_place_by_id/1`, `list_places/0`, `find_places_by_id/1`,
+  `find_places_by_name/1` now return concrete subtype structs** — projected via
+  `AshNeo4j.worlds/1`, not the abstract `%Diffo.Provider.Place{}`. Tests that
+  pattern-match on `%Provider.Place{}` need updating to `%Provider.GeographicSite{}`
+  (etc.). Field-access assertions (`.id`, `.name`, `.type`) continue to work.
+
+* **Type-change updates on cascade leaves are now rejected** — a typed Place
+  leaf (e.g. `Provider.GeographicAddress`) cannot have its `:type` changed to
+  `:GeographicSite` via `update_place!/2`; the typed leaves have fixed `:type`
+  set by their `:build` action. PlaceRef-typed placeholders (`Provider.Place`
+  records with `referred_type:`) still support `referred_type:` updates.
+
+* **`GeographicLocation` now requires geometry** — `BaseGeographicLocation`
+  validates that records with `type: :GeographicLocation` have `:location` or
+  `:bounds` set. Pre-cascade `GeographicLocation`-typed records without geometry
+  must be backfilled or re-classified as `:PlaceRef` placeholders.
+
+### Architectural notes
+
+* **`Diffo.Provider.Place` stays in core minimally** — repurposed as the
+  abstract reader that backs projection bootstrap (symmetric with how
+  `Provider.Instance` backs `inherited_characteristic`) and the PlaceRef-typed
+  placeholder dispatcher path. Production code should use the typed subtype
+  leaves or the dispatcher; `Provider.Place` is plumbing, not a recommendation.
+  Moduledoc rewritten to reflect this.
+* **`AGENTS.md` — Fat\* pattern section updated** — the original "don't split
+  subtypes into fragments" advice was based on a misread of how fragment
+  composition stacks. Fragment composition is additive at the leaf, not a
+  budget spend. The Fat\* invariants (graph edges, indexability, no N²
+  explosion) still hold under the cascade because typed `belongs_to` keeps
+  pointing at the abstract reader (Option C).
+* **Reanimates #4 "split Service and Resource"** — the cascade pattern
+  established here is the reusable template for the Instance Service/Resource
+  cascade in #4, with `ProjectedRef` + dispatcher as the shared artifacts.
+
 ## [v0.4.1](https://github.com/diffo-dev/diffo/compare/v0.4.0...v0.4.1) (2026-05-22)
 
 ### Bug Fixes
