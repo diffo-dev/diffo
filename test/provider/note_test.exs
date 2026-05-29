@@ -20,7 +20,7 @@ defmodule Diffo.Provider.NoteTest do
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -28,7 +28,7 @@ defmodule Diffo.Provider.NoteTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -62,7 +62,7 @@ defmodule Diffo.Provider.NoteTest do
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -70,7 +70,7 @@ defmodule Diffo.Provider.NoteTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -118,7 +118,7 @@ defmodule Diffo.Provider.NoteTest do
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -126,7 +126,7 @@ defmodule Diffo.Provider.NoteTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -173,7 +173,7 @@ defmodule Diffo.Provider.NoteTest do
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -181,7 +181,7 @@ defmodule Diffo.Provider.NoteTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -243,7 +243,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -272,7 +272,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -297,7 +297,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -326,7 +326,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -350,7 +350,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -374,7 +374,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -401,7 +401,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -409,7 +409,7 @@ defmodule Diffo.Provider.NoteTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -434,7 +434,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -458,7 +458,7 @@ defmodule Diffo.Provider.NoteTest do
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -483,7 +483,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -523,7 +523,7 @@ defmodule Diffo.Provider.NoteTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",

@@ -15,6 +15,64 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **Party subtype cascade — `BaseParty` → typed subtype leaves** (#186) — TMF632 Organization and Individual now ship as concrete leaves built from fragment composition (`BaseParty` + `BaseOrganization` / `BaseIndividual`). Consumer leaves (e.g. `MyApp.Carrier`) compose the same two fragments alongside their own attributes.
+
+  ```elixir
+  defmodule Diffo.Provider.Organization do
+    use Ash.Resource,
+      fragments: [BaseParty, BaseOrganization],
+      domain: Diffo.Provider
+  end
+  ```
+
+  Attributes (TMF632 v5 cut, permissive defaults):
+  - `BaseOrganization`: `trading_name`, `name_type`, `organization_type`, `is_legal_entity`, `is_head_office`
+  - `BaseIndividual`: `given_name`, `family_name`, `middle_name`, `title`, `gender`, `birth_date`, `nationality`
+
+  Deferred to follow-ups: nested arrays (`otherName[]`, `*Identification[]`, `disability[]`, `languageAbility[]`, `skill[]`), state machine attrs (pairs with `[[project_specification_lifecycle]]`), org parent/child relationships (via PartyRef machinery), richer demographics (`deathDate`, `placeOfBirth`, etc.), `existsDuring` (TimePeriod).
+
+* **Party dispatcher API on `Diffo.Provider`** (#186) — mirrors the Place dispatcher exactly, with `:Entity` as an additional abstract-routed type alongside `:PartyRef`:
+
+  ```elixir
+  Diffo.Provider.create_party!(:Organization, %{id: "X", trading_name: "Acme"})
+  Diffo.Provider.create_party!(:Individual, %{id: "Y", given_name: "Jane"})
+  Diffo.Provider.create_party!(:PartyRef, %{id: "Z", referred_type: :Organization})
+  Diffo.Provider.create_party!(:Entity, %{id: "E", name: "Aggregate"})
+
+  Diffo.Provider.get_party_by_id!(id)         # returns concrete subtype struct via projection
+  Diffo.Provider.list_parties!()              # mixed-subtype list, each projected
+
+  Diffo.Provider.update_party!(record, attrs)  # struct-dispatched to :define
+  Diffo.Provider.delete_party!(record)
+  ```
+
+* **`Diffo.Test.Party.Organization` → `Diffo.Test.Party.Enterprise`** (#186) — frees the canonical `Diffo.Provider.Organization` name and demonstrates consumer-style naming (paired with existing `Diffo.Test.Party.Person` which similarly demonstrates non-TMF naming for an Individual analogue).
+
+### Breaking changes (Party)
+
+* **`Diffo.Provider.create_party!/1` removed** — replaced by `create_party!/2`. Migration mirrors the Place migration in #185:
+
+  ```elixir
+  # Before
+  Diffo.Provider.create_party!(%{type: :Organization, id: "X", ...})
+  Diffo.Provider.create_party!(%{referred_type: :Individual, id: "Y"})
+
+  # After
+  Diffo.Provider.create_party!(:Organization, %{id: "X", ...})
+  Diffo.Provider.create_party!(:PartyRef, %{referred_type: :Individual, id: "Y"})
+  ```
+
+* **All per-codedef Party actions on `Diffo.Provider` domain dropped** — replaced by the dispatcher functions of the same names (different arities for `create_party`).
+
+* **`get_party_by_id/1`, `list_parties/0`, `find_parties_by_*/1` return concrete subtype structs** via `AshNeo4j.worlds/1` projection.
+
+* **Type-change updates on cascade leaves are rejected** — typed Party leaves have fixed `:type`. PartyRef placeholders (`Provider.Party` records with `referred_type:`) still support `referred_type:` updates.
+
+### Architectural notes (Party)
+
+* **`Diffo.Provider.Party` stays in core minimally** — repurposed as the abstract reader for projection bootstrap + PartyRef-typed placeholder support + `:Entity` routing. Moduledoc rewritten to reflect this.
+* **PartyRef typed `belongs_to` unchanged** (Option C carries over from #185) — graph integrity preserved.
+
 * **Place subtype cascade — `BasePlace` → typed subtype leaves** (#185) — TMF675 GeographicAddress / GeographicSite / GeographicLocation now ship as concrete leaves built from fragment composition (`BasePlace` + `BaseGeographicX`). Consumer leaves (e.g. `MyApp.SydneyExchange`) compose the same two fragments alongside their own attributes.
 
   ```elixir

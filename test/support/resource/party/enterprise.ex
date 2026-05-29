@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Test.Party.Organization do
+defmodule Diffo.Test.Party.Enterprise do
   @moduledoc """
   Diffo - TMF Service and Resource Management with a difference
 
-  Organization - Organization Party
+  Enterprise - Enterprise Party
   """
 
   alias Diffo.Provider.BaseParty
@@ -17,7 +17,7 @@ defmodule Diffo.Test.Party.Organization do
     domain: Nbn
 
   resource do
-    description "An Organization"
+    description "An Enterprise"
     plural_name :organizations
   end
 

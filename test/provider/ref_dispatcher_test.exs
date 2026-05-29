@@ -210,7 +210,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
     test "creates a PartyRef with tagged-tuple instance source" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispPrTag"})
       instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
-      party = Diffo.Provider.create_party!(%{id: "RDT-PR-PARTY", name: "Org", type: :Organization})
+      party = Diffo.Provider.create_party!(:Organization, %{id: "RDT-PR-PARTY", name: "Org"})
 
       ref =
         Diffo.Provider.create_party_ref!(%{
@@ -227,10 +227,10 @@ defmodule Diffo.Provider.RefDispatcherTest do
 
     test "creates a PartyRef with party struct source (party-to-party)" do
       source_party =
-        Diffo.Provider.create_party!(%{id: "RDT-PR-SRC", name: "Source Party", type: :Organization})
+        Diffo.Provider.create_party!(:Organization, %{id: "RDT-PR-SRC", name: "Source Party"})
 
       target_party =
-        Diffo.Provider.create_party!(%{id: "RDT-PR-TGT", name: "Target Party", type: :Organization})
+        Diffo.Provider.create_party!(:Organization, %{id: "RDT-PR-TGT", name: "Target Party"})
 
       ref =
         Diffo.Provider.create_party_ref!(%{
@@ -249,8 +249,8 @@ defmodule Diffo.Provider.RefDispatcherTest do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispPrlf"})
       instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
 
-      party_a = Diffo.Provider.create_party!(%{id: "RDT-PRLF-A", name: "A", type: :Organization})
-      party_b = Diffo.Provider.create_party!(%{id: "RDT-PRLF-B", name: "B", type: :Organization})
+      party_a = Diffo.Provider.create_party!(:Organization, %{id: "RDT-PRLF-A", name: "A"})
+      party_b = Diffo.Provider.create_party!(:Organization, %{id: "RDT-PRLF-B", name: "B"})
 
       Diffo.Provider.create_party_ref!(%{
         role: :role1,
@@ -273,7 +273,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispPrtg"})
       instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
 
-      party = Diffo.Provider.create_party!(%{id: "RDT-PRTG-P", name: "P", type: :Organization})
+      party = Diffo.Provider.create_party!(:Organization, %{id: "RDT-PRTG-P", name: "P"})
 
       Diffo.Provider.create_party_ref!(%{
         role: :facilitator,

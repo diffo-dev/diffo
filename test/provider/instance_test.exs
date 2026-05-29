@@ -661,7 +661,7 @@ defmodule Diffo.Provider.InstanceTest do
       })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -669,7 +669,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -677,7 +677,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_CPE",
           name: :entityId,
           href: "entity/internal/T4_CPE",
@@ -873,7 +873,7 @@ defmodule Diffo.Provider.InstanceTest do
       })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -881,7 +881,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -889,7 +889,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_CPE",
           name: :entityId,
           href: "entity/internal/T4_CPE",
@@ -1321,13 +1321,11 @@ defmodule Diffo.Provider.InstanceTest do
 
     # expect a consumer party
     consumer_party =
-      Diffo.Provider.create_party!(%{
+      Diffo.Provider.create_party!(:PartyRef, %{
         id: "T3_CONNECTIVITY",
         name: :entityId,
         href: "entity/internal/T3_CONNECTIVITY",
-        referred_type: :Entity,
-        type: :PartyRef
-      })
+        referred_type: :Entity})
 
     expected_party_ref =
       Diffo.Provider.create_party_ref!(%{

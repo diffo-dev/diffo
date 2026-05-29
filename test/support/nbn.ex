@@ -13,7 +13,7 @@ defmodule Diffo.Test.Nbn do
     validate_config_inclusion?: false,
     fragments: [Diffo.Provider.DomainFragment]
 
-  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Party.Enterprise
   alias Diffo.Test.Party.Person
   alias Diffo.Test.Party.Carrier
   alias Diffo.Test.Place.GeographicSite
@@ -24,10 +24,10 @@ defmodule Diffo.Test.Nbn do
   end
 
   resources do
-    resource Organization do
-      define :create_organization, action: :build
-      define :get_organization_by_id, action: :read, get_by: :id
-      define :list_organizations, action: :list
+    resource Enterprise do
+      define :create_enterprise, action: :build
+      define :get_enterprise_by_id, action: :read, get_by: :id
+      define :list_enterprises, action: :list
     end
 
     resource Person do
