@@ -323,11 +323,21 @@ Spark runs two separate pipelines during compilation, in this order:
 
 New transformers go under `transformers:`. New persisters go under `persisters:`.
 
-## Resource polymorphism — the Fat* pattern
+## Resource polymorphism — the cascade refinement of the Fat* pattern
 
-Each Ash resource concept has exactly **one polymorphism budget** — the axis along
-which concrete resources differ. Diffo consistently spends that budget on the
-**extender's domain axis**, never on the TMF subtype axis.
+> **Note (post-#185):** The original Fat* pattern argued *against* subtype-per-fragment
+> on the grounds it would re-spend the polymorphism budget on the TMF axis. The Place
+> cascade (#185) showed this was overstated — **fragment composition is additive at
+> the leaf**, not a budget spend. A consumer leaf composes BasePlace + BaseGeographicSite +
+> its own attributes in one resource, no budget re-spent. The Fat* invariants still hold
+> (graph edges intact, storage indexable, no N² explosion) under the cascade because we
+> deliberately keep typed `belongs_to` pointing at the abstract reader (Option C). The
+> sections below have been updated to reflect this refinement.
+
+Each Ash resource concept has a **polymorphism budget** — the axis along which concrete
+resources differ. Diffo spends that budget on the **extender's domain axis**. TMF
+subtype identity is layered on top via compile-time fragment composition (the cascade),
+which doesn't compete with the extender's axis because fragments compose at the leaf.
 
 ### What this means
 
@@ -345,51 +355,93 @@ which concrete resources differ. Diffo consistently spends that budget on the
   subtype-specific attribute groups (e.g. `:location` / `:bounds` for
   `:GeographicLocation`) gated by `type` via Ash validations.
 
-These bases grow wide ("Fat*") as new TMF subtype concerns become real work, but they
-stay singular. A `:GeographicAddress` Place and a `:GeographicLocation` Place are the
-same Ash resource — the `type` enum and which attribute group is populated tells them
-apart. Storage cost is negligible: Neo4j doesn't store nil properties, so unused
-attribute groups never touch disk.
+These bases grow wide ("Fat*") for behaviours that span all subtypes (graph wiring,
+TMF base attributes, the encoder hook). Subtype-specific attribute groups now live
+on **subtype fragments** (`BaseGeographicAddress`, `BaseGeographicSite`,
+`BaseGeographicLocation`) that compose with `BasePlace` at the consumer leaf —
+each subtype is its own resource with its own labels and its own concrete struct.
+Storage cost remains negligible: unused base attributes still don't touch disk
+because Neo4j skips nil properties, and the subtype-specific fields live only on
+the leaves where they apply.
 
 ### Wire-side TMF polymorphism still works
 
 TMF wire forms carry their own polymorphism (`@type`, `@baseType`, `@referredType`
 per the TMF API Design Guidelines). That polymorphism is **reconstructed at the JSON
-encoder edge** rather than represented at the resource type. `Diffo.Provider.Place`'s
-`customize/2` callback in its `jason do` block pattern-matches on which subtype
-attributes are populated and synthesises the right TMF shape — e.g.
-`@baseType: "GeographicLocation"` + `@type: "GeoJsonPoint"` + nested `geoJson` for a
-populated `:location`. Same pattern extends to TMF673/674 shapes as those subtype
-attribute groups grow on the base.
+encoder edge**: `BasePlace.encode_geo_json/2` pattern-matches on geometry to emit
+`@baseType: "GeographicLocation"` + `@type: "GeoJsonPoint"` + nested `geoJson` for
+populated `:location`/`:bounds`. Each subtype fragment in the cascade
+(`BaseGeographicAddress`, `BaseGeographicSite`, `BaseGeographicLocation`) declares
+its own `jason do` block selecting base + subtype fields, with TMF camelCase
+renames; the `encode_geo_json/2` customize is inherited from `BasePlace` so
+geometry rebranding works uniformly.
 
-### Why this commitment is durable
+### Why this commitment is durable (refined)
 
-- **Subtype-per-fragment doesn't work.** Splitting `BasePlace` into
-  `BaseGeographicLocation` / `BaseGeographicSite` / `BaseGeographicAddress` would
-  re-spend the polymorphism budget on the TMF axis. Every consumer would then have
-  to compose differently per subtype, lose the "use the base, set `:type`, you have
-  a Place" story, and face N² edge declarations for every Instance-to-Place or
-  Place-to-Place role that could accept more than one subtype.
-- **Generic edges survive.** Because the resource is singular, any Instance
-  declaring `place :role, Diffo.Provider.Place` (or a domain extender's Place)
-  can hold any TMF subtype with no combinatorial relationship explosion.
+- **Subtype-per-fragment is the cascade pattern.** Splitting `BasePlace` into
+  `BaseGeographicAddress` / `BaseGeographicSite` / `BaseGeographicLocation` is the
+  *correct* answer when those subtypes carry distinct attribute groups. Fragment
+  composition at the leaf means a consumer's `MyApp.SydneyExchange` composes
+  `BasePlace + BaseGeographicSite + its own attrs` — three layers in one resource,
+  one polymorphism budget. The original "don't split" advice was based on a misread
+  of how fragment composition stacks; #185 corrected this.
+- **Generic edges still survive — via the dispatcher and `Provider.Place`.**
+  Typed `belongs_to` on PlaceRef/PartyRef stays pointing at the abstract
+  `Diffo.Provider.Place` reader (Option C — see "PlaceRef / PartyRef belongs_to
+  stay at the abstract reader" below). No N² edge explosion because diffo never
+  enumerates consumer leaves in `belongs_to`; instead, the dispatcher does inline
+  projection on reads via `AshNeo4j.worlds/1`.
 - **Storage stays indexable.** Each attribute is its own typed Neo4j property —
   `CREATE POINT INDEX ON (p:Place) ON p.bounds.bbSW` works for geometry; address
   fields would be indexable in their own way. A union-typed `:geometry` attribute
   would collapse to a JSON blob via Ash's `:ash_json` classifier and lose all
-  indexability — that's the trap of `Ash.Type.Union` for spatial data.
+  indexability — that's the trap of `Ash.Type.Union` for spatial data. The same
+  indexes work uniformly across the cascade because all subtype leaves carry
+  `:Place` (or `:Party`, `:Instance`) labels via `BasePlace` fragment composition
+  — a `:Place` index covers both the abstract reader and every concrete leaf.
 
 ### Implications for design work
 
-- **New TMF subtype attribute group → new attributes on the existing base**,
-  with a `validate attribute_equals(:type, :GeographicXxx), where: present([...], at_least: 1)`
-  guard. Don't reach for a new fragment.
-- **Subtype-specific behaviour → validations gated on `type` + encoder branches**, not
-  new resources.
-- **API-layer union sugar (so consumers can read/write a single `:geometry` shape)
-  → action arguments + a calculation on the resource**, with storage staying as
-  separate typed attributes underneath. Coupling AshNeo4j to that union would
-  rightly be refused — TMF concerns belong in Diffo, not the data layer.
+- **New TMF subtype → new `BaseXxx` fragment + new `Provider.Xxx` leaf**. The
+  subtype fragment carries that subtype's attribute group, jason wire shape, and
+  any tightened validations; the leaf composes `BaseKind + BaseXxx`, sets the TMF
+  `:type` discriminator via its `:build` action, and accepts the union of base +
+  subtype fields.
+- **Subtype-specific behaviour → validations on the subtype fragment + encoder
+  branches**. BasePlace still handles geometry encoding via its `customize` hook;
+  subtype fragments tighten validations (e.g. `BaseGeographicLocation` requires
+  location-xor-bounds set).
+- **Use the dispatcher API**: `Diffo.Provider.create_place!/2` dispatches by TMF
+  type atom; `update_place!/2` / `delete_place!/1` dispatch by record struct;
+  reads (`get_place_by_id!/1`, `list_places!/0`) project to concrete subtype via
+  `AshNeo4j.worlds/1`. The dispatcher only knows TMF blessed types — consumer
+  leaves create/update through their own domain APIs but reads surface them
+  transparently via projection.
+
+### PlaceRef / PartyRef belongs_to stay at the abstract reader (Option C)
+
+The cascade does **not** migrate the typed `belongs_to` on PlaceRef/PartyRef to
+`ProjectedRef` calcs. `AshNeo4j`'s `relate` block requires a real Ash relationship
+to maintain the Neo4j edge (`verify_relate` enforces this at compile time).
+Dropping the `belongs_to` would kill the edge — the graph becomes nodes with id
+pointers and no connectivity, which guts the whole point of using a graph DB.
+
+The right separation:
+
+- **`belongs_to` for graph integrity.** PlaceRef/PartyRef keep all eight typed
+  `belongs_to` (4 each), pointing at the abstract `Diffo.Provider.Place` /
+  `Diffo.Provider.Party` / `Diffo.Provider.Instance` readers. Edges stay intact,
+  Ash filter/sort/join through still works.
+- **`ProjectedRef` calc for cross-resource refs *without* a graph edge.** E.g.
+  `BaseGeographicSite.address` resolves an `address_id` FK to a concrete
+  `GeographicAddress` (or consumer-domain Address leaf) at read time — no edge,
+  open-world projection, three-state load surface
+  (struct / `%Diffo.Unknown{}` / `%Ash.NotLoaded{}`).
+- **Dispatcher's inline projection for typed reads via abstract reader.**
+  `get_place_by_id!/1` loads via `Provider.Place`, then projects via
+  `AshNeo4j.worlds/1` to return the concrete subtype struct. The abstract reader
+  bootstraps; the dispatcher provides the typed surface. `Provider.Place` is
+  plumbing, not a recommendation.
 
 ## Cross-domain lookups and the `Diffo.Unknown` primitive
 

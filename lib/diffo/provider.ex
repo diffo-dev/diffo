@@ -467,4 +467,191 @@ defmodule Diffo.Provider do
         abstract
     end
   end
+
+  # ============================================================================
+  # Polymorphic-source ref dispatcher API
+  #
+  # Collapses the noisy four-FK shape on PlaceRef/PartyRef into one tagged-tuple
+  # `source:` field, with reads expressed as intent (`_from/_targeting`) rather
+  # than per-FK (`_by_*_id`). The schema is unchanged — the four FK columns stay
+  # in the underlying resource; the dispatcher just unpacks the source tag.
+  #
+  # The source can be a tagged tuple (`{:instance, id}` / `{:party, id}` /
+  # `{:place, id}`) or a struct whose module is recognised below. Consumer
+  # leaves outside diffo's known set should use tagged tuples.
+  # ============================================================================
+
+  @doc """
+  Creates a PlaceRef from a tagged source to a target Place.
+
+  ## Source forms
+
+      source: {:instance, "INST-001"}
+      source: {:party, "PARTY-001"}
+      source: {:place, "PLACE-001"}
+      source: some_instance_struct
+      source: some_party_struct
+      source: some_place_struct
+
+  ## Target forms
+
+      target: "LOC-001"
+      target: some_place_struct
+  """
+  @spec create_place_ref!(map()) :: Ash.Resource.record()
+  def create_place_ref!(%{role: _, source: source, target: target} = attrs) do
+    attrs
+    |> Map.delete(:source)
+    |> Map.delete(:target)
+    |> place_ref_put_source(source)
+    |> Map.put(:place_id, normalize_target_id(target))
+    |> then(&Ash.create!(Diffo.Provider.PlaceRef, &1, action: :create, domain: __MODULE__))
+  end
+
+  @doc "Same as `create_place_ref!/1` but returns `{:ok, record}` or `{:error, error}`."
+  @spec create_place_ref(map()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  def create_place_ref(%{role: _, source: source, target: target} = attrs) do
+    attrs
+    |> Map.delete(:source)
+    |> Map.delete(:target)
+    |> place_ref_put_source(source)
+    |> Map.put(:place_id, normalize_target_id(target))
+    |> then(&Ash.create(Diffo.Provider.PlaceRef, &1, action: :create, domain: __MODULE__))
+  end
+
+  @doc """
+  Lists PlaceRefs whose source matches the given Instance/Party/Place.
+  """
+  @spec list_place_refs_from(tagged_source() | Ash.Resource.record()) ::
+          [Ash.Resource.record()]
+  def list_place_refs_from({:instance, id}),
+    do: list_place_refs_by_instance_id!(id)
+
+  def list_place_refs_from({:party, id}),
+    do: list_place_refs_by_party_id!(id)
+
+  def list_place_refs_from({:place, id}),
+    do: list_place_refs_by_source_place_id!(id)
+
+  def list_place_refs_from(%mod{id: id}) do
+    list_place_refs_from({source_kind_for(mod), id})
+  end
+
+  @doc """
+  Lists PlaceRefs targeting the given Place.
+  """
+  @spec list_place_refs_targeting(String.t() | Ash.Resource.record()) ::
+          [Ash.Resource.record()]
+  def list_place_refs_targeting(target) do
+    list_place_refs_by_place_id!(normalize_target_id(target))
+  end
+
+  @doc """
+  Creates a PartyRef from a tagged source to a target Party.
+
+  ## Source forms
+
+      source: {:instance, "INST-001"}
+      source: {:place, "PLACE-001"}
+      source: {:party, "PARTY-001"}
+      source: some_instance_struct
+      source: some_place_struct
+      source: some_party_struct
+  """
+  @spec create_party_ref!(map()) :: Ash.Resource.record()
+  def create_party_ref!(%{role: _, source: source, target: target} = attrs) do
+    attrs
+    |> Map.delete(:source)
+    |> Map.delete(:target)
+    |> party_ref_put_source(source)
+    |> Map.put(:party_id, normalize_target_id(target))
+    |> then(&Ash.create!(Diffo.Provider.PartyRef, &1, action: :create, domain: __MODULE__))
+  end
+
+  @doc "Same as `create_party_ref!/1` but returns `{:ok, record}` or `{:error, error}`."
+  @spec create_party_ref(map()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  def create_party_ref(%{role: _, source: source, target: target} = attrs) do
+    attrs
+    |> Map.delete(:source)
+    |> Map.delete(:target)
+    |> party_ref_put_source(source)
+    |> Map.put(:party_id, normalize_target_id(target))
+    |> then(&Ash.create(Diffo.Provider.PartyRef, &1, action: :create, domain: __MODULE__))
+  end
+
+  @doc "Lists PartyRefs whose source matches the given Instance/Place/Party."
+  @spec list_party_refs_from(tagged_source() | Ash.Resource.record()) ::
+          [Ash.Resource.record()]
+  def list_party_refs_from({:instance, id}),
+    do: list_party_refs_by_instance_id!(id)
+
+  def list_party_refs_from({:place, id}),
+    do: list_party_refs_by_place_id!(id)
+
+  def list_party_refs_from({:party, id}),
+    do: list_party_refs_by_source_party_id!(id)
+
+  def list_party_refs_from(%mod{id: id}) do
+    list_party_refs_from({source_kind_for(mod), id})
+  end
+
+  @doc "Lists PartyRefs targeting the given Party."
+  @spec list_party_refs_targeting(String.t() | Ash.Resource.record()) ::
+          [Ash.Resource.record()]
+  def list_party_refs_targeting(target) do
+    list_party_refs_by_party_id!(normalize_target_id(target))
+  end
+
+  @typedoc "Tagged source for ref dispatchers."
+  @type tagged_source :: {:instance | :party | :place, String.t()}
+
+  # Source put-fns: place the id in the right FK column based on the source tag.
+
+  defp place_ref_put_source(attrs, {:instance, id}), do: Map.put(attrs, :instance_id, id)
+  defp place_ref_put_source(attrs, {:party, id}), do: Map.put(attrs, :party_id, id)
+  defp place_ref_put_source(attrs, {:place, id}), do: Map.put(attrs, :source_place_id, id)
+
+  defp place_ref_put_source(attrs, %mod{id: id}),
+    do: place_ref_put_source(attrs, {source_kind_for(mod), id})
+
+  defp place_ref_put_source(_attrs, other) do
+    raise ArgumentError,
+          "unknown source kind for PlaceRef: #{inspect(other)}; " <>
+            "use a tagged tuple ({:instance, id} / {:party, id} / {:place, id}) " <>
+            "or a known Instance/Party/Place struct with an :id"
+  end
+
+  defp party_ref_put_source(attrs, {:instance, id}), do: Map.put(attrs, :instance_id, id)
+  defp party_ref_put_source(attrs, {:place, id}), do: Map.put(attrs, :place_id, id)
+  defp party_ref_put_source(attrs, {:party, id}), do: Map.put(attrs, :source_party_id, id)
+
+  defp party_ref_put_source(attrs, %mod{id: id}),
+    do: party_ref_put_source(attrs, {source_kind_for(mod), id})
+
+  defp party_ref_put_source(_attrs, other) do
+    raise ArgumentError,
+          "unknown source kind for PartyRef: #{inspect(other)}; " <>
+            "use a tagged tuple ({:instance, id} / {:place, id} / {:party, id}) " <>
+            "or a known Instance/Place/Party struct with an :id"
+  end
+
+  defp normalize_target_id(%{id: id}), do: id
+  defp normalize_target_id(id) when is_binary(id), do: id
+
+  # Map known struct modules to their kind tag. Consumer leaves outside this
+  # list should use tagged tuples explicitly — diffo doesn't have a registry
+  # and can't enumerate consumer-domain Places/Parties/Instances at compile
+  # time.
+  defp source_kind_for(Diffo.Provider.Instance), do: :instance
+  defp source_kind_for(Diffo.Provider.Party), do: :party
+  defp source_kind_for(Diffo.Provider.Place), do: :place
+  defp source_kind_for(Diffo.Provider.GeographicAddress), do: :place
+  defp source_kind_for(Diffo.Provider.GeographicSite), do: :place
+  defp source_kind_for(Diffo.Provider.GeographicLocation), do: :place
+
+  defp source_kind_for(mod) do
+    raise ArgumentError,
+          "unknown source kind for #{inspect(mod)}; use a tagged tuple " <>
+            "(`{:instance, id}` / `{:party, id}` / `{:place, id}`) for consumer-domain structs"
+  end
 end

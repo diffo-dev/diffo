@@ -4,14 +4,47 @@
 
 defmodule Diffo.Provider.BasePlace do
   @moduledoc """
-  Ash Resource Fragment which is the point of extension for your TMF Place.
+  Ash Resource Fragment which is the foundation for TMF Place subtypes.
 
-  `BasePlace` is the foundation for domain-specific Place kinds.
-  Include it as a fragment on an `Ash.Resource` to get common Place attributes, Neo4j graph
-  wiring, and the `Diffo.Provider.Place.Extension` DSL.
+  `BasePlace` is the foundation for the TMF675 cascade — Place is an abstract
+  TMF concept, and concrete subtype identity lives on the fragments that
+  compose with it:
 
-  `Diffo.Provider.Place` uses `BasePlace` directly as the out-of-the-box TMF Place resource.
-  Domain-specific resources extend it for richer domain identity.
+    * `Diffo.Provider.BaseGeographicAddress` — TMF674 GeographicAddress fields
+      (street_name, postcode, country, …)
+    * `Diffo.Provider.BaseGeographicSite` — TMF675 GeographicSite fields
+      (site_type, site_code, projected :address ref)
+    * `Diffo.Provider.BaseGeographicLocation` — TMF675 GeographicLocation
+      fields (accuracy) and tightened geometry validation
+
+  Each subtype fragment composes with `BasePlace` on a concrete leaf:
+
+      defmodule MyApp.SydneyExchange do
+        use Ash.Resource,
+          fragments: [
+            Diffo.Provider.BasePlace,
+            Diffo.Provider.BaseGeographicSite
+          ],
+          domain: MyApp.Domain
+        # consumer-specific attributes here
+      end
+
+  Diffo ships the three corresponding concrete leaves out of the box:
+  `Diffo.Provider.GeographicAddress`, `Diffo.Provider.GeographicSite`,
+  `Diffo.Provider.GeographicLocation`. Use them directly or as templates
+  for your own domain leaves.
+
+  `Diffo.Provider.Place` is also kept in core but is plumbing (abstract
+  reader for projection + PlaceRef-typed placeholder support), not a
+  TMF subtype recommendation. See its moduledoc for details.
+
+  ## Preferred consumer API
+
+  The `Diffo.Provider` domain exposes a type-atom dispatcher that handles
+  the subtype routing for you:
+
+      Diffo.Provider.create_place!(:GeographicSite, %{...})
+      Diffo.Provider.get_place_by_id!(id)    # returns concrete subtype struct via projection
 
   ## Attributes
 
