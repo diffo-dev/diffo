@@ -43,6 +43,7 @@ defmodule Diffo.Provider.Instance.Party do
     counts = Enum.frequencies_by(parties, & &1.role)
 
     declarations
+    |> Enum.filter(&is_struct(&1, Diffo.Provider.Extension.PartyDeclaration))
     |> Enum.reject(&(&1.reference || &1.calculate))
     |> Enum.reduce(changeset, fn decl, cs ->
       count = Map.get(counts, decl.role, 0)

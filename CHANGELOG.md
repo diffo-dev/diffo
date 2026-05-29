@@ -15,6 +15,22 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 ### Bug Fixes
 
+* **`Instance.Party.validate_constraints` skips inherited declarations** (#183) — the validator's `Enum.reject(&(&1.reference || &1.calculate))` was iterating ALL party declarations and KeyError'd on `InheritedPartyDeclaration` (which has no `:reference`/`:calculate` fields). Same shape of bug as the persister fix in #172 for inherited characteristics. Fix: filter to `Diffo.Provider.Extension.PartyDeclaration` before the reject — inherited variants are pre-validated by their declaration entity and have no min/max constraints to enforce.
+
+### Behavior changes
+
+* **`inherited_place` / `inherited_party` calcs now emit `%Diffo.Unknown{}` for reached-but-undeclared sources** (#183) — `Diffo.Provider.Calculations.InheritedPlace` and `InheritedParty` previously silently dropped source instances that didn't carry a `PlaceRef`/`PartyRef` at the declared `source_role`. The new `InheritedCharacteristic` / `ReverseInheritedCharacteristic` calcs (from #172) surface that case as `%Diffo.Unknown{}`; this aligns the older calcs with the same X-state discipline.
+
+  Single reason vocabulary (no cross-world dispatch needed — PlaceRef/PartyRef are universal indirections):
+
+  - `:role_not_declared` — source instance reached by alias traversal but its `PlaceRef`/`PartyRef` records carry no entry at `source_role`. Context: `%{source_id: id, role: source_role}`.
+
+  `:world` is stamped at compile time via `TransformInheritedRefs` (previously passed only to the characteristic variants; now passed to all four inherited calcs).
+
+  **Consumer impact**: code that `Enum.map`s `%Diffo.Provider.Place{}` (or `Party{}`) from an inherited_place/inherited_party result must now handle `%Diffo.Unknown{}` entries (filter, pattern-match, or let them propagate). The empty-list case (no sources reached at all) is unchanged — `Unknown` is reserved for "tried and couldn't determine," not "nothing to determine."
+
+### Bug Fixes
+
 * **Eliminate fragment-override warnings on cascade leaves** (#181) — Spark's `merge_with_warning` was firing during compile time whenever a subtype fragment (`BaseGeographicAddress`/`Site`/`Location`, `BaseOrganization`/`Individual`) declared a wider `jason.pick` / `outstanding.expect` than `BasePlace` / `BaseParty`. The merge logic has no opt-out for deliberate overrides. Fix: move `jason do` and `outstanding do` off `BasePlace` and `BaseParty` entirely; each concrete leaf carries its own declaration:
 
   - Abstract readers (`Provider.Place`, `Provider.Party`) now declare their own base-shape `jason do` and `outstanding do` (previously inherited from the base fragment)
