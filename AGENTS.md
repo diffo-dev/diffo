@@ -422,6 +422,34 @@ geometry rebranding works uniformly.
   leaves create/update through their own domain APIs but reads surface them
   transparently via projection.
 
+### Fragment composition discipline — `jason do` / `outstanding do` live on leaves
+
+Spark's `merge_with_warning` (`deps/spark/lib/spark/dsl.ex:794`) is
+unconditional — there is no "this override is deliberate" opt-out. Whenever
+two fragments write different values to the same `jason.pick` /
+`outstanding.expect` opt, a compile-time warning fires regardless of intent.
+
+The cascade pattern requires every subtype fragment (`BaseGeographicAddress`
+etc.) and every consumer leaf to declare a wider `jason.pick` /
+`outstanding.expect` than any base default would provide. To avoid noise,
+**`BasePlace` / `BaseParty` / `BaseInstance` do not declare `jason do` or
+`outstanding do`**. Each concrete leaf carries its own:
+
+- Abstract readers (`Provider.Place`/`Provider.Party`/`Provider.Instance`)
+  ship the base shape — id, href, name, referred_type, type — for placeholder
+  records and projection bootstrap.
+- Cascade subtype fragments declare the union of base + subtype fields with
+  TMF camelCase renames.
+- Consumer leaves declare their own union per their domain shape.
+
+`BasePlace.encode_geo_json/2` stays as a static helper on `BasePlace` (not in
+a `jason do` block) — subtype fragments and consumer leaves reference it
+from their own `jason.customize`. Same idiom would apply to any future helper
+on `BaseParty` / `BaseInstance`.
+
+This is a deliberate departure from the "fragments carry defaults" idiom
+some Ash extensions use. It came out of #181.
+
 ### PlaceRef / PartyRef belongs_to stay at the abstract reader (Option C)
 
 The cascade does **not** migrate the typed `belongs_to` on PlaceRef/PartyRef to

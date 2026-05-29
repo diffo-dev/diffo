@@ -291,13 +291,13 @@ defmodule Diffo.Provider.BaseParty do
     prepare build(sort: [id: :asc, name: :asc])
   end
 
-  jason do
-    pick [:id, :href, :name, :referred_type, :type]
-    compact true
-    rename referred_type: "@referredType", type: "@type"
-  end
-
-  outstanding do
-    expect [:id, :name, :referred_type, :type]
-  end
+  # Note: `jason do` and `outstanding do` are NOT declared on this fragment.
+  # Spark fragment merge emits a compile-time warning whenever two fragments
+  # write to the same `jason.pick` / `outstanding.expect` opt — and every
+  # cascade subtype fragment (`BaseOrganization`/`Individual`) and every
+  # consumer leaf needs to declare a wider pick than this base would.
+  # Keeping these declarations off the base fragment eliminates the warnings
+  # cleanly. Each concrete leaf (abstract `Provider.Party`, subtype fragments,
+  # consumer leaves like `MyApp.Carrier`) declares its own `jason do` and
+  # `outstanding do`.
 end
