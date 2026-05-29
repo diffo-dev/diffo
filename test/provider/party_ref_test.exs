@@ -117,14 +117,14 @@ defmodule Diffo.Provider.PartyRefTest do
 
     test "list party refs by related place - success" do
       place1 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000123456",
           name: :locationId,
           referred_type: :GeographicAddress
         })
 
       place2 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           referred_type: :GeographicAddress
@@ -555,7 +555,7 @@ defmodule Diffo.Provider.PartyRefTest do
 
     test "delete party_ref with related place - success" do
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           referred_type: :GeographicAddress
