@@ -53,4 +53,14 @@ defmodule Diffo.Provider.Party do
     description "An Ash Resource for a TMF Party"
     plural_name :parties
   end
+
+  jason do
+    pick [:id, :href, :name, :referred_type, :type]
+    compact true
+    rename referred_type: "@referredType", type: "@type"
+  end
+
+  outstanding do
+    expect [:id, :name, :referred_type, :type]
+  end
 end
