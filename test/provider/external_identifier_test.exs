@@ -21,7 +21,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -29,7 +29,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -63,7 +63,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -71,7 +71,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -79,7 +79,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -134,7 +134,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -142,7 +142,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -150,7 +150,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -208,7 +208,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -216,7 +216,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -224,7 +224,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -290,7 +290,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -316,7 +316,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "create - failure - must have an instance" do
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -338,7 +338,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -364,7 +364,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -391,7 +391,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -418,7 +418,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -426,7 +426,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -454,7 +454,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -480,7 +480,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -512,7 +512,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -557,7 +557,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
       instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",

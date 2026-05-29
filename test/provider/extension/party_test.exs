@@ -9,7 +9,7 @@ defmodule Diffo.Provider.Extension.PartyTest do
 
   alias Diffo.Provider.Instance.Extension.Info, as: InstanceInfo
   alias Diffo.Provider.Party.Extension.Info, as: PartyInfo
-  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Party.Enterprise
   alias Diffo.Test.Party.Person
 
   alias Diffo.Test.Instance.ShelfInstance
@@ -22,16 +22,16 @@ defmodule Diffo.Provider.Extension.PartyTest do
     on_exit(&AshNeo4j.Sandbox.rollback/0)
   end
 
-  describe "Party DSL — Organization" do
+  describe "Party DSL — Enterprise" do
     test "instance roles are declared" do
-      roles = PartyInfo.instances(Organization)
+      roles = PartyInfo.instances(Enterprise)
       assert length(roles) == 1
       assert hd(roles).role == :facilitator
       assert hd(roles).instance_type == Diffo.Provider.Instance
     end
 
     test "party roles are declared" do
-      roles = PartyInfo.parties(Organization)
+      roles = PartyInfo.parties(Enterprise)
       assert length(roles) == 1
       assert hd(roles).role == :employer
     end
@@ -64,7 +64,7 @@ defmodule Diffo.Provider.Extension.PartyTest do
       parties = InstanceInfo.structure_parties(ShelfInstance)
       facilitator = Enum.find(parties, &(&1.role == :facilitator))
       overseer = Enum.find(parties, &(&1.role == :overseer))
-      assert facilitator.party_type == Organization
+      assert facilitator.party_type == Enterprise
       assert overseer.party_type == Person
     end
 
@@ -108,7 +108,7 @@ defmodule Diffo.Provider.Extension.PartyTest do
 
   describe "Instance DSL — parties enforcement" do
     setup do
-      {:ok, org} = Nbn.create_organization(%{name: "Acme"})
+      {:ok, org} = Nbn.create_enterprise(%{name: "Acme"})
       {:ok, p1} = Nbn.create_person(%{name: "Alice"})
       {:ok, p2} = Nbn.create_person(%{name: "Bob"})
       {:ok, p3} = Nbn.create_person(%{name: "Carol"})
@@ -157,13 +157,13 @@ defmodule Diffo.Provider.Extension.PartyTest do
     end
   end
 
-  describe "BaseParty — simple pattern (Organization)" do
+  describe "BaseParty — simple pattern (Enterprise)" do
     test "create and read using only base attributes" do
-      {:ok, org} = Nbn.create_organization(%{name: "Acme Corp"})
+      {:ok, org} = Nbn.create_enterprise(%{name: "Acme Corp"})
       assert org.name == "Acme Corp"
       assert org.type == :Organization
 
-      {:ok, loaded} = Nbn.get_organization_by_id(org.id)
+      {:ok, loaded} = Nbn.get_enterprise_by_id(org.id)
       assert loaded.name == "Acme Corp"
     end
   end

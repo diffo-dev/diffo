@@ -124,6 +124,51 @@ Diffo.Provider.update_place!(record, attrs)
 Diffo.Provider.delete_place!(record)
 ```
 
+### Party subtype fragments (TMF632 cascade)
+
+`BaseParty` composes with one of two subtype fragments to produce a TMF632
+concrete Party. Diffo ships the two subtype leaves out of the box and the
+matching consumer leaf is a sibling, not a child:
+
+| Subtype | Subtype fragment | Concrete leaf in diffo |
+|---|---|---|
+| Organization | `Diffo.Provider.BaseOrganization` | `Diffo.Provider.Organization` |
+| Individual | `Diffo.Provider.BaseIndividual` | `Diffo.Provider.Individual` |
+
+```elixir
+defmodule MyApp.Carrier do
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BaseParty, Diffo.Provider.BaseOrganization],
+    domain: MyApp.SRM
+  # consumer-specific attributes / actions here
+end
+```
+
+Same `:build` / `:define` action naming convention as the Place cascade.
+
+### Provider.Party is plumbing — use the dispatcher API
+
+`Diffo.Provider.Party` is **kept in core minimally** as the abstract reader
+that backs projection bootstrap + PartyRef-typed placeholders + `:Entity`
+routing. It is *not* a TMF subtype recommendation. Production code should use
+the type-atom dispatcher on `Diffo.Provider`:
+
+```elixir
+# Writes — dispatch on TMF type atom
+Diffo.Provider.create_party!(:Organization, %{id: "ORG-001", trading_name: "Acme"})
+Diffo.Provider.create_party!(:Individual, %{id: "IND-001", given_name: "Jane", family_name: "Doe"})
+Diffo.Provider.create_party!(:PartyRef, %{id: "REF-001", referred_type: :Organization})
+Diffo.Provider.create_party!(:Entity, %{id: "ENT-001", name: "Aggregate"})
+
+# Reads — open-world projection via AshNeo4j.worlds/1
+Diffo.Provider.get_party_by_id!(id)          # returns concrete subtype struct
+Diffo.Provider.list_parties!()               # mixed-subtype list, each projected
+
+# Update / destroy — dispatch on record's struct module
+Diffo.Provider.update_party!(record, attrs)
+Diffo.Provider.delete_party!(record)
+```
+
 ### Polymorphic-source ref API
 
 `PlaceRef` and `PartyRef` use a polymorphic-source dispatcher that collapses

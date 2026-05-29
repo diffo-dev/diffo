@@ -59,7 +59,7 @@ defmodule Diffo.Provider.Extension.PlaceVerifierTest do
     test "instance_type not extending BaseInstance warns DslError on compilation" do
       Util.assert_compile_time_warning(
         Spark.Error.DslError,
-        "instances: instance_type Diffo.Test.Party.Organization does not extend BaseInstance",
+        "instances: instance_type Diffo.Test.Party.Enterprise does not extend BaseInstance",
         fn ->
           defmodule WrongPlaceInstanceType do
             alias Diffo.Provider.BasePlace
@@ -71,7 +71,7 @@ defmodule Diffo.Provider.Extension.PlaceVerifierTest do
 
             provider do
               instances do
-                role :site_for, Diffo.Test.Party.Organization
+                role :site_for, Diffo.Test.Party.Enterprise
               end
             end
           end
@@ -96,8 +96,8 @@ defmodule Diffo.Provider.Extension.PlaceVerifierTest do
 
             provider do
               parties do
-                role :managed_by, Diffo.Test.Party.Organization
-                role :managed_by, Diffo.Test.Party.Organization
+                role :managed_by, Diffo.Test.Party.Enterprise
+                role :managed_by, Diffo.Test.Party.Enterprise
               end
             end
           end
@@ -203,7 +203,7 @@ defmodule Diffo.Provider.Extension.PlaceVerifierTest do
     test "place_type not extending BasePlace warns DslError on compilation" do
       Util.assert_compile_time_warning(
         Spark.Error.DslError,
-        "places: place_type Diffo.Test.Party.Organization does not extend BasePlace",
+        "places: place_type Diffo.Test.Party.Enterprise does not extend BasePlace",
         fn ->
           defmodule WrongPlacePlaceRoleType do
             alias Diffo.Provider.BasePlace
@@ -215,7 +215,7 @@ defmodule Diffo.Provider.Extension.PlaceVerifierTest do
 
             provider do
               places do
-                role :contained_in, Diffo.Test.Party.Organization
+                role :contained_in, Diffo.Test.Party.Enterprise
               end
             end
           end
@@ -251,7 +251,7 @@ defmodule Diffo.Provider.Extension.PlaceVerifierTest do
     test "instance_ref with non-BaseInstance type warns DslError on compilation" do
       Util.assert_compile_time_warning(
         Spark.Error.DslError,
-        "instances: instance_type Diffo.Test.Party.Organization does not extend BaseInstance",
+        "instances: instance_type Diffo.Test.Party.Enterprise does not extend BaseInstance",
         fn ->
           defmodule InvalidPlaceInstanceRefBaseType do
             alias Diffo.Provider.BasePlace
@@ -263,7 +263,7 @@ defmodule Diffo.Provider.Extension.PlaceVerifierTest do
 
             provider do
               instances do
-                instance_ref :site_for, Diffo.Test.Party.Organization
+                instance_ref :site_for, Diffo.Test.Party.Enterprise
               end
             end
           end

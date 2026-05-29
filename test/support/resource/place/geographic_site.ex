@@ -44,7 +44,7 @@ defmodule Diffo.Test.Place.GeographicSite do
     end
 
     parties do
-      role :managed_by, Diffo.Test.Party.Organization
+      role :managed_by, Diffo.Test.Party.Enterprise
     end
 
     places do
