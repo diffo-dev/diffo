@@ -101,6 +101,30 @@ Action naming convention on cascade leaves: `:build` for create, `:define` for
 update, both accepting the union of base + subtype fields. `:build` sets the
 TMF `:type` discriminator automatically.
 
+### `jason do` and `outstanding do` live on leaves, not on `Base*` fragments
+
+Spark's fragment merge emits a compile-time warning whenever two fragments
+write to the same `jason.pick` / `outstanding.expect` opt — and every cascade
+subtype fragment and every consumer leaf needs a wider pick than any base
+default would provide. To eliminate the warnings cleanly, **`BasePlace` /
+`BaseParty` / `BaseInstance` do not declare `jason do` or `outstanding do`**.
+
+Each concrete leaf declares its own:
+
+- **Abstract readers** (`Provider.Place` / `Provider.Party` / `Provider.Instance`)
+  carry the base shape (id, href, name, referred_type, type) for placeholder
+  records.
+- **Cascade subtype fragments** (`BaseGeographicAddress`/`Site`/`Location`,
+  `BaseOrganization`/`Individual`) carry the union of base + subtype fields
+  with TMF camelCase renames.
+- **Consumer leaves** (`MyApp.Carrier`, `MyApp.SydneyExchange`, etc.) declare
+  their own `jason do` and `outstanding do` covering base + their domain-
+  specific fields. See the docstring examples on each Base* fragment.
+
+This is a deliberate departure from the "fragments carry defaults" idiom that
+some Ash extensions use. Spark's `merge_with_warning` has no opt-out for
+deliberate overrides, so the only way to avoid noise is to not declare twice.
+
 ### Provider.Place is plumbing — use the dispatcher API
 
 `Diffo.Provider.Place` is **kept in core minimally** as the abstract reader

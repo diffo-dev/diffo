@@ -279,16 +279,17 @@ defmodule Diffo.Provider.BasePlace do
     prepare build(sort: [id: :asc, name: :asc])
   end
 
-  jason do
-    pick [:id, :href, :name, :referred_type, :type, :location, :bounds]
-    compact true
-    rename referred_type: "@referredType", type: "@type"
-    customize &Diffo.Provider.BasePlace.encode_geo_json/2
-  end
-
-  outstanding do
-    expect [:id, :name, :referred_type, :type]
-  end
+  # Note: `jason do` and `outstanding do` are NOT declared on this fragment.
+  # Spark fragment merge emits a compile-time warning whenever two fragments
+  # write to the same `jason.pick` / `outstanding.expect` opt — and every
+  # cascade subtype fragment (`BaseGeographicAddress`/`Site`/`Location`) and
+  # every consumer leaf needs to declare a wider pick than this base would.
+  # Keeping these declarations off the base fragment eliminates the warnings
+  # cleanly. Each concrete leaf (abstract `Provider.Place`, subtype fragments,
+  # consumer leaves like `MyApp.SydneyExchange`) declares its own `jason do`
+  # and `outstanding do`. `encode_geo_json/2` below remains as a static helper
+  # that subtype fragments and consumer leaves reference from their own
+  # `jason.customize`.
 
   @doc false
   def encode_geo_json(result, record) do

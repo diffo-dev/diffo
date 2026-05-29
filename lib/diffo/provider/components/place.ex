@@ -49,4 +49,15 @@ defmodule Diffo.Provider.Place do
     description "An Ash Resource for a TMF Place"
     plural_name :places
   end
+
+  jason do
+    pick [:id, :href, :name, :referred_type, :type, :location, :bounds]
+    compact true
+    rename referred_type: "@referredType", type: "@type"
+    customize &Diffo.Provider.BasePlace.encode_geo_json/2
+  end
+
+  outstanding do
+    expect [:id, :name, :referred_type, :type]
+  end
 end
