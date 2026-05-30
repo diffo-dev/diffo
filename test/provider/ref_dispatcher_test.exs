@@ -25,7 +25,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
   describe "create_place_ref!/1 — tagged-tuple source" do
     test "creates with {:instance, id} source" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispTagInst"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: spec.id})
 
       place =
         Diffo.Provider.create_place!(:GeographicSite, %{
@@ -77,7 +77,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
   describe "create_place_ref!/1 — struct source" do
     test "creates with an Instance struct source" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispStructInst"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: spec.id})
 
       place =
         Diffo.Provider.create_place!(:GeographicSite, %{
@@ -124,7 +124,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
   describe "list_place_refs_from/1" do
     test "lists by tagged-tuple instance source" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispListFrom"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: spec.id})
 
       place_a =
         Diffo.Provider.create_place!(:GeographicSite, %{id: "RDT-LF-A", name: "A"})
@@ -152,7 +152,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
 
     test "lists by instance struct source" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispStructList"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: spec.id})
 
       place =
         Diffo.Provider.create_place!(:GeographicSite, %{id: "RDT-SL-P", name: "P"})
@@ -172,7 +172,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
   describe "list_place_refs_targeting/1" do
     test "lists refs whose target_id matches a string id" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispTargeting"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: spec.id})
 
       place =
         Diffo.Provider.create_place!(:GeographicSite, %{id: "RDT-TG-P", name: "P"})
@@ -190,7 +190,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
 
     test "lists refs targeting a place struct" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispTargetingStruct"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: spec.id})
 
       place =
         Diffo.Provider.create_place!(:GeographicSite, %{id: "RDT-TGS-P", name: "P"})
@@ -209,7 +209,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
   describe "create_party_ref!/1 — same patterns symmetric to PlaceRef" do
     test "creates a PartyRef with tagged-tuple instance source" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispPrTag"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: spec.id})
       party = Diffo.Provider.create_party!(:Organization, %{id: "RDT-PR-PARTY", name: "Org"})
 
       ref =
@@ -247,7 +247,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
   describe "list_party_refs_from/1 + list_party_refs_targeting/1" do
     test "list_party_refs_from with tagged tuple" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispPrlf"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: spec.id})
 
       party_a = Diffo.Provider.create_party!(:Organization, %{id: "RDT-PRLF-A", name: "A"})
       party_b = Diffo.Provider.create_party!(:Organization, %{id: "RDT-PRLF-B", name: "B"})
@@ -271,7 +271,7 @@ defmodule Diffo.Provider.RefDispatcherTest do
 
     test "list_party_refs_targeting with party struct" do
       spec = Diffo.Provider.create_specification!(%{name: "testRefDispPrtg"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: spec.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: spec.id})
 
       party = Diffo.Provider.create_party!(:Organization, %{id: "RDT-PRTG-P", name: "P"})
 

@@ -58,7 +58,7 @@ produces nodes that Ash cannot find or interpret correctly.
 
 | Kind | Base fragment | Marker extension |
 |---|---|---|
-| Instance (Service or Resource) | `Diffo.Provider.BaseInstance` | `Diffo.Provider.Instance.Extension` |
+| Instance (Service or Resource) | `Diffo.Provider.BaseInstance` + `Service`/`Resource` | `Diffo.Provider.Instance.Extension` |
 | Party (Organization, Individual) | `Diffo.Provider.BaseParty` | `Diffo.Provider.Party.Extension` |
 | Place (GeographicAddress, Site, Location) | `Diffo.Provider.BasePlace` | `Diffo.Provider.Place.Extension` |
 
@@ -71,10 +71,34 @@ Always start from the appropriate base fragment:
 
 ```elixir
 defmodule MyApp.BroadbandService do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.SRM
+  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance, Diffo.Provider.Service], domain: MyApp.SRM
   ...
 end
 ```
+
+### Instance subtype fragments (TMF638/639 cascade)
+
+`BaseInstance` carries everything shared between Services and Resources. Compose it
+with exactly one subtype fragment — an instance is either a Service or a Resource,
+never both, never neither:
+
+| Subtype | Subtype fragment | Adds |
+|---|---|---|
+| Service (TMF638) | `Diffo.Provider.Service` | the service lifecycle state machine (`state` / `operating_status`), lifecycle actions (activate/suspend/terminate/cancel/…), TMF638 jason |
+| Resource (TMF639) | `Diffo.Provider.Resource` | `resource_state` (lifecycleState), the `lifecycle` action, TMF639 jason |
+
+```elixir
+defmodule MyApp.Card do
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BaseInstance, Diffo.Provider.Resource],
+    domain: MyApp.SRM
+  # a Card is a Resource — no service lifecycle
+end
+```
+
+`Diffo.Provider.Instance` is the generic Service (`[BaseInstance, Service]`) and the
+abstract reader that `get_instance_by_id!/1` projects through. A service
+**terminates** or **cancels** — only a Specification retires.
 
 ### Place subtype fragments (TMF675 cascade)
 
@@ -580,9 +604,9 @@ defmodule MyApp.SRM do
   end
 end
 
-# Instance resource
+# Instance resource (a service composes BaseInstance + Service; a resource, BaseInstance + Resource)
 defmodule MyApp.BroadbandService do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.SRM
+  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance, Diffo.Provider.Service], domain: MyApp.SRM
 
   resource do
     description "An ADSL broadband service"

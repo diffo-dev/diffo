@@ -162,41 +162,38 @@ defmodule Diffo.Provider.Instance.Util do
   end
 
   @doc false
-  def dates(result, record) do
+  def service_dates(result, record) do
     result
-    |> Diffo.Util.set(
-      derive_create_date_name(record.type),
-      Diffo.Util.to_iso8601(record.created_at)
-    )
-    |> Diffo.Util.set(
-      derive_start_date_name(record.type),
-      Diffo.Util.to_iso8601(record.started_at)
-    )
-    |> Diffo.Util.set(
-      derive_end_date_name(record.type),
-      Diffo.Util.to_iso8601(record.stopped_at)
-    )
+    |> Diffo.Util.set(:serviceDate, Diffo.Util.to_iso8601(record.created_at))
+    |> Diffo.Util.set(:startDate, Diffo.Util.to_iso8601(record.started_at))
+    |> Diffo.Util.set(:endDate, Diffo.Util.to_iso8601(record.stopped_at))
   end
 
   @doc false
-  def states(result, record) do
-    case record.type do
-      :service ->
-        result
-        |> Diffo.Util.set(:state, record.service_state)
-        |> Diffo.Util.set(:operatingStatus, record.service_operating_status)
+  def resource_dates(result, record) do
+    result
+    |> Diffo.Util.set(:startOperatingDate, Diffo.Util.to_iso8601(record.started_at))
+    |> Diffo.Util.set(:endOperatingDate, Diffo.Util.to_iso8601(record.stopped_at))
+  end
 
-      :resource ->
-        case record.resource_state do
-          nil -> result
-          state -> Diffo.Util.set(result, :lifecycleState, state)
-        end
+  @doc false
+  def service_states(result, record) do
+    result
+    |> Diffo.Util.set(:state, record.state)
+    |> Diffo.Util.set(:operatingStatus, record.operating_status)
+  end
 
-        # |> Diffo.Util.ensure_not_nil(:administrativeState, record.resource_administrative_state)
-        # |> Diffo.Util.ensure_not_nil(:operationalState, record.resource_operational_state)
-        # |> Diffo.Util.ensure_not_nil(:resourceStatus, record.resource_status)
-        # |> Diffo.Util.ensure_not_nil(:usageState, record.resource_usage_state)
-    end
+  @doc false
+  def resource_states(result, record) do
+    # `Diffo.Util.set/3` drops the key when the value is nil, so unset axes simply
+    # don't appear on the wire.
+    result
+    |> Diffo.Util.set(:resourceVersion, record.resource_version)
+    |> Diffo.Util.set(:lifecycleState, record.lifecycle_state)
+    |> Diffo.Util.set(:administrativeState, record.administrative_state)
+    |> Diffo.Util.set(:operationalState, record.operational_state)
+    |> Diffo.Util.set(:usageState, record.usage_state)
+    |> Diffo.Util.set(:resourceStatus, record.resource_status)
   end
 
   @doc false

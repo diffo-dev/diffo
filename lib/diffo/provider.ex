@@ -28,35 +28,13 @@ defmodule Diffo.Provider do
       define :delete_specification, action: :destroy
     end
 
-    resource Diffo.Provider.Instance do
-      define :create_instance, action: :create
-      define :get_instance_by_id, action: :read, get_by: :id
-      define :list_instances, action: :list
-      define :find_instances_by_name, action: :find_by_name, args: [:query]
-
-      define :find_instances_by_specification_id,
-        action: :find_by_specification_id,
-        args: [:query]
-
-      define :name_instance, action: :name
-      define :cancel_service, action: :cancel
-      define :feasibilityCheck_service, action: :feasibilityCheck
-      define :reserve_service, action: :reserve
-      define :deactivate_service, action: :deactivate
-      define :activate_service, action: :activate
-      define :suspend_service, action: :suspend
-      define :terminate_service, action: :terminate
-      define :status_service, action: :status
-      define :lifecycle_resource, action: :lifecycle
-      define :respecify_instance, action: :specify
-      define :relate_instance_features, action: :relate_features
-      define :unrelate_instance_features, action: :unrelate_features
-      define :relate_instance_characteristics, action: :relate_characteristics
-      define :unrelate_instance_characteristics, action: :unrelate_characteristics
-      define :annotate_instance, action: :annotate
-      define :fire_instance_event, action: :fire_event
-      define :delete_instance, action: :destroy
-    end
+    # `Diffo.Provider.Instance` is the abstract reader for the Service/Resource
+    # cascade — registered bare. Instances are concrete Service/Resource leaves,
+    # so reads project (`get_instance_by_id!`, etc.) and every record operation
+    # (`activate_service!`, `respecify_instance!`, `delete_instance!`, …) is a
+    # hand-written dispatcher function on `Diffo.Provider` that dispatches on the
+    # record's own resource.
+    resource Diffo.Provider.Instance
 
     resource Diffo.Provider.Relationship do
       define :create_relationship, action: :create
@@ -247,6 +225,185 @@ defmodule Diffo.Provider do
       define :delete_event, action: :destroy
     end
   end
+
+  # ============================================================================
+  # Instance dispatcher API
+  #
+  # `Diffo.Provider.Instance` is the abstract reader for the Service/Resource
+  # cascade. Reads project each instance to its concrete leaf (a resource
+  # composing `BaseInstance` + `Service`/`Resource`) via `AshNeo4j.worlds/1`, so
+  # the leaf's TMF638/639 jason fires on encode. The service lifecycle dispatches
+  # on the record's own resource — the lifecycle actions live on the `Service`
+  # fragment, so any service leaf carries them.
+  # ============================================================================
+
+  @doc """
+  Loads an instance by id and projects it to its concrete Service/Resource leaf.
+
+  Accepts a `:load` opt applied to the projected leaf (e.g. `load: [:event]`).
+  """
+  @spec get_instance_by_id!(String.t(), keyword()) :: Ash.Resource.record()
+  def get_instance_by_id!(id, opts \\ []) when is_binary(id) do
+    Diffo.Provider.Instance
+    |> Ash.get!(id, domain: __MODULE__)
+    |> project_instance()
+    |> load_projection(opts)
+  end
+
+  @doc "Same as `get_instance_by_id!/2` but returns `{:ok, record}` or `{:error, error}`."
+  @spec get_instance_by_id(String.t(), keyword()) ::
+          {:ok, Ash.Resource.record()} | {:error, term()}
+  def get_instance_by_id(id, opts \\ []) when is_binary(id) do
+    case Ash.get(Diffo.Provider.Instance, id, domain: __MODULE__) do
+      {:ok, abstract} -> {:ok, abstract |> project_instance() |> load_projection(opts)}
+      {:error, _} = err -> err
+    end
+  end
+
+  defp load_projection(record, opts) do
+    case Keyword.get(opts, :load) do
+      nil -> record
+      load -> Ash.load!(record, load)
+    end
+  end
+
+  @doc "Lists all instances, each projected to its concrete Service/Resource leaf."
+  @spec list_instances!() :: [Ash.Resource.record()]
+  def list_instances! do
+    Diffo.Provider.Instance
+    |> Ash.read!(action: :list, domain: __MODULE__)
+    |> Enum.map(&project_instance/1)
+  end
+
+  @doc "Finds instances whose name contains the query, each projected to its concrete leaf."
+  @spec find_instances_by_name!(String.t()) :: [Ash.Resource.record()]
+  def find_instances_by_name!(query) do
+    Diffo.Provider.Instance
+    |> Ash.Query.for_read(:find_by_name, %{query: query})
+    |> Ash.read!(domain: __MODULE__)
+    |> Enum.map(&project_instance/1)
+  end
+
+  @doc "Finds instances by specification id, each projected to its concrete leaf."
+  @spec find_instances_by_specification_id!(String.t()) :: [Ash.Resource.record()]
+  def find_instances_by_specification_id!(query) do
+    Diffo.Provider.Instance
+    |> Ash.Query.for_read(:find_by_specification_id, %{query: query})
+    |> Ash.read!(domain: __MODULE__)
+    |> Enum.map(&project_instance/1)
+  end
+
+  defp project_instance(%Diffo.Provider.Instance{id: id} = abstract) do
+    case AshNeo4j.worlds(abstract) do
+      [{domain, concrete} | _] when concrete != Diffo.Provider.Instance ->
+        Ash.get!(concrete, id, domain: domain)
+
+      _ ->
+        abstract
+    end
+  end
+
+  @doc "Feasibility-checks a service instance (dispatches on the record's resource)."
+  def feasibilityCheck_service!(record, attrs \\ %{}),
+    do: Ash.update!(record, attrs, action: :feasibilityCheck)
+
+  @doc "Same as `feasibilityCheck_service!/2` but returns `{:ok, record}` or `{:error, error}`."
+  def feasibilityCheck_service(record, attrs \\ %{}),
+    do: Ash.update(record, attrs, action: :feasibilityCheck)
+
+  @doc "Reserves a service instance."
+  def reserve_service!(record), do: Ash.update!(record, %{}, action: :reserve)
+  def reserve_service(record), do: Ash.update(record, %{}, action: :reserve)
+
+  @doc "Deactivates a service instance."
+  def deactivate_service!(record), do: Ash.update!(record, %{}, action: :deactivate)
+  def deactivate_service(record), do: Ash.update(record, %{}, action: :deactivate)
+
+  @doc "Activates a service instance."
+  def activate_service!(record), do: Ash.update!(record, %{}, action: :activate)
+  def activate_service(record), do: Ash.update(record, %{}, action: :activate)
+
+  @doc "Suspends a service instance."
+  def suspend_service!(record), do: Ash.update!(record, %{}, action: :suspend)
+  def suspend_service(record), do: Ash.update(record, %{}, action: :suspend)
+
+  @doc "Terminates a service instance."
+  def terminate_service!(record), do: Ash.update!(record, %{}, action: :terminate)
+  def terminate_service(record), do: Ash.update(record, %{}, action: :terminate)
+
+  @doc "Cancels a service instance."
+  def cancel_service!(record), do: Ash.update!(record, %{}, action: :cancel)
+  def cancel_service(record), do: Ash.update(record, %{}, action: :cancel)
+
+  @doc "Updates the operating status of a service instance."
+  def status_service!(record, attrs \\ %{}), do: Ash.update!(record, attrs, action: :status)
+  def status_service(record, attrs \\ %{}), do: Ash.update(record, attrs, action: :status)
+
+  @doc "Sets the TMF lifecycleState of a resource instance."
+  def lifecycle_resource!(record, attrs \\ %{}),
+    do: Ash.update!(record, attrs, action: :lifecycle)
+
+  @doc "Same as `lifecycle_resource!/2` but returns `{:ok, record}` or `{:error, error}`."
+  def lifecycle_resource(record, attrs \\ %{}),
+    do: Ash.update(record, attrs, action: :lifecycle)
+
+  # Shared record operations — dispatch on the record's resource (the actions live
+  # on `BaseInstance`, so every Service/Resource leaf carries them).
+
+  @doc "Renames an instance."
+  def name_instance!(record, attrs \\ %{}), do: Ash.update!(record, attrs, action: :name)
+  def name_instance(record, attrs \\ %{}), do: Ash.update(record, attrs, action: :name)
+
+  @doc "Respecifies an instance (changes its specification)."
+  def respecify_instance!(record, attrs \\ %{}), do: Ash.update!(record, attrs, action: :specify)
+  def respecify_instance(record, attrs \\ %{}), do: Ash.update(record, attrs, action: :specify)
+
+  @doc "Relates features to an instance."
+  def relate_instance_features!(record, attrs \\ %{}),
+    do: Ash.update!(record, attrs, action: :relate_features)
+
+  def relate_instance_features(record, attrs \\ %{}),
+    do: Ash.update(record, attrs, action: :relate_features)
+
+  @doc "Unrelates features from an instance."
+  def unrelate_instance_features!(record, attrs \\ %{}),
+    do: Ash.update!(record, attrs, action: :unrelate_features)
+
+  def unrelate_instance_features(record, attrs \\ %{}),
+    do: Ash.update(record, attrs, action: :unrelate_features)
+
+  @doc "Relates characteristics to an instance."
+  def relate_instance_characteristics!(record, attrs \\ %{}),
+    do: Ash.update!(record, attrs, action: :relate_characteristics)
+
+  def relate_instance_characteristics(record, attrs \\ %{}),
+    do: Ash.update(record, attrs, action: :relate_characteristics)
+
+  @doc "Unrelates characteristics from an instance."
+  def unrelate_instance_characteristics!(record, attrs \\ %{}),
+    do: Ash.update!(record, attrs, action: :unrelate_characteristics)
+
+  def unrelate_instance_characteristics(record, attrs \\ %{}),
+    do: Ash.update(record, attrs, action: :unrelate_characteristics)
+
+  @doc "Annotates an instance with a note."
+  def annotate_instance!(record, attrs \\ %{}), do: Ash.update!(record, attrs, action: :annotate)
+  def annotate_instance(record, attrs \\ %{}), do: Ash.update(record, attrs, action: :annotate)
+
+  @doc "Fires an event on an instance, maintaining the event chain."
+  def fire_instance_event!(record, attrs \\ %{}),
+    do: Ash.update!(record, attrs, action: :fire_event)
+
+  def fire_instance_event(record, attrs \\ %{}),
+    do: Ash.update(record, attrs, action: :fire_event)
+
+  @doc "Deletes an instance (or a list of instances, returning an `%Ash.BulkResult{}`)."
+  def delete_instance!(record), do: Ash.destroy!(record)
+
+  def delete_instance(records) when is_list(records),
+    do: Ash.bulk_destroy(records, :destroy, %{}, return_errors?: true)
+
+  def delete_instance(record), do: Ash.destroy(record)
 
   # ============================================================================
   # Place dispatcher API

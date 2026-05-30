@@ -13,7 +13,7 @@ defmodule Diffo.Provider.Assigner do
   alias Diffo.Provider.AssignableCharacteristic
   alias Diffo.Provider.AssignmentRelationship
 
-  @assignable_resource_states [:installing, :operating]
+  @assignable_resource_states [:planned, :installed]
   @assignable_service_states [:feasibilityChecked, :reserved, :inactive, :active, :suspended]
 
   @doc """
@@ -78,13 +78,13 @@ defmodule Diffo.Provider.Assigner do
   Returns `:ok` if the instance is in a lifecycle state that permits assignment,
   otherwise `{:error, reason}`.
   """
-  def assignable_state?(%{type: :resource, resource_state: state})
+  def assignable_state?(%{type: :resource, lifecycle_state: state})
       when state not in @assignable_resource_states,
       do:
         {:error,
          "cannot assign: resource lifecycle state is #{inspect(state)}, must be one of #{inspect(@assignable_resource_states)}"}
 
-  def assignable_state?(%{type: :service, service_state: state})
+  def assignable_state?(%{type: :service, state: state})
       when state not in @assignable_service_states,
       do:
         {:error,

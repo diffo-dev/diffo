@@ -17,7 +17,7 @@ defmodule Diffo.Provider.NoteTest do
   describe "Diffo.Provider read Notes" do
     test "list notes - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -58,8 +58,8 @@ defmodule Diffo.Provider.NoteTest do
 
     test "find notes by note_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -114,8 +114,8 @@ defmodule Diffo.Provider.NoteTest do
 
     test "list notes by related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -169,8 +169,8 @@ defmodule Diffo.Provider.NoteTest do
 
     test "list notes by related author id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -233,14 +233,14 @@ defmodule Diffo.Provider.NoteTest do
 
     test "create a note with no author  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
       note = Diffo.Provider.create_note!(%{instance_id: instance1.id, text: "123"})
       assert note.text == "123"
     end
 
     test "create a note with external id and author  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -263,13 +263,13 @@ defmodule Diffo.Provider.NoteTest do
 
     test "create - failure - must have one of text, external id, author_id" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
       {:error, _error} = Diffo.Provider.create_note(%{instance_id: instance1.id})
     end
 
     test "create similar notes without note id on same instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -294,7 +294,7 @@ defmodule Diffo.Provider.NoteTest do
 
     test "create similar notes with note id on same instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -323,7 +323,7 @@ defmodule Diffo.Provider.NoteTest do
   describe "Diffo.Provider update Notes" do
     test "update note_id to nil - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -347,7 +347,7 @@ defmodule Diffo.Provider.NoteTest do
 
     test "update note_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -371,7 +371,7 @@ defmodule Diffo.Provider.NoteTest do
 
     test "remove note author - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -398,7 +398,7 @@ defmodule Diffo.Provider.NoteTest do
 
     test "replace note author - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -431,7 +431,7 @@ defmodule Diffo.Provider.NoteTest do
 
     test "update author_id - failure - author doesn't exist" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -454,8 +454,8 @@ defmodule Diffo.Provider.NoteTest do
 
     test "update instance_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -480,7 +480,7 @@ defmodule Diffo.Provider.NoteTest do
 
     test "update instance_id - failure - instance doesn't exist" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -504,7 +504,7 @@ defmodule Diffo.Provider.NoteTest do
 
     test "update - failure - must have one of text, external id, author_id" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       note =
         Diffo.Provider.create_note!(%{
@@ -520,7 +520,7 @@ defmodule Diffo.Provider.NoteTest do
   describe "Diffo.Provider encode Notes" do
     test "encode json with author - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
         Diffo.Provider.create_party!(:PartyRef, %{
@@ -547,7 +547,7 @@ defmodule Diffo.Provider.NoteTest do
 
     test "encode json no author - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       note =
         Diffo.Provider.create_note!(%{
@@ -619,7 +619,7 @@ defmodule Diffo.Provider.NoteTest do
   describe "Diffo.Provider delete Notes" do
     test "delete note with related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       note =
         Diffo.Provider.create_note!(%{

@@ -15,7 +15,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
   describe "Diffo.Provider.ProcessStatus create" do
     test "create a process status - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -30,7 +30,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
 
     test "create a process status with a parameterised message - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       parameterized_message = %Ash.Union{
         type: :map,
@@ -53,7 +53,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
   describe "Diffo.Provider.ProcessStatus update" do
     test "update code - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -71,7 +71,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
 
     test "update severity - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -89,7 +89,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
 
     test "update message - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -108,7 +108,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
 
     test "update parameterized message - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       parameterized_message = %{reason: "cancelled due to force majeure"}
 
       process_status =
@@ -130,7 +130,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
 
     test "update code to nil - failure" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -145,7 +145,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
 
     test "update severity to nil - failure" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -160,7 +160,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
 
     test "update message to nil - failure" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -175,7 +175,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
 
     test "update parameterized message to nil - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       parameterized_message = %{reason: "cancelled due to force majeure"}
 
       process_status =
@@ -197,7 +197,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
   describe "Diffo.Provider.ProcessStatus encode" do
     test "encode json - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -217,7 +217,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
       parameterized_message = %{reason: "cancelled due to force majeure"}
 
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
@@ -326,7 +326,7 @@ defmodule Diffo.Provider.ProcessStatusTest do
   describe "Diffo.Provider delete ProcessStatus" do
     test "delete process_status with related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       process_status =
         Diffo.Provider.ProcessStatus.create!(%{
