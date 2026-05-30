@@ -122,6 +122,12 @@ defmodule Diffo.Provider.Resource do
     end
   end
 
+  validations do
+    validate {Diffo.Provider.Validations.ValidateSpecificationKind,
+              expected: :resourceSpecification},
+             on: [:create, :update]
+  end
+
   jason do
     pick [
       :id,

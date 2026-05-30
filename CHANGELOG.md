@@ -22,6 +22,7 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
   - **`Diffo.Provider.Instance`** composes `[BaseInstance, Service]` — it is the generic Service and the abstract reader for projection. An instance is exactly one of Service or Resource (not both, not neither).
   - The jason wire shape is **byte-for-byte unchanged** (the `state` / `operatingStatus` keys were already those names); the renames are internal only.
   - The service-state vocabulary helper moved from `Diffo.Provider.Service` to **`Diffo.Provider.ServiceState`** (the former name now belongs to the fragment).
+  - **Specification-kind guards** keep an instance and its specification on the same side of the divide: a Service must be specified by a `:serviceSpecification`, a Resource by a `:resourceSpecification`. Two complementary checks — a compile-time `Diffo.Provider.Extension.Verifiers.VerifySpecificationKind` (catches a consumer leaf mis-declaring its `specification do type`, failing their build) and a runtime `Diffo.Provider.Validations.ValidateSpecificationKind` on the `Service`/`Resource` fragments (catches the spec associated at create/specify — covering generic instances and `respecify`). Generic instances with no declared specification are not statically checked but are validated at runtime.
 
   **Consumer migration:** a service leaf now composes `fragments: [BaseInstance, Service]`; a resource leaf composes `fragments: [BaseInstance, Resource]` (previously `[BaseInstance]`).
 
