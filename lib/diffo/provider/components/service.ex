@@ -163,6 +163,12 @@ defmodule Diffo.Provider.Service do
     end
   end
 
+  validations do
+    validate {Diffo.Provider.Validations.ValidateSpecificationKind,
+              expected: :serviceSpecification},
+             on: [:create, :update]
+  end
+
   jason do
     pick [
       :id,
