@@ -13,6 +13,16 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 ## Unreleased
 
+### Features
+
+* **Inherited and reverse-inherited values now surface in the TMF JSON view** (#173) — a new sibling transformer `Diffo.Provider.Extension.Transformers.TransformInheritedJason` runs after `TransformInheritedRefs` (calc injection) and before `AshJason.Resource.Transformer` (encoder generation). For each inherited kind a resource declares, it injects a focused `jason.customize` step so loaded inherited calcs reach the consumer-visible array — no per-consumer customize required:
+
+  - `inherited_place` → the `place` array, as a simulated `PlaceRef` (carries the declared role plus the inherited place's flattened identity; there is no backing ref node — the inheritance simulates it)
+  - `inherited_party` → the `relatedParty` array, as a simulated `PartyRef`
+  - `inherited_characteristic` / `reverse_inherited_characteristic` → the `serviceCharacteristic` / `resourceCharacteristic` array, as ordinary typed characteristics
+
+  Surfaced entries appear after the instance's local entries. `%Diffo.Unknown{}` sentinels are filtered out before any ref wrapping — X-state is the Diffo diagnostic surface, not the TMF wire. Unloaded calcs (`%Ash.NotLoaded{}`) contribute nothing; load the calc to include it. Wire-shape concerns stay in this transformer; calc-shape concerns stay in `TransformInheritedRefs`.
+
 ### Bug Fixes
 
 * **`Instance.Party.validate_constraints` skips inherited declarations** (#183) — the validator's `Enum.reject(&(&1.reference || &1.calculate))` was iterating ALL party declarations and KeyError'd on `InheritedPartyDeclaration` (which has no `:reference`/`:calculate` fields). Same shape of bug as the persister fix in #172 for inherited characteristics. Fix: filter to `Diffo.Provider.Extension.PartyDeclaration` before the reject — inherited variants are pre-validated by their declaration entity and have no min/max constraints to enforce.
