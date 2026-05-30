@@ -10,6 +10,7 @@ defmodule Diffo.Test.Instance.ShelfInstance do
   """
 
   alias Diffo.Provider.BaseInstance
+  alias Diffo.Provider.Resource
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.Changes
   alias Diffo.Test.Servo
@@ -19,7 +20,7 @@ defmodule Diffo.Test.Instance.ShelfInstance do
   alias Diffo.Test.Party.Person
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Resource],
     domain: Servo
 
   resource do

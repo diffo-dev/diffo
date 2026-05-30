@@ -11,10 +11,11 @@ defmodule Diffo.Test.Instance.BroadbandV2 do
   instance with technology: :fttb before respecification.
   """
   alias Diffo.Provider.BaseInstance
+  alias Diffo.Provider.Service
   alias Diffo.Test.Servo
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Service],
     domain: Servo
 
   resource do

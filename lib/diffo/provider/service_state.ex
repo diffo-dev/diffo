@@ -2,9 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule Diffo.Provider.Service do
+defmodule Diffo.Provider.ServiceState do
   @moduledoc false
-  def service_states() do
+  # Service lifecycle vocabulary (TMF638 ServiceStateType / ServiceOperatingStatusType).
+  # Lives in its own module so the `Diffo.Provider.Service` fragment can reference these
+  # lists in its attribute constraints (a fragment cannot call its own functions inside
+  # its own DSL during compilation).
+
+  def states() do
     [
       :initial,
       :feasibilityChecked,
@@ -17,11 +22,11 @@ defmodule Diffo.Provider.Service do
     ]
   end
 
-  def default_service_state do
+  def default_state do
     :initial
   end
 
-  def service_operating_statuses() do
+  def operating_statuses() do
     [
       :pending,
       :feasible,
@@ -38,11 +43,11 @@ defmodule Diffo.Provider.Service do
     ]
   end
 
-  def default_service_operating_status() do
+  def default_operating_status() do
     :unknown
   end
 
-  def default_service_operating_status(state) do
+  def default_operating_status(state) do
     case state do
       :initial -> :pending
       :feasibilityChecked -> :pending

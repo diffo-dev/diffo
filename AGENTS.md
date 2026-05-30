@@ -341,11 +341,15 @@ which doesn't compete with the extender's axis because fragments compose at the 
 
 ### What this means
 
-- **`BaseInstance`** — extenders define `MyApp.Avc`, `MyApp.Cvc`, `MyApp.NbnEthernet`
-  as distinct resources. TMF638/639 subtypes (`:service` vs `:resource`) live as a
-  `type` enum, with `service_state` and `resource_state` as optional attributes
-  gated by `type`. The Assigner already exploits this — `Assigner.assignable_service_states/0`
-  and `Assigner.assignable_resource_states/0` dispatch on the discriminator.
+- **`BaseInstance`** — the shared base. TMF638/639 subtypes ship as cascade
+  fragments: a Service composes `BaseInstance + Service` (lifecycle state machine
+  on `state` / `operating_status`), a Resource composes `BaseInstance + Resource`
+  (`resource_state`). An instance is exactly one of Service or Resource; the
+  `type` enum still records which. Extenders define `MyApp.Avc`, `MyApp.Cvc`,
+  `MyApp.NbnEthernet` as distinct Service/Resource leaves. `Provider.Instance`
+  is the generic Service + projection reader. The Assigner dispatches on the
+  discriminator — `Assigner.assignable_service_states/0` /
+  `assignable_resource_states/0`.
 - **`BaseParty`** — extenders define `MyApp.Carrier`, `MyApp.Customer`,
   `MyApp.NetworkOperator` as distinct resources. TMF632 subtypes
   (`:Organization`, `:Individual`) ship as cascade leaves

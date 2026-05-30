@@ -46,22 +46,22 @@ defmodule Diffo.Provider.Extension.AssignerTest do
 
     test "service: committed lifecycle states are permitted" do
       for state <- [:feasibilityChecked, :reserved, :inactive, :active, :suspended] do
-        assert :ok = Assigner.assignable_state?(%{type: :service, service_state: state}),
-               "expected service_state #{inspect(state)} to be assignable"
+        assert :ok = Assigner.assignable_state?(%{type: :service, state: state}),
+               "expected state #{inspect(state)} to be assignable"
       end
     end
 
     test "service: :initial is rejected" do
       assert {:error, msg} =
-               Assigner.assignable_state?(%{type: :service, service_state: :initial})
+               Assigner.assignable_state?(%{type: :service, state: :initial})
 
       assert msg =~ ":initial"
     end
 
     test "service: terminal states are rejected" do
       for state <- [:cancelled, :terminated] do
-        assert {:error, _} = Assigner.assignable_state?(%{type: :service, service_state: state}),
-               "expected service_state #{inspect(state)} to be rejected"
+        assert {:error, _} = Assigner.assignable_state?(%{type: :service, state: state}),
+               "expected state #{inspect(state)} to be rejected"
       end
     end
   end

@@ -15,7 +15,7 @@ defmodule Diffo.Provider.EventTest do
   describe "Diffo.Provider.Event create" do
     test "create an event using Event code interface - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       snapshot = Jason.encode!(instance)
 
       event =
@@ -43,7 +43,7 @@ defmodule Diffo.Provider.EventTest do
 
     test "events created with code interface can be chained - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       snapshot = Jason.encode!(instance)
 
       event_1 =
@@ -99,7 +99,7 @@ defmodule Diffo.Provider.EventTest do
   describe "Diffo.Provider.Event encode" do
     test "encode json with service instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       snapshot = Jason.encode!(instance)
 
       event =
@@ -120,7 +120,7 @@ defmodule Diffo.Provider.EventTest do
   describe "Diffo.Provider.Event provider API" do
     test "fire an instance event - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       instance =
         Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
@@ -145,7 +145,7 @@ defmodule Diffo.Provider.EventTest do
 
     test "fired instance events are chained - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       instance =
         Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})
@@ -192,7 +192,7 @@ defmodule Diffo.Provider.EventTest do
     use Outstand
     @now DateTime.utc_now()
     @instance_id UUID.uuid4()
-    @instance %Diffo.Provider.Instance{service_state: :active}
+    @instance %Diffo.Provider.Instance{state: :active}
     @firing_type :service
     @firing_snapshot Jason.encode(!@instance)
 
@@ -283,7 +283,7 @@ defmodule Diffo.Provider.EventTest do
   describe "Diffo.Provider delete Event" do
     test "delete event with related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       instance =
         Diffo.Provider.fire_instance_event!(instance, %{event: %{type: :serviceCreateEvent}})

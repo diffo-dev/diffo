@@ -15,6 +15,20 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 ### Features
 
+* **Service / Resource cascade — Phase A** (#4) — `Diffo.Provider.BaseInstance` is split into a shared base fragment plus two subtype fragments, `Diffo.Provider.Service` (TMF638) and `Diffo.Provider.Resource` (TMF639). A concrete instance composes `[BaseInstance, Service]` or `[BaseInstance, Resource]`. This fixes the long-standing modelling bug where a Resource carried a `service_state`: Resources now compose only the `Resource` fragment and have no service lifecycle at all.
+
+  - **`Service` fragment** carries the `AshStateMachine` lifecycle (`state`, renamed from `service_state`), `operating_status` (renamed from `service_operating_status`), the lifecycle actions (feasibilityCheck/reserve/deactivate/activate/suspend/terminate/cancel/status), and the TMF638-shaped jason. A service **terminates** or **cancels** — it never "retires".
+  - **`Resource` fragment** carries `resource_state` (TMF639 `lifecycleState`), the `lifecycle` action, and the TMF639-shaped jason.
+  - **`Diffo.Provider.Instance`** composes `[BaseInstance, Service]` — it is the generic Service and the abstract reader for projection. An instance is exactly one of Service or Resource (not both, not neither).
+  - The jason wire shape is **byte-for-byte unchanged** (the `state` / `operatingStatus` keys were already those names); the renames are internal only.
+  - The service-state vocabulary helper moved from `Diffo.Provider.Service` to **`Diffo.Provider.ServiceState`** (the former name now belongs to the fragment).
+
+  **Consumer migration:** a service leaf now composes `fragments: [BaseInstance, Service]`; a resource leaf composes `fragments: [BaseInstance, Resource]` (previously `[BaseInstance]`).
+
+  **API:** reads project to the concrete leaf — `Diffo.Provider.get_instance_by_id!/1` / `list_instances!/0` / `find_instances_by_*` return the concrete Service/Resource struct (via `AshNeo4j.worlds/1`). The lifecycle and record operations (`activate_service!`, `respecify_instance!`, `delete_instance!`, …) are now struct-dispatched functions on `Diffo.Provider` rather than code-interface definitions; existing call sites are unchanged.
+
+  Known limitation: creating a generic instance with both features **and** characteristics is blocked by [ash_neo4j#284](https://github.com/diffo-dev/ash_neo4j/issues/284) (`AshStateMachine` + multiple same-label `manage_relationship` edges drops a `belongs_to` edge); 5 encode tests are skipped pending the upstream fix. The production consumer-leaf path (features/characteristics via the `provider do` DSL → `build_after`) is unaffected.
+
 * **Inherited and reverse-inherited values now surface in the TMF JSON view** (#173) — a new sibling transformer `Diffo.Provider.Extension.Transformers.TransformInheritedJason` runs after `TransformInheritedRefs` (calc injection) and before `AshJason.Resource.Transformer` (encoder generation). For each inherited kind a resource declares, it injects a focused `jason.customize` step so loaded inherited calcs reach the consumer-visible array — no per-consumer customize required:
 
   - `inherited_place` → the `place` array, as a simulated `PlaceRef` (carries the declared role plus the inherited place's flattened identity; there is no backing ref node — the inheritance simulates it)
