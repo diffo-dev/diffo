@@ -30,11 +30,27 @@ defmodule Diffo.Provider.Resource do
 
   ## Resource state
 
-  TMF639's `lifecycleState` (`resource_state`: planning → installing → operating →
-  retiring) is a plain atom, set via the `lifecycle` action — no state machine, as
-  resources have no single linear transition constraint. The orthogonal TMF639
-  status axes (administrative / operational / usage / resourceStatus) land in
-  Phase B as further plain enums.
+  Two layers, both ITU-grounded:
+
+  - **`lifecycle_state`** — the resource lifecycle, from ITU-T M.3701. TMF639 v4
+    omitted a lifecycle field, so this began as a near-universal customization;
+    **TMF639 v5 standardised it as `lifecycleState`** (the wire key emitted here)
+    with values `planned` / `installed` / `pendingRemoval` — the resting-state
+    (milestone) form: you reach `planned` by *finishing* planning. `nil` is both the
+    initial and the removed/terminal state (no explicit cancelled/terminated). For a
+    resource, `installed` is the equivalent of a service "operating" — present and
+    usable, just not as actively stateful as a service.
+  - **`administrative_state` / `operational_state` / `usage_state` /
+    `resource_status`** — the TMF639 v4 status attributes from the ITU-T X.731 /
+    M.3100 state-management model. They are **orthogonal** — any axis moves
+    independently — so they are plain enums, not a state machine. (v5 decomposes the
+    single `resource_status` into alarm/availability/procedural/control/standby
+    status; `resource_status` is kept `allow_nil?` as a v4 back-compat escape hatch.)
+
+  `lifecycle_state` is a genuine ordered lifecycle and is the natural candidate for
+  an `AshStateMachine` (symmetric with `Service.state`) — deferred to #189 so its
+  transition rules land with the other state machines, and to avoid widening
+  ash_neo4j#284 across Resource leaves before that upstream fix.
   """
   use Spark.Dsl.Fragment,
     of: Ash.Resource,
@@ -44,21 +60,65 @@ defmodule Diffo.Provider.Resource do
   alias Diffo.Provider.Instance.Util, as: Instance
 
   attributes do
-    attribute :resource_state, :atom do
-      description "the TMF639 lifecycleState for resource instances: planning, installing, operating, or retiring"
+    attribute :lifecycle_state, :atom do
+      description "the TMF639 v5 lifecycleState for resource instances: planned, installed, or pendingRemoval (nil is both the initial and the removed/terminal state)"
       allow_nil? true
       public? true
       default nil
-      constraints one_of: [:planning, :installing, :operating, :retiring]
+      constraints one_of: [:planned, :installed, :pendingRemoval]
+    end
+
+    attribute :resource_version, :string do
+      description "the TMF639 resourceVersion identifier"
+      allow_nil? true
+      public? true
+    end
+
+    # TMF639's status axes are orthogonal — any axis can move to any value at any
+    # time, so they are plain enums, not a state machine.
+    attribute :administrative_state, :atom do
+      description "the TMF639 administrativeState"
+      allow_nil? true
+      public? true
+      constraints one_of: [:locked, :unlocked, :shutdown]
+    end
+
+    attribute :operational_state, :atom do
+      description "the TMF639 operationalState"
+      allow_nil? true
+      public? true
+      constraints one_of: [:enabled, :disabled]
+    end
+
+    attribute :usage_state, :atom do
+      description "the TMF639 usageState"
+      allow_nil? true
+      public? true
+      constraints one_of: [:idle, :active, :busy]
+    end
+
+    attribute :resource_status, :atom do
+      description "the TMF639 resourceStatus"
+      allow_nil? true
+      public? true
+      constraints one_of: [:standby, :alarm, :available, :reserved, :suspended]
     end
   end
 
   actions do
     update :lifecycle do
-      description "sets the TMF lifecycleState for a resource instance"
+      description "sets the TMF639 lifecycleState and orthogonal status axes for a resource instance"
       require_atomic? false
       validate attribute_equals(:type, :resource)
-      accept [:resource_state]
+
+      accept [
+        :lifecycle_state,
+        :resource_version,
+        :administrative_state,
+        :operational_state,
+        :usage_state,
+        :resource_status
+      ]
     end
   end
 
@@ -109,6 +169,7 @@ defmodule Diffo.Provider.Resource do
       :name,
       :externalIdentifier,
       :resourceSpecification,
+      :resourceVersion,
       :startOperatingDate,
       :endOperatingDate,
       :lifecycleState,
@@ -131,6 +192,6 @@ defmodule Diffo.Provider.Resource do
   end
 
   outstanding do
-    expect [:specification, :type, :resource_state]
+    expect [:specification, :type, :lifecycle_state]
   end
 end

@@ -185,10 +185,15 @@ defmodule Diffo.Provider.Instance.Util do
 
   @doc false
   def resource_states(result, record) do
-    case record.resource_state do
-      nil -> result
-      state -> Diffo.Util.set(result, :lifecycleState, state)
-    end
+    # `Diffo.Util.set/3` drops the key when the value is nil, so unset axes simply
+    # don't appear on the wire.
+    result
+    |> Diffo.Util.set(:resourceVersion, record.resource_version)
+    |> Diffo.Util.set(:lifecycleState, record.lifecycle_state)
+    |> Diffo.Util.set(:administrativeState, record.administrative_state)
+    |> Diffo.Util.set(:operationalState, record.operational_state)
+    |> Diffo.Util.set(:usageState, record.usage_state)
+    |> Diffo.Util.set(:resourceStatus, record.resource_status)
   end
 
   @doc false
