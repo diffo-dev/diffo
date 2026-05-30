@@ -20,7 +20,8 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       place =
         Diffo.Provider.create_place!(:GeographicSite, %{
           id: "LOC-TEST-INHERITED-001",
-          name: "Test Exchange"})
+          name: "Test Exchange"
+        })
 
       {:ok, card} = Servo.build_card(%{})
 
@@ -67,12 +68,14 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       place_a =
         Diffo.Provider.create_place!(:GeographicSite, %{
           id: "LOC-TEST-INHERITED-002",
-          name: "Exchange A"})
+          name: "Exchange A"
+        })
 
       place_b =
         Diffo.Provider.create_place!(:GeographicSite, %{
           id: "LOC-TEST-INHERITED-003",
-          name: "Exchange B"})
+          name: "Exchange B"
+        })
 
       {:ok, card_a} = Servo.build_card(%{})
       {:ok, card_b} = Servo.build_card(%{})
@@ -327,5 +330,182 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
 
       assert shelf.assigned_cards == []
     end
+  end
+
+  describe "JSON surfacing (#173) — inherited values appear in TMF arrays" do
+    test "inherited_place surfaces into the place array on encode" do
+      place =
+        Diffo.Provider.create_place!(:GeographicSite, %{
+          id: "LOC-TEST-JSON-001",
+          name: "Test Exchange"
+        })
+
+      {:ok, card} = Servo.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+
+      Diffo.Provider.create_place_ref!(%{
+        instance_id: card.id,
+        role: :location,
+        place_id: place.id
+      })
+
+      {:ok, service} = Servo.build_access_service(%{})
+
+      {:ok, _card} =
+        Servo.assign_port(card, %{
+          assignment: %Assignment{
+            assignee_id: service.id,
+            operation: :auto_assign,
+            alias: :primary
+          }
+        })
+
+      encoded =
+        service.id
+        |> reload_with([:primary])
+        |> Jason.encode!()
+        |> Jason.decode!()
+
+      # Surfaced as a simulated PlaceRef: carries the declaration role ("primary")
+      # and the inherited place's flattened identity, with no backing ref node.
+      assert [
+               %{
+                 "id" => "LOC-TEST-JSON-001",
+                 "role" => "primary",
+                 "@type" => "GeographicSite"
+               }
+             ] = encoded["place"]
+    end
+
+    test "inherited_party surfaces into the relatedParty array as a simulated PartyRef" do
+      party =
+        Diffo.Provider.create_party!(:Organization, %{id: "ORG-TEST-JSON-1", name: "Test Org"})
+
+      {:ok, card} = Servo.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+
+      Diffo.Provider.create_party_ref!(%{
+        instance_id: card.id,
+        role: :provider,
+        party_id: party.id
+      })
+
+      {:ok, service} = Servo.build_access_service(%{})
+
+      {:ok, _card} =
+        Servo.assign_port(card, %{
+          assignment: %Assignment{
+            assignee_id: service.id,
+            operation: :auto_assign,
+            alias: :primary
+          }
+        })
+
+      encoded =
+        service.id
+        |> reload_with([:owner])
+        |> Jason.encode!()
+        |> Jason.decode!()
+
+      assert [
+               %{"id" => "ORG-TEST-JSON-1", "role" => "owner", "@type" => "Organization"}
+             ] = encoded["relatedParty"]
+    end
+
+    test "inherited_characteristic surfaces into the serviceCharacteristic array on encode" do
+      {:ok, card} = Servo.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+
+      {:ok, service} = Servo.build_access_service(%{})
+
+      {:ok, _card} =
+        Servo.assign_port(card, %{
+          assignment: %Assignment{
+            assignee_id: service.id,
+            operation: :auto_assign,
+            alias: :primary
+          }
+        })
+
+      encoded =
+        service.id
+        |> reload_with([:card])
+        |> Jason.encode!()
+        |> Jason.decode!()
+
+      assert Enum.any?(encoded["serviceCharacteristic"] || [], &Map.has_key?(&1, "name"))
+    end
+
+    test "Diffo.Unknown sentinels are filtered off the wire" do
+      # Card assigned via :primary but with no PlaceRef at :location — the
+      # inherited_place calc yields a %Diffo.Unknown{}, which must not surface.
+      {:ok, card} = Servo.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
+      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+
+      {:ok, service} = Servo.build_access_service(%{})
+
+      {:ok, _card} =
+        Servo.assign_port(card, %{
+          assignment: %Assignment{
+            assignee_id: service.id,
+            operation: :auto_assign,
+            alias: :primary
+          }
+        })
+
+      encoded =
+        service.id
+        |> reload_with([:primary])
+        |> Jason.encode!()
+        |> Jason.decode!()
+
+      refute Map.has_key?(encoded, "place")
+    end
+
+    test "not loading the inherited calc leaves the array untouched" do
+      {:ok, service} = Servo.build_access_service(%{})
+
+      encoded =
+        service.id
+        |> reload_with([])
+        |> Jason.encode!()
+        |> Jason.decode!()
+
+      refute Map.has_key?(encoded, "place")
+    end
+  end
+
+  defp reload_with(id, loads) do
+    Diffo.Test.Instance.AccessService
+    |> Ash.get!(id, domain: Servo)
+    |> Ash.load!(loads, domain: Servo)
   end
 end

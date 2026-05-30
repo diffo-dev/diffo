@@ -753,6 +753,34 @@ Options:
 The DSL entity must be declared in the correct section (`places do` for `inherited_place`,
 `parties do` for `inherited_party`). The generated calculation name matches the declared role.
 
+### JSON surfacing
+
+When the calculation is loaded and the instance is JSON-encoded, the inherited values
+surface automatically in the corresponding TMF array — no per-consumer `jason` customize
+required:
+
+- `inherited_place` → the `place` array, as a simulated `PlaceRef` (carries the declared
+  role plus the inherited place's flattened identity; there is no backing ref node, the
+  inheritance simulates it)
+- `inherited_party` → the `relatedParty` array, as a simulated `PartyRef`
+- `inherited_characteristic` / `reverse_inherited_characteristic` → the
+  `serviceCharacteristic` / `resourceCharacteristic` array, as ordinary typed
+  characteristics
+
+Surfaced entries appear after the instance's local entries. `%Diffo.Unknown{}` sentinels
+(the "tried and couldn't determine" X-state) are filtered out — they are a Diffo-level
+diagnostic surface, not the TMF wire. Values you have not loaded simply do not surface;
+load the calculation (e.g. `Ash.load(instance, [:exchange])`) to include it.
+
+```jsonc
+// AccessService with inherited_place :primary, inherited_party :owner, inherited_characteristic :card
+{
+  "place":         [{ "role": "primary", "id": "LOC-1", "name": "Exchange", "@type": "GeographicSite" }],
+  "relatedParty":  [{ "role": "owner",   "id": "ORG-1", "name": "Owner Co", "@type": "Organization" }],
+  "serviceCharacteristic": [{ "name": "card", "value": { "model": "EBLT48" } }]
+}
+```
+
 ## Field calculation modules
 
 Three general-purpose calculation modules cover reading fields across the assignment and

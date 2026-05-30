@@ -4,6 +4,129 @@
 
 defmodule Diffo.Provider.Instance.Util do
   @moduledoc false
+  alias Diffo.Provider.Extension.Info
+  alias Diffo.Provider.Extension.InheritedPlaceDeclaration
+  alias Diffo.Provider.Extension.InheritedPartyDeclaration
+  alias Diffo.Provider.Extension.InheritedCharacteristicDeclaration
+  alias Diffo.Provider.Extension.ReverseInheritedCharacteristicDeclaration
+
+  # Each of the three functions below is injected as its own `jason.customize`
+  # step by `Diffo.Provider.Extension.Transformers.TransformInheritedJason`, but
+  # only for the inherited kinds a resource actually declares — one focused step
+  # per TMF array. They run after `BaseInstance`'s own customize, so the array
+  # keys are already in TMF form (`:place`, `:relatedParty`,
+  # `:serviceCharacteristic` / `:resourceCharacteristic`).
+  #
+  # Each reads the matching calc(s) off the record. A `%Ash.NotLoaded{}` (the
+  # consumer didn't load it) or `nil` contributes nothing; `%Diffo.Unknown{}`
+  # sentinels are dropped — X-state is the Diffo diagnostic surface, not the TMF
+  # wire.
+  #
+  # Places and parties surface as `PlaceRef` / `PartyRef`-shaped entries: the
+  # inheritance has no backing ref node, but the ref carries "what this place /
+  # party means to me" (the declared role), which is an essential part of the
+  # TMF shape. We simulate it by wrapping the inherited target in an ephemeral
+  # (non-persisted) `PlaceRef` / `PartyRef` stamped with the declaration role and
+  # letting the ref's own `Jason.Encoder` produce the exact wire shape. Typed
+  # characteristics carry their own `name`, so they surface as-is.
+  #
+  # Ordering follows the convention: locals stay first (already in `result`),
+  # then inherited values; within characteristics, inherited before
+  # reverse-inherited.
+
+  @doc "Surfaces `inherited_place` calc results into the `place` array as simulated `PlaceRef`s."
+  def surface_inherited_places(result, record) do
+    refs =
+      record.__struct__
+      |> inherited_place_roles()
+      |> Enum.flat_map(fn role ->
+        record
+        |> loaded_values(role)
+        |> Enum.map(&%Diffo.Provider.PlaceRef{role: role, place: &1})
+      end)
+
+    append_values(result, :place, refs)
+  end
+
+  @doc "Surfaces `inherited_party` calc results into the `relatedParty` array as simulated `PartyRef`s."
+  def surface_inherited_parties(result, record) do
+    refs =
+      record.__struct__
+      |> inherited_party_roles()
+      |> Enum.flat_map(fn role ->
+        record
+        |> loaded_values(role)
+        |> Enum.map(&%Diffo.Provider.PartyRef{role: role, party: &1})
+      end)
+
+    append_values(result, :relatedParty, refs)
+  end
+
+  @doc """
+  Surfaces `inherited_characteristic` then `reverse_inherited_characteristic`
+  calc results into the `serviceCharacteristic` / `resourceCharacteristic` array.
+  """
+  def surface_inherited_characteristics(result, record) do
+    characteristics =
+      record.__struct__
+      |> inherited_characteristic_names()
+      |> Enum.flat_map(&loaded_values(record, &1))
+
+    append_values(result, derive_characteristic_list_name(record.type), characteristics)
+  end
+
+  defp inherited_place_roles(resource) do
+    resource
+    |> Info.provider_places()
+    |> Enum.filter(&is_struct(&1, InheritedPlaceDeclaration))
+    |> Enum.map(& &1.role)
+  end
+
+  defp inherited_party_roles(resource) do
+    resource
+    |> Info.provider_parties()
+    |> Enum.filter(&is_struct(&1, InheritedPartyDeclaration))
+    |> Enum.map(& &1.role)
+  end
+
+  defp inherited_characteristic_names(resource) do
+    characteristics = Info.provider_characteristics(resource)
+
+    inherited =
+      characteristics
+      |> Enum.filter(&is_struct(&1, InheritedCharacteristicDeclaration))
+      |> Enum.map(& &1.role)
+
+    reverse =
+      characteristics
+      |> Enum.filter(&is_struct(&1, ReverseInheritedCharacteristicDeclaration))
+      |> Enum.map(& &1.name)
+
+    inherited ++ reverse
+  end
+
+  # Appends the surfaced values to the named array, preserving any locals already
+  # present.
+  defp append_values(result, nil, _values), do: result
+  defp append_values(result, _key, []), do: result
+
+  defp append_values(result, key, values) do
+    Diffo.Util.set(result, key, (Diffo.Util.get(result, key) || []) ++ values)
+  end
+
+  # The concrete values for an inherited calc: a `%Ash.NotLoaded{}` (consumer
+  # didn't load it) or `nil` yields none, and `%Diffo.Unknown{}` sentinels are
+  # dropped — X-state is the Diffo diagnostic surface, not the TMF wire. Rejecting
+  # Unknowns here (before any ref wrapping) keeps them off the wire entirely.
+  defp loaded_values(record, name) do
+    case Map.get(record, name) do
+      %Ash.NotLoaded{} -> []
+      nil -> []
+      list when is_list(list) -> Enum.reject(list, &is_struct(&1, Diffo.Unknown))
+      value -> if is_struct(value, Diffo.Unknown), do: [], else: [value]
+    end
+  end
+
   @doc false
   def category(result, record) do
     specification = Map.get(record, :specification)
