@@ -248,7 +248,7 @@ defmodule Diffo.Compute.Cluster do
   alias Diffo.Compute.Engineer
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Diffo.Provider.Resource],
     domain: Compute
 
   resource do
@@ -406,7 +406,7 @@ defmodule Diffo.Compute.GPU do
   alias Diffo.Compute.GpuCharacteristic
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Diffo.Provider.Resource],
     domain: Compute
 
   resource do

@@ -146,7 +146,7 @@ defmodule Diffo.Nbn.Broadband do
   alias Diffo.Nbn.BroadbandValue
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Diffo.Provider.Service],
     domain: Nbn
 
   resource do
@@ -220,7 +220,7 @@ defmodule Diffo.Nbn.BroadbandV2 do
   alias Diffo.Nbn.BroadbandV2Value
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Diffo.Provider.Service],
     domain: Nbn
 
   resource do

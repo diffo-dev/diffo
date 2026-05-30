@@ -84,7 +84,7 @@ defmodule Diffo.Provider.Assigner do
         {:error,
          "cannot assign: resource lifecycle state is #{inspect(state)}, must be one of #{inspect(@assignable_resource_states)}"}
 
-  def assignable_state?(%{type: :service, service_state: state})
+  def assignable_state?(%{type: :service, state: state})
       when state not in @assignable_service_states,
       do:
         {:error,

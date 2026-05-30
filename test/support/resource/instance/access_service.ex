@@ -8,10 +8,11 @@ defmodule Diffo.Test.Instance.AccessService do
   Used by inherited_refs_test.exs to verify assignment alias traversal.
   """
   alias Diffo.Provider.BaseInstance
+  alias Diffo.Provider.Service
   alias Diffo.Test.Servo
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Service],
     domain: Servo
 
   resource do

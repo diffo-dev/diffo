@@ -114,7 +114,11 @@ defmodule Diffo.Provider.PlaceTest do
 
     test "create a GeographicSite place referred_type - success" do
       place =
-        Diffo.Provider.create_place!(:PlaceRef, %{id: "3NBA", name: :poiId, referred_type: :GeographicSite})
+        Diffo.Provider.create_place!(:PlaceRef, %{
+          id: "3NBA",
+          name: :poiId,
+          referred_type: :GeographicSite
+        })
 
       assert place.type == :PlaceRef
     end
@@ -123,7 +127,8 @@ defmodule Diffo.Provider.PlaceTest do
       place =
         Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId})
+          name: :locationId
+        })
 
       assert place.referred_type == nil
     end
@@ -133,7 +138,8 @@ defmodule Diffo.Provider.PlaceTest do
         Diffo.Provider.create_place!(:GeographicLocation, %{
           id: "CSA000000124343",
           name: :csaId,
-          location: %Geo.Point{coordinates: {151.0, -33.0}, srid: 4326}})
+          location: %Geo.Point{coordinates: {151.0, -33.0}, srid: 4326}
+        })
 
       assert place.referred_type == nil
       assert place.type == :GeographicLocation
@@ -149,7 +155,8 @@ defmodule Diffo.Provider.PlaceTest do
         Diffo.Provider.create_place!(:GeographicSite, %{
           id: "3NBA",
           href: "place/nbnco/3NBA",
-          name: :poiId})
+          name: :poiId
+        })
 
       assert place.referred_type == nil
     end
@@ -159,7 +166,8 @@ defmodule Diffo.Provider.PlaceTest do
         Diffo.Provider.create_place!(:GeographicSite, %{
           id: "3NBA",
           href: "place/nbnco/3NBA",
-          name: :poiId})
+          name: :poiId
+        })
 
       Diffo.Provider.create_place!(:GeographicSite, %{id: "3NBA", name: :poiId})
       refreshed_place = Diffo.Provider.get_place_by_id!(place.id)
@@ -172,7 +180,8 @@ defmodule Diffo.Provider.PlaceTest do
       Diffo.Provider.create_place!(:GeographicSite, %{
         id: "3NBA",
         href: "place/nbnco/3NBA",
-        name: :poiId})
+        name: :poiId
+      })
 
       refreshed_place = Diffo.Provider.get_place_by_id!(place.id)
       assert refreshed_place.href == "place/nbnco/3NBA"
@@ -184,7 +193,8 @@ defmodule Diffo.Provider.PlaceTest do
       place =
         Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId})
+          name: :locationId
+        })
 
       updated_place =
         place |> Diffo.Provider.update_place!(%{href: "place/nbnco/LOC000000897353"})
@@ -196,7 +206,8 @@ defmodule Diffo.Provider.PlaceTest do
       place =
         Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :location})
+          name: :location
+        })
 
       updated_place = place |> Diffo.Provider.update_place!(%{name: :locationId})
       assert updated_place.name == "locationId"
@@ -230,7 +241,8 @@ defmodule Diffo.Provider.PlaceTest do
       place =
         Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId})
+          name: :locationId
+        })
 
       {:error, _error} =
         place |> Diffo.Provider.update_place(%{href: "place/nbnco/LOC000000897354"})
@@ -240,7 +252,8 @@ defmodule Diffo.Provider.PlaceTest do
       place =
         Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId})
+          name: :locationId
+        })
 
       {:error, _error} =
         place |> Diffo.Provider.update_place(%{referred_type: :GeographicAddress})
@@ -261,7 +274,8 @@ defmodule Diffo.Provider.PlaceTest do
       place =
         Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId})
+          name: :locationId
+        })
 
       {:error, _error} = place |> Diffo.Provider.update_place(%{id: "LOC0000008973534"})
     end
@@ -273,7 +287,8 @@ defmodule Diffo.Provider.PlaceTest do
         Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
           name: :locationId,
-          href: "place/nbnco/LOC000000897353"})
+          href: "place/nbnco/LOC000000897353"
+        })
 
       encoding = Jason.encode!(place)
 
@@ -577,7 +592,8 @@ defmodule Diffo.Provider.PlaceTest do
         Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "REG-GA-1",
           name: :locationId,
-          href: "place/nbnco/REG-GA-1"})
+          href: "place/nbnco/REG-GA-1"
+        })
 
       decoded = place |> Jason.encode!() |> Jason.decode!()
       assert decoded["@type"] == "GeographicAddress"
@@ -708,7 +724,7 @@ defmodule Diffo.Provider.PlaceTest do
 
     test "delete place - failure, related PlaceRef" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
         Diffo.Provider.create_place!(:PlaceRef, %{
