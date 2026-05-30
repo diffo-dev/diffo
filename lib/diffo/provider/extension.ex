@@ -713,7 +713,8 @@ defmodule Diffo.Provider.Extension do
     transformers: [
       Diffo.Provider.Extension.Transformers.TransformRelationships,
       Diffo.Provider.Extension.Transformers.TransformBehaviour,
-      Diffo.Provider.Extension.Transformers.TransformInheritedRefs
+      Diffo.Provider.Extension.Transformers.TransformInheritedRefs,
+      Diffo.Provider.Extension.Transformers.TransformInheritedJason
     ],
     persisters: [
       Diffo.Provider.Extension.Persisters.PersistSpecification,
