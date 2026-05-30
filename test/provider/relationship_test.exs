@@ -19,12 +19,12 @@ defmodule Diffo.Provider.RelationshipTest do
       access_specification = Diffo.Provider.create_specification!(%{name: "access"})
       aggregation_specification = Diffo.Provider.create_specification!(%{name: "aggregation"})
       edge_specification = Diffo.Provider.create_specification!(%{name: "edge"})
-      access_instance = Diffo.Provider.create_instance!(%{specified_by: access_specification.id})
+      access_instance = Diffo.Test.create_instance!(%{specified_by: access_specification.id})
 
       aggregation_instance =
-        Diffo.Provider.create_instance!(%{specified_by: aggregation_specification.id})
+        Diffo.Test.create_instance!(%{specified_by: aggregation_specification.id})
 
-      edge_instance = Diffo.Provider.create_instance!(%{specified_by: edge_specification.id})
+      edge_instance = Diffo.Test.create_instance!(%{specified_by: edge_specification.id})
 
       Diffo.Provider.create_relationship!(%{
         alias: :aggregation_peer,
@@ -63,9 +63,9 @@ defmodule Diffo.Provider.RelationshipTest do
 
     test "list service relationships from - success" do
       specification = Diffo.Provider.create_specification!(%{name: "accessEvc"})
-      evpl1 = Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "evpl1"})
-      evpl2 = Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "evpl2"})
-      evpl3 = Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "evpl3"})
+      evpl1 = Diffo.Test.create_instance!(%{specified_by: specification.id, name: "evpl1"})
+      evpl2 = Diffo.Test.create_instance!(%{specified_by: specification.id, name: "evpl2"})
+      evpl3 = Diffo.Test.create_instance!(%{specified_by: specification.id, name: "evpl3"})
 
       Diffo.Provider.create_relationship!(%{
         type: :refersTo,
@@ -108,21 +108,21 @@ defmodule Diffo.Provider.RelationshipTest do
         Diffo.Provider.create_specification!(%{name: "cable", type: :resourceSpecification})
 
       cable1 =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: specification.id,
           name: "cable1",
           type: :resource
         })
 
       cable2 =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: specification.id,
           name: "cable2",
           type: :resource
         })
 
       cable3 =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: specification.id,
           name: "cable3",
           type: :resource
@@ -176,8 +176,8 @@ defmodule Diffo.Provider.RelationshipTest do
   describe "Diffo.Provider create Relationships" do
     test "create a mutual peer service relationship - success" do
       specification = Diffo.Provider.create_specification!(%{name: "accessEvc"})
-      evpl1 = Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "evpl1"})
-      evpl2 = Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "evpl2"})
+      evpl1 = Diffo.Test.create_instance!(%{specified_by: specification.id, name: "evpl1"})
+      evpl2 = Diffo.Test.create_instance!(%{specified_by: specification.id, name: "evpl2"})
 
       relationship1 =
         Diffo.Provider.create_relationship!(%{
@@ -209,13 +209,13 @@ defmodule Diffo.Provider.RelationshipTest do
         Diffo.Provider.create_specification!(%{name: "cable", type: :resourceSpecification})
 
       cable1 =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: resource_specification.id,
           type: :resource
         })
 
       cable2 =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: resource_specification.id,
           type: :resource
         })
@@ -252,10 +252,10 @@ defmodule Diffo.Provider.RelationshipTest do
         Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
 
       service_instance =
-        Diffo.Provider.create_instance!(%{specified_by: service_specification.id})
+        Diffo.Test.create_instance!(%{specified_by: service_specification.id})
 
       resource_instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: resource_specification.id,
           type: :resource
         })
@@ -277,10 +277,10 @@ defmodule Diffo.Provider.RelationshipTest do
       specification = Diffo.Provider.create_specification!(%{name: "evc1"})
 
       first_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "first"})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, name: "first"})
 
       second_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "second"})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, name: "second"})
 
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
@@ -308,10 +308,10 @@ defmodule Diffo.Provider.RelationshipTest do
       specification = Diffo.Provider.create_specification!(%{name: "evc2"})
 
       first_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "first"})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, name: "first"})
 
       second_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "second"})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, name: "second"})
 
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
@@ -342,10 +342,10 @@ defmodule Diffo.Provider.RelationshipTest do
       specification = Diffo.Provider.create_specification!(%{name: "evc1"})
 
       first_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "first"})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, name: "first"})
 
       second_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "second"})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, name: "second"})
 
       first_characteristic =
         Diffo.Provider.create_characteristic!(%{
@@ -389,10 +389,10 @@ defmodule Diffo.Provider.RelationshipTest do
         })
 
       parent_instance =
-        Diffo.Provider.create_instance!(%{specified_by: parent_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: parent_specification.id, type: :resource})
 
       child_instance =
-        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
       relationship =
         Diffo.Provider.create_relationship!(%{
@@ -415,9 +415,9 @@ defmodule Diffo.Provider.RelationshipTest do
       child_specification = Diffo.Provider.create_specification!(%{name: "adslAccess"})
 
       parent_instance =
-        Diffo.Provider.create_instance!(%{specified_by: parent_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: parent_specification.id, type: :resource})
 
-      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
+      child_instance = Diffo.Test.create_instance!(%{specified_by: child_specification.id})
 
       relationship =
         Diffo.Provider.create_relationship(%{
@@ -434,8 +434,8 @@ defmodule Diffo.Provider.RelationshipTest do
     test "encode service instance serviceRelationship json - success" do
       parent_specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       child_specification = Diffo.Provider.create_specification!(%{name: "device"})
-      parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
-      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
+      parent_instance = Diffo.Test.create_instance!(%{specified_by: parent_specification.id})
+      child_instance = Diffo.Test.create_instance!(%{specified_by: child_specification.id})
 
       characteristic =
         Diffo.Provider.create_characteristic!(%{
@@ -465,10 +465,10 @@ defmodule Diffo.Provider.RelationshipTest do
         Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
 
       service_instance =
-        Diffo.Provider.create_instance!(%{specified_by: service_specification.id})
+        Diffo.Test.create_instance!(%{specified_by: service_specification.id})
 
       resource_instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: resource_specification.id,
           type: :resource
         })
@@ -501,10 +501,10 @@ defmodule Diffo.Provider.RelationshipTest do
         Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
 
       service_instance =
-        Diffo.Provider.create_instance!(%{specified_by: service_specification.id})
+        Diffo.Test.create_instance!(%{specified_by: service_specification.id})
 
       resource_instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: resource_specification.id,
           type: :resource
         })
@@ -533,10 +533,10 @@ defmodule Diffo.Provider.RelationshipTest do
         Diffo.Provider.create_specification!(%{name: "can", type: :resourceSpecification})
 
       service_instance =
-        Diffo.Provider.create_instance!(%{specified_by: service_specification.id})
+        Diffo.Test.create_instance!(%{specified_by: service_specification.id})
 
       resource_instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: resource_specification.id,
           type: :resource
         })
@@ -576,8 +576,8 @@ defmodule Diffo.Provider.RelationshipTest do
     test "delete relationship with related instance - success" do
       parent_specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       child_specification = Diffo.Provider.create_specification!(%{name: "device"})
-      parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
-      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
+      parent_instance = Diffo.Test.create_instance!(%{specified_by: parent_specification.id})
+      child_instance = Diffo.Test.create_instance!(%{specified_by: child_specification.id})
 
       relationship =
         Diffo.Provider.create_relationship!(%{
@@ -593,8 +593,8 @@ defmodule Diffo.Provider.RelationshipTest do
     test "delete relationship with related instance - failure, related characteristic" do
       parent_specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
       child_specification = Diffo.Provider.create_specification!(%{name: "device"})
-      parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
-      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
+      parent_instance = Diffo.Test.create_instance!(%{specified_by: parent_specification.id})
+      child_instance = Diffo.Test.create_instance!(%{specified_by: child_specification.id})
 
       characteristic =
         Diffo.Provider.create_characteristic!(%{

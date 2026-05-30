@@ -369,7 +369,7 @@ defmodule Diffo.Provider.EntityTest do
         })
 
       specification = Diffo.Provider.create_specification!(%{name: "copperAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity_ref =
         Diffo.Provider.create_entity_ref!(%{

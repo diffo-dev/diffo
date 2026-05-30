@@ -4,11 +4,21 @@
 
 defmodule Diffo.Provider.BaseInstance do
   @moduledoc """
-  Ash Resource Fragment which is the point of extension for your TMF Service or Resource Instance.
+  Ash Resource Fragment which is the shared base for your TMF Service or Resource Instance.
 
-  `BaseInstance` is the foundation for domain-specific Service and Resource kinds.
-  Include it as a fragment on an `Ash.Resource` to get common Instance attributes,
-  Neo4j graph wiring, state machine, and the `Diffo.Provider.Instance.Extension` DSL.
+  `BaseInstance` carries everything common to both kinds — identity, the graph
+  relationships (specification, characteristics, features, parties, places,
+  entities, notes, events, relationships), build wiring, the shared actions, and
+  the `Diffo.Provider.Instance.Extension` DSL. It is **not** composed alone:
+  pair it with a subtype fragment on a concrete leaf —
+
+      use Ash.Resource, fragments: [Diffo.Provider.BaseInstance, Diffo.Provider.Service]   # a Service
+      use Ash.Resource, fragments: [Diffo.Provider.BaseInstance, Diffo.Provider.Resource]  # a Resource
+
+  `Diffo.Provider.Service` (TMF638) adds the service lifecycle state machine
+  (`state` / `operating_status`) and lifecycle actions; `Diffo.Provider.Resource`
+  (TMF639) adds `lifecycle_state`. An instance is exactly one of Service or
+  Resource. `Diffo.Provider.Instance` is the generic Service + projection reader.
 
   ## Instance Extension DSL
 
@@ -89,7 +99,8 @@ defmodule Diffo.Provider.BaseInstance do
   ## Usage
 
       defmodule MyApp.Cluster do
-        use Ash.Resource, fragments: [BaseInstance], domain: MyApp.Domain
+        # a Cluster is a Resource, so it composes the Resource fragment
+        use Ash.Resource, fragments: [BaseInstance, Diffo.Provider.Resource], domain: MyApp.Domain
 
         resource do
           description "A Cluster Resource Instance"
@@ -173,13 +184,9 @@ defmodule Diffo.Provider.BaseInstance do
     extensions: [
       AshOutstanding.Resource,
       AshJason.Resource,
-      AshStateMachine,
       Diffo.Provider.Extension,
       Diffo.Provider.Instance.Extension
     ]
-
-  alias Diffo.Util, as: Util
-  alias Diffo.Provider.Instance.Util, as: Instance
 
   neo4j do
     relate [
@@ -199,124 +206,6 @@ defmodule Diffo.Provider.BaseInstance do
     ]
 
     label :Instance
-  end
-
-  jason do
-    pick [
-      :id,
-      :href,
-      :name,
-      :external_identifiers,
-      :specification,
-      :process_statuses,
-      :forward_relationships,
-      :assignments,
-      :features,
-      :characteristics,
-      :entities,
-      :places,
-      :parties,
-      :type
-    ]
-
-    compact true
-
-    customize fn result, record ->
-      result
-      |> Instance.category(record)
-      |> Instance.description(record)
-      |> Util.suppress_rename(:external_identifiers, :externalIdentifier)
-      |> Instance.dates(record)
-      |> Instance.states(record)
-      |> Instance.relationships()
-      |> Util.rename(:specification, record.specification.type)
-      |> Util.suppress_rename(:process_statuses, :processStatus)
-      |> Util.suppress_rename(
-        :features,
-        Instance.derive_feature_list_name(record.type)
-      )
-      |> Instance.merge_typed_and_pool_characteristics(record)
-      |> Util.suppress_rename(
-        :characteristics,
-        Instance.derive_characteristic_list_name(record.type)
-      )
-      |> Util.suppress_rename(:entities, :relatedEntity)
-      |> Util.suppress_rename(:notes, :note)
-      |> Util.suppress_rename(:places, :place)
-      |> Util.suppress_rename(:parties, :relatedParty)
-    end
-
-    order [
-      :id,
-      :href,
-      :category,
-      :description,
-      :name,
-      :externalIdentifier,
-      :serviceSpecification,
-      :resourceSpecification,
-      :serviceDate,
-      :startDate,
-      :startOperatingDate,
-      :endDate,
-      :endOperatingDate,
-      :state,
-      :operatingStatus,
-      :lifecycleState,
-      :administrativeState,
-      :operationalState,
-      :resourceStatus,
-      :usageState,
-      :processStatus,
-      :serviceRelationship,
-      :resourceRelationship,
-      :supportingService,
-      :supportingResource,
-      :feature,
-      :activationFeature,
-      :serviceCharacteristic,
-      :resourceCharacteristic,
-      :relatedEntity,
-      :notes,
-      :place,
-      :relatedParty
-    ]
-  end
-
-  outstanding do
-    expect [:specification, :type, :service_state, :service_operating_status]
-
-    # expect [:type, :name, :external_identifiers, :specification, :service_state, :service_operating_status, :forward_relationships, :reverse_relationships, :features, :characteristics, :entities, :process_statuses, :places, :parties]
-  end
-
-  state_machine do
-    initial_states [:initial]
-    default_initial_state :initial
-    state_attribute :service_state
-
-    transitions do
-      transition action: :cancel,
-                 from: [:initial, :feasibilityChecked, :reserved],
-                 to: :cancelled
-
-      transition action: :feasibilityCheck, from: :initial, to: :feasibilityChecked
-      transition action: :reserve, from: [:initial, :feasibilityChecked], to: :reserved
-      transition action: :deactivate, from: [:active, :reserved], to: [:inactive]
-
-      transition action: :activate,
-                 from: [
-                   :initial,
-                   :feasibilityChecked,
-                   :reserved,
-                   :inactive,
-                   :suspended,
-                   :terminated
-                 ],
-                 to: :active
-
-      transition action: :suspend, from: :active, to: :suspended
-      transition action: :terminate, from: [:active, :inactive, :suspended], to: :terminated
-    end
   end
 
   attributes do
@@ -350,30 +239,6 @@ defmodule Diffo.Provider.BaseInstance do
       allow_nil? true
       public? true
       constraints match: ~r/^[a-zA-Z0-9\s._-]+$/
-    end
-
-    attribute :service_state, :atom do
-      allow_nil? false
-      default Diffo.Provider.Service.default_service_state()
-      public? true
-
-      constraints one_of: Diffo.Provider.Service.service_states()
-    end
-
-    attribute :service_operating_status, :atom do
-      description "the service operating status, if this instance is a service"
-      allow_nil? true
-      public? true
-      default nil
-      constraints one_of: Diffo.Provider.Service.service_operating_statuses()
-    end
-
-    attribute :resource_state, :atom do
-      description "the TMF lifecycleState for resource instances: planning, installing, operating, or retiring"
-      allow_nil? true
-      public? true
-      default nil
-      constraints one_of: [:planning, :installing, :operating, :retiring]
     end
 
     create_timestamp :created_at
@@ -538,88 +403,6 @@ defmodule Diffo.Provider.BaseInstance do
       argument :specified_by, :uuid
       change manage_relationship(:specified_by, :specification, type: :append_and_remove)
       # todo validate that the new specification has same name (will have different major version)
-    end
-
-    update :cancel do
-      description "cancels a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:cancelled)
-      change set_attribute(:service_operating_status, :unknown)
-      change set_attribute(:stopped_at, &DateTime.utc_now/0)
-    end
-
-    update :feasibilityCheck do
-      description "feasibilityChecks a service instance"
-      require_atomic? false
-      accept [:service_operating_status]
-      validate attribute_equals(:type, :service)
-      change transition_state(:feasibilityChecked)
-
-      validate argument_in(:service_operating_status, [
-                 nil,
-                 :initial,
-                 :pending,
-                 :unknown,
-                 :feasible,
-                 :not_feasible
-               ])
-    end
-
-    update :reserve do
-      description "reserves a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:reserved)
-      change set_attribute(:service_operating_status, :pending)
-    end
-
-    update :deactivate do
-      description "deactivates a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:inactive)
-      change set_attribute(:service_operating_status, :configured)
-    end
-
-    update :activate do
-      description "activates a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:active)
-      change set_attribute(:service_operating_status, :starting)
-      change set_attribute(:started_at, &DateTime.utc_now/0)
-    end
-
-    update :suspend do
-      description "suspends a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:suspended)
-      change set_attribute(:service_operating_status, :limited)
-    end
-
-    update :terminate do
-      description "terminates a service instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      change transition_state(:terminated)
-      change set_attribute(:service_operating_status, :stopping)
-      change set_attribute(:stopped_at, &DateTime.utc_now/0)
-    end
-
-    update :status do
-      description "updates the status of an instance"
-      require_atomic? false
-      validate attribute_equals(:type, :service)
-      accept [:service_operating_status]
-    end
-
-    update :lifecycle do
-      description "sets the TMF lifecycleState for a resource instance"
-      require_atomic? false
-      validate attribute_equals(:type, :resource)
-      accept [:resource_state]
     end
 
     update :relate_features do

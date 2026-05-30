@@ -727,6 +727,7 @@ defmodule Diffo.Provider.Extension do
     ],
     verifiers: [
       Diffo.Provider.Extension.Verifiers.VerifySpecification,
+      Diffo.Provider.Extension.Verifiers.VerifySpecificationKind,
       Diffo.Provider.Extension.Verifiers.VerifyCharacteristics,
       Diffo.Provider.Extension.Verifiers.VerifyFeatures,
       Diffo.Provider.Extension.Verifiers.VerifyPools,

@@ -32,7 +32,8 @@ defmodule Diffo.Provider.Calculations.ProjectedRefTest do
       place =
         Diffo.Provider.create_place!(:GeographicSite, %{
           id: "PR-PROJECTED-001",
-          name: "Test Projected Place"})
+          name: "Test Projected Place"
+        })
 
       record = %Diffo.Provider.PlaceRef{place_id: place.id}
 
@@ -48,12 +49,14 @@ defmodule Diffo.Provider.Calculations.ProjectedRefTest do
       place_a =
         Diffo.Provider.create_place!(:GeographicSite, %{
           id: "PR-PROJECTED-002",
-          name: "A"})
+          name: "A"
+        })
 
       place_b =
         Diffo.Provider.create_place!(:GeographicSite, %{
           id: "PR-PROJECTED-003",
-          name: "B"})
+          name: "B"
+        })
 
       records = [
         %Diffo.Provider.PlaceRef{place_id: place_a.id},
