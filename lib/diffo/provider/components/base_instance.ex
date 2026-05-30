@@ -17,7 +17,7 @@ defmodule Diffo.Provider.BaseInstance do
 
   `Diffo.Provider.Service` (TMF638) adds the service lifecycle state machine
   (`state` / `operating_status`) and lifecycle actions; `Diffo.Provider.Resource`
-  (TMF639) adds `resource_state`. An instance is exactly one of Service or
+  (TMF639) adds `lifecycle_state`. An instance is exactly one of Service or
   Resource. `Diffo.Provider.Instance` is the generic Service + projection reader.
 
   ## Instance Extension DSL

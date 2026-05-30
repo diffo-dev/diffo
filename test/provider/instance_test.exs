@@ -1317,6 +1317,40 @@ defmodule Diffo.Provider.InstanceTest do
       assert encoding ==
                ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"startDate\":\"now\",\"endDate\":\"now\",\"state\":\"terminated\",\"operatingStatus\":\"stopping\"})
     end
+
+    test "encode resource with TMF639 lifecycleState and status axes - success" do
+      specification =
+        Diffo.Provider.create_specification!(%{name: "copperPath", type: :resourceSpecification})
+
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
+
+      Diffo.Provider.lifecycle_resource!(instance, %{
+        lifecycle_state: :installed,
+        resource_version: "1.2",
+        administrative_state: :unlocked,
+        operational_state: :enabled,
+        usage_state: :active,
+        resource_status: :available
+      })
+
+      encoded =
+        instance.id
+        |> Diffo.Provider.get_instance_by_id!()
+        |> Jason.encode!()
+        |> Jason.decode!()
+
+      assert encoded["href"] =~ "resourceInventoryManagement/v4/resource/"
+      assert encoded["resourceSpecification"]["name"] == "copperPath"
+      assert encoded["resourceVersion"] == "1.2"
+      assert encoded["lifecycleState"] == "installed"
+      assert encoded["administrativeState"] == "unlocked"
+      assert encoded["operationalState"] == "enabled"
+      assert encoded["usageState"] == "active"
+      assert encoded["resourceStatus"] == "available"
+      # no service fields leak onto a resource
+      refute Map.has_key?(encoded, "state")
+      refute Map.has_key?(encoded, "operatingStatus")
+    end
   end
 
   @doc """

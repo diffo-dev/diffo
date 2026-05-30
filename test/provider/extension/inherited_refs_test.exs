@@ -31,7 +31,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       Diffo.Provider.create_place_ref!(%{
         instance_id: card.id,
@@ -86,9 +86,9 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, card_a} = Servo.define_card(card_a, %{characteristic_value_updates: updates})
-      {:ok, card_a} = Servo.lifecycle_card(card_a, %{resource_state: :operating})
+      {:ok, card_a} = Servo.lifecycle_card(card_a, %{lifecycle_state: :installed})
       {:ok, card_b} = Servo.define_card(card_b, %{characteristic_value_updates: updates})
-      {:ok, card_b} = Servo.lifecycle_card(card_b, %{resource_state: :operating})
+      {:ok, card_b} = Servo.lifecycle_card(card_b, %{lifecycle_state: :installed})
 
       Diffo.Provider.create_place_ref!(%{
         instance_id: card_a.id,
@@ -143,7 +143,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, service} = Servo.build_access_service(%{})
 
@@ -183,7 +183,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, service} = Servo.build_access_service(%{})
 
@@ -228,7 +228,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, service} = Servo.build_access_service(%{})
 
@@ -275,7 +275,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, shelf} = Servo.define_shelf(shelf, %{characteristic_value_updates: shelf_updates})
-      {:ok, shelf} = Servo.lifecycle_shelf(shelf, %{resource_state: :operating})
+      {:ok, shelf} = Servo.lifecycle_shelf(shelf, %{lifecycle_state: :installed})
 
       updates = [
         card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
@@ -284,11 +284,11 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
 
       {:ok, card_a} = Servo.build_card(%{})
       {:ok, card_a} = Servo.define_card(card_a, %{characteristic_value_updates: updates})
-      {:ok, card_a} = Servo.lifecycle_card(card_a, %{resource_state: :operating})
+      {:ok, card_a} = Servo.lifecycle_card(card_a, %{lifecycle_state: :installed})
 
       {:ok, card_b} = Servo.build_card(%{})
       {:ok, card_b} = Servo.define_card(card_b, %{characteristic_value_updates: updates})
-      {:ok, card_b} = Servo.lifecycle_card(card_b, %{resource_state: :operating})
+      {:ok, card_b} = Servo.lifecycle_card(card_b, %{lifecycle_state: :installed})
 
       {:ok, _shelf} =
         Servo.assign_slot(shelf, %{
@@ -348,7 +348,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       Diffo.Provider.create_place_ref!(%{
         instance_id: card.id,
@@ -396,7 +396,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       Diffo.Provider.create_party_ref!(%{
         instance_id: card.id,
@@ -435,7 +435,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, service} = Servo.build_access_service(%{})
 
@@ -468,7 +468,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, service} = Servo.build_access_service(%{})
 
