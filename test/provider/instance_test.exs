@@ -603,13 +603,6 @@ defmodule Diffo.Provider.InstanceTest do
   """
 
   describe "Diffo.Provider encode Instances" do
-    # Blocked by https://github.com/diffo-dev/ash_neo4j/issues/284 — creating a
-    # generic Service instance (Provider.Instance carries AshStateMachine) with
-    # both features and characteristics (2+ :HAS edges) drops the :SPECIFIED_BY
-    # edge. The production path (a consumer leaf declaring features/characteristics
-    # via the provider DSL → build_after) is unaffected. Re-enable when the
-    # upstream fix lands.
-    @tag :skip
     test "encode service with service child instance json - success" do
       parent_specification =
         Diffo.Provider.create_specification!(%{
@@ -821,8 +814,6 @@ defmodule Diffo.Provider.InstanceTest do
                ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"connectionId\",\"id\":\"EVC010000873982\",\"owner\":\"T3_CONNECTIVITY\"},{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_CPE\"}],\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"processStatus\":[{\"code\":\"CPEDEV-1002\",\"severity\":\"WARN\",\"message\":\"device unmanagable\",\"timeStamp\":\"now\"},{\"code\":\"CPEDEV-1001\",\"severity\":\"INFO\",\"message\":\"device discovered\",\"timeStamp\":\"now\"}],\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{parent_instance.id}\"}}],\"relatedEntity\":[{\"id\":\"COR000000123456\",\"name\":\"2025-01\",\"role\":\"expected\",\"@referredType\":\"cost\",\"@type\":\"EntityRef\"}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T4_CPE\",\"href\":\"entity/internal/T4_CPE\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
     end
 
-    # Blocked by https://github.com/diffo-dev/ash_neo4j/issues/284 (see note above).
-    @tag :skip
     test "encode service with supporting service child instance json - success" do
       parent_specification =
         Diffo.Provider.create_specification!(%{
@@ -992,8 +983,6 @@ defmodule Diffo.Provider.InstanceTest do
                ~s({\"id\":\"#{child_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{child_instance.id}\",\"category\":\"connectivity\",\"description\":\"Device Service\",\"externalIdentifier\":[{\"externalIdentifierType\":\"connectionId\",\"id\":\"EVC010000873982\",\"owner\":\"T3_CONNECTIVITY\"},{\"externalIdentifierType\":\"orderId\",\"id\":\"ORD00000123456\",\"owner\":\"T4_CPE\"}],\"serviceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{child_specification.id}\",\"name\":\"device\",\"version\":\"v1.0.0\"},"serviceDate\":\"now\",\"state\":\"initial\",\"serviceRelationship\":[{\"type\":\"providedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{parent_instance.id}\"}}],\"place\":[{\"id\":\"LOC000000897353\",\"href\":\"place/nbnco/LOC000000897353\",\"name\":\"locationId\",\"role\":\"CustomerSite\",\"@referredType\":\"GeographicAddress\",\"@type\":\"PlaceRef\"}],\"relatedParty\":[{\"id\":\"T3_CONNECTIVITY\",\"href\":\"entity/internal/T3_CONNECTIVITY\",\"name\":\"entityId\",\"role\":\"Consumer\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"},{\"id\":\"T4_CPE\",\"href\":\"entity/internal/T4_CPE\",\"name\":\"entityId\",\"role\":\"Provider\",\"@referredType\":\"Entity\",\"@type\":\"PartyRef\"}]})
     end
 
-    # Blocked by https://github.com/diffo-dev/ash_neo4j/issues/284 (see note above).
-    @tag :skip
     test "encode service with resource child instance json - success" do
       parent_specification =
         Diffo.Provider.create_specification!(%{
@@ -1067,8 +1056,6 @@ defmodule Diffo.Provider.InstanceTest do
       ~s({\"id\":\"#{child_instance.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{child_instance.id}\",\"category\":\"physical\",\"description\":\"Customer Access Network Resource\",\"resourceSpecification\":{\"id\":\"#{child_specification.id}\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/#{child_specification.id}\",\"name\":\"can\",\"version\":\"v1.0.0\"},\"serviceRelationship\":[{\"type\":\"assignedTo\",\"service\":{\"id\":\"#{parent_instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{parent_instance.id}\"}}]})
     end
 
-    # Blocked by https://github.com/diffo-dev/ash_neo4j/issues/284 (see note above).
-    @tag :skip
     test "encode service with supporting resource child instance json - success" do
       parent_specification =
         Diffo.Provider.create_specification!(%{
@@ -1250,8 +1237,6 @@ defmodule Diffo.Provider.InstanceTest do
                ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"state\":\"initial\",\"feature\":[{\"name\":\"automations\",\"isEnabled\":true,\"featureCharacteristic\":[{\"name\":\"management\",\"value\":true},{\"name\":\"optimisation\",\"value\":true},{\"name\":\"security\",\"value\":true}]}]})
     end
 
-    # Blocked by https://github.com/diffo-dev/ash_neo4j/issues/284 (see note above).
-    @tag :skip
     test "encode sorts characteristics - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
 

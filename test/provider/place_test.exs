@@ -383,12 +383,6 @@ defmodule Diffo.Provider.PlaceTest do
       assert is_struct(error, Ash.Error.Invalid)
     end
 
-    # Currently failing under AshNeo4j 0.8.0 — see
-    # https://github.com/diffo-dev/ash_neo4j/issues/283 (geo attribute set to
-    # nil on update doesn't clear persisted companions). Plain string attributes
-    # (e.g. :href) clear correctly under the same path, so this is geo-specific.
-    # Re-enable when the upstream fix lands.
-    @tag :skip
     test "update from location to bounds - success" do
       place =
         Diffo.Provider.create_place!(:GeographicLocation, %{
