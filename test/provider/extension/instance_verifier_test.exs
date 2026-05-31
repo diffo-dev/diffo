@@ -674,4 +674,32 @@ defmodule Diffo.Provider.Extension.InstanceVerifierTest do
       )
     end
   end
+
+  describe "specification kind verifier (#4)" do
+    test "a Service leaf with a resourceSpecification warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "specification: a service instance must declare type :serviceSpecification, got :resourceSpecification",
+        fn ->
+          defmodule ServiceWithResourceSpec do
+            alias Diffo.Provider.BaseInstance
+            alias Diffo.Provider.Service
+            use Ash.Resource, fragments: [BaseInstance, Service], domain: Diffo.Test.Servo
+
+            resource do
+              description "a service leaf wrongly specified by a resourceSpecification"
+            end
+
+            provider do
+              specification do
+                id "cd29956f-6c68-44cc-bf54-705eb8d2f754"
+                name "wrongKind"
+                type :resourceSpecification
+              end
+            end
+          end
+        end
+      )
+    end
+  end
 end

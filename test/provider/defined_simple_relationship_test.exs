@@ -18,8 +18,8 @@ defmodule Diffo.Provider.DefinedSimpleRelationshipTest do
   defp build_instances do
     spec_a = Diffo.Provider.create_specification!(%{name: "accessEvc"})
     spec_b = Diffo.Provider.create_specification!(%{name: "aggregationEvc"})
-    source = Diffo.Provider.create_instance!(%{specified_by: spec_a.id, name: "access1"})
-    target = Diffo.Provider.create_instance!(%{specified_by: spec_b.id, name: "agg1"})
+    source = Diffo.Test.create_instance!(%{specified_by: spec_a.id, name: "access1"})
+    target = Diffo.Test.create_instance!(%{specified_by: spec_b.id, name: "agg1"})
     {source, target}
   end
 

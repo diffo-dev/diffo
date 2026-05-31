@@ -15,6 +15,7 @@ defmodule Diffo.Test.Servo do
 
   alias Diffo.Test.Instance.ShelfInstance
   alias Diffo.Test.Instance.CardInstance
+  alias Diffo.Test.Instance.ResourceInstance
   alias Diffo.Test.Instance.Broadband
   alias Diffo.Test.Instance.BroadbandV2
   alias Diffo.Test.Instance.AccessService
@@ -34,6 +35,7 @@ defmodule Diffo.Test.Servo do
       define :define_shelf, action: :define
       define :relate_shelf, action: :relate
       define :assign_slot, action: :assign_slot
+      define :lifecycle_shelf, action: :lifecycle
     end
 
     resource CardInstance do
@@ -44,6 +46,8 @@ defmodule Diffo.Test.Servo do
       define :assign_port, action: :assign_port
       define :lifecycle_card, action: :lifecycle
     end
+
+    resource ResourceInstance
 
     resource Broadband do
       define :build_broadband, action: :build

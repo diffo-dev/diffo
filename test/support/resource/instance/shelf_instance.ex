@@ -10,16 +10,17 @@ defmodule Diffo.Test.Instance.ShelfInstance do
   """
 
   alias Diffo.Provider.BaseInstance
+  alias Diffo.Provider.Resource
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.Changes
   alias Diffo.Test.Servo
   alias Diffo.Test.Characteristic.ShelfCharacteristic
   alias Diffo.Test.Characteristic.DeploymentClass
-  alias Diffo.Test.Party.Organization
+  alias Diffo.Test.Party.Enterprise
   alias Diffo.Test.Party.Person
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Resource],
     domain: Servo
 
   resource do
@@ -51,6 +52,12 @@ defmodule Diffo.Test.Instance.ShelfInstance do
     characteristics do
       characteristic :shelf, ShelfCharacteristic
       characteristic :shelves, {:array, ShelfCharacteristic}
+      # Surface the :card typed characteristic of every CardInstance assigned
+      # to one of this shelf's slot-pool assignments. Per-assignee the typed
+      # module is resolved at runtime via AshNeo4j.worlds/1.
+      reverse_inherited_characteristic :assigned_cards,
+        assignment_alias: :slot,
+        characteristic: :card
     end
 
     pools do
@@ -58,10 +65,10 @@ defmodule Diffo.Test.Instance.ShelfInstance do
     end
 
     parties do
-      party :facilitator, Organization
+      party :facilitator, Enterprise
       party :overseer, Person
-      party_ref :provider, Organization
-      party :manager, Organization, calculate: :manager_calc
+      party_ref :provider, Enterprise
+      party :manager, Enterprise, calculate: :manager_calc
       parties :installer, Person, constraints: [min: 1, max: 3]
     end
 

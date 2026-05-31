@@ -4,8 +4,10 @@
 
 # Used by "mix format"
 spark_locals_without_parens = [
+  assignment_alias: 1,
   calculate: 1,
   category: 1,
+  characteristic: 1,
   characteristic: 2,
   characteristic: 3,
   constraints: 1,
@@ -15,11 +17,14 @@ spark_locals_without_parens = [
   feature: 1,
   feature: 2,
   id: 1,
+  inherited_characteristic: 1,
+  inherited_characteristic: 2,
   inherited_party: 1,
   inherited_party: 2,
   inherited_place: 1,
   inherited_place: 2,
   instance_ref: 2,
+  instance_ref: 3,
   is_enabled?: 1,
   major_version: 1,
   minor_version: 1,
@@ -38,15 +43,21 @@ spark_locals_without_parens = [
   places: 2,
   places: 3,
   pool: 2,
-  reference: 1,
+  pool: 3,
+  reverse_inherited_characteristic: 1,
+  reverse_inherited_characteristic: 2,
   role: 2,
   role: 3,
   source: 1,
+  source: 2,
+  source_role: 1,
   target: 1,
+  target: 2,
   tmf_version: 1,
   type: 1,
   update: 1,
-  update: 2
+  update: 2,
+  via: 1
 ]
 
 [

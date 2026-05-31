@@ -4,14 +4,47 @@
 
 defmodule Diffo.Provider.BasePlace do
   @moduledoc """
-  Ash Resource Fragment which is the point of extension for your TMF Place.
+  Ash Resource Fragment which is the foundation for TMF Place subtypes.
 
-  `BasePlace` is the foundation for domain-specific Place kinds.
-  Include it as a fragment on an `Ash.Resource` to get common Place attributes, Neo4j graph
-  wiring, and the `Diffo.Provider.Place.Extension` DSL.
+  `BasePlace` is the foundation for the TMF675 cascade — Place is an abstract
+  TMF concept, and concrete subtype identity lives on the fragments that
+  compose with it:
 
-  `Diffo.Provider.Place` uses `BasePlace` directly as the out-of-the-box TMF Place resource.
-  Domain-specific resources extend it for richer domain identity.
+    * `Diffo.Provider.BaseGeographicAddress` — TMF674 GeographicAddress fields
+      (street_name, postcode, country, …)
+    * `Diffo.Provider.BaseGeographicSite` — TMF675 GeographicSite fields
+      (site_type, site_code, projected :address ref)
+    * `Diffo.Provider.BaseGeographicLocation` — TMF675 GeographicLocation
+      fields (accuracy) and tightened geometry validation
+
+  Each subtype fragment composes with `BasePlace` on a concrete leaf:
+
+      defmodule MyApp.SydneyExchange do
+        use Ash.Resource,
+          fragments: [
+            Diffo.Provider.BasePlace,
+            Diffo.Provider.BaseGeographicSite
+          ],
+          domain: MyApp.Domain
+        # consumer-specific attributes here
+      end
+
+  Diffo ships the three corresponding concrete leaves out of the box:
+  `Diffo.Provider.GeographicAddress`, `Diffo.Provider.GeographicSite`,
+  `Diffo.Provider.GeographicLocation`. Use them directly or as templates
+  for your own domain leaves.
+
+  `Diffo.Provider.Place` is also kept in core but is plumbing (abstract
+  reader for projection + PlaceRef-typed placeholder support), not a
+  TMF subtype recommendation. See its moduledoc for details.
+
+  ## Preferred consumer API
+
+  The `Diffo.Provider` domain exposes a type-atom dispatcher that handles
+  the subtype routing for you:
+
+      Diffo.Provider.create_place!(:GeographicSite, %{...})
+      Diffo.Provider.get_place_by_id!(id)    # returns concrete subtype struct via projection
 
   ## Attributes
 
@@ -24,6 +57,13 @@ defmodule Diffo.Provider.BasePlace do
   - `referred_type` — TMF `@referredType`. One of `:GeographicSite`, `:GeographicLocation`,
     `:GeographicAddress`. When present, indicates this is a reference to a place of that kind;
     `type` must be `:PlaceRef`.
+  - `location` — optional `AshGeo.GeoJson` (`:point`, WGS-84) for point-like Places.
+    Values are `%Geo.Point{coordinates: {lon, lat}, srid: 4326}`.
+  - `bounds` — optional `AshGeo.GeoJson` (`:polygon`, WGS-84) for region Places.
+    Values are `%Geo.Polygon{coordinates: [ring], srid: 4326}`. Polygon is the wire form;
+    axis-aligned-bounding-box is the conventional use today but not type-enforced.
+    At most one of `location`/`bounds` may be set on a record, and only when
+    `type == :GeographicLocation` (per TMF675).
 
   ## Usage
 
@@ -142,6 +182,20 @@ defmodule Diffo.Provider.BasePlace do
       constraints one_of: [:GeographicSite, :GeographicLocation, :GeographicAddress]
     end
 
+    attribute :location, AshGeo.GeoJson do
+      description "WGS-84 2D point for point-like Places (TMF675 GeoJsonPoint)"
+      constraints geo_types: [:point], force_srid: 4326
+      allow_nil? true
+      public? true
+    end
+
+    attribute :bounds, AshGeo.GeoJson do
+      description "WGS-84 2D polygon for region Places (TMF675 GeoJsonPolygon)"
+      constraints geo_types: [:polygon], force_srid: 4326
+      allow_nil? true
+      public? true
+    end
+
     create_timestamp :created_at
 
     update_timestamp :updated_at
@@ -160,13 +214,13 @@ defmodule Diffo.Provider.BasePlace do
 
     create :create do
       description "creates a place"
-      accept [:id, :href, :name, :type, :referred_type]
+      accept [:id, :href, :name, :type, :referred_type, :location, :bounds]
       upsert? true
     end
 
     update :update do
       description "updates the place"
-      accept [:href, :name, :type, :referred_type]
+      accept [:href, :name, :type, :referred_type, :location, :bounds]
     end
 
     read :list do
@@ -210,9 +264,79 @@ defmodule Diffo.Provider.BasePlace do
       where absent(:referred_type)
       message "when referred_type is absent, type must be not be PlaceRef"
     end
+
+    validate absent([:location, :bounds], at_least: 1) do
+      message "at most one of [location, bounds] may be set"
+    end
+
+    validate attribute_equals(:type, :GeographicLocation) do
+      where present([:location, :bounds], at_least: 1)
+      message "location and bounds are only allowed when type is :GeographicLocation"
+    end
   end
 
   preparations do
     prepare build(sort: [id: :asc, name: :asc])
+  end
+
+  # Note: `jason do` and `outstanding do` are NOT declared on this fragment.
+  # Spark fragment merge emits a compile-time warning whenever two fragments
+  # write to the same `jason.pick` / `outstanding.expect` opt — and every
+  # cascade subtype fragment (`BaseGeographicAddress`/`Site`/`Location`) and
+  # every consumer leaf needs to declare a wider pick than this base would.
+  # Keeping these declarations off the base fragment eliminates the warnings
+  # cleanly. Each concrete leaf (abstract `Provider.Place`, subtype fragments,
+  # consumer leaves like `MyApp.SydneyExchange`) declares its own `jason do`
+  # and `outstanding do`. `encode_geo_json/2` below remains as a static helper
+  # that subtype fragments and consumer leaves reference from their own
+  # `jason.customize`.
+
+  @doc false
+  def encode_geo_json(result, record) do
+    case {record.location, record.bounds} do
+      {nil, nil} ->
+        result
+
+      {%Geo.Point{coordinates: {lon, lat}}, nil} ->
+        result
+        |> List.keydelete(:location, 0)
+        |> List.keydelete(:bounds, 0)
+        |> rebrand_type("GeoJsonPoint")
+        |> List.keystore(
+          "geoJson",
+          0,
+          {"geoJson", %{geometry: %{type: "Point", coordinates: [lon, lat]}}}
+        )
+
+      {nil, %Geo.Polygon{coordinates: rings}} ->
+        ring_coords =
+          Enum.map(rings, fn ring ->
+            Enum.map(ring, fn {x, y} -> [x, y] end)
+          end)
+
+        result
+        |> List.keydelete(:location, 0)
+        |> List.keydelete(:bounds, 0)
+        |> rebrand_type("GeoJsonPolygon")
+        |> List.keystore(
+          "geoJson",
+          0,
+          {"geoJson", %{geometry: %{type: "Polygon", coordinates: ring_coords}}}
+        )
+    end
+  end
+
+  defp rebrand_type(result, concrete) do
+    case List.keyfind(result, "@type", 0) do
+      {"@type", _} ->
+        result
+        |> List.keyreplace("@type", 0, {"@type", concrete})
+        |> List.keystore("@baseType", 0, {"@baseType", "GeographicLocation"})
+
+      nil ->
+        result
+        |> List.keystore("@baseType", 0, {"@baseType", "GeographicLocation"})
+        |> List.keystore("@type", 0, {"@type", concrete})
+    end
   end
 end

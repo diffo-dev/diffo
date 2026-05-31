@@ -20,48 +20,49 @@ defmodule Diffo.Provider.Extension.AssignerTest do
     on_exit(&AshNeo4j.Sandbox.rollback/0)
   end
 
-  # Issue #168 — broadened lifecycle policy. Service-side now covers the full
+  # Issue #168 — broadened lifecycle policy. Service-side covers the full
   # committed lifecycle (excludes :initial, :cancelled, :terminated); resource
-  # side now allows :installing in addition to :operating.
+  # side is assignable once committed — :planned or :installed (TMF639 v5
+  # lifecycleState). nil (uninstalled / removed) and :pendingRemoval are not.
   describe "assignable_state?/1 (#168)" do
-    test "resource: :operating is permitted" do
-      assert :ok = Assigner.assignable_state?(%{type: :resource, resource_state: :operating})
+    test "resource: :planned is permitted" do
+      assert :ok = Assigner.assignable_state?(%{type: :resource, lifecycle_state: :planned})
     end
 
-    test "resource: :installing is permitted" do
-      assert :ok = Assigner.assignable_state?(%{type: :resource, resource_state: :installing})
+    test "resource: :installed is permitted" do
+      assert :ok = Assigner.assignable_state?(%{type: :resource, lifecycle_state: :installed})
     end
 
-    test "resource: :planning is rejected" do
-      assert {:error, msg} =
-               Assigner.assignable_state?(%{type: :resource, resource_state: :planning})
-
-      assert msg =~ ":planning"
-    end
-
-    test "resource: :retiring is rejected" do
+    test "resource: nil lifecycle state is rejected" do
       assert {:error, _} =
-               Assigner.assignable_state?(%{type: :resource, resource_state: :retiring})
+               Assigner.assignable_state?(%{type: :resource, lifecycle_state: nil})
+    end
+
+    test "resource: :pendingRemoval is rejected" do
+      assert {:error, msg} =
+               Assigner.assignable_state?(%{type: :resource, lifecycle_state: :pendingRemoval})
+
+      assert msg =~ ":pendingRemoval"
     end
 
     test "service: committed lifecycle states are permitted" do
       for state <- [:feasibilityChecked, :reserved, :inactive, :active, :suspended] do
-        assert :ok = Assigner.assignable_state?(%{type: :service, service_state: state}),
-               "expected service_state #{inspect(state)} to be assignable"
+        assert :ok = Assigner.assignable_state?(%{type: :service, state: state}),
+               "expected state #{inspect(state)} to be assignable"
       end
     end
 
     test "service: :initial is rejected" do
       assert {:error, msg} =
-               Assigner.assignable_state?(%{type: :service, service_state: :initial})
+               Assigner.assignable_state?(%{type: :service, state: :initial})
 
       assert msg =~ ":initial"
     end
 
     test "service: terminal states are rejected" do
       for state <- [:cancelled, :terminated] do
-        assert {:error, _} = Assigner.assignable_state?(%{type: :service, service_state: state}),
-               "expected service_state #{inspect(state)} to be rejected"
+        assert {:error, _} = Assigner.assignable_state?(%{type: :service, state: state}),
+               "expected state #{inspect(state)} to be rejected"
       end
     end
   end
@@ -145,7 +146,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, card} =
         Servo.assign_port(card, %{
@@ -157,7 +158,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"lifecycleState\":\"operating\",\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"lifecycleState\":\"installed\",\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
     end
 
     test "auto assign two ports to same resource" do
@@ -171,7 +172,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, card} =
         Servo.assign_port(card, %{
@@ -188,7 +189,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"lifecycleState\":\"operating\",\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]},{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":2}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"lifecycleState\":\"installed\",\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":1}]},{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":2}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
     end
 
     test "specific assignment rejects duplicate request" do
@@ -202,7 +203,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, card} =
         Servo.assign_port(card, %{
@@ -219,7 +220,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"lifecycleState\":\"operating\",\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":5}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"lifecycleState\":\"installed\",\"resourceRelationship\":[{\"type\":\"assignedTo\",\"resource\":{\"id\":\"#{assignee.id}\",\"href\":\"resourceInventoryManagement/v4/resource/#{assignee.id}\"},\"resourceRelationshipCharacteristic\":[{\"name\":\"port\",\"value\":5}]}],\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
     end
 
     test "unassign an auto-assigned port from a resource" do
@@ -233,7 +234,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, card} =
         Servo.assign_port(card, %{
@@ -258,7 +259,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       encoding = Jason.encode!(card) |> Diffo.Util.summarise_dates()
 
       assert encoding ==
-               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"lifecycleState\":\"operating\",\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
+               ~s({\"id\":\"#{card.id}",\"href\":\"resourceInventoryManagement/v4/resource/#{card.id}",\"category\":\"Network Resource\",\"description\":\"A Card Resource Instance\",\"resourceSpecification\":{\"id\":\"cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"href\":\"resourceCatalogManagement/v4/resourceSpecification/cd29956f-6c68-44cc-bf54-705eb8d2f754\",\"name\":\"card\",\"version\":\"v1.0.0\"},\"lifecycleState\":\"installed\",\"resourceCharacteristic\":[{\"name\":\"card\",\"value\":{\"family\":\"ISAM\",\"model\":\"EBLT48\",\"technology\":\"adsl2Plus\"}},{\"name\":\"ports\",\"value\":{\"first\":1,\"last\":48,\"type\":\"ADSL2+\",\"algorithm\":\"lowest\"}}]})
     end
 
     test "auto assign port to resource in :installing state (#168)" do
@@ -272,7 +273,7 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :installing})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
 
       {:ok, card} =
         Servo.assign_port(card, %{
@@ -282,7 +283,27 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       assert length(card.assignments) == 1
     end
 
-    test "assign rejected while resource is in :planning state (#168)" do
+    test "assign rejected while resource is uninstalled (nil lifecycle state) (#168)" do
+      {:ok, assignee} = Parties.build_shelf_with_installer()
+
+      {:ok, card} = Servo.build_card(%{})
+
+      updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      # a freshly built/defined card has a nil lifecycle_state — not yet committed
+      # (:planned) or installed, so it is not assignable
+      {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
+
+      assert {:error, _} =
+               Servo.assign_port(card, %{
+                 assignment: %Assignment{assignee_id: assignee.id, operation: :auto_assign}
+               })
+    end
+
+    test "assign rejected while resource is :pendingRemoval (#168)" do
       {:ok, assignee} = Parties.build_shelf_with_installer()
 
       {:ok, card} = Servo.build_card(%{})
@@ -293,7 +314,10 @@ defmodule Diffo.Provider.Extension.AssignerTest do
       ]
 
       {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-      {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :planning})
+
+      # installed (assignable) → pendingRemoval (being decommissioned): no longer assignable
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
+      {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :pendingRemoval})
 
       assert {:error, _} =
                Servo.assign_port(card, %{

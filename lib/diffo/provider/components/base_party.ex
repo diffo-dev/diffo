@@ -4,14 +4,44 @@
 
 defmodule Diffo.Provider.BaseParty do
   @moduledoc """
-  Ash Resource Fragment which is a the point of extension for your TMF Party
+  Ash Resource Fragment which is the foundation for TMF Party subtypes.
 
-  `BaseParty` is the foundation for domain-specific Party kinds such as Organization or Person.
-  Include it as a fragment on an `Ash.Resource` to get common Party attributes, Neo4j graph
-  wiring, and the `Diffo.Provider.Party.Extension` DSL.
+  `BaseParty` is the foundation for the TMF632 cascade — Party is an abstract
+  TMF concept, and concrete subtype identity lives on the fragments that
+  compose with it:
 
-  `Diffo.Provider.Party` uses `BaseParty` directly as the out-of-the-box TMF Party resource.
-  Domain-specific resources extend it for richer domain identity.
+    * `Diffo.Provider.BaseOrganization` — TMF632 Organization fields
+      (tradingName, organizationType, isLegalEntity, isHeadOffice, …)
+    * `Diffo.Provider.BaseIndividual` — TMF632 Individual fields
+      (givenName, familyName, gender, birthDate, …)
+
+  Each subtype fragment composes with `BaseParty` on a concrete leaf:
+
+      defmodule MyApp.Carrier do
+        use Ash.Resource,
+          fragments: [
+            Diffo.Provider.BaseParty,
+            Diffo.Provider.BaseOrganization
+          ],
+          domain: MyApp.Domain
+        # consumer-specific attributes here
+      end
+
+  Diffo ships the two corresponding concrete leaves out of the box:
+  `Diffo.Provider.Organization` and `Diffo.Provider.Individual`. Use them
+  directly or as templates for your own domain leaves.
+
+  `Diffo.Provider.Party` is also kept in core but is plumbing (abstract
+  reader for projection + PartyRef-typed placeholder support + `:Entity`
+  routing), not a TMF subtype recommendation. See its moduledoc for details.
+
+  ## Preferred consumer API
+
+  The `Diffo.Provider` domain exposes a type-atom dispatcher that handles
+  the subtype routing for you:
+
+      Diffo.Provider.create_party!(:Organization, %{...})
+      Diffo.Provider.get_party_by_id!(id)    # returns concrete subtype struct via projection
 
   ## Attributes
 
@@ -26,21 +56,25 @@ defmodule Diffo.Provider.BaseParty do
 
   ## Party Extension DSL
 
-  The `Diffo.Provider.Party.Extension` DSL provides two compile-time declaration blocks.
-  Role names are domain-specific nouns from the party's perspective — timeless, camelCase
-  when multi-word.
+  The party DSL provides two compile-time declaration blocks, both nested inside a single
+  `provider do` section. Role names are domain-specific nouns from the party's perspective
+  — timeless, camelCase when multi-word.
 
   `instances do` — declares the roles this Party kind plays with respect to Instances:
 
-      instances do
-        role :operator, MyApp.Cluster
-        role :dataCentre, MyApp.Facility
+      provider do
+        instances do
+          role :operator, MyApp.Cluster
+          role :dataCentre, MyApp.Facility
+        end
       end
 
   `parties do` — declares the roles this Party kind plays with respect to other Parties:
 
-      parties do
-        role :employer, MyApp.Organization
+      provider do
+        parties do
+          role :employer, MyApp.Organization
+        end
       end
 
   Both blocks are introspectable via `Diffo.Provider.Party.Extension.Info`.
@@ -71,8 +105,10 @@ defmodule Diffo.Provider.BaseParty do
           end
         end
 
-        instances do
-          role :provider, MyApp.AccessService
+        provider do
+          instances do
+            role :provider, MyApp.AccessService
+          end
         end
       end
 
@@ -260,4 +296,14 @@ defmodule Diffo.Provider.BaseParty do
   preparations do
     prepare build(sort: [id: :asc, name: :asc])
   end
+
+  # Note: `jason do` and `outstanding do` are NOT declared on this fragment.
+  # Spark fragment merge emits a compile-time warning whenever two fragments
+  # write to the same `jason.pick` / `outstanding.expect` opt — and every
+  # cascade subtype fragment (`BaseOrganization`/`Individual`) and every
+  # consumer leaf needs to declare a wider pick than this base would.
+  # Keeping these declarations off the base fragment eliminates the warnings
+  # cleanly. Each concrete leaf (abstract `Provider.Party`, subtype fragments,
+  # consumer leaves like `MyApp.Carrier`) declares its own `jason do` and
+  # `outstanding do`.
 end

@@ -17,9 +17,9 @@ defmodule Diffo.Provider.InstanceTest do
     test "list instances" do
       delete_all_instances()
       specification = Diffo.Provider.create_specification!(%{name: "firewall"})
-      Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      Diffo.Test.create_instance!(%{specified_by: specification.id})
+      Diffo.Test.create_instance!(%{specified_by: specification.id})
+      Diffo.Test.create_instance!(%{specified_by: specification.id})
       instances = Diffo.Provider.list_instances!()
       assert length(instances) == 3
       # TODO check sorted by href
@@ -28,9 +28,9 @@ defmodule Diffo.Provider.InstanceTest do
     test "find instances by specification id" do
       specification = Diffo.Provider.create_specification!(%{name: "firewall"})
       other_specification = Diffo.Provider.create_specification!(%{name: "gateway"})
-      Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      Diffo.Provider.create_instance!(%{specified_by: other_specification.id})
+      Diffo.Test.create_instance!(%{specified_by: specification.id})
+      Diffo.Test.create_instance!(%{specified_by: specification.id})
+      Diffo.Test.create_instance!(%{specified_by: other_specification.id})
       instances = Diffo.Provider.find_instances_by_specification_id!(specification.id)
       assert length(instances) == 2
       # TODO check sorted by href
@@ -39,17 +39,17 @@ defmodule Diffo.Provider.InstanceTest do
     test "find instances by name" do
       specification = Diffo.Provider.create_specification!(%{name: "intrusionMonitor"})
 
-      Diffo.Provider.create_instance!(%{
+      Diffo.Test.create_instance!(%{
         specified_by: specification.id,
         name: "Westfield Doncaster L1.M1"
       })
 
-      Diffo.Provider.create_instance!(%{
+      Diffo.Test.create_instance!(%{
         specified_by: specification.id,
         name: "Westfield Doncaster L2.M3"
       })
 
-      Diffo.Provider.create_instance!(%{
+      Diffo.Test.create_instance!(%{
         specified_by: specification.id,
         name: "Westfield Doncaster L2.M4"
       })
@@ -69,11 +69,11 @@ defmodule Diffo.Provider.InstanceTest do
           category: "connectivity"
         })
 
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       assert Diffo.Uuid.uuid4?(instance.id) == true
       assert instance.type == :service
-      assert instance.service_state == :initial
-      refute instance.service_operating_status
+      assert instance.state == :initial
+      refute instance.operating_status
       assert instance.specification.id == specification.id
       assert instance.href == "serviceInventoryManagement/v4/service/#{instance.id}"
 
@@ -94,11 +94,11 @@ defmodule Diffo.Provider.InstanceTest do
           category: "connectivity"
         })
 
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id, id: uuid})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id, id: uuid})
       assert instance.id == uuid
       assert instance.type == :service
-      assert instance.service_state == :initial
-      refute instance.service_operating_status
+      assert instance.state == :initial
+      refute instance.operating_status
       assert instance.specification.id == specification.id
       assert instance.href == "serviceInventoryManagement/v4/service/#{instance.id}"
     end
@@ -114,7 +114,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       {:error, _error} =
-        Diffo.Provider.create_instance(%{specified_by: specification.id, id: not_a_uuid})
+        Diffo.Test.create_instance(%{specified_by: specification.id, id: not_a_uuid})
     end
 
     test "upsert a service instance - success" do
@@ -127,10 +127,10 @@ defmodule Diffo.Provider.InstanceTest do
           category: "connectivity"
         })
 
-      {:ok, _result} = Diffo.Provider.create_instance(%{specified_by: specification.id, id: uuid})
+      {:ok, _result} = Diffo.Test.create_instance(%{specified_by: specification.id, id: uuid})
 
       {:ok, _result} =
-        Diffo.Provider.create_instance(%{specified_by: specification.id, id: uuid})
+        Diffo.Test.create_instance(%{specified_by: specification.id, id: uuid})
 
       {:ok, found} = Diffo.Provider.get_instance_by_id(uuid)
       assert found.id == uuid
@@ -139,7 +139,7 @@ defmodule Diffo.Provider.InstanceTest do
     # TODO fix this test, it is failing as specified_instance_type calculation is not loaded when create validation occurs
     # test "create a resource instance - success" do
     # {:ok, specification} = Diffo.Provider.create_specification(%{name: "copperPath", description: "Copper Path Resource", category: "physical", type: :resourceSpecification})
-    #  {:ok, instance} = Diffo.Provider.create_instance(%{specified_by: specification.id, type: :resource})
+    #  {:ok, instance} = Diffo.Test.create_instance(%{specified_by: specification.id, type: :resource})
     #  assert Diffo.Uuid.uuid4?(instance.id) == true
     #  assert instance.type == :resource
     #  {:ok, loaded_instance} = Diffo.Provider.get_instance_by_id(instance.id)
@@ -157,8 +157,8 @@ defmodule Diffo.Provider.InstanceTest do
           category: "connectivity"
         })
 
-      {:ok, _result} = Diffo.Provider.create_instance(%{specified_by: specification.id})
-      {:ok, _result} = Diffo.Provider.create_instance(%{specified_by: specification.id})
+      {:ok, _result} = Diffo.Test.create_instance(%{specified_by: specification.id})
+      {:ok, _result} = Diffo.Test.create_instance(%{specified_by: specification.id})
     end
 
     test "create named service instances - success - different names" do
@@ -170,10 +170,10 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       {:ok, _result} =
-        Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
+        Diffo.Test.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
 
       {:ok, _result} =
-        Diffo.Provider.create_instance(%{name: "fibreAccess 2", specified_by: specification.id})
+        Diffo.Test.create_instance(%{name: "fibreAccess 2", specified_by: specification.id})
     end
 
     test "create named service instances - failure - duplicate names" do
@@ -185,14 +185,14 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       {:ok, _result} =
-        Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
+        Diffo.Test.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
 
       {:error, _message} =
-        Diffo.Provider.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
+        Diffo.Test.create_instance(%{name: "fibreAccess 1", specified_by: specification.id})
     end
 
     test "create a service instance - failure - specification_id invalid" do
-      {:error, _message} = Diffo.Provider.create_instance(%{specified_by: UUID.uuid4()})
+      {:error, _message} = Diffo.Test.create_instance(%{specified_by: UUID.uuid4()})
     end
 
     test "create a service instance - failure - type not correct" do
@@ -203,18 +203,47 @@ defmodule Diffo.Provider.InstanceTest do
           category: "connectivity"
         })
 
+      # The instance `type` constraint rejects anything but :service / :resource.
       {:error, _} =
-        Diffo.Provider.create_instance(%{
-          specified_by: specification.id,
-          type: :serviceSpecification
-        })
+        Ash.create(
+          Diffo.Provider.Instance,
+          %{specified_by: specification.id, type: :serviceSpecification},
+          action: :create
+        )
     end
 
-    # TODO this test is failing
-    # test "create a service instance - failure - type mismatch with specification" do
-    #   {:ok, specification} = Diffo.Provider.create_specification(%{name: "radioAccess", description: "Radio Access Service", category: "connectivity"})
-    #   {:error, _specification} = Diffo.Provider.create_instance(%{specified_by: specification.id, type: :service})
-    # end
+    test "create a Service instance specified by a resourceSpecification - failure (#4)" do
+      resource_specification =
+        Diffo.Provider.create_specification!(%{
+          name: "copperPath",
+          type: :resourceSpecification,
+          description: "Copper Path Resource"
+        })
+
+      # Provider.Instance is a Service — a resourceSpecification is the wrong kind
+      assert {:error, _} =
+               Ash.create(
+                 Diffo.Provider.Instance,
+                 %{specified_by: resource_specification.id},
+                 action: :create
+               )
+    end
+
+    test "create a Resource instance specified by a serviceSpecification - failure (#4)" do
+      service_specification =
+        Diffo.Provider.create_specification!(%{
+          name: "hfcAccess",
+          description: "HFC Access Service"
+        })
+
+      # ResourceInstance composes Resource — a serviceSpecification is the wrong kind
+      assert {:error, _} =
+               Ash.create(
+                 Diffo.Test.Instance.ResourceInstance,
+                 %{specified_by: service_specification.id, type: :resource},
+                 action: :create
+               )
+    end
 
     test "create instance with characteristics - success" do
       specification = Diffo.Provider.create_specification!(%{name: "evc"})
@@ -233,7 +262,7 @@ defmodule Diffo.Provider.InstanceTest do
           type: :instance
         })
 
-      Diffo.Provider.create_instance!(%{
+      Diffo.Test.create_instance!(%{
         specified_by: specification.id,
         characteristics: [first_characteristic.id, second_characteristic.id]
       })
@@ -257,7 +286,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       {:error, _} =
-        Diffo.Provider.create_instance(%{
+        Diffo.Test.create_instance(%{
           specified_by: specification.id,
           characteristics: [first_characteristic.id, second_characteristic.id]
         })
@@ -278,7 +307,7 @@ defmodule Diffo.Provider.InstanceTest do
           isEnabled: false
         })
 
-      Diffo.Provider.create_instance!(%{
+      Diffo.Test.create_instance!(%{
         specified_by: specification.id,
         features: [first_feature.id, second_feature.id]
       })
@@ -300,7 +329,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       {:error, _} =
-        Diffo.Provider.create_instance(%{
+        Diffo.Test.create_instance(%{
           specified_by: specification.id,
           features: [first_feature.id, second_feature.id]
         })
@@ -310,10 +339,10 @@ defmodule Diffo.Provider.InstanceTest do
   describe "Diffo.Provider update Instances" do
     test "cancel an initial service instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "initialCancel"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       updated_instance = instance |> Diffo.Provider.cancel_service!()
-      assert updated_instance.service_state == :cancelled
-      assert updated_instance.service_operating_status == :unknown
+      assert updated_instance.state == :cancelled
+      assert updated_instance.operating_status == :unknown
       refute updated_instance.started_at
       assert updated_instance.stopped_at
     end
@@ -322,11 +351,11 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "initialFeasibilityChecked"})
 
       updated_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        Diffo.Test.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.feasibilityCheck_service!()
 
-      assert updated_instance.service_state == :feasibilityChecked
-      assert updated_instance.service_operating_status == nil
+      assert updated_instance.state == :feasibilityChecked
+      assert updated_instance.operating_status == nil
       refute updated_instance.started_at
       refute updated_instance.stopped_at
     end
@@ -335,11 +364,11 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "initialFeasibilityChecked"})
 
       updated_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id})
-        |> Diffo.Provider.feasibilityCheck_service!(%{service_operating_status: :feasible})
+        Diffo.Test.create_instance!(%{specified_by: specification.id})
+        |> Diffo.Provider.feasibilityCheck_service!(%{operating_status: :feasible})
 
-      assert updated_instance.service_state == :feasibilityChecked
-      assert updated_instance.service_operating_status == :feasible
+      assert updated_instance.state == :feasibilityChecked
+      assert updated_instance.operating_status == :feasible
       refute updated_instance.started_at
       refute updated_instance.stopped_at
     end
@@ -348,11 +377,11 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "initialActive"})
 
       updated_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        Diffo.Test.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.activate_service!()
 
-      assert updated_instance.service_state == :active
-      assert updated_instance.service_operating_status == :starting
+      assert updated_instance.state == :active
+      assert updated_instance.operating_status == :starting
       assert updated_instance.started_at
       refute updated_instance.stopped_at
     end
@@ -361,12 +390,12 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "feasibilityCheckedActive"})
 
       updated_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        Diffo.Test.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.feasibilityCheck_service!()
         |> Diffo.Provider.activate_service!()
 
-      assert updated_instance.service_state == :active
-      assert updated_instance.service_operating_status == :starting
+      assert updated_instance.state == :active
+      assert updated_instance.operating_status == :starting
       assert updated_instance.started_at != nil
       assert updated_instance.stopped_at == nil
     end
@@ -375,12 +404,12 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "activeTerminate"})
 
       updated_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        Diffo.Test.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.activate_service!()
         |> Diffo.Provider.terminate_service!()
 
-      assert updated_instance.service_state == :terminated
-      assert updated_instance.service_operating_status == :stopping
+      assert updated_instance.state == :terminated
+      assert updated_instance.operating_status == :stopping
       assert updated_instance.started_at
       assert updated_instance.stopped_at
     end
@@ -389,12 +418,12 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "activeRunning"})
 
       updated_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        Diffo.Test.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.activate_service!()
-        |> Diffo.Provider.status_service!(%{service_operating_status: :running})
+        |> Diffo.Provider.status_service!(%{operating_status: :running})
 
-      assert updated_instance.service_state == :active
-      assert updated_instance.service_operating_status == :running
+      assert updated_instance.state == :active
+      assert updated_instance.operating_status == :running
       assert updated_instance.started_at
       refute updated_instance.stopped_at
     end
@@ -403,20 +432,20 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "activeSuspended"})
 
       updated_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        Diffo.Test.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.activate_service!()
         |> Diffo.Provider.suspend_service!()
 
-      assert updated_instance.service_state == :suspended
-      assert updated_instance.service_operating_status == :limited
+      assert updated_instance.state == :suspended
+      assert updated_instance.operating_status == :limited
       assert updated_instance.started_at
       refute updated_instance.stopped_at
     end
 
     test "transition an initial service terminated - failure" do
       specification = Diffo.Provider.create_specification!(%{name: "initialTerminated"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      assert instance.service_state == :initial
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      assert instance.state == :initial
       {:error, _error} = instance |> Diffo.Provider.terminate_service()
     end
 
@@ -424,19 +453,19 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "feasibilityCheckedFeasible"})
 
       updated_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        Diffo.Test.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.feasibilityCheck_service!()
-        |> Diffo.Provider.status_service!(%{service_operating_status: :feasible})
+        |> Diffo.Provider.status_service!(%{operating_status: :feasible})
 
-      assert updated_instance.service_state == :feasibilityChecked
-      assert updated_instance.service_operating_status == :feasible
+      assert updated_instance.state == :feasibilityChecked
+      assert updated_instance.operating_status == :feasible
     end
 
     test "update a service instance name - success" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
 
       updated_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id})
+        Diffo.Test.create_instance!(%{specified_by: specification.id})
         |> Diffo.Provider.name_instance!(%{name: "Westfield Doncaster L2.E16"})
 
       assert updated_instance.name == "Westfield Doncaster L2.E16"
@@ -444,7 +473,7 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "update a service instance specification - success" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       new_specification =
         Diffo.Provider.create_specification!(%{name: "wifiAccess", major_version: 2})
@@ -457,7 +486,7 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "update a service instance specification - failure - does not exist" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       {:error, _error} =
         instance |> Diffo.Provider.respecify_instance(%{specified_by: UUID.uuid4()})
@@ -465,7 +494,7 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "update a service instance specification - failure - not a uuid" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       {:error, _error} =
         instance |> Diffo.Provider.respecify_instance(%{specified_by: "not a uuid"})
@@ -473,7 +502,7 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "annotate a service instance with a note - success" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       note = Diffo.Provider.create_note!(%{text: "a note"})
 
@@ -485,7 +514,7 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "annotate a service instance with similar notes - success" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       note = Diffo.Provider.create_note!(%{note_id: "TST000000123465", text: "test service"})
       note2 = Diffo.Provider.create_note!(%{note_id: "TST000000123466", text: "test service"})
@@ -501,14 +530,14 @@ defmodule Diffo.Provider.InstanceTest do
   describe "Diffo.Provider which Instance" do
     test "default created service is actual - success" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      actual = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      actual = Diffo.Test.create_instance!(%{specified_by: specification.id})
       refreshed_actual = Diffo.Provider.get_instance_by_id!(actual.id)
       assert refreshed_actual.which == :actual
     end
 
     test "create an actual service - success" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      actual = Diffo.Provider.create_instance!(%{specified_by: specification.id, which: :actual})
+      actual = Diffo.Test.create_instance!(%{specified_by: specification.id, which: :actual})
       refreshed_actual = Diffo.Provider.get_instance_by_id!(actual.id)
       assert refreshed_actual.which == :actual
     end
@@ -517,7 +546,7 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
 
       expected =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, which: :expected})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, which: :expected})
 
       refreshed_expected = Diffo.Provider.get_instance_by_id!(expected.id)
       assert refreshed_expected.which == :expected
@@ -528,10 +557,10 @@ defmodule Diffo.Provider.InstanceTest do
   describe "Diffo.Provider twin Instances" do
     test "create an expected service and twin it with an actual - success" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      actual = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      actual = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       expected =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, which: :expected})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, which: :expected})
         |> Diffo.Provider.twin_instance!(%{twin_id: actual.id})
 
       assert expected.which == :expected
@@ -546,16 +575,16 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
 
       expected =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, which: :expected})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, which: :expected})
 
-      actual = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      actual = Diffo.Test.create_instance!(%{specified_by: specification.id})
       {:error, _error} = actual |> Diffo.Provider.twin_instance(%{twin_id: expected.id})
     end
 
     test "create an actual service and twin it with an actual - failure" do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
-      actual = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      actual2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      actual = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      actual2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
       {:error, _error} = actual |> Diffo.Provider.twin_instance(%{twin_id: actual2.id})
     end
 
@@ -563,10 +592,10 @@ defmodule Diffo.Provider.InstanceTest do
       specification = Diffo.Provider.create_specification!(%{name: "wifiAccess"})
 
       expected =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, which: :expected})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, which: :expected})
 
       expected2 =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, which: :expected})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, which: :expected})
 
       {:error, _error} = expected |> Diffo.Provider.twin_instance(%{twin_id: expected2.id})
     end
@@ -610,13 +639,13 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       parent_instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: parent_specification.id,
           features: [feature.id],
           characteristics: [characteristic.id]
         })
 
-      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
+      child_instance = Diffo.Test.create_instance!(%{specified_by: child_specification.id})
 
       forward_relationship_characteristic =
         Diffo.Provider.create_characteristic!(%{
@@ -641,7 +670,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
@@ -661,7 +690,7 @@ defmodule Diffo.Provider.InstanceTest do
       })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -669,7 +698,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -677,7 +706,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_CPE",
           name: :entityId,
           href: "entity/internal/T4_CPE",
@@ -821,13 +850,13 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       parent_instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: parent_specification.id,
           features: [feature.id],
           characteristics: [characteristic.id]
         })
 
-      child_instance = Diffo.Provider.create_instance!(%{specified_by: child_specification.id})
+      child_instance = Diffo.Test.create_instance!(%{specified_by: child_specification.id})
 
       forward_relationship_characteristic =
         Diffo.Provider.create_characteristic!(%{
@@ -853,7 +882,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
@@ -873,7 +902,7 @@ defmodule Diffo.Provider.InstanceTest do
       })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -881,7 +910,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -889,7 +918,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_CPE",
           name: :entityId,
           href: "entity/internal/T4_CPE",
@@ -991,14 +1020,14 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       parent_instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: parent_specification.id,
           features: [feature.id],
           characteristics: [characteristic.id]
         })
 
       child_instance =
-        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
       # _reverse_relationship =
       # Diffo.Provider.create_relationship!(%{
@@ -1064,14 +1093,14 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       parent_instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: parent_specification.id,
           features: [feature.id],
           characteristics: [characteristic.id]
         })
 
       child_instance =
-        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
       _reverse_relationship =
         Diffo.Provider.create_relationship!(%{
@@ -1106,13 +1135,13 @@ defmodule Diffo.Provider.InstanceTest do
       access_specification = Diffo.Provider.create_specification!(%{name: "fibreAccess"})
       aggregation_specification = Diffo.Provider.create_specification!(%{name: "aggregation"})
       edge_specification = Diffo.Provider.create_specification!(%{name: "edge"})
-      parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
-      access_instance = Diffo.Provider.create_instance!(%{specified_by: access_specification.id})
+      parent_instance = Diffo.Test.create_instance!(%{specified_by: parent_specification.id})
+      access_instance = Diffo.Test.create_instance!(%{specified_by: access_specification.id})
 
       aggregation_instance =
-        Diffo.Provider.create_instance!(%{specified_by: aggregation_specification.id})
+        Diffo.Test.create_instance!(%{specified_by: aggregation_specification.id})
 
-      edge_instance = Diffo.Provider.create_instance!(%{specified_by: edge_specification.id})
+      edge_instance = Diffo.Test.create_instance!(%{specified_by: edge_specification.id})
 
       _forward_relationship =
         Diffo.Provider.create_relationship!(%{
@@ -1152,7 +1181,7 @@ defmodule Diffo.Provider.InstanceTest do
       feature3 = Diffo.Provider.create_feature!(%{name: :security})
 
       instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: specification.id,
           features: [feature1.id, feature2.id, feature3.id]
         })
@@ -1198,7 +1227,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, features: [feature.id]})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, features: [feature.id]})
 
       refreshed_instance = Diffo.Provider.get_instance_by_id!(instance.id)
 
@@ -1233,7 +1262,7 @@ defmodule Diffo.Provider.InstanceTest do
         })
 
       instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: specification.id,
           characteristics: [
             first_characteristic.id,
@@ -1253,7 +1282,7 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "encode cancelled service - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       cancelled_instance = Diffo.Provider.cancel_service!(instance)
       refreshed_instance = Diffo.Provider.get_instance_by_id!(cancelled_instance.id)
       encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
@@ -1264,7 +1293,7 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "encode active service - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       activated_instance = Diffo.Provider.activate_service!(instance)
       refreshed_instance = Diffo.Provider.get_instance_by_id!(activated_instance.id)
       encoding = Jason.encode!(refreshed_instance) |> Diffo.Util.summarise_dates()
@@ -1275,7 +1304,7 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "encode suspended service - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       suspended_instance =
         Diffo.Provider.activate_service!(instance) |> Diffo.Provider.suspend_service!()
@@ -1289,7 +1318,7 @@ defmodule Diffo.Provider.InstanceTest do
 
     test "encode terminated service - success" do
       specification = Diffo.Provider.create_specification!(%{name: "siteConnection"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       terminated_instance =
         Diffo.Provider.activate_service!(instance) |> Diffo.Provider.terminate_service!()
@@ -1299,6 +1328,40 @@ defmodule Diffo.Provider.InstanceTest do
 
       assert encoding ==
                ~s({\"id\":\"#{instance.id}\",\"href\":\"serviceInventoryManagement/v4/service/#{instance.id}\",\"serviceSpecification\":{\"id\":\"#{specification.id}\",\"href\":\"serviceCatalogManagement/v4/serviceSpecification/#{specification.id}\",\"name\":\"siteConnection\",\"version\":\"v1.0.0\"},\"serviceDate\":\"now\",\"startDate\":\"now\",\"endDate\":\"now\",\"state\":\"terminated\",\"operatingStatus\":\"stopping\"})
+    end
+
+    test "encode resource with TMF639 lifecycleState and status axes - success" do
+      specification =
+        Diffo.Provider.create_specification!(%{name: "copperPath", type: :resourceSpecification})
+
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
+
+      Diffo.Provider.lifecycle_resource!(instance, %{
+        lifecycle_state: :installed,
+        resource_version: "1.2",
+        administrative_state: :unlocked,
+        operational_state: :enabled,
+        usage_state: :active,
+        resource_status: :available
+      })
+
+      encoded =
+        instance.id
+        |> Diffo.Provider.get_instance_by_id!()
+        |> Jason.encode!()
+        |> Jason.decode!()
+
+      assert encoded["href"] =~ "resourceInventoryManagement/v4/resource/"
+      assert encoded["resourceSpecification"]["name"] == "copperPath"
+      assert encoded["resourceVersion"] == "1.2"
+      assert encoded["lifecycleState"] == "installed"
+      assert encoded["administrativeState"] == "unlocked"
+      assert encoded["operationalState"] == "enabled"
+      assert encoded["usageState"] == "active"
+      assert encoded["resourceStatus"] == "available"
+      # no service fields leak onto a resource
+      refute Map.has_key?(encoded, "state")
+      refute Map.has_key?(encoded, "operatingStatus")
     end
   end
 
@@ -1310,9 +1373,9 @@ defmodule Diffo.Provider.InstanceTest do
     specification = Diffo.Provider.create_specification!(%{name: "freePhone"})
 
     expected_instance =
-      Diffo.Provider.create_instance!(%{specified_by: specification.id, which: :expected})
+      Diffo.Test.create_instance!(%{specified_by: specification.id, which: :expected})
 
-    actual_instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+    actual_instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
     twinned_expected_instance =
       expected_instance |> Diffo.Provider.twin_instance!(%{twin_id: actual_instance.id})
@@ -1321,13 +1384,11 @@ defmodule Diffo.Provider.InstanceTest do
 
     # expect a consumer party
     consumer_party =
-      Diffo.Provider.create_party!(%{
+      Diffo.Provider.create_party!(:PartyRef, %{
         id: "T3_CONNECTIVITY",
         name: :entityId,
         href: "entity/internal/T3_CONNECTIVITY",
-        referred_type: :Entity,
-        type: :PartyRef
-      })
+        referred_type: :Entity})
 
     expected_party_ref =
       Diffo.Provider.create_party_ref!(%{
@@ -1352,12 +1413,12 @@ defmodule Diffo.Provider.InstanceTest do
     # now expect the actual service to be active and starting
     active_expected_instance =
       consumed_expected_instance
-      |> Map.put(:service_state, :active)
-      |> Map.put(:service_operating_status, :starting)
+      |> Map.put(:state, :active)
+      |> Map.put(:operating_status, :starting)
 
     active_outstanding_instance = active_expected_instance --- consumed_actual_instance
-    assert active_outstanding_instance.service_state == :active
-    assert active_outstanding_instance.service_operating_status == :starting
+    assert active_outstanding_instance.state == :active
+    assert active_outstanding_instance.operating_status == :starting
 
     # now resolve this by activating the actual service
     active_actual_instance = consumed_actual_instance |> Diffo.Provider.activate_service!()
@@ -1381,7 +1442,7 @@ defmodule Diffo.Provider.InstanceTest do
           description: "Site Connection Service"
         })
 
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       :ok = Diffo.Provider.delete_instance(instance)
     end
 
@@ -1401,10 +1462,10 @@ defmodule Diffo.Provider.InstanceTest do
           type: :resourceSpecification
         })
 
-      parent_instance = Diffo.Provider.create_instance!(%{specified_by: parent_specification.id})
+      parent_instance = Diffo.Test.create_instance!(%{specified_by: parent_specification.id})
 
       child_instance =
-        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
       reverse_relationship =
         Diffo.Provider.create_relationship!(%{
