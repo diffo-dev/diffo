@@ -11,6 +11,240 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## 0.5.0 (2026-06-01)
+
+### Dependencies
+
+* **Bump `ash_neo4j` to `~> 0.8.1`** (#198) — picks up the data-layer fixes for [ash_neo4j#283](https://github.com/diffo-dev/ash_neo4j/issues/283) (geo attribute set to `nil` on update now clears persisted companions), [#285](https://github.com/diffo-dev/ash_neo4j/issues/285) (a `belongs_to` edge present in the graph failed to load when the node carried ≥2 same-label collection edges), and #287 (stale indexable geo companions on a shape-changing update). Six previously-skipped tests re-enabled: the `BasePlace` `location → bounds` transition and the 5 generic-instance encode tests.
+
+### Features
+
+* **Service / Resource cascade — Phase A** (#4) — `Diffo.Provider.BaseInstance` is split into a shared base fragment plus two subtype fragments, `Diffo.Provider.Service` (TMF638) and `Diffo.Provider.Resource` (TMF639). A concrete instance composes `[BaseInstance, Service]` or `[BaseInstance, Resource]`. This fixes the long-standing modelling bug where a Resource carried a `service_state`: Resources now compose only the `Resource` fragment and have no service lifecycle at all.
+
+  - **`Service` fragment** carries the `AshStateMachine` lifecycle (`state`, renamed from `service_state`), `operating_status` (renamed from `service_operating_status`), the lifecycle actions (feasibilityCheck/reserve/deactivate/activate/suspend/terminate/cancel/status), and the TMF638-shaped jason. A service **terminates** or **cancels** — it never "retires".
+  - **`Resource` fragment** carries `lifecycle_state` (TMF639 v5 `lifecycleState`; ITU-T M.3701 lifecycle — `planned`/`installed`/`pendingRemoval`, with `nil` as both the initial and terminal state), the orthogonal TMF639 v4 X.731 status axes (`administrative_state`/`operational_state`/`usage_state`/`resource_status`) plus `resource_version` as nullable enums, the `lifecycle` action, and the TMF639-shaped jason. The status axes move independently (not a state machine); `resource_status` is kept `allow_nil?` as a v4 back-compat escape hatch. (The resource lifecycle is a state-machine candidate, deferred to #189.)
+  - **`Diffo.Provider.Instance`** composes `[BaseInstance, Service]` — it is the generic Service and the abstract reader for projection. An instance is exactly one of Service or Resource (not both, not neither).
+  - The jason wire shape is **byte-for-byte unchanged** (the `state` / `operatingStatus` keys were already those names); the renames are internal only.
+  - The service-state vocabulary helper moved from `Diffo.Provider.Service` to **`Diffo.Provider.ServiceState`** (the former name now belongs to the fragment).
+  - **Specification-kind guards** keep an instance and its specification on the same side of the divide: a Service must be specified by a `:serviceSpecification`, a Resource by a `:resourceSpecification`. Two complementary checks — a compile-time `Diffo.Provider.Extension.Verifiers.VerifySpecificationKind` (catches a consumer leaf mis-declaring its `specification do type`, failing their build) and a runtime `Diffo.Provider.Validations.ValidateSpecificationKind` on the `Service`/`Resource` fragments (catches the spec associated at create/specify — covering generic instances and `respecify`). Generic instances with no declared specification are not statically checked but are validated at runtime.
+
+  **Consumer migration:** a service leaf now composes `fragments: [BaseInstance, Service]`; a resource leaf composes `fragments: [BaseInstance, Resource]` (previously `[BaseInstance]`).
+
+  **API:** reads project to the concrete leaf — `Diffo.Provider.get_instance_by_id!/1` / `list_instances!/0` / `find_instances_by_*` return the concrete Service/Resource struct (via `AshNeo4j.worlds/1`). The lifecycle and record operations (`activate_service!`, `respecify_instance!`, `delete_instance!`, …) are now struct-dispatched functions on `Diffo.Provider` rather than code-interface definitions; existing call sites are unchanged.
+
+  Earlier in this cycle, creating a generic instance with both features **and** characteristics was blocked by an ash_neo4j load-path defect ([ash_neo4j#285](https://github.com/diffo-dev/ash_neo4j/issues/285), originally filed as [#284](https://github.com/diffo-dev/ash_neo4j/issues/284)) — a `belongs_to` edge present in the graph failed to load when the node also carried ≥2 same-label collection edges. Resolved by the ash_neo4j 0.8.1 bump (below); the 5 encode tests skipped against it are re-enabled.
+
+* **Inherited and reverse-inherited values now surface in the TMF JSON view** (#173) — a new sibling transformer `Diffo.Provider.Extension.Transformers.TransformInheritedJason` runs after `TransformInheritedRefs` (calc injection) and before `AshJason.Resource.Transformer` (encoder generation). For each inherited kind a resource declares, it injects a focused `jason.customize` step so loaded inherited calcs reach the consumer-visible array — no per-consumer customize required:
+
+  - `inherited_place` → the `place` array, as a simulated `PlaceRef` (carries the declared role plus the inherited place's flattened identity; there is no backing ref node — the inheritance simulates it)
+  - `inherited_party` → the `relatedParty` array, as a simulated `PartyRef`
+  - `inherited_characteristic` / `reverse_inherited_characteristic` → the `serviceCharacteristic` / `resourceCharacteristic` array, as ordinary typed characteristics
+
+  Surfaced entries appear after the instance's local entries. `%Diffo.Unknown{}` sentinels are filtered out before any ref wrapping — X-state is the Diffo diagnostic surface, not the TMF wire. Unloaded calcs (`%Ash.NotLoaded{}`) contribute nothing; load the calc to include it. Wire-shape concerns stay in this transformer; calc-shape concerns stay in `TransformInheritedRefs`.
+
+### Bug Fixes
+
+* **`Instance.Party.validate_constraints` skips inherited declarations** (#183) — the validator's `Enum.reject(&(&1.reference || &1.calculate))` was iterating ALL party declarations and KeyError'd on `InheritedPartyDeclaration` (which has no `:reference`/`:calculate` fields). Same shape of bug as the persister fix in #172 for inherited characteristics. Fix: filter to `Diffo.Provider.Extension.PartyDeclaration` before the reject — inherited variants are pre-validated by their declaration entity and have no min/max constraints to enforce.
+
+### Behavior changes
+
+* **`inherited_place` / `inherited_party` calcs now emit `%Diffo.Unknown{}` for reached-but-undeclared sources** (#183) — `Diffo.Provider.Calculations.InheritedPlace` and `InheritedParty` previously silently dropped source instances that didn't carry a `PlaceRef`/`PartyRef` at the declared `source_role`. The new `InheritedCharacteristic` / `ReverseInheritedCharacteristic` calcs (from #172) surface that case as `%Diffo.Unknown{}`; this aligns the older calcs with the same X-state discipline.
+
+  Single reason vocabulary (no cross-world dispatch needed — PlaceRef/PartyRef are universal indirections):
+
+  - `:role_not_declared` — source instance reached by alias traversal but its `PlaceRef`/`PartyRef` records carry no entry at `source_role`. Context: `%{source_id: id, role: source_role}`.
+
+  `:world` is stamped at compile time via `TransformInheritedRefs` (previously passed only to the characteristic variants; now passed to all four inherited calcs).
+
+  **Consumer impact**: code that `Enum.map`s `%Diffo.Provider.Place{}` (or `Party{}`) from an inherited_place/inherited_party result must now handle `%Diffo.Unknown{}` entries (filter, pattern-match, or let them propagate). The empty-list case (no sources reached at all) is unchanged — `Unknown` is reserved for "tried and couldn't determine," not "nothing to determine."
+
+### Bug Fixes
+
+* **Eliminate fragment-override warnings on cascade leaves** (#181) — Spark's `merge_with_warning` was firing during compile time whenever a subtype fragment (`BaseGeographicAddress`/`Site`/`Location`, `BaseOrganization`/`Individual`) declared a wider `jason.pick` / `outstanding.expect` than `BasePlace` / `BaseParty`. The merge logic has no opt-out for deliberate overrides. Fix: move `jason do` and `outstanding do` off `BasePlace` and `BaseParty` entirely; each concrete leaf carries its own declaration:
+
+  - Abstract readers (`Provider.Place`, `Provider.Party`) now declare their own base-shape `jason do` and `outstanding do` (previously inherited from the base fragment)
+  - Cascade subtype fragments continue to declare their own (no change)
+  - Test-support consumer leaves were already declaring their own (audit confirmed)
+  - `BasePlace.encode_geo_json/2` stays as a static helper that subtype fragments and consumer leaves reference from their own `jason.customize`
+
+  Documented as cascade discipline in `usage-rules.md` and `AGENTS.md`. Zero behaviour change; 757 tests + 90 doctests still pass.
+
+### Features
+
+* **Party subtype cascade — `BaseParty` → typed subtype leaves** (#186) — TMF632 Organization and Individual now ship as concrete leaves built from fragment composition (`BaseParty` + `BaseOrganization` / `BaseIndividual`). Consumer leaves (e.g. `MyApp.Carrier`) compose the same two fragments alongside their own attributes.
+
+  ```elixir
+  defmodule Diffo.Provider.Organization do
+    use Ash.Resource,
+      fragments: [BaseParty, BaseOrganization],
+      domain: Diffo.Provider
+  end
+  ```
+
+  Attributes (TMF632 v5 cut, permissive defaults):
+  - `BaseOrganization`: `trading_name`, `name_type`, `organization_type`, `is_legal_entity`, `is_head_office`
+  - `BaseIndividual`: `given_name`, `family_name`, `middle_name`, `title`, `gender`, `birth_date`, `nationality`
+
+  Deferred to follow-ups: nested arrays (`otherName[]`, `*Identification[]`, `disability[]`, `languageAbility[]`, `skill[]`), state machine attrs (pairs with `[[project_specification_lifecycle]]`), org parent/child relationships (via PartyRef machinery), richer demographics (`deathDate`, `placeOfBirth`, etc.), `existsDuring` (TimePeriod).
+
+* **Party dispatcher API on `Diffo.Provider`** (#186) — mirrors the Place dispatcher exactly, with `:Entity` as an additional abstract-routed type alongside `:PartyRef`:
+
+  ```elixir
+  Diffo.Provider.create_party!(:Organization, %{id: "X", trading_name: "Acme"})
+  Diffo.Provider.create_party!(:Individual, %{id: "Y", given_name: "Jane"})
+  Diffo.Provider.create_party!(:PartyRef, %{id: "Z", referred_type: :Organization})
+  Diffo.Provider.create_party!(:Entity, %{id: "E", name: "Aggregate"})
+
+  Diffo.Provider.get_party_by_id!(id)         # returns concrete subtype struct via projection
+  Diffo.Provider.list_parties!()              # mixed-subtype list, each projected
+
+  Diffo.Provider.update_party!(record, attrs)  # struct-dispatched to :define
+  Diffo.Provider.delete_party!(record)
+  ```
+
+* **`Diffo.Test.Party.Organization` → `Diffo.Test.Party.Enterprise`** (#186) — frees the canonical `Diffo.Provider.Organization` name and demonstrates consumer-style naming (paired with existing `Diffo.Test.Party.Person` which similarly demonstrates non-TMF naming for an Individual analogue).
+
+### Breaking changes (Party)
+
+* **`Diffo.Provider.create_party!/1` removed** — replaced by `create_party!/2`. Migration mirrors the Place migration in #185:
+
+  ```elixir
+  # Before
+  Diffo.Provider.create_party!(%{type: :Organization, id: "X", ...})
+  Diffo.Provider.create_party!(%{referred_type: :Individual, id: "Y"})
+
+  # After
+  Diffo.Provider.create_party!(:Organization, %{id: "X", ...})
+  Diffo.Provider.create_party!(:PartyRef, %{referred_type: :Individual, id: "Y"})
+  ```
+
+* **All per-codedef Party actions on `Diffo.Provider` domain dropped** — replaced by the dispatcher functions of the same names (different arities for `create_party`).
+
+* **`get_party_by_id/1`, `list_parties/0`, `find_parties_by_*/1` return concrete subtype structs** via `AshNeo4j.worlds/1` projection.
+
+* **Type-change updates on cascade leaves are rejected** — typed Party leaves have fixed `:type`. PartyRef placeholders (`Provider.Party` records with `referred_type:`) still support `referred_type:` updates.
+
+### Architectural notes (Party)
+
+* **`Diffo.Provider.Party` stays in core minimally** — repurposed as the abstract reader for projection bootstrap + PartyRef-typed placeholder support + `:Entity` routing. Moduledoc rewritten to reflect this.
+* **PartyRef typed `belongs_to` unchanged** (Option C carries over from #185) — graph integrity preserved.
+
+* **Place subtype cascade — `BasePlace` → typed subtype leaves** (#185) — TMF675 GeographicAddress / GeographicSite / GeographicLocation now ship as concrete leaves built from fragment composition (`BasePlace` + `BaseGeographicX`). Consumer leaves (e.g. `MyApp.SydneyExchange`) compose the same two fragments alongside their own attributes.
+
+  ```elixir
+  defmodule Diffo.Provider.GeographicSite do
+    use Ash.Resource,
+      fragments: [BasePlace, BaseGeographicSite],
+      domain: Diffo.Provider
+    # …
+  end
+  ```
+
+  Subtype fragments carry TMF-camelCase jason wire shape, tightened validations
+  (e.g. `BaseGeographicLocation` requires location-xor-bounds set), and — on
+  `BaseGeographicSite` — a projected `:address` calc that resolves to a concrete
+  `GeographicAddress` (or consumer-domain Address leaf) at read time via
+  `AshNeo4j.worlds/1`.
+
+* **`Diffo.Provider.Calculations.ProjectedRef`** (#185) — reusable calculation
+  for cross-resource references *without* a graph edge. Resolves an `id_field`
+  to the outermost concrete world's resource struct via `AshNeo4j.worlds/1`.
+  Three-state load surface: concrete struct on success, `%Diffo.Unknown{}` for
+  resolution failures (`:no_target` / `:no_concrete_world` / `:projection_failed`),
+  `%Ash.NotLoaded{}` until loaded. **Does NOT replace `belongs_to`** —
+  AshNeo4j's `verify_relate` requires real Ash relationships to maintain edges,
+  so typed `belongs_to` on PlaceRef/PartyRef stay intact (Option C).
+
+* **Place dispatcher API on `Diffo.Provider`** (#185) — replaces per-subtype
+  codedef explosion (7 codedefs × 3 subtypes = 21) with one function per CRUD
+  verb that scales to N subtypes at constant API surface:
+
+  ```elixir
+  Diffo.Provider.create_place!(:GeographicSite, %{id: "X", site_type: :exchange})
+  Diffo.Provider.create_place!(:PlaceRef, %{id: "Y", referred_type: :GeographicAddress})
+
+  Diffo.Provider.get_place_by_id!(id)        # returns concrete subtype struct via projection
+  Diffo.Provider.list_places!()              # mixed-subtype list, each projected
+
+  Diffo.Provider.update_place!(record, attrs)  # struct-dispatched to :define action
+  Diffo.Provider.delete_place!(record)
+  ```
+
+  Reads do inline projection (load via `Provider.Place` abstract reader → project
+  via `AshNeo4j.worlds/1`). Unknown TMF type atoms raise `ArgumentError`.
+
+* **Polymorphic-source ref dispatcher** (#185) — `create_place_ref!/1` /
+  `create_party_ref!/1` accept a tagged-tuple or struct `source:` field that
+  unpacks to the right FK column. `list_place_refs_from/1` /
+  `list_place_refs_targeting/1` express read intent rather than per-FK
+  (`list_place_refs_by_*_id`). Schema unchanged — the four FK columns stay.
+
+  ```elixir
+  Diffo.Provider.create_place_ref!(%{
+    role: :installation_site,
+    source: {:instance, "INST-001"},          # or {:party, ...}, {:place, ...}, or a struct
+    target: place_or_id
+  })
+
+  Diffo.Provider.list_place_refs_from(source)
+  Diffo.Provider.list_place_refs_targeting(target)
+  ```
+
+### Breaking changes
+
+* **`Diffo.Provider.create_place!/1` removed** — replaced by `create_place!/2`
+  (type-atom dispatcher). Migration:
+
+  ```elixir
+  # Before
+  Diffo.Provider.create_place!(%{type: :GeographicSite, id: "X", ...})
+  Diffo.Provider.create_place!(%{referred_type: :GeographicAddress, id: "Y"})
+
+  # After
+  Diffo.Provider.create_place!(:GeographicSite, %{id: "X", ...})
+  Diffo.Provider.create_place!(:PlaceRef, %{referred_type: :GeographicAddress, id: "Y"})
+  ```
+
+* **All per-codedef Place actions on `Diffo.Provider` domain dropped**
+  (`create_place`, `get_place_by_id`, `list_places`, `find_places_by_id`,
+  `find_places_by_name`, `update_place`, `delete_place`) — replaced by the
+  dispatcher functions of the same names (different arities for `create_place`).
+
+* **`Diffo.Provider.get_place_by_id/1`, `list_places/0`, `find_places_by_id/1`,
+  `find_places_by_name/1` now return concrete subtype structs** — projected via
+  `AshNeo4j.worlds/1`, not the abstract `%Diffo.Provider.Place{}`. Tests that
+  pattern-match on `%Provider.Place{}` need updating to `%Provider.GeographicSite{}`
+  (etc.). Field-access assertions (`.id`, `.name`, `.type`) continue to work.
+
+* **Type-change updates on cascade leaves are now rejected** — a typed Place
+  leaf (e.g. `Provider.GeographicAddress`) cannot have its `:type` changed to
+  `:GeographicSite` via `update_place!/2`; the typed leaves have fixed `:type`
+  set by their `:build` action. PlaceRef-typed placeholders (`Provider.Place`
+  records with `referred_type:`) still support `referred_type:` updates.
+
+* **`GeographicLocation` now requires geometry** — `BaseGeographicLocation`
+  validates that records with `type: :GeographicLocation` have `:location` or
+  `:bounds` set. Pre-cascade `GeographicLocation`-typed records without geometry
+  must be backfilled or re-classified as `:PlaceRef` placeholders.
+
+### Architectural notes
+
+* **`Diffo.Provider.Place` stays in core minimally** — repurposed as the
+  abstract reader that backs projection bootstrap (symmetric with how
+  `Provider.Instance` backs `inherited_characteristic`) and the PlaceRef-typed
+  placeholder dispatcher path. Production code should use the typed subtype
+  leaves or the dispatcher; `Provider.Place` is plumbing, not a recommendation.
+  Moduledoc rewritten to reflect this.
+* **`AGENTS.md` — Fat\* pattern section updated** — the original "don't split
+  subtypes into fragments" advice was based on a misread of how fragment
+  composition stacks. Fragment composition is additive at the leaf, not a
+  budget spend. The Fat\* invariants (graph edges, indexability, no N²
+  explosion) still hold under the cascade because typed `belongs_to` keeps
+  pointing at the abstract reader (Option C).
+* **Reanimates #4 "split Service and Resource"** — the cascade pattern
+  established here is the reusable template for the Instance Service/Resource
+  cascade in #4, with `ProjectedRef` + dispatcher as the shared artifacts.
+
 ## [v0.4.1](https://github.com/diffo-dev/diffo/compare/v0.4.0...v0.4.1) (2026-05-22)
 
 ### Bug Fixes

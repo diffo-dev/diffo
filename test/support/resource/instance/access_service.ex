@@ -8,10 +8,11 @@ defmodule Diffo.Test.Instance.AccessService do
   Used by inherited_refs_test.exs to verify assignment alias traversal.
   """
   alias Diffo.Provider.BaseInstance
+  alias Diffo.Provider.Service
   alias Diffo.Test.Servo
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Service],
     domain: Servo
 
   resource do
@@ -30,6 +31,18 @@ defmodule Diffo.Test.Instance.AccessService do
 
     places do
       inherited_place :primary, source_role: :location
+    end
+
+    parties do
+      inherited_party :owner, via: [:primary], source_role: :provider
+    end
+
+    characteristics do
+      # Inherit the source instance's :card characteristic by traversing
+      # the :primary assignment alias inward (this service is the assignee
+      # of a card's port assignment). Per-source the typed module is
+      # resolved at runtime via AshNeo4j.worlds/1 — late-binding by design.
+      inherited_characteristic :card, via: [:primary]
     end
 
     behaviour do

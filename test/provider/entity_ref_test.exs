@@ -18,7 +18,7 @@ defmodule Diffo.Provider.EntityRefTest do
   describe "Diffo.Provider read EntityRefs" do
     test "list entity refs - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity1 =
         Diffo.Provider.create_entity!(%{
@@ -72,8 +72,8 @@ defmodule Diffo.Provider.EntityRefTest do
 
     test "list entity refs by related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity1 =
         Diffo.Provider.create_entity!(%{
@@ -125,8 +125,8 @@ defmodule Diffo.Provider.EntityRefTest do
 
     test "list entity refs by related entity id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity1 =
         Diffo.Provider.create_entity!(%{
@@ -182,7 +182,7 @@ defmodule Diffo.Provider.EntityRefTest do
   describe "Diffo.Provider create EntityRefs" do
     test "create a reportedOn role entity ref  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity =
         Diffo.Provider.create_entity!(%{
@@ -228,7 +228,7 @@ defmodule Diffo.Provider.EntityRefTest do
   describe "Diffo.Provider update EntityRefs" do
     test "update role to nil - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity =
         Diffo.Provider.create_entity!(%{
@@ -251,7 +251,7 @@ defmodule Diffo.Provider.EntityRefTest do
 
     test "update role - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity =
         Diffo.Provider.create_entity!(%{
@@ -274,7 +274,7 @@ defmodule Diffo.Provider.EntityRefTest do
 
     test "update id - failure - not updatable" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity =
         Diffo.Provider.create_entity!(%{
@@ -295,8 +295,8 @@ defmodule Diffo.Provider.EntityRefTest do
 
     test "update instance_id - failure - not updatable" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      other_instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      other_instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity =
         Diffo.Provider.create_entity!(%{
@@ -318,7 +318,7 @@ defmodule Diffo.Provider.EntityRefTest do
 
     test "update entity_id - failure - not updatable" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity =
         Diffo.Provider.create_entity!(%{
@@ -344,7 +344,7 @@ defmodule Diffo.Provider.EntityRefTest do
   describe "Diffo.Provider encode EntityRefs" do
     test "encode json entity ref type - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity =
         Diffo.Provider.create_entity!(%{
@@ -370,7 +370,7 @@ defmodule Diffo.Provider.EntityRefTest do
 
     test "encode json entity ref referred_type - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity =
         Diffo.Provider.create_entity!(%{
@@ -506,7 +506,7 @@ defmodule Diffo.Provider.EntityRefTest do
   describe "Diffo.Provider delete EntityRefs" do
     test "delete entity_ref with related instance and entity - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       entity =
         Diffo.Provider.create_entity!(%{

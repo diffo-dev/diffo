@@ -248,7 +248,7 @@ defmodule Diffo.Provider.SpecificationTest do
 
     test "delete specification - failure, related instance" do
       specification = Diffo.Provider.create_specification!(%{name: "bdslAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
       {:error, error} = Diffo.Provider.delete_specification(specification)
       assert is_struct(error, Ash.Error.Invalid)
 

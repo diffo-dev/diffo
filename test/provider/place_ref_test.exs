@@ -17,20 +17,18 @@ defmodule Diffo.Provider.PlaceRefTest do
     test "list place refs - success" do
       delete_all_place_refs()
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place1 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000123456",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       place2 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       Diffo.Provider.create_place_ref!(%{
@@ -54,25 +52,25 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "list place refs by related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place1 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           referred_type: :GeographicAddress
         })
 
       place2 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897354",
           name: :locationId,
           referred_type: :GeographicAddress
         })
 
       place3 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "CSA000000123456",
           name: :csaId,
           referred_type: :GeographicLocation
@@ -111,35 +109,35 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "list place refs by related party id - success" do
       party1 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "IND000000897353",
           name: :individualId,
           referred_type: :Individual
         })
 
       party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "IND000000897354",
           name: :individualId,
           referred_type: :Individual
         })
 
       party3 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "ORG000163435034",
           name: :organizationId,
           referred_type: :Organization
         })
 
       place1 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000123456",
           name: :locationId,
           referred_type: :GeographicAddress
         })
 
       place2 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           referred_type: :GeographicAddress
@@ -179,25 +177,25 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "list place refs by related place id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place1 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           referred_type: :GeographicAddress
         })
 
       place2 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897354",
           name: :locationId,
           referred_type: :GeographicAddress
         })
 
       place3 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "CSA000000123456",
           name: :csaId,
           referred_type: :GeographicLocation
@@ -237,32 +235,29 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "list place refs by source place id - success" do
       place1 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicSite, %{
           id: "3NBA",
           href: "place/nbnco/3NBA",
-          name: :poiId,
-          type: :GeographicSite
+          name: :poiId
         })
 
       place2 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicLocation, %{
           id: "CSA000000124343",
           name: :csaId,
-          type: :GeographicLocation
+          location: %Geo.Point{coordinates: {151.0, -33.0}, srid: 4326}
         })
 
       place3 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       place4 =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897354",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       Diffo.Provider.create_place_ref!(%{
@@ -294,13 +289,12 @@ defmodule Diffo.Provider.PlaceRefTest do
   describe "Diffo.Provider create PlaceRefs" do
     test "create a CustomerSite role place ref  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       place_ref =
@@ -317,13 +311,12 @@ defmodule Diffo.Provider.PlaceRefTest do
   describe "Diffo.Provider update PlaceRefs" do
     test "update role to nil - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       place_ref =
@@ -339,13 +332,12 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "update role - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       place_ref =
@@ -361,13 +353,12 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "update id - failure - not updatable" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       place_ref =
@@ -384,13 +375,12 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "update instance_id - failure - not updatable" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       place_ref =
@@ -400,7 +390,7 @@ defmodule Diffo.Provider.PlaceRefTest do
           place_id: place.id
         })
 
-      other_instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      other_instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       {:error, _error} =
         place_ref |> Diffo.Provider.update_place_ref(%{instance_id: other_instance.id})
@@ -408,13 +398,12 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "update place_id - failure - not updatable" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       place_ref =
@@ -425,10 +414,9 @@ defmodule Diffo.Provider.PlaceRefTest do
         })
 
       other_place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897354",
-          name: :locationId,
-          type: :GeographicAddress
+          name: :locationId
         })
 
       {:error, _error} = place_ref |> Diffo.Provider.update_place_ref(%{place_id: other_place.id})
@@ -438,14 +426,13 @@ defmodule Diffo.Provider.PlaceRefTest do
   describe "Diffo.Provider encode PlaceRefs" do
     test "encode json place type - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicAddress, %{
           id: "LOC000000897353",
           name: :locationId,
-          href: "place/nbnco/LOC000000897353",
-          type: :GeographicAddress
+          href: "place/nbnco/LOC000000897353"
         })
 
       place_ref =
@@ -463,10 +450,10 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "encode json place referred_type - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
@@ -490,10 +477,10 @@ defmodule Diffo.Provider.PlaceRefTest do
   describe "Diffo.Provider outstanding PlaceRefs" do
     test "resolve a general expected place" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: "locationId",
           href: "place/nbnco/LOC000000897353",
@@ -524,10 +511,10 @@ defmodule Diffo.Provider.PlaceRefTest do
   describe "Diffo.Provider delete PlaceRefs" do
     test "delete place_ref with related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           href: "place/nbnco/LOC000000897353",
@@ -547,7 +534,7 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "delete place_ref with related party - success" do
       party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "IND000000897353",
           name: :individualId,
           href: "party/internal/IND000000897353",
@@ -555,7 +542,7 @@ defmodule Diffo.Provider.PlaceRefTest do
         })
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:PlaceRef, %{
           id: "LOC000000897353",
           name: :locationId,
           referred_type: :GeographicAddress
@@ -574,18 +561,17 @@ defmodule Diffo.Provider.PlaceRefTest do
 
     test "delete place_ref with related source place - success" do
       source_place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicSite, %{
           id: "3NBA",
           href: "place/nbnco/3NBA",
-          name: :poiId,
-          type: :GeographicSite
+          name: :poiId
         })
 
       place =
-        Diffo.Provider.create_place!(%{
+        Diffo.Provider.create_place!(:GeographicLocation, %{
           id: "CSA000000124343",
           name: :csaId,
-          type: :GeographicLocation
+          location: %Geo.Point{coordinates: {151.0, -33.0}, srid: 4326}
         })
 
       place_ref =

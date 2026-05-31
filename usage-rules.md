@@ -58,9 +58,9 @@ produces nodes that Ash cannot find or interpret correctly.
 
 | Kind | Base fragment | Marker extension |
 |---|---|---|
-| Instance (service or resource) | `Diffo.Provider.BaseInstance` | `Diffo.Provider.Instance.Extension` |
-| Party (organisation, person, entity) | `Diffo.Provider.BaseParty` | `Diffo.Provider.Party.Extension` |
-| Place (site, address, location) | `Diffo.Provider.BasePlace` | `Diffo.Provider.Place.Extension` |
+| Instance (Service or Resource) | `Diffo.Provider.BaseInstance` + `Service`/`Resource` | `Diffo.Provider.Instance.Extension` |
+| Party (Organization, Individual) | `Diffo.Provider.BaseParty` | `Diffo.Provider.Party.Extension` |
+| Place (GeographicAddress, Site, Location) | `Diffo.Provider.BasePlace` | `Diffo.Provider.Place.Extension` |
 
 All three kinds use the same unified `Diffo.Provider.Extension` DSL with a single `provider do`
 section. The marker extensions are zero-section extensions used only for kind identification
@@ -71,10 +71,180 @@ Always start from the appropriate base fragment:
 
 ```elixir
 defmodule MyApp.BroadbandService do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.SRM
+  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance, Diffo.Provider.Service], domain: MyApp.SRM
   ...
 end
 ```
+
+### Instance subtype fragments (TMF638/639 cascade)
+
+`BaseInstance` carries everything shared between Services and Resources. Compose it
+with exactly one subtype fragment — an instance is either a Service or a Resource,
+never both, never neither:
+
+| Subtype | Subtype fragment | Adds |
+|---|---|---|
+| Service (TMF638) | `Diffo.Provider.Service` | the service lifecycle state machine (`state` / `operating_status`), lifecycle actions (activate/suspend/terminate/cancel/…), TMF638 jason |
+| Resource (TMF639) | `Diffo.Provider.Resource` | `lifecycle_state` (TMF639 v5 lifecycleState — `planned`/`installed`/`pendingRemoval`), the `lifecycle` action, TMF639 jason |
+
+```elixir
+defmodule MyApp.Card do
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BaseInstance, Diffo.Provider.Resource],
+    domain: MyApp.SRM
+  # a Card is a Resource — no service lifecycle
+end
+```
+
+`Diffo.Provider.Instance` is the generic Service (`[BaseInstance, Service]`) and the
+abstract reader that `get_instance_by_id!/1` projects through. A service
+**terminates** or **cancels** — only a Specification retires.
+
+### Place subtype fragments (TMF675 cascade)
+
+`BasePlace` composes with one of three subtype fragments to produce a TMF675
+concrete Place. Diffo ships the three subtype leaves out of the box and the
+matching consumer leaf is a sibling, not a child:
+
+| Subtype | Subtype fragment | Concrete leaf in diffo |
+|---|---|---|
+| GeographicAddress | `Diffo.Provider.BaseGeographicAddress` | `Diffo.Provider.GeographicAddress` |
+| GeographicSite | `Diffo.Provider.BaseGeographicSite` | `Diffo.Provider.GeographicSite` |
+| GeographicLocation | `Diffo.Provider.BaseGeographicLocation` | `Diffo.Provider.GeographicLocation` |
+
+```elixir
+defmodule MyApp.SydneyExchange do
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BasePlace, Diffo.Provider.BaseGeographicSite],
+    domain: MyApp.SRM
+  # consumer-specific attributes / actions here
+end
+```
+
+Action naming convention on cascade leaves: `:build` for create, `:define` for
+update, both accepting the union of base + subtype fields. `:build` sets the
+TMF `:type` discriminator automatically.
+
+### `jason do` and `outstanding do` live on leaves, not on `Base*` fragments
+
+Spark's fragment merge emits a compile-time warning whenever two fragments
+write to the same `jason.pick` / `outstanding.expect` opt — and every cascade
+subtype fragment and every consumer leaf needs a wider pick than any base
+default would provide. To eliminate the warnings cleanly, **`BasePlace` /
+`BaseParty` / `BaseInstance` do not declare `jason do` or `outstanding do`**.
+
+Each concrete leaf declares its own:
+
+- **Abstract readers** (`Provider.Place` / `Provider.Party` / `Provider.Instance`)
+  carry the base shape (id, href, name, referred_type, type) for placeholder
+  records.
+- **Cascade subtype fragments** (`BaseGeographicAddress`/`Site`/`Location`,
+  `BaseOrganization`/`Individual`) carry the union of base + subtype fields
+  with TMF camelCase renames.
+- **Consumer leaves** (`MyApp.Carrier`, `MyApp.SydneyExchange`, etc.) declare
+  their own `jason do` and `outstanding do` covering base + their domain-
+  specific fields. See the docstring examples on each Base* fragment.
+
+This is a deliberate departure from the "fragments carry defaults" idiom that
+some Ash extensions use. Spark's `merge_with_warning` has no opt-out for
+deliberate overrides, so the only way to avoid noise is to not declare twice.
+
+### Provider.Place is plumbing — use the dispatcher API
+
+`Diffo.Provider.Place` is **kept in core minimally** as the abstract reader
+that backs projection bootstrap and PlaceRef-typed placeholders. It is *not*
+a TMF subtype recommendation. Production code should use the type-atom
+dispatcher on `Diffo.Provider`:
+
+```elixir
+# Writes — dispatch on TMF type atom
+Diffo.Provider.create_place!(:GeographicSite, %{id: "X", site_type: :exchange})
+Diffo.Provider.create_place!(:GeographicAddress, %{id: "Y", country: "AU"})
+Diffo.Provider.create_place!(:GeographicLocation, %{id: "Z", location: %Geo.Point{...}})
+Diffo.Provider.create_place!(:PlaceRef, %{id: "P", referred_type: :GeographicSite})
+
+# Reads — open-world projection via AshNeo4j.worlds/1
+Diffo.Provider.get_place_by_id!(id)          # returns concrete subtype struct
+Diffo.Provider.list_places!()                # mixed-subtype list, each projected
+
+# Update / destroy — dispatch on record's struct module
+Diffo.Provider.update_place!(record, attrs)
+Diffo.Provider.delete_place!(record)
+```
+
+### Party subtype fragments (TMF632 cascade)
+
+`BaseParty` composes with one of two subtype fragments to produce a TMF632
+concrete Party. Diffo ships the two subtype leaves out of the box and the
+matching consumer leaf is a sibling, not a child:
+
+| Subtype | Subtype fragment | Concrete leaf in diffo |
+|---|---|---|
+| Organization | `Diffo.Provider.BaseOrganization` | `Diffo.Provider.Organization` |
+| Individual | `Diffo.Provider.BaseIndividual` | `Diffo.Provider.Individual` |
+
+```elixir
+defmodule MyApp.Carrier do
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BaseParty, Diffo.Provider.BaseOrganization],
+    domain: MyApp.SRM
+  # consumer-specific attributes / actions here
+end
+```
+
+Same `:build` / `:define` action naming convention as the Place cascade.
+
+### Provider.Party is plumbing — use the dispatcher API
+
+`Diffo.Provider.Party` is **kept in core minimally** as the abstract reader
+that backs projection bootstrap + PartyRef-typed placeholders + `:Entity`
+routing. It is *not* a TMF subtype recommendation. Production code should use
+the type-atom dispatcher on `Diffo.Provider`:
+
+```elixir
+# Writes — dispatch on TMF type atom
+Diffo.Provider.create_party!(:Organization, %{id: "ORG-001", trading_name: "Acme"})
+Diffo.Provider.create_party!(:Individual, %{id: "IND-001", given_name: "Jane", family_name: "Doe"})
+Diffo.Provider.create_party!(:PartyRef, %{id: "REF-001", referred_type: :Organization})
+Diffo.Provider.create_party!(:Entity, %{id: "ENT-001", name: "Aggregate"})
+
+# Reads — open-world projection via AshNeo4j.worlds/1
+Diffo.Provider.get_party_by_id!(id)          # returns concrete subtype struct
+Diffo.Provider.list_parties!()               # mixed-subtype list, each projected
+
+# Update / destroy — dispatch on record's struct module
+Diffo.Provider.update_party!(record, attrs)
+Diffo.Provider.delete_party!(record)
+```
+
+### Polymorphic-source ref API
+
+`PlaceRef` and `PartyRef` use a polymorphic-source dispatcher that collapses
+the four-FK source noise into one tagged-tuple `source:` field. The schema is
+unchanged (four FK columns stay); only the API surface drops:
+
+```elixir
+Diffo.Provider.create_place_ref!(%{
+  role: :installation_site,
+  source: {:instance, "INST-001"},       # or {:party, ...}, {:place, ...}, or a struct
+  target: "LOC-001"                       # or a Place struct
+})
+
+Diffo.Provider.list_place_refs_from(source)          # struct or {tag, id}
+Diffo.Provider.list_place_refs_targeting(target)     # struct or id
+```
+
+### ProjectedRef for cross-resource refs without graph edges
+
+`Diffo.Provider.Calculations.ProjectedRef` is a reusable calculation for
+cross-resource references that don't have (and don't need) a graph edge — e.g.
+`BaseGeographicSite.address` resolves to a concrete `GeographicAddress` (or
+consumer-domain Address leaf) at read time via `AshNeo4j.worlds/1`.
+
+**It does NOT replace `belongs_to`.** AshNeo4j requires a real `belongs_to`
+relationship to maintain the Neo4j edge (`verify_relate` enforces this at
+compile time). PlaceRef/PartyRef keep all eight typed `belongs_to` intact for
+graph integrity; the dispatcher does projection on direct reads instead.
 
 ## The unified `provider do` DSL
 
@@ -434,9 +604,9 @@ defmodule MyApp.SRM do
   end
 end
 
-# Instance resource
+# Instance resource (a service composes BaseInstance + Service; a resource, BaseInstance + Resource)
 defmodule MyApp.BroadbandService do
-  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance], domain: MyApp.SRM
+  use Ash.Resource, fragments: [Diffo.Provider.BaseInstance, Diffo.Provider.Service], domain: MyApp.SRM
 
   resource do
     description "An ADSL broadband service"
@@ -606,6 +776,34 @@ Options:
 
 The DSL entity must be declared in the correct section (`places do` for `inherited_place`,
 `parties do` for `inherited_party`). The generated calculation name matches the declared role.
+
+### JSON surfacing
+
+When the calculation is loaded and the instance is JSON-encoded, the inherited values
+surface automatically in the corresponding TMF array — no per-consumer `jason` customize
+required:
+
+- `inherited_place` → the `place` array, as a simulated `PlaceRef` (carries the declared
+  role plus the inherited place's flattened identity; there is no backing ref node, the
+  inheritance simulates it)
+- `inherited_party` → the `relatedParty` array, as a simulated `PartyRef`
+- `inherited_characteristic` / `reverse_inherited_characteristic` → the
+  `serviceCharacteristic` / `resourceCharacteristic` array, as ordinary typed
+  characteristics
+
+Surfaced entries appear after the instance's local entries. `%Diffo.Unknown{}` sentinels
+(the "tried and couldn't determine" X-state) are filtered out — they are a Diffo-level
+diagnostic surface, not the TMF wire. Values you have not loaded simply do not surface;
+load the calculation (e.g. `Ash.load(instance, [:exchange])`) to include it.
+
+```jsonc
+// AccessService with inherited_place :primary, inherited_party :owner, inherited_characteristic :card
+{
+  "place":         [{ "role": "primary", "id": "LOC-1", "name": "Exchange", "@type": "GeographicSite" }],
+  "relatedParty":  [{ "role": "owner",   "id": "ORG-1", "name": "Owner Co", "@type": "Organization" }],
+  "serviceCharacteristic": [{ "name": "card", "value": { "model": "EBLT48" } }]
+}
+```
 
 ## Field calculation modules
 

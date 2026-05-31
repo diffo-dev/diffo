@@ -9,13 +9,14 @@ defmodule Diffo.Test.Instance.CardInstance do
   Card - Card Resource Instance
   """
   alias Diffo.Provider.BaseInstance
+  alias Diffo.Provider.Resource
   alias Diffo.Provider.Assignment
   alias Diffo.Provider.Changes
   alias Diffo.Test.Servo
   alias Diffo.Test.Characteristic.CardCharacteristic
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Resource],
     domain: Servo
 
   resource do

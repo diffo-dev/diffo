@@ -23,7 +23,7 @@ defmodule Diffo.Provider.Extension.FieldFromAssignmentTest do
 
     {:ok, card} = Servo.build_card(%{})
     {:ok, card} = Servo.define_card(card, %{characteristic_value_updates: updates})
-    {:ok, card} = Servo.lifecycle_card(card, %{resource_state: :operating})
+    {:ok, card} = Servo.lifecycle_card(card, %{lifecycle_state: :installed})
     card
   end
 

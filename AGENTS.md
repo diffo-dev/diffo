@@ -18,6 +18,7 @@ on [Ash Framework](https://www.ash-hq.org/) + [AshNeo4j](https://github.com/diff
 1. Read `usage-rules.md` — Diffo-specific DSL rules.
 2. Read `CLAUDE.md` — dependency usage rules (Ash, Elixir, OTP, AshNeo4j, Spark).
 3. Consult the skill at `.claude/skills/diffo-framework/` for Ash ecosystem patterns.
+4. Run `mix test` before and after your change to confirm nothing regressed.
 
 ## Updating dependencies
 
@@ -25,6 +26,45 @@ When updating a dependency (e.g. bumping `ash_neo4j`, `ash`, `spark` in `mix.exs
 run `mix usage_rules.sync` immediately after `mix deps.get`. Dependencies publish their own
 usage rules; syncing pulls those changes into `CLAUDE.md` so you are working from the
 up-to-date guidance before touching any code.
+
+## Fixing bugs
+
+Before writing any fix, review existing test coverage for the affected behaviour. If the bug
+has no test, write the failing test first — this confirms the reproduction and guards the
+fix against regression. Only then implement the fix and verify the test passes.
+
+## Designing intricate changes — the spelunking pattern
+
+For any change that touches more than one layer (Spark DSL extension / transformers /
+persisters / verifiers / base fragments / AshNeo4j sandbox / consumer-domain resources),
+don't work top-down or bottom-up alone — work from both ends and meet in the middle
+(stalagmite + stalactite). Both ends carry unknowns that compound when you discover them
+late.
+
+**Bottom (stalagmite) — start with a focused test against the lowest layer that doesn't
+involve the consumer surface.** Examples for diffo:
+
+- A direct introspection call against `Diffo.Provider.Extension.Info` or
+  `Spark.Dsl.Extension.get_entities/2` to confirm a transformer/persister bakes the shape
+  you expect.
+- An `AshNeo4j.Sandbox` round-trip against a minimal `BaseInstance` / `BaseParty` /
+  `BasePlace` / `BaseCharacteristic`-derived resource that exercises only the primitive you
+  are changing.
+- A raw `AshNeo4j.Sandbox.run/2` (or `Bolty.query!/2`) when the surprise might be at the
+  Cypher / driver layer.
+
+This isolates DSL- and graph-level surprises before they ripple up into a consumer domain.
+
+**Top (stalactite) — write an exploratory consumer-domain test with `IO.inspect` inside
+your transformer, persister, calculation, or change callback.** Surfaces shape assumptions
+you have wrong about how DSL state arrives, what the change context contains, or what Ash
+hands the callback. Throw the test away once it has taught you the shape.
+
+**Meet in the middle.** Once both ends are settled, the connecting commit is small and
+focused — write the bridge code, run the existing end tests plus a new end-to-end one
+through a consumer-style resource.
+
+Use this pattern whenever a change spans more than one layer.
 
 ## Project structure
 
@@ -254,6 +294,34 @@ mix test path/to/test.exs:LINE        # single test
 mix test --max-failures 5             # stop early
 ```
 
+## Formatting, docs, and the DSL toolchain
+
+Diffo is a Spark DSL library, so formatting and docs have DSL-aware steps. Run these
+after any change that touches the `Diffo.Provider.Extension` DSL (adding/removing/renaming
+an entity or its args), and before a release:
+
+```sh
+mix format                            # format all code (uses .formatter.exs)
+mix spark.formatter                   # regenerate .formatter.exs locals_without_parens, then format it
+mix spark.cheat_sheets                # regenerate documentation/dsls/DSL-Diffo.Provider.Extension.md
+mix docs                              # spark.cheat_sheets + ex_doc + spark.replace_doc_links
+```
+
+- **`.formatter.exs`** carries the `Spark.Formatter` plugin and a `locals_without_parens`
+  list of every DSL entity/arity (e.g. `party_ref: 2`, `inherited_characteristic: 2`,
+  `assignment_alias: 1`, `via: 1`). It is **committed** and must stay in sync with the DSL —
+  if it drifts, `mix format` adds spurious parens to DSL calls. `mix spark.formatter`
+  (the alias regenerates the list and re-formats the file) is the source of truth; run it
+  whenever you change the extension, and commit the result.
+- **`mix format --check-formatted`** must pass in CI/pre-release. The `mix test` alias runs
+  `ash.setup` first; formatting is separate.
+- **The DSL cheat sheet** (`documentation/dsls/DSL-Diffo.Provider.Extension.md`) is generated
+  by `mix spark.cheat_sheets` and **committed** — regenerate and commit it after DSL changes
+  so it doesn't go stale (a no-diff regenerate means it's current).
+- **`mix docs`** output lands in `doc/`, which is **gitignored** — generated HTML and the
+  livebooks copied there are not tracked. The source livebooks live in `documentation/how_to/`
+  and the root `diffo.livemd`; edit those, not `doc/`.
+
 ## Module naming and Neo4j labels
 
 AshNeo4j derives a node label from the **last segment** of the module name. Two resources
@@ -282,6 +350,251 @@ Spark runs two separate pipelines during compilation, in this order:
 - Do not put a transformer in `persisters:` hoping `after?` declarations will order it relative to transformers — those declarations are silently ignored across pipeline boundaries.
 
 New transformers go under `transformers:`. New persisters go under `persisters:`.
+
+## Resource polymorphism — the cascade refinement of the Fat* pattern
+
+> **Note (post-#185):** The original Fat* pattern argued *against* subtype-per-fragment
+> on the grounds it would re-spend the polymorphism budget on the TMF axis. The Place
+> cascade (#185) showed this was overstated — **fragment composition is additive at
+> the leaf**, not a budget spend. A consumer leaf composes BasePlace + BaseGeographicSite +
+> its own attributes in one resource, no budget re-spent. The Fat* invariants still hold
+> (graph edges intact, storage indexable, no N² explosion) under the cascade because we
+> deliberately keep typed `belongs_to` pointing at the abstract reader (Option C). The
+> sections below have been updated to reflect this refinement.
+
+Each Ash resource concept has a **polymorphism budget** — the axis along which concrete
+resources differ. Diffo spends that budget on the **extender's domain axis**. TMF
+subtype identity is layered on top via compile-time fragment composition (the cascade),
+which doesn't compete with the extender's axis because fragments compose at the leaf.
+
+### What this means
+
+- **`BaseInstance`** — the shared base. TMF638/639 subtypes ship as cascade
+  fragments: a Service composes `BaseInstance + Service` (lifecycle state machine
+  on `state` / `operating_status`), a Resource composes `BaseInstance + Resource`
+  (`lifecycle_state`). An instance is exactly one of Service or Resource; the
+  `type` enum still records which. Extenders define `MyApp.Avc`, `MyApp.Cvc`,
+  `MyApp.NbnEthernet` as distinct Service/Resource leaves. `Provider.Instance`
+  is the generic Service + projection reader. The Assigner dispatches on the
+  discriminator — `Assigner.assignable_service_states/0` /
+  `assignable_resource_states/0`.
+- **`BaseParty`** — extenders define `MyApp.Carrier`, `MyApp.Customer`,
+  `MyApp.NetworkOperator` as distinct resources. TMF632 subtypes
+  (`:Organization`, `:Individual`) ship as cascade leaves
+  (`Provider.Organization`, `Provider.Individual`) composing
+  `BaseParty + BaseOrganization|Individual`. Diffo also extends the TMF type
+  enum with `:Entity` (party-like aggregates) and the placeholder `:PartyRef`,
+  both routing to the abstract `Provider.Party` via the dispatcher.
+- **`BasePlace`** — extenders define `MyApp.CSA`, `MyApp.Warehouse`, `MyApp.HomeAddress`
+  as distinct resources. TMF673/674/675 subtypes (`:GeographicAddress`,
+  `:GeographicSite`, `:GeographicLocation`, `:PlaceRef`) live as a `type` enum, with
+  subtype-specific attribute groups (e.g. `:location` / `:bounds` for
+  `:GeographicLocation`) gated by `type` via Ash validations.
+
+These bases grow wide ("Fat*") for behaviours that span all subtypes (graph wiring,
+TMF base attributes, the encoder hook). Subtype-specific attribute groups now live
+on **subtype fragments** (`BaseGeographicAddress`, `BaseGeographicSite`,
+`BaseGeographicLocation`) that compose with `BasePlace` at the consumer leaf —
+each subtype is its own resource with its own labels and its own concrete struct.
+Storage cost remains negligible: unused base attributes still don't touch disk
+because Neo4j skips nil properties, and the subtype-specific fields live only on
+the leaves where they apply.
+
+### Wire-side TMF polymorphism still works
+
+TMF wire forms carry their own polymorphism (`@type`, `@baseType`, `@referredType`
+per the TMF API Design Guidelines). That polymorphism is **reconstructed at the JSON
+encoder edge**: `BasePlace.encode_geo_json/2` pattern-matches on geometry to emit
+`@baseType: "GeographicLocation"` + `@type: "GeoJsonPoint"` + nested `geoJson` for
+populated `:location`/`:bounds`. Each subtype fragment in the cascade
+(`BaseGeographicAddress`, `BaseGeographicSite`, `BaseGeographicLocation`) declares
+its own `jason do` block selecting base + subtype fields, with TMF camelCase
+renames; the `encode_geo_json/2` customize is inherited from `BasePlace` so
+geometry rebranding works uniformly.
+
+### Why this commitment is durable (refined)
+
+- **Subtype-per-fragment is the cascade pattern.** Splitting `BasePlace` into
+  `BaseGeographicAddress` / `BaseGeographicSite` / `BaseGeographicLocation` is the
+  *correct* answer when those subtypes carry distinct attribute groups. Fragment
+  composition at the leaf means a consumer's `MyApp.SydneyExchange` composes
+  `BasePlace + BaseGeographicSite + its own attrs` — three layers in one resource,
+  one polymorphism budget. The original "don't split" advice was based on a misread
+  of how fragment composition stacks; #185 corrected this.
+- **Generic edges still survive — via the dispatcher and `Provider.Place`.**
+  Typed `belongs_to` on PlaceRef/PartyRef stays pointing at the abstract
+  `Diffo.Provider.Place` reader (Option C — see "PlaceRef / PartyRef belongs_to
+  stay at the abstract reader" below). No N² edge explosion because diffo never
+  enumerates consumer leaves in `belongs_to`; instead, the dispatcher does inline
+  projection on reads via `AshNeo4j.worlds/1`.
+- **Storage stays indexable.** Each attribute is its own typed Neo4j property —
+  `CREATE POINT INDEX ON (p:Place) ON p.bounds.bbSW` works for geometry; address
+  fields would be indexable in their own way. A union-typed `:geometry` attribute
+  would collapse to a JSON blob via Ash's `:ash_json` classifier and lose all
+  indexability — that's the trap of `Ash.Type.Union` for spatial data. The same
+  indexes work uniformly across the cascade because all subtype leaves carry
+  `:Place` (or `:Party`, `:Instance`) labels via `BasePlace` fragment composition
+  — a `:Place` index covers both the abstract reader and every concrete leaf.
+
+### Implications for design work
+
+- **New TMF subtype → new `BaseXxx` fragment + new `Provider.Xxx` leaf**. The
+  subtype fragment carries that subtype's attribute group, jason wire shape, and
+  any tightened validations; the leaf composes `BaseKind + BaseXxx`, sets the TMF
+  `:type` discriminator via its `:build` action, and accepts the union of base +
+  subtype fields.
+- **Subtype-specific behaviour → validations on the subtype fragment + encoder
+  branches**. BasePlace still handles geometry encoding via its `customize` hook;
+  subtype fragments tighten validations (e.g. `BaseGeographicLocation` requires
+  location-xor-bounds set).
+- **Use the dispatcher API**: `Diffo.Provider.create_place!/2` dispatches by TMF
+  type atom; `update_place!/2` / `delete_place!/1` dispatch by record struct;
+  reads (`get_place_by_id!/1`, `list_places!/0`) project to concrete subtype via
+  `AshNeo4j.worlds/1`. The dispatcher only knows TMF blessed types — consumer
+  leaves create/update through their own domain APIs but reads surface them
+  transparently via projection.
+
+### Fragment composition discipline — `jason do` / `outstanding do` live on leaves
+
+Spark's `merge_with_warning` (`deps/spark/lib/spark/dsl.ex:794`) is
+unconditional — there is no "this override is deliberate" opt-out. Whenever
+two fragments write different values to the same `jason.pick` /
+`outstanding.expect` opt, a compile-time warning fires regardless of intent.
+
+The cascade pattern requires every subtype fragment (`BaseGeographicAddress`
+etc.) and every consumer leaf to declare a wider `jason.pick` /
+`outstanding.expect` than any base default would provide. To avoid noise,
+**`BasePlace` / `BaseParty` / `BaseInstance` do not declare `jason do` or
+`outstanding do`**. Each concrete leaf carries its own:
+
+- Abstract readers (`Provider.Place`/`Provider.Party`/`Provider.Instance`)
+  ship the base shape — id, href, name, referred_type, type — for placeholder
+  records and projection bootstrap.
+- Cascade subtype fragments declare the union of base + subtype fields with
+  TMF camelCase renames.
+- Consumer leaves declare their own union per their domain shape.
+
+`BasePlace.encode_geo_json/2` stays as a static helper on `BasePlace` (not in
+a `jason do` block) — subtype fragments and consumer leaves reference it
+from their own `jason.customize`. Same idiom would apply to any future helper
+on `BaseParty` / `BaseInstance`.
+
+This is a deliberate departure from the "fragments carry defaults" idiom
+some Ash extensions use. It came out of #181.
+
+### PlaceRef / PartyRef belongs_to stay at the abstract reader (Option C)
+
+The cascade does **not** migrate the typed `belongs_to` on PlaceRef/PartyRef to
+`ProjectedRef` calcs. `AshNeo4j`'s `relate` block requires a real Ash relationship
+to maintain the Neo4j edge (`verify_relate` enforces this at compile time).
+Dropping the `belongs_to` would kill the edge — the graph becomes nodes with id
+pointers and no connectivity, which guts the whole point of using a graph DB.
+
+The right separation:
+
+- **`belongs_to` for graph integrity.** PlaceRef/PartyRef keep all eight typed
+  `belongs_to` (4 each), pointing at the abstract `Diffo.Provider.Place` /
+  `Diffo.Provider.Party` / `Diffo.Provider.Instance` readers. Edges stay intact,
+  Ash filter/sort/join through still works.
+- **`ProjectedRef` calc for cross-resource refs *without* a graph edge.** E.g.
+  `BaseGeographicSite.address` resolves an `address_id` FK to a concrete
+  `GeographicAddress` (or consumer-domain Address leaf) at read time — no edge,
+  open-world projection, three-state load surface
+  (struct / `%Diffo.Unknown{}` / `%Ash.NotLoaded{}`).
+- **Dispatcher's inline projection for typed reads via abstract reader.**
+  `get_place_by_id!/1` loads via `Provider.Place`, then projects via
+  `AshNeo4j.worlds/1` to return the concrete subtype struct. The abstract reader
+  bootstraps; the dispatcher provides the typed surface. `Provider.Place` is
+  plumbing, not a recommendation.
+
+## Cross-domain lookups and the `Diffo.Unknown` primitive
+
+Calculations that cross resource or domain boundaries (e.g. `inherited_characteristic`
+reading a typed characteristic from a source instance reached via the assignment graph)
+face two structural constraints:
+
+1. **The target resource may not exist at the consumer's compile time.** A generic
+   upstream resource declaring a cross-resource lookup will be consumed by downstream
+   domains whose resources don't exist yet when the upstream compiles. Compile-time
+   resolution of "which module does this role on the source map to?" is architecturally
+   wrong — not just fragile.
+2. **Failure modes are world-local.** The vocabulary for *why* a lookup didn't yield a
+   value (source not reached, role not declared on source, source not Instance-derived,
+   etc.) is domain-specific. Centralising a canonical enumeration of failure reasons in
+   a shared module would force every domain to fit its semantics into a foreign
+   vocabulary.
+
+The Diffo response is `Diffo.Unknown` — a sentinel for "we tried and couldn't determine
+this value, in this context, in this domain."
+
+### Shape
+
+```elixir
+defmodule Diffo.Unknown do
+  defstruct [:world, :reason, :context]
+
+  @type t :: %__MODULE__{
+    world: module(),  # the outermost Resource module that produced this Unknown
+    reason: atom(),   # world-local atom; vocabulary owned by the producing world
+    context: term()   # world-local diagnostic data
+  }
+end
+```
+
+`:world` is the **outermost `(Domain, Resource)` pair** the Unknown was produced under,
+stored as the Resource module since the Domain is derivable via
+`Ash.Resource.Info.domain/1`. The Domain alone is insufficient — within a single
+Domain, multiple concrete resources can extend the same base fragment (e.g.
+`Diffo.Provider.AssignmentRelationship` and `Diffo.Provider.DefinedSimpleRelationship`
+both share `Relationship` infrastructure but are distinct worlds in the same Domain).
+The Resource alone is also insufficient — the Domain anchors which polymorphism axis
+the Resource lives on. Together they identify the producer uniquely.
+
+The structure is **N-world by construction.** A node in the graph can participate in
+many `(Domain, Resource)` worlds simultaneously (one per base-fragment / concrete
+combination it carries labels for). A calc produces an Unknown stamped with its own
+outermost world; consumers see the projection. Today the practical count is two (e.g.
+Diffo's `Diffo.Provider` and a consumer's `MyApp` domains) but the shape doesn't
+encode that limit.
+
+`:reason` is `atom()` at the structural level only — no
+`@type reason :: :a | :b | ...` narrowing. Each calc moduledoc declares its own reason
+vocabulary; the central type stays open.
+
+`:context` is `term()` — each world decides what to put there. Diagnostic, not
+load-bearing.
+
+### Discipline
+
+- **Compile-time stamping of `:world`.** The transformer that injects a cross-boundary
+  calc passes the resource it's injecting into as an opt (the resource being compiled
+  is statically known to the transformer); the calc stamps that resource on every
+  Unknown it emits. No runtime resource lookup needed for the world tag.
+- **Calcs are total.** A calc that crosses a boundary never raises on missing data — it
+  returns the value, `nil`, or `%Diffo.Unknown{}`. The consumer pattern-matches.
+- **Projection across worlds, free composition within.** An outer-world calc that
+  encounters an inner-world Unknown wraps it
+  (`%Diffo.Unknown{world: OuterResource, reason: :inner_unknown, context: %{inner: original}}`);
+  calcs within the same world share vocabulary and can read each other's `:reason`
+  directly without projecting through. Worlds are determined by the outermost
+  `(Domain, Resource)` pair, so calcs on `Diffo.Provider.AssignmentRelationship`
+  vs `Diffo.Provider.DefinedSimpleRelationship` are distinct worlds even though they
+  share a Domain.
+- **No central reason registry.** Resist the urge to enumerate `Diffo.Unknown` reasons
+  anywhere shared. Each world documents its own vocabulary in the moduledocs of the
+  calcs that produce it.
+- **No permanent roles.** The structure describes states (currently-inside-a-world,
+  currently-outside) not identities. The same module may produce an Unknown in one call
+  and consume one in another; nothing in the design should bake static insider/outsider
+  distinctions.
+
+### Relationship to `Ash.NotLoaded`
+
+`Ash.NotLoaded` represents the load-lifecycle "uninitialised" state — we haven't tried
+to load this slot yet. `Diffo.Unknown` represents the post-resolution "we tried and
+couldn't determine" state — the calc ran, the answer is "not determinable in this
+context." Both are explicit values; consumers pattern-match them as distinct outcomes
+alongside concrete values and `nil`.
 
 ## DSL shape changes
 
@@ -333,7 +646,7 @@ not. Add any useful hypotheses as a follow-up comment on the issue, then leave i
 - Calling `Assigner.assign/4` when a `pools do` declaration exists — prefer `Assigner.assign/3` which looks up the thing automatically.
 - Hand-writing the `:define` / `:relate` / `:assign_*` after-action plumbing — use `Diffo.Provider.Changes.Define`, `Diffo.Provider.Changes.Relate`, and `{Diffo.Provider.Changes.Assign, pool: :name}` (since 0.4.1). The change modules thread `Characteristic.update_all/3`, `Pool.update_pools/3`, `Relationship.relate_instance/2` and `Assigner.assign/3` together and reload via the resource's primary `:read` action.
 - Hand-writing the `:create` / `:update` accept lists on a `BaseCharacteristic`-derived resource — they are synthesised from the resource's public attributes (since 0.4.1). Declare your own only when you need a narrower accept list.
-- Calling `Assigner.assign/3` on an instance that is not in the correct lifecycle state — the assigner enforces: resource instances must have `resource_state` of `:installing` or `:operating`; service instances must have `service_state` of `:feasibilityChecked`, `:reserved`, `:inactive`, `:active`, or `:suspended` (since 0.4.1). The full lists are exposed via `Assigner.assignable_resource_states/0` and `Assigner.assignable_service_states/0`. Lifecycle state transitions are an internal domain concern managed by the provider; assignment actions are external-facing.
+- Calling `Assigner.assign/3` on an instance that is not in the correct lifecycle state — the assigner enforces: resource instances must have `lifecycle_state` of `:planned` or `:installed`; service instances must have `state` of `:feasibilityChecked`, `:reserved`, `:inactive`, `:active`, or `:suspended`. The full lists are exposed via `Assigner.assignable_resource_states/0` and `Assigner.assignable_service_states/0`. Lifecycle state transitions are an internal domain concern managed by the provider; assignment actions are external-facing.
 - Wondering why `Relationship` and `AssignmentRelationship` both have an `alias` attribute with a `[:source_id, :alias]` / `[:target_id, :alias]` identity — alias is a "baby name" given to a relationship slot before (or when) the target is bound. Its full purpose becomes clear alongside the first-order expectation system (see issue #122): the expectation declares the alias for a slot it expects to be filled, and the actual relationship carries the same alias so the two can be matched. Without expectations in place, aliases look like optional metadata; with them, they are the join key between intent and fulfilment.
 - Using `characteristic :pool_name, Diffo.Provider.AssignedToRelationship` — `AssignedToRelationship` no longer exists; use `pools do / pool :name, :thing / end` instead.
 - Querying `Diffo.Provider.Relationship` for assignment records — assignments are stored as `Diffo.Provider.DefinedSimpleRelationship`; access them via `instance.assignments`.

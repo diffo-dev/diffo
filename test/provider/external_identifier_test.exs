@@ -18,10 +18,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
     @tag :casing
     test "list external identifiers - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -29,7 +29,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -59,11 +59,11 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "find external identifiers by external id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -71,7 +71,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -79,7 +79,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -130,11 +130,11 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "list external identifiers by related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -142,7 +142,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -150,7 +150,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -204,11 +204,11 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "list external identifiers by related owner id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -216,7 +216,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -224,7 +224,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party2 =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_ADAPTIVE_NETWORKS",
           name: :entityId,
           href: "entity/internal/T3_ADAPTIVE_NETWORKS",
@@ -277,7 +277,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
   describe "Diffo.Provider create ExternalIdentifiers" do
     test "create an external identifier with no external id or owner  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       external_identifier =
         Diffo.Provider.create_external_identifier!(%{instance_id: instance1.id, type: "123"})
@@ -287,10 +287,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "create an external identifier with external id and owner  - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -310,13 +310,13 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "create - failure - must have one of type, external id, owner_id" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
       {:error, _error} = Diffo.Provider.create_external_identifier(%{instance_id: instance1.id})
     end
 
     test "create - failure - must have an instance" do
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -335,10 +335,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
   describe "Diffo.Provider update ExternalIdentifiers" do
     test "update external_id to nil - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -361,10 +361,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "update external_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -388,10 +388,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "update owner_id to nil - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -415,10 +415,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "update owner_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -426,7 +426,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
         })
 
       t3_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T3_CONNECTIVITY",
           name: :entityId,
           href: "entity/internal/T3_CONNECTIVITY",
@@ -451,10 +451,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "update owner_id - failure - owner doesn't exist" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -476,11 +476,11 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "update instance_id - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
-      instance2 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
+      instance2 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -509,10 +509,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "update instance_id - failure - instance doesn't exist" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance1 = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance1 = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -536,7 +536,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "update - failure - must have one of type, external id, owner_id" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       external_identifier =
         Diffo.Provider.create_external_identifier!(%{
@@ -554,10 +554,10 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
   describe "Diffo.Provider encode ExternalIdentifiers" do
     test "encode json with owner - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       t4_party =
-        Diffo.Provider.create_party!(%{
+        Diffo.Provider.create_party!(:PartyRef, %{
           id: "T4_ACCESS",
           name: :entityId,
           href: "entity/internal/T4_ACCESS",
@@ -580,7 +580,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
 
     test "encode json no owner - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       external_identifier =
         Diffo.Provider.create_external_identifier!(%{
@@ -659,7 +659,7 @@ defmodule Diffo.Provider.ExternalIdentifierTest do
   describe "Diffo.Provider delete ExternalIdentifiers" do
     test "delete external_identifier with related instance - success" do
       specification = Diffo.Provider.create_specification!(%{name: "nbnAccess"})
-      instance = Diffo.Provider.create_instance!(%{specified_by: specification.id})
+      instance = Diffo.Test.create_instance!(%{specified_by: specification.id})
 
       external_identifier =
         Diffo.Provider.create_external_identifier!(%{

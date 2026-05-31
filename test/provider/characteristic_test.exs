@@ -60,10 +60,10 @@ defmodule Diffo.Provider.CharacteristicTest do
         })
 
       parent_instance =
-        Diffo.Provider.create_instance!(%{specified_by: parent_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: parent_specification.id, type: :resource})
 
       child_instance =
-        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
       characteristic =
         Diffo.Provider.create_characteristic!(%{
@@ -87,10 +87,10 @@ defmodule Diffo.Provider.CharacteristicTest do
       specification = Diffo.Provider.create_specification!(%{name: "evc"})
 
       first_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "first"})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, name: "first"})
 
       second_instance =
-        Diffo.Provider.create_instance!(%{specified_by: specification.id, name: "second"})
+        Diffo.Test.create_instance!(%{specified_by: specification.id, name: "second"})
 
       forward_characteristic =
         Diffo.Provider.create_characteristic!(%{
@@ -134,10 +134,10 @@ defmodule Diffo.Provider.CharacteristicTest do
         Diffo.Provider.create_specification!(%{name: "cable", type: :resourceSpecification})
 
       parent_instance =
-        Diffo.Provider.create_instance!(%{specified_by: parent_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: parent_specification.id, type: :resource})
 
       child_instance =
-        Diffo.Provider.create_instance!(%{specified_by: child_specification.id, type: :resource})
+        Diffo.Test.create_instance!(%{specified_by: child_specification.id, type: :resource})
 
       characteristic =
         Diffo.Provider.create_characteristic!(%{
@@ -379,7 +379,7 @@ defmodule Diffo.Provider.CharacteristicTest do
         })
 
       instance =
-        Diffo.Provider.create_instance!(%{
+        Diffo.Test.create_instance!(%{
           specified_by: specification.id,
           characteristics: [characteristic.id]
         })

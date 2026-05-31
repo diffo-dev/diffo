@@ -19,7 +19,7 @@ defmodule Diffo.Provider.Extension.InfoTest do
     end
 
     test "returns false for a BaseParty-derived resource" do
-      assert Info.instance?(Diffo.Test.Party.Organization) == false
+      assert Info.instance?(Diffo.Test.Party.Enterprise) == false
     end
 
     test "returns false for a BasePlace-derived resource" do
@@ -33,7 +33,7 @@ defmodule Diffo.Provider.Extension.InfoTest do
 
   describe "party?/1" do
     test "returns true for a BaseParty-derived resource" do
-      assert Info.party?(Diffo.Test.Party.Organization) == true
+      assert Info.party?(Diffo.Test.Party.Enterprise) == true
     end
 
     test "returns true for the base Party resource" do
@@ -67,7 +67,7 @@ defmodule Diffo.Provider.Extension.InfoTest do
     end
 
     test "returns false for a BaseParty-derived resource" do
-      assert Info.place?(Diffo.Test.Party.Organization) == false
+      assert Info.place?(Diffo.Test.Party.Enterprise) == false
     end
 
     test "returns false for a non-existent module" do

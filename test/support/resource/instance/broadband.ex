@@ -11,10 +11,11 @@ defmodule Diffo.Test.Instance.Broadband do
   removal of :fttb from the supported technology types.
   """
   alias Diffo.Provider.BaseInstance
+  alias Diffo.Provider.Service
   alias Diffo.Test.Servo
 
   use Ash.Resource,
-    fragments: [BaseInstance],
+    fragments: [BaseInstance, Service],
     domain: Servo
 
   resource do
