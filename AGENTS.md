@@ -294,6 +294,34 @@ mix test path/to/test.exs:LINE        # single test
 mix test --max-failures 5             # stop early
 ```
 
+## Formatting, docs, and the DSL toolchain
+
+Diffo is a Spark DSL library, so formatting and docs have DSL-aware steps. Run these
+after any change that touches the `Diffo.Provider.Extension` DSL (adding/removing/renaming
+an entity or its args), and before a release:
+
+```sh
+mix format                            # format all code (uses .formatter.exs)
+mix spark.formatter                   # regenerate .formatter.exs locals_without_parens, then format it
+mix spark.cheat_sheets                # regenerate documentation/dsls/DSL-Diffo.Provider.Extension.md
+mix docs                              # spark.cheat_sheets + ex_doc + spark.replace_doc_links
+```
+
+- **`.formatter.exs`** carries the `Spark.Formatter` plugin and a `locals_without_parens`
+  list of every DSL entity/arity (e.g. `party_ref: 2`, `inherited_characteristic: 2`,
+  `assignment_alias: 1`, `via: 1`). It is **committed** and must stay in sync with the DSL —
+  if it drifts, `mix format` adds spurious parens to DSL calls. `mix spark.formatter`
+  (the alias regenerates the list and re-formats the file) is the source of truth; run it
+  whenever you change the extension, and commit the result.
+- **`mix format --check-formatted`** must pass in CI/pre-release. The `mix test` alias runs
+  `ash.setup` first; formatting is separate.
+- **The DSL cheat sheet** (`documentation/dsls/DSL-Diffo.Provider.Extension.md`) is generated
+  by `mix spark.cheat_sheets` and **committed** — regenerate and commit it after DSL changes
+  so it doesn't go stale (a no-diff regenerate means it's current).
+- **`mix docs`** output lands in `doc/`, which is **gitignored** — generated HTML and the
+  livebooks copied there are not tracked. The source livebooks live in `documentation/how_to/`
+  and the root `diffo.livemd`; edit those, not `doc/`.
+
 ## Module naming and Neo4j labels
 
 AshNeo4j derives a node label from the **last segment** of the module name. Two resources
@@ -344,7 +372,7 @@ which doesn't compete with the extender's axis because fragments compose at the 
 - **`BaseInstance`** — the shared base. TMF638/639 subtypes ship as cascade
   fragments: a Service composes `BaseInstance + Service` (lifecycle state machine
   on `state` / `operating_status`), a Resource composes `BaseInstance + Resource`
-  (`resource_state`). An instance is exactly one of Service or Resource; the
+  (`lifecycle_state`). An instance is exactly one of Service or Resource; the
   `type` enum still records which. Extenders define `MyApp.Avc`, `MyApp.Cvc`,
   `MyApp.NbnEthernet` as distinct Service/Resource leaves. `Provider.Instance`
   is the generic Service + projection reader. The Assigner dispatches on the
@@ -618,7 +646,7 @@ not. Add any useful hypotheses as a follow-up comment on the issue, then leave i
 - Calling `Assigner.assign/4` when a `pools do` declaration exists — prefer `Assigner.assign/3` which looks up the thing automatically.
 - Hand-writing the `:define` / `:relate` / `:assign_*` after-action plumbing — use `Diffo.Provider.Changes.Define`, `Diffo.Provider.Changes.Relate`, and `{Diffo.Provider.Changes.Assign, pool: :name}` (since 0.4.1). The change modules thread `Characteristic.update_all/3`, `Pool.update_pools/3`, `Relationship.relate_instance/2` and `Assigner.assign/3` together and reload via the resource's primary `:read` action.
 - Hand-writing the `:create` / `:update` accept lists on a `BaseCharacteristic`-derived resource — they are synthesised from the resource's public attributes (since 0.4.1). Declare your own only when you need a narrower accept list.
-- Calling `Assigner.assign/3` on an instance that is not in the correct lifecycle state — the assigner enforces: resource instances must have `resource_state` of `:installing` or `:operating`; service instances must have `service_state` of `:feasibilityChecked`, `:reserved`, `:inactive`, `:active`, or `:suspended` (since 0.4.1). The full lists are exposed via `Assigner.assignable_resource_states/0` and `Assigner.assignable_service_states/0`. Lifecycle state transitions are an internal domain concern managed by the provider; assignment actions are external-facing.
+- Calling `Assigner.assign/3` on an instance that is not in the correct lifecycle state — the assigner enforces: resource instances must have `lifecycle_state` of `:planned` or `:installed`; service instances must have `state` of `:feasibilityChecked`, `:reserved`, `:inactive`, `:active`, or `:suspended`. The full lists are exposed via `Assigner.assignable_resource_states/0` and `Assigner.assignable_service_states/0`. Lifecycle state transitions are an internal domain concern managed by the provider; assignment actions are external-facing.
 - Wondering why `Relationship` and `AssignmentRelationship` both have an `alias` attribute with a `[:source_id, :alias]` / `[:target_id, :alias]` identity — alias is a "baby name" given to a relationship slot before (or when) the target is bound. Its full purpose becomes clear alongside the first-order expectation system (see issue #122): the expectation declares the alias for a slot it expects to be filled, and the actual relationship carries the same alias so the two can be matched. Without expectations in place, aliases look like optional metadata; with them, they are the join key between intent and fulfilment.
 - Using `characteristic :pool_name, Diffo.Provider.AssignedToRelationship` — `AssignedToRelationship` no longer exists; use `pools do / pool :name, :thing / end` instead.
 - Querying `Diffo.Provider.Relationship` for assignment records — assignments are stored as `Diffo.Provider.DefinedSimpleRelationship`; access them via `instance.assignments`.

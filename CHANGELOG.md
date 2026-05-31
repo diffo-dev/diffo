@@ -11,7 +11,11 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
-## Unreleased
+## 0.5.0 (2026-06-01)
+
+### Dependencies
+
+* **Bump `ash_neo4j` to `~> 0.8.1`** (#198) — picks up the data-layer fixes for [ash_neo4j#283](https://github.com/diffo-dev/ash_neo4j/issues/283) (geo attribute set to `nil` on update now clears persisted companions), [#285](https://github.com/diffo-dev/ash_neo4j/issues/285) (a `belongs_to` edge present in the graph failed to load when the node carried ≥2 same-label collection edges), and #287 (stale indexable geo companions on a shape-changing update). Six previously-skipped tests re-enabled: the `BasePlace` `location → bounds` transition and the 5 generic-instance encode tests.
 
 ### Features
 
@@ -28,7 +32,7 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
   **API:** reads project to the concrete leaf — `Diffo.Provider.get_instance_by_id!/1` / `list_instances!/0` / `find_instances_by_*` return the concrete Service/Resource struct (via `AshNeo4j.worlds/1`). The lifecycle and record operations (`activate_service!`, `respecify_instance!`, `delete_instance!`, …) are now struct-dispatched functions on `Diffo.Provider` rather than code-interface definitions; existing call sites are unchanged.
 
-  Known limitation: creating a generic instance with both features **and** characteristics is blocked by [ash_neo4j#284](https://github.com/diffo-dev/ash_neo4j/issues/284) (`AshStateMachine` + multiple same-label `manage_relationship` edges drops a `belongs_to` edge); 5 encode tests are skipped pending the upstream fix. The production consumer-leaf path (features/characteristics via the `provider do` DSL → `build_after`) is unaffected.
+  Earlier in this cycle, creating a generic instance with both features **and** characteristics was blocked by an ash_neo4j load-path defect ([ash_neo4j#285](https://github.com/diffo-dev/ash_neo4j/issues/285), originally filed as [#284](https://github.com/diffo-dev/ash_neo4j/issues/284)) — a `belongs_to` edge present in the graph failed to load when the node also carried ≥2 same-label collection edges. Resolved by the ash_neo4j 0.8.1 bump (below); the 5 encode tests skipped against it are re-enabled.
 
 * **Inherited and reverse-inherited values now surface in the TMF JSON view** (#173) — a new sibling transformer `Diffo.Provider.Extension.Transformers.TransformInheritedJason` runs after `TransformInheritedRefs` (calc injection) and before `AshJason.Resource.Transformer` (encoder generation). For each inherited kind a resource declares, it injects a focused `jason.customize` step so loaded inherited calcs reach the consumer-visible array — no per-consumer customize required:
 

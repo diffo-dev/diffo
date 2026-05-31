@@ -22,10 +22,10 @@ defmodule Diffo.Provider.BaseInstance do
 
   ## Instance Extension DSL
 
-  The DSL has two top-level sections: `structure do` describes what the instance kind is;
-  `behaviour do` wires it to Ash actions.
-
-  ### structure
+  All declarations live inside a single `provider do` section. It describes what the
+  instance kind is (`specification`, `characteristics`, `features`, `parties`, `places`)
+  and wires it to Ash actions (`behaviour`). The blocks below are each shown on their own
+  for clarity, but all sit inside one `provider do`.
 
   `specification do` — declares the TMF Specification for this Instance kind (id, name, type,
   major_version, description, category).
@@ -43,27 +43,24 @@ defmodule Diffo.Provider.BaseInstance do
         party :provider, MyApp.Provider, calculate: :provider_calculation
         parties :installer, MyApp.Installer
         parties :technician, MyApp.Technician, constraints: [min: 1, max: 3]
-        party :owner, MyApp.InfrastructureCo, reference: true
+        party_ref :owner, MyApp.InfrastructureCo
       end
 
   - `party` — singular (at most one party in this role per instance)
   - `parties` — plural (unbounded, or bounded with `constraints: [min: n, max: m]`)
-  - `reference: true` — no direct `PartyRef` edge; party is reachable by graph traversal
+  - `party_ref` — a reference: no direct `PartyRef` edge; party is reachable by graph traversal
   - `calculate:` — names an Ash calculation on this resource that produces the party at build time
 
-  `places do` — declares the Place roles this Instance kind relates to. Mirrors `parties do`
-  in structure:
+  `places do` — declares the Place roles this Instance kind relates to. Mirrors `parties do`:
 
       places do
         place :installation_site, MyApp.GeographicSite
         places :coverage_areas, MyApp.GeographicLocation, constraints: [min: 1]
-        place :billing_address, MyApp.GeographicAddress, reference: true
+        place_ref :billing_address, MyApp.GeographicAddress
       end
 
   All declarations are introspectable at runtime via `Diffo.Provider.Instance.Info` and at
   compile time via `Diffo.Provider.Instance.Extension.Info`.
-
-  ### behaviour
 
   `behaviour do actions do create :name end end` — marks a named create action for build
   wiring. This injects `:specified_by`, `:features`, and `:characteristics` arguments onto
@@ -107,7 +104,7 @@ defmodule Diffo.Provider.BaseInstance do
           plural_name :clusters
         end
 
-        structure do
+        provider do
           specification do
             id "4bcfc4c9-e776-4878-a658-e8d81857bed7"
             name "cluster"
@@ -122,11 +119,11 @@ defmodule Diffo.Provider.BaseInstance do
           places do
             place :site, MyApp.GeographicSite
           end
-        end
 
-        behaviour do
-          actions do
-            create :build
+          behaviour do
+            actions do
+              create :build
+            end
           end
         end
 
