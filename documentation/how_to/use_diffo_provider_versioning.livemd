@@ -154,7 +154,7 @@ defmodule Diffo.Nbn.Broadband do
     plural_name :broadbands
   end
 
-  structure do
+  provider do
     specification do
       id "a1b2c3d4-e5f6-4a7b-8c9d-e0f1a2b3c4d5"
       name "broadband"
@@ -167,11 +167,11 @@ defmodule Diffo.Nbn.Broadband do
     characteristics do
       characteristic :broadband, BroadbandValue
     end
-  end
 
-  behaviour do
-    actions do
-      create :build
+    behaviour do
+      actions do
+        create :build
+      end
     end
   end
 
@@ -228,7 +228,7 @@ defmodule Diffo.Nbn.BroadbandV2 do
     plural_name :broadband_v2s
   end
 
-  structure do
+  provider do
     specification do
       id "f6e5d4c3-b2a1-4f0e-9d8c-7b6a5f4e3d2c"
       name "broadband"
@@ -241,11 +241,11 @@ defmodule Diffo.Nbn.BroadbandV2 do
     characteristics do
       characteristic :broadband, BroadbandV2Value
     end
-  end
 
-  behaviour do
-    actions do
-      create :build
+    behaviour do
+      actions do
+        create :build
+      end
     end
   end
 

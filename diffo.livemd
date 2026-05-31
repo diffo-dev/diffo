@@ -201,13 +201,13 @@ For our broadband service instance we'll add both Customer and Reseller parties 
 
 ```elixir
 individual =
-  Diffo.Provider.create_party!(%{
+  Diffo.Provider.create_party!(:PartyRef, %{
     id: "IND000000897354",
     name: :individualId,
     referred_type: :Individual
   })
 org =
-  Diffo.Provider.create_party!(%{
+  Diffo.Provider.create_party!(:PartyRef, %{
     id: "ORG000000123456",
     name: :organizationId,
     referred_type: :Organization
@@ -312,8 +312,8 @@ expected_parties = [%{role: :Provider}, %{role: :Reseller}, %{role: :SiteContact
 expected_instance = %{
   id: &Uuid.expect_uuid4/1,
   specification: expected_specification, 
-  service_state: :feasibilityChecked,
-  service_operating_status: :feasible, 
+  state: :feasibilityChecked,
+  operating_status: :feasible,
   characteristics: expected_characteristics, 
   places: expected_places,
   parties: expected_parties}
@@ -336,7 +336,7 @@ We'll have a few things outstanding which we would normally find out during serv
 We recommend using outstanding to drive next task logic, so that the orchestration is directed by the difference engine. This could look like an address lookup (where we learn the provider) followed by a provider service qualification (where we learn the technology) and the related network places.
 
 ```elixir
-nbn = Provider.create_party!(%{id: "nbn", name: "NBNCo", referred_type: :Organization})
+nbn = Provider.create_party!(:PartyRef, %{id: "nbn", name: "NBNCo", referred_type: :Organization})
 nbn_party_ref = Provider.create_party_ref!(%{instance_id: broadband_0001.id, party_id: nbn.id, role: :Provider})
 provider_z_end = Provider.create_place!(:PlaceRef, %{id: "LOC000000899353", name: "locationId", href: "place/nbnco/LOC000000899353", referred_type: :GeographicAddress})
 provider_z_end_place_ref = Provider.create_place_ref!(%{instance_id: broadband_0001.id, role: :CustomerSite, place_id: provider_z_end.id})
@@ -375,7 +375,7 @@ We simply need to advance the services state to end the feasiblity
 
 ## Advancing Service State
 
-TMF638 Services implement a service_state and also have an service_operating_status. The service we created earlier was in the :initial service state.
+TMF638 Services implement a `state` and also have an `operating_status`. The service we created earlier was in the :initial service state.
 
 Diffo uses the [AshStateMachine Extension](https://github.com/ash-project/ash_state_machine). By default we allow all TMF638 state transitions, but these are customisable by manipulating the Instance DSL.
 
@@ -385,10 +385,10 @@ From active state we can deactivate, suspend or terminate the service
 From inactive or suspended state we can activate or terminate the service.
 No transitions are possible from terminated or cancelled.
 
-Given that our feasibilityCheck above was complete we want to set the :feasibilityChecked service_state, and because it was successful we'll set the :feasible service_operating_status:
+Given that our feasibilityCheck above was complete we want to set the :feasibilityChecked `state`, and because it was successful we'll set the :feasible `operating_status`:
 
 ```elixir
-broadband_0001 = broadband_0001 |> Provider.feasibilityCheck_service!(%{service_operating_status: :feasible})
+broadband_0001 = broadband_0001 |> Provider.feasibilityCheck_service!(%{operating_status: :feasible})
 broadband_0001 = Provider.get_instance_by_id!(broadband_0001.id)
 broadband_0001 |> Jason.encode!(pretty: true) |> IO.puts
 ```

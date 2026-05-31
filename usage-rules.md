@@ -85,7 +85,7 @@ never both, never neither:
 | Subtype | Subtype fragment | Adds |
 |---|---|---|
 | Service (TMF638) | `Diffo.Provider.Service` | the service lifecycle state machine (`state` / `operating_status`), lifecycle actions (activate/suspend/terminate/cancel/…), TMF638 jason |
-| Resource (TMF639) | `Diffo.Provider.Resource` | `resource_state` (lifecycleState), the `lifecycle` action, TMF639 jason |
+| Resource (TMF639) | `Diffo.Provider.Resource` | `lifecycle_state` (TMF639 v5 lifecycleState — `planned`/`installed`/`pendingRemoval`), the `lifecycle` action, TMF639 jason |
 
 ```elixir
 defmodule MyApp.Card do

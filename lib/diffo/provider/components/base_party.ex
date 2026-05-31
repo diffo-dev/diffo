@@ -56,21 +56,25 @@ defmodule Diffo.Provider.BaseParty do
 
   ## Party Extension DSL
 
-  The `Diffo.Provider.Party.Extension` DSL provides two compile-time declaration blocks.
-  Role names are domain-specific nouns from the party's perspective — timeless, camelCase
-  when multi-word.
+  The party DSL provides two compile-time declaration blocks, both nested inside a single
+  `provider do` section. Role names are domain-specific nouns from the party's perspective
+  — timeless, camelCase when multi-word.
 
   `instances do` — declares the roles this Party kind plays with respect to Instances:
 
-      instances do
-        role :operator, MyApp.Cluster
-        role :dataCentre, MyApp.Facility
+      provider do
+        instances do
+          role :operator, MyApp.Cluster
+          role :dataCentre, MyApp.Facility
+        end
       end
 
   `parties do` — declares the roles this Party kind plays with respect to other Parties:
 
-      parties do
-        role :employer, MyApp.Organization
+      provider do
+        parties do
+          role :employer, MyApp.Organization
+        end
       end
 
   Both blocks are introspectable via `Diffo.Provider.Party.Extension.Info`.
@@ -101,8 +105,10 @@ defmodule Diffo.Provider.BaseParty do
           end
         end
 
-        instances do
-          role :provider, MyApp.AccessService
+        provider do
+          instances do
+            role :provider, MyApp.AccessService
+          end
         end
       end
 
