@@ -64,6 +64,19 @@ defmodule Diffo.MixProject do
       source_ref: "v#{@version}",
       main: "readme",
       logo: "logos/diffo.jpg",
+      # These public moduledocs legitimately name internal collaborators that are
+      # `@moduledoc false` (`Diffo.Provider.Instance.Util`, `Diffo.Provider.ServiceState`)
+      # or belong to a dependency (`AshJason.Resource.Transformer`). Keep the prose
+      # references but tell ExDoc not to autolink them, so it doesn't warn about linking
+      # to hidden entities.
+      skip_code_autolink_to: [
+        "Diffo.Provider.Instance.Util",
+        "Diffo.Provider.Instance.Util.surface_inherited_places/2",
+        "Diffo.Provider.Instance.Util.surface_inherited_parties/2",
+        "Diffo.Provider.Instance.Util.surface_inherited_characteristics/2",
+        "Diffo.Provider.ServiceState",
+        "AshJason.Resource.Transformer"
+      ],
       extras: [
         "README.md": [title: "Guide"],
         "LICENSES/MIT.md": [title: "License"],
