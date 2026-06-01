@@ -6,7 +6,7 @@ defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
 
-  @version "0.5.0"
+  @version "0.5.1"
   @name "Diffo"
   @description "TMF Service and Resource Manager with a difference"
   @github_url "https://github.com/diffo-dev/diffo"
@@ -121,6 +121,7 @@ defmodule Diffo.MixProject do
   defp deps do
     [
       {:usage_rules, "~> 1.2", only: [:dev]},
+      {:git_ops, "~> 2.6", only: [:dev], runtime: false},
       {:ash_outstanding, "~> 0.2.3"},
       {:ash_jason, "~> 3.0"},
       {:ash_state_machine, "~> 0.2.12"},
