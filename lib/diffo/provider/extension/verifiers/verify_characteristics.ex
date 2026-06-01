@@ -8,12 +8,21 @@ defmodule Diffo.Provider.Extension.Verifiers.VerifyCharacteristics do
 
   alias Spark.Dsl.Verifier
   alias Spark.Error.DslError
+  alias Diffo.Provider.Extension.Characteristic
   alias Diffo.Provider.Extension.Info
 
   @impl true
   def verify(dsl_state) do
     resource = Verifier.get_persisted(dsl_state, :module)
-    characteristics = Verifier.get_entities(dsl_state, [:provider, :characteristics])
+
+    # The :characteristics section also holds inherited_characteristic /
+    # reverse_inherited_characteristic declarations, whose structs carry neither
+    # :name nor :value_type. The name-uniqueness and value_type checks below apply
+    # only to plain `characteristic` entities, so filter to those first (cf. #183).
+    characteristics =
+      dsl_state
+      |> Verifier.get_entities([:provider, :characteristics])
+      |> Enum.filter(&is_struct(&1, Characteristic))
 
     duplicate_errors =
       characteristics
