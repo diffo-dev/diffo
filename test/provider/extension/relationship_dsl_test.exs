@@ -93,7 +93,7 @@ defmodule Diffo.Provider.Extension.RelationshipDslTest do
     test "non-atom in source roles list warns DslError" do
       Util.assert_compile_time_warning(
         Spark.Error.DslError,
-        "relationships:",
+        ~s(relationships: source role "not_an_atom" must be an atom),
         fn ->
           defmodule InvalidSourceRole do
             alias Diffo.Provider.BaseInstance
@@ -123,7 +123,7 @@ defmodule Diffo.Provider.Extension.RelationshipDslTest do
     test "empty list for source roles warns DslError" do
       Util.assert_compile_time_warning(
         Spark.Error.DslError,
-        "relationships:",
+        "relationships: source roles must be :all, :none, or a non-empty list of atoms",
         fn ->
           defmodule EmptySourceRoles do
             alias Diffo.Provider.BaseInstance
@@ -143,6 +143,66 @@ defmodule Diffo.Provider.Extension.RelationshipDslTest do
 
               relationships do
                 source []
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "non-atom in target roles list warns DslError — direction is reported" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        ~s(relationships: target role "not_an_atom" must be an atom),
+        fn ->
+          defmodule InvalidTargetRole do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with non-atom target relationship role"
+              plural_name :invalid_target_roles
+            end
+
+            provider do
+              specification do
+                id "d4e5f6a7-b8c9-4012-9def-234567890123"
+                name "invalidTargetRole"
+                type :resourceSpecification
+              end
+
+              relationships do
+                target ["not_an_atom"]
+              end
+            end
+          end
+        end
+      )
+    end
+
+    test "non-list scalar roles warns DslError — e.g. the string \"all\" instead of the atom :all" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        ~s(relationships: source roles must be :all, :none, or a non-empty list of atoms, got: "all"),
+        fn ->
+          defmodule ScalarSourceRoles do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with a string instead of :all for source roles"
+              plural_name :scalar_source_roles
+            end
+
+            provider do
+              specification do
+                id "e5f6a7b8-c9d0-4123-8ef0-345678901234"
+                name "scalarSourceRoles"
+                type :resourceSpecification
+              end
+
+              relationships do
+                source "all"
               end
             end
           end
