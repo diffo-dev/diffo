@@ -27,6 +27,31 @@ run `mix usage_rules.sync` immediately after `mix deps.get`. Dependencies publis
 usage rules; syncing pulls those changes into `CLAUDE.md` so you are working from the
 up-to-date guidance before touching any code.
 
+## Releasing
+
+Releases are driven by [`git_ops`](https://hexdocs.pm/git_ops) — a dev-only dependency
+configured in `config/config.exs`. The changelog is built from
+[Conventional Commits](https://www.conventionalcommits.org), so write commit subjects with a
+type prefix (`fix:`, `feat:`, `deps:`, `chore:`, `refactor:`, `test:`, `docs:`).
+
+To cut a release from `dev`:
+
+1. `mix git_ops.release --dry-run` — preview the computed version and changelog without
+   writing anything. The bump follows semver from the commit types since the last `v*` tag
+   (`fix:` → patch, `feat:` → minor).
+2. `mix git_ops.release` — bumps `@version` in `mix.exs`, inserts the new section into
+   `CHANGELOG.md` after the `<!-- changelog -->` marker, commits, and tags `vX.Y.Z`.
+3. Curate the generated entries. git_ops seeds each from the commit *subject* — often a
+   branch name — so rewrite the `feat:`/`fix:` lines into the curated prose this changelog
+   uses (bold lead, `(#issue)`, an em-dash explanation), then `git commit --amend --no-edit`
+   and `git tag -f vX.Y.Z` to fold the edits in (safe while unpushed).
+4. Open a PR `dev` → `main`, merge, then `mix hex.publish` from `main`.
+
+Only `feat`/`fix`/`deps` surface in the changelog; `chore`/`refactor`/`test`/`docs` are
+accepted but hidden, so test-only work (e.g. verifier coverage) doesn't clutter it.
+Non-Conventional subjects and merge commits are logged as "Unparseable" and skipped — that
+is expected, not an error.
+
 ## Fixing bugs
 
 Before writing any fix, review existing test coverage for the affected behaviour. If the bug

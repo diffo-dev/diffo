@@ -39,4 +39,26 @@ config :spark,
 config :ash, :custom_expressions, [Diffo.Unwrap.AshCustomExpression]
 
 config :diffo, ash_domains: [Diffo.Provider]
+
+# git_ops drives releases: `mix git_ops.release` reads Conventional Commits since the
+# last `v*` tag, bumps `@version` in mix.exs, rolls CHANGELOG.md (inserting after the
+# `<!-- changelog -->` marker), commits, and tags. Only `feat` and `fix` surface in the
+# changelog; `deps` is a custom section for dependency bumps. `chore`/`refactor`/`test`/
+# `docs` are accepted commit types but hidden from the changelog (so test-only work like
+# verifier coverage doesn't appear). See AGENTS.md "Releasing".
+config :git_ops,
+  mix_project: Mix.Project.get!(),
+  changelog_file: "CHANGELOG.md",
+  repository_url: "https://github.com/diffo-dev/diffo",
+  types: [
+    deps: [header: "Dependencies"],
+    chore: [hidden?: true],
+    refactor: [hidden?: true],
+    test: [hidden?: true],
+    docs: [hidden?: true]
+  ],
+  tags: [allowed: ["major", "minor", "patch"], allow_untagged?: true],
+  manage_mix_version?: true,
+  version_tag_prefix: "v"
+
 import_config "#{config_env()}.exs"
