@@ -11,6 +11,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.5.1](https://github.com/diffo-dev/diffo/compare/v0.5.0...v0.5.1) (2026-06-01)
+
+
+
+
+### Bug Fixes:
+
+* 202-surface-inherited-characteristic-jason-step-order by Matt Beanland
+
+* 201-verify-characteristics-inherited-keyerror by Matt Beanland
+
 ## 0.5.0 (2026-06-01)
 
 ### Dependencies

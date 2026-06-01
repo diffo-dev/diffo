@@ -454,7 +454,12 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
         |> Jason.encode!()
         |> Jason.decode!()
 
-      assert Enum.any?(encoded["serviceCharacteristic"] || [], &Map.has_key?(&1, "name"))
+      # The inherited :card characteristic must actually surface — asserting the
+      # concrete value, not merely "some entry with a name" (AccessService declares no
+      # typed characteristic, so a lax check would pass even if nothing surfaced).
+      assert [%{"name" => "card", "value" => value}] = encoded["serviceCharacteristic"]
+      assert value["family"] == "ISAM"
+      assert value["model"] == "EBLT48"
     end
 
     test "Diffo.Unknown sentinels are filtered off the wire" do
@@ -500,6 +505,72 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
         |> Jason.decode!()
 
       refute Map.has_key?(encoded, "place")
+    end
+  end
+
+  # Regression for #202. The earlier surfacing test above uses AccessService, which
+  # declares *no* typed characteristic — so the base fragment never rebuilds the
+  # array and nothing could clobber the surfaced value, masking the bug. The clobber
+  # only bites when typed and inherited characteristics share one array: the surfacing
+  # step (prepended, pre-fix) ran *before* the fragment built the array from the typed
+  # characteristics, and the fragment then overwrote it. ShelfInstance is the real
+  # shape — typed :shelf plus reverse_inherited_characteristic :assigned_cards.
+  describe "JSON surfacing (#202) — typed and inherited characteristics coexist in one array" do
+    test "resourceCharacteristic carries both the typed shelf characteristic and the surfaced assignee cards" do
+      {:ok, shelf} = Diffo.Test.Parties.build_shelf_with_installer()
+
+      shelf_updates = [
+        shelf: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        slots: [first: 1, last: 16, assignable_type: "Slot"]
+      ]
+
+      {:ok, shelf} = Servo.define_shelf(shelf, %{characteristic_value_updates: shelf_updates})
+      {:ok, shelf} = Servo.lifecycle_shelf(shelf, %{lifecycle_state: :installed})
+
+      card_updates = [
+        card: [family: :ISAM, model: "EBLT48", technology: :adsl2Plus],
+        ports: [first: 1, last: 48, assignable_type: "ADSL2+"]
+      ]
+
+      {:ok, card_a} = Servo.build_card(%{})
+      {:ok, card_a} = Servo.define_card(card_a, %{characteristic_value_updates: card_updates})
+      {:ok, card_a} = Servo.lifecycle_card(card_a, %{lifecycle_state: :installed})
+
+      {:ok, card_b} = Servo.build_card(%{})
+      {:ok, card_b} = Servo.define_card(card_b, %{characteristic_value_updates: card_updates})
+      {:ok, card_b} = Servo.lifecycle_card(card_b, %{lifecycle_state: :installed})
+
+      for card <- [card_a, card_b] do
+        {:ok, _shelf} =
+          Servo.assign_slot(shelf, %{
+            assignment: %Assignment{
+              assignee_id: card.id,
+              operation: :auto_assign,
+              alias: :slot
+            }
+          })
+      end
+
+      encoded =
+        shelf
+        |> Ash.load!([:assigned_cards], domain: Servo)
+        |> Jason.encode!()
+        |> Jason.decode!()
+
+      chars = encoded["resourceCharacteristic"] || []
+
+      # The shelf's own typed characteristic survives — the fragment still builds it.
+      assert Enum.any?(chars, &(&1["name"] == "shelf"))
+
+      # And the reverse-inherited :assigned_cards surfaced *alongside* it, one entry
+      # per slot assignee. Pre-fix (#202) the prepended surfacing step ran before the
+      # fragment built the array, and the fragment then clobbered these to nothing.
+      card_chars = Enum.filter(chars, &(&1["name"] == "card"))
+      assert length(card_chars) == 2
+
+      assert Enum.all?(card_chars, fn c ->
+               c["value"]["family"] == "ISAM" and c["value"]["model"] == "EBLT48"
+             end)
     end
   end
 

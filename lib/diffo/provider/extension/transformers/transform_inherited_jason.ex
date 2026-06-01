@@ -86,7 +86,14 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedJason do
 
   defp maybe_add_step(dsl_state, true, fun) do
     step = %AshJason.TransformerHelpers.Step{type: :customize, input: fun}
-    Transformer.add_entity(dsl_state, [:jason], step)
+    # Append, not prepend. AshJason threads `result` through the `[:jason]` steps
+    # in list order, and the base Service/Resource fragment's own customize step is
+    # what *builds* the `serviceCharacteristic` / `resourceCharacteristic` (and
+    # `place` / `relatedParty`) arrays. The surfacing step appends to those arrays,
+    # so it must run *after* the fragment materialises them — prepending (the
+    # `add_entity` default) ran it first, before the array existed, and the fragment
+    # then clobbered the surfaced value. See #202.
+    Transformer.add_entity(dsl_state, [:jason], step, type: :append)
   end
 
   defp declared?(entities, declaration_modules) do
