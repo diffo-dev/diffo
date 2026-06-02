@@ -787,9 +787,9 @@ required:
   role plus the inherited place's flattened identity; there is no backing ref node, the
   inheritance simulates it)
 - `inherited_party` → the `relatedParty` array, as a simulated `PartyRef`
-- `inherited_characteristic` / `reverse_inherited_characteristic` → the
-  `serviceCharacteristic` / `resourceCharacteristic` array, as ordinary typed
-  characteristics
+- `inherited_characteristic` → the `serviceCharacteristic` / `resourceCharacteristic`
+  array, as ordinary typed characteristics (see the `inherited_characteristic` DSL section
+  below)
 
 Surfaced entries appear after the instance's local entries. `%Diffo.Unknown{}` sentinels
 (the "tried and couldn't determine" X-state) are filtered out — they are a Diffo-level
@@ -804,6 +804,111 @@ load the calculation (e.g. `Ash.load(instance, [:exchange])`) to include it.
   "serviceCharacteristic": [{ "name": "card", "value": { "model": "EBLT48" } }]
 }
 ```
+
+## `inherited_characteristic` DSL
+
+Declare `inherited_characteristic` inside `characteristics do` on an Instance resource to
+generate an Ash calculation that **derives a typed characteristic by walking the graph**.
+No characteristic record is created on the consuming instance — the calculation *is* the
+reference, late-bound (the reached resource need not exist at the consumer's compile time).
+
+> **0.6.0 breaking change.** This unifies and replaces the 0.5.x
+> `inherited_characteristic` (assignment-inward only) and
+> `reverse_inherited_characteristic` entities with one entity and a per-hop `via:` grammar.
+> See the migration table at the end of this section.
+
+### Traversal — the `via:` hop chain
+
+`via:` is an ordered list of hops. Each hop walks **one edge in one direction**; direction
+is mechanical and matches the stored edge:
+
+- `:forward` — this instance is the edge `source` (filter `source_id = me`, follow to
+  `target`).
+- `:reverse` — this instance is the edge `target` (filter `target_id = me`, follow to
+  `source`).
+
+Mechanism is `assignment:` (`AssignmentRelationship`, keyed by `alias`) or `relationship:`
+(`DefinedSimpleRelationship`, by `type` and/or `alias`). The two axes are independent, so
+any combination is a legal hop and chains of any length compose:
+
+| direction | `assignment` | `relationship` |
+|---|---|---|
+| `:forward` | my assignees | what I contain/own |
+| `:reverse` | my assigner | what contains/owns me |
+
+**Hop forms:**
+
+- `alias` *(bare atom)* — shorthand for `{:reverse, assignment: alias}` (inherit from your
+  assigner — the common case). An omitted `via:` defaults to `[name]`.
+- `{:forward | :reverse, assignment: alias}`
+- `{:forward | :reverse, relationship: type}` — by relationship `type` only.
+- `{:forward | :reverse, relationship: [type: t, alias: a]}` — by `type` and/or `alias`.
+
+### Options
+
+- `via:` — the hop list (default `[name]`).
+- `read:` — the characteristic role to read on each reached instance. Defaults to the calc
+  name. (The hop `alias` names the *assigned thing*; `read:` names the *characteristic* —
+  they are independent.)
+- `as:` — renames the surfaced characteristic (both the loaded value and the encoded TMF
+  entry). Defaults to the source characteristic's own name (no rename).
+- `collapse: :first | :last` — collapses the consumer-ordered result list to that end
+  (`List.first/1` / `List.last/1`). When set the calc returns a single record or `nil`
+  instead of a list — for the common case of a structurally-single inheritance.
+
+```elixir
+provider do
+  characteristics do
+    # Inherit from your assigner (bare-atom shorthand = reverse assignment)
+    inherited_characteristic :card, via: [:primary]
+
+    # Forward assignment to your assignees, reading their :card (renamed calc handle)
+    inherited_characteristic :assigned_cards, via: [{:forward, assignment: :slot}], read: :card
+
+    # Forward relationship — every NNI a group contains (plural)
+    inherited_characteristic :nnis, via: [{:forward, relationship: :contains}], read: :nni
+
+    # Mixed chain + collapse: forward :owns to the AVC, then reverse :cvlan to its CVC
+    inherited_characteristic :cvc,
+      via: [{:forward, relationship: [alias: :circuit]}, {:reverse, assignment: :cvlan}],
+      read: :cvc, collapse: :first
+  end
+end
+```
+
+Because mechanism and direction are independent per hop, long mixed chains are just longer
+lists. For example, "which network-side NNIs could a logical UNI's traffic traverse?"
+(UNI → its PRI → the owned AVC → its CVC → the NNI Group → all contained NNIs):
+
+```elixir
+inherited_characteristic :intercept_nnis,
+  via: [
+    {:reverse, relationship: [type: :owns, alias: :port]},  # UNI  → its PRI
+    {:forward, relationship: [alias: :circuit]},            # PRI  → owned AVC
+    {:reverse, assignment: :cvlan},                         # AVC  → its CVC
+    {:reverse, assignment: :svlan},                         # CVC  → its NNI Group
+    {:forward, relationship: :contains}                     # NNI Group → all NNIs
+  ],
+  read: :nni
+```
+
+### Result shape and surfacing
+
+Without `collapse`, the calc returns a list (one entry per reached instance; a list of
+records where the reached resource declares `{:array, _}`). With `collapse`, a single
+record or `nil`. `%Diffo.Unknown{}` sentinels appear when a reached struct can't be
+projected to a loadable resource or declares no characteristic at the `read` role; they are
+the Diffo diagnostic surface and are filtered off the TMF wire. When loaded, results surface
+into the `serviceCharacteristic` / `resourceCharacteristic` array (see *JSON surfacing*
+above).
+
+### Migration from 0.5.x
+
+| 0.5.x | 0.6.0 |
+|---|---|
+| `inherited_characteristic :card, via: [:primary]` | unchanged |
+| `inherited_characteristic :x, via: [:a, :b]` | unchanged (each bare atom = reverse assignment) |
+| `reverse_inherited_characteristic :n, assignment_alias: :s, characteristic: :c` | `inherited_characteristic :n, via: [{:forward, assignment: :s}], read: :c` |
 
 ## Field calculation modules
 

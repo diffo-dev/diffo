@@ -265,7 +265,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
     end
   end
 
-  describe "reverse_inherited_characteristic — typed characteristic of assignees (outward)" do
+  describe "inherited_characteristic — forward assignment to assignees (read rename)" do
     test "shelf surfaces the :card characteristic of every CardInstance assigned via :slot" do
       {:ok, shelf} = Diffo.Test.Parties.build_shelf_with_installer()
 
@@ -323,7 +323,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
       assert assignee_ids == Enum.sort([card_a.id, card_b.id])
     end
 
-    test "shelf with no slot assignees yields empty reverse_inherited_characteristic" do
+    test "shelf with no slot assignees yields empty forward-assignment inheritance" do
       {:ok, shelf} = Diffo.Test.Parties.build_shelf_with_installer()
 
       shelf = Ash.load!(shelf, [:assigned_cards], domain: Servo)
@@ -514,7 +514,7 @@ defmodule Diffo.Provider.Extension.InheritedRefsTest do
   # only bites when typed and inherited characteristics share one array: the surfacing
   # step (prepended, pre-fix) ran *before* the fragment built the array from the typed
   # characteristics, and the fragment then overwrote it. ShelfInstance is the real
-  # shape — typed :shelf plus reverse_inherited_characteristic :assigned_cards.
+  # shape — typed :shelf plus inherited_characteristic :assigned_cards (forward :slot).
   describe "JSON surfacing (#202) — typed and inherited characteristics coexist in one array" do
     test "resourceCharacteristic carries both the typed shelf characteristic and the surfaced assignee cards" do
       {:ok, shelf} = Diffo.Test.Parties.build_shelf_with_installer()
