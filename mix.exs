@@ -77,6 +77,10 @@ defmodule Diffo.MixProject do
         "Diffo.Provider.ServiceState",
         "AshJason.Resource.Transformer"
       ],
+      # The CHANGELOG is a historical record and legitimately names functions removed in
+      # earlier releases (e.g. create_place!/1, create_party!/1). Don't warn about those
+      # undefined references — it's not live API documentation.
+      skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
       extras: [
         "README.md": [title: "Guide"],
         "CHANGELOG.md": [title: "Changelog"],
@@ -89,6 +93,9 @@ defmodule Diffo.MixProject do
         "documentation/how_to/use_diffo_type.livemd": [title: "Using Diffo.Type"],
         "documentation/how_to/use_diffo_provider_extension.livemd": [
           title: "Using the Diffo Provider Extension"
+        ],
+        "documentation/how_to/use_diffo_place_geo.livemd": [
+          title: "Places: GeographicLocation and GeoJSON"
         ],
         "documentation/how_to/use_diffo_provider_versioning.livemd": [
           title: "Instance Versioning with the Diffo Provider"
