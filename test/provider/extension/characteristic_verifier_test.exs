@@ -147,5 +147,36 @@ defmodule Diffo.Provider.Extension.CharacteristicVerifierTest do
         end
       )
     end
+
+    # A malformed `via:` hop is caught at compile time by VerifyCharacteristics
+    # (via Traversal.normalize/2) rather than crashing at runtime.
+    test "malformed via hop warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "inherited_characteristic :bad: invalid via",
+        fn ->
+          defmodule MalformedViaHop do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with a malformed inherited_characteristic via hop"
+            end
+
+            provider do
+              specification do
+                id "f5e4d3c2-8b7a-4d9e-0f1a-4b3c2d1e0f5a"
+                name "malformedVia"
+                type :resourceSpecification
+              end
+
+              characteristics do
+                inherited_characteristic :bad, via: [{:forward, relationship: []}]
+              end
+            end
+          end
+        end
+      )
+    end
   end
 end

@@ -89,25 +89,31 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedRefs do
          %InheritedCharacteristicDeclaration{} = decl,
          resource
        ) do
-    # `via` was validated by VerifyCharacteristics, so normalize/2 succeeds here.
-    {:ok, hops} = Traversal.normalize(decl.via, decl.name)
-    read = decl.read || decl.name
+    case Traversal.normalize(decl.via, decl.name) do
+      {:ok, hops} ->
+        read = decl.read || decl.name
+        type = if decl.collapse, do: :map, else: {:array, :map}
 
-    type = if decl.collapse, do: :map, else: {:array, :map}
+        calc = %Ash.Resource.Calculation{
+          name: decl.name,
+          type: type,
+          calculation:
+            {Diffo.Provider.Calculations.InheritedCharacteristic,
+             [hops: hops, read: read, as: decl.as, world: resource, collapse: decl.collapse]},
+          description: "Inherited typed characteristic via graph traversal",
+          arguments: [],
+          public?: true,
+          allow_nil?: true,
+          constraints: []
+        }
 
-    calc = %Ash.Resource.Calculation{
-      name: decl.name,
-      type: type,
-      calculation:
-        {Diffo.Provider.Calculations.InheritedCharacteristic,
-         [hops: hops, read: read, as: decl.as, world: resource, collapse: decl.collapse]},
-      description: "Inherited typed characteristic via graph traversal",
-      arguments: [],
-      public?: true,
-      allow_nil?: true,
-      constraints: []
-    }
+        Transformer.add_entity(dsl_state, [:calculations], calc)
 
-    Transformer.add_entity(dsl_state, [:calculations], calc)
+      # Transformers run before verifiers; a malformed `via` is left untouched here
+      # so VerifyCharacteristics can report it as a clean DslError rather than this
+      # transformer crashing on a match error.
+      {:error, _reason} ->
+        dsl_state
+    end
   end
 end
