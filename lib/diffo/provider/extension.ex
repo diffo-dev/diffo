@@ -96,7 +96,6 @@ defmodule Diffo.Provider.Extension do
     InheritedCharacteristicDeclaration,
     InheritedPartyDeclaration,
     InheritedPlaceDeclaration,
-    ReverseInheritedCharacteristicDeclaration,
     PartyDeclaration,
     PartyRole,
     PlaceDeclaration,
@@ -190,47 +189,35 @@ defmodule Diffo.Provider.Extension do
   @inherited_characteristic_entity %Spark.Dsl.Entity{
     name: :inherited_characteristic,
     describe:
-      "Declares a typed characteristic derived by traversing the assignment graph inward — generates a calculation; per-source the typed module is resolved at runtime via AshNeo4j.worlds/1",
+      "Declares a typed characteristic derived by walking the graph along a `via:` hop chain (assignment and/or relationship edges, in either direction) — generates a calculation; per-reached-instance the typed module is resolved at runtime via AshNeo4j.worlds/1",
     target: InheritedCharacteristicDeclaration,
-    args: [:role],
-    schema: [
-      role: [
-        type: :atom,
-        doc:
-          "The characteristic role to look up on each source instance — also the default alias step and the generated calc name.",
-        required: true
-      ],
-      via: [
-        type: {:list, :atom},
-        doc:
-          "Sequence of assignment aliases to traverse inward. Defaults to [role] for single-hop. Use a list for multi-level."
-      ]
-    ]
-  }
-
-  @reverse_inherited_characteristic_entity %Spark.Dsl.Entity{
-    name: :reverse_inherited_characteristic,
-    describe:
-      "Declares a typed characteristic derived by traversing the assignment graph outward (assigner's view of assignees) — generates a calculation; per-assignee the typed module is resolved at runtime via AshNeo4j.worlds/1",
-    target: ReverseInheritedCharacteristicDeclaration,
     args: [:name],
     schema: [
       name: [
         type: :atom,
-        doc: "The name of the generated calculation on this resource.",
+        doc:
+          "The name of the generated calculation (Ash load/field handle), and the default `read` role.",
         required: true
       ],
-      assignment_alias: [
-        type: :atom,
+      via: [
+        type: {:list, :any},
         doc:
-          "The outgoing AssignmentRelationship alias to follow. Named `assignment_alias` because `alias` is an Elixir special form.",
-        required: true
+          "Ordered hop list. A bare atom is `{:reverse, assignment: alias}` shorthand; tuples are `{:forward | :reverse, assignment: alias}` or `{:forward | :reverse, relationship: type | [type: t, alias: a]}`. Defaults to [name]."
       ],
-      characteristic: [
+      read: [
         type: :atom,
         doc:
-          "The characteristic role to look up on each reached assignee — may differ from the calc name on this resource.",
-        required: true
+          "The characteristic role to look up on each reached instance. Defaults to the calc name."
+      ],
+      as: [
+        type: :atom,
+        doc:
+          "Renames the surfaced characteristic (loaded value and encoded entry). Defaults to the source characteristic's own name (no rename)."
+      ],
+      collapse: [
+        type: {:one_of, [:first, :last]},
+        doc:
+          "Collapses the result list to one end (`:first`/`:last`). When set, the calc returns a single record or nil rather than a list."
       ]
     ]
   }
@@ -243,18 +230,17 @@ defmodule Diffo.Provider.Extension do
       characteristics do
         characteristic :circuit, Diffo.Access.Circuit
         characteristic :line, Diffo.Access.Line
-        # Inherit a typed characteristic from a source instance reached
-        # by following the :port assignment-graph alias inward
+        # Inherit a typed characteristic from the assigner reached by following
+        # the :port assignment alias (bare atom = reverse assignment shorthand)
         inherited_characteristic :uni, via: [:port]
-        # Surface the typed characteristics of every assignee reached via :port
-        reverse_inherited_characteristic :unis, assignment_alias: :port, characteristic: :uni
+        # Surface the typed characteristic of every assignee reached forward via :port
+        inherited_characteristic :unis, via: [{:forward, assignment: :port}], read: :uni
       end
       """
     ],
     entities: [
       @characteristic_entity,
-      @inherited_characteristic_entity,
-      @reverse_inherited_characteristic_entity
+      @inherited_characteristic_entity
     ]
   }
 

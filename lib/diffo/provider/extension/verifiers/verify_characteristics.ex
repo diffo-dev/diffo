@@ -9,20 +9,21 @@ defmodule Diffo.Provider.Extension.Verifiers.VerifyCharacteristics do
   alias Spark.Dsl.Verifier
   alias Spark.Error.DslError
   alias Diffo.Provider.Extension.Characteristic
+  alias Diffo.Provider.Extension.InheritedCharacteristicDeclaration
   alias Diffo.Provider.Extension.Info
+  alias Diffo.Provider.Extension.Traversal
 
   @impl true
   def verify(dsl_state) do
     resource = Verifier.get_persisted(dsl_state, :module)
 
-    # The :characteristics section also holds inherited_characteristic /
-    # reverse_inherited_characteristic declarations, whose structs carry neither
-    # :name nor :value_type. The name-uniqueness and value_type checks below apply
-    # only to plain `characteristic` entities, so filter to those first (cf. #183).
-    characteristics =
-      dsl_state
-      |> Verifier.get_entities([:provider, :characteristics])
-      |> Enum.filter(&is_struct(&1, Characteristic))
+    entities = Verifier.get_entities(dsl_state, [:provider, :characteristics])
+
+    # The :characteristics section also holds inherited_characteristic declarations,
+    # whose structs carry neither :name (as a value name) nor :value_type. The
+    # name-uniqueness and value_type checks below apply only to plain `characteristic`
+    # entities, so filter to those first (cf. #183).
+    characteristics = Enum.filter(entities, &is_struct(&1, Characteristic))
 
     duplicate_errors =
       characteristics
@@ -71,7 +72,28 @@ defmodule Diffo.Provider.Extension.Verifiers.VerifyCharacteristics do
         end
       end)
 
-    case duplicate_errors ++ type_errors do
+    via_errors =
+      entities
+      |> Enum.filter(&is_struct(&1, InheritedCharacteristicDeclaration))
+      |> Enum.reduce([], fn decl, acc ->
+        case Traversal.normalize(decl.via, decl.name) do
+          {:ok, _hops} ->
+            acc
+
+          {:error, reason} ->
+            [
+              DslError.exception(
+                module: resource,
+                path: [:provider, :characteristics, decl.name],
+                message:
+                  "inherited_characteristic #{inspect(decl.name)}: invalid via — #{inspect(reason)}"
+              )
+              | acc
+            ]
+        end
+      end)
+
+    case duplicate_errors ++ type_errors ++ via_errors do
       [] -> :ok
       errors -> {:error, errors}
     end

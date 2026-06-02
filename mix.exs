@@ -6,7 +6,7 @@ defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
 
-  @version "0.5.1"
+  @version "0.6.0"
   @name "Diffo"
   @description "TMF Service and Resource Manager with a difference"
   @github_url "https://github.com/diffo-dev/diffo"
@@ -64,8 +64,26 @@ defmodule Diffo.MixProject do
       source_ref: "v#{@version}",
       main: "readme",
       logo: "logos/diffo.jpg",
+      # These public moduledocs legitimately name internal collaborators that are
+      # `@moduledoc false` (`Diffo.Provider.Instance.Util`, `Diffo.Provider.ServiceState`)
+      # or belong to a dependency (`AshJason.Resource.Transformer`). Keep the prose
+      # references but tell ExDoc not to autolink them, so it doesn't warn about linking
+      # to hidden entities.
+      skip_code_autolink_to: [
+        "Diffo.Provider.Instance.Util",
+        "Diffo.Provider.Instance.Util.surface_inherited_places/2",
+        "Diffo.Provider.Instance.Util.surface_inherited_parties/2",
+        "Diffo.Provider.Instance.Util.surface_inherited_characteristics/2",
+        "Diffo.Provider.ServiceState",
+        "AshJason.Resource.Transformer"
+      ],
+      # The CHANGELOG is a historical record and legitimately names functions removed in
+      # earlier releases (e.g. create_place!/1, create_party!/1). Don't warn about those
+      # undefined references — it's not live API documentation.
+      skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
       extras: [
         "README.md": [title: "Guide"],
+        "CHANGELOG.md": [title: "Changelog"],
         "LICENSES/MIT.md": [title: "License"],
         "diffo.livemd": [title: "Tutorial"],
         "documentation/dsls/DSL-Diffo.Provider.Extension.md": [
@@ -75,6 +93,9 @@ defmodule Diffo.MixProject do
         "documentation/how_to/use_diffo_type.livemd": [title: "Using Diffo.Type"],
         "documentation/how_to/use_diffo_provider_extension.livemd": [
           title: "Using the Diffo Provider Extension"
+        ],
+        "documentation/how_to/use_diffo_place_geo.livemd": [
+          title: "Places: GeographicLocation and GeoJSON"
         ],
         "documentation/how_to/use_diffo_provider_versioning.livemd": [
           title: "Instance Versioning with the Diffo Provider"
@@ -92,7 +113,7 @@ defmodule Diffo.MixProject do
     [
       name: :diffo,
       licenses: ["MIT"],
-      files: ~w(lib .formatter.exs mix.exs README* LICENSE* usage-rules.md),
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE* CHANGELOG* usage-rules.md),
       links: %{
         "GitHub" => @github_url,
         "Author's home page" => "https://www.diffo.dev"

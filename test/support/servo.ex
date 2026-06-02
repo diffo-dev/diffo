@@ -19,6 +19,7 @@ defmodule Diffo.Test.Servo do
   alias Diffo.Test.Instance.Broadband
   alias Diffo.Test.Instance.BroadbandV2
   alias Diffo.Test.Instance.AccessService
+  alias Diffo.Test.Instance.TraversalProbe
   alias Diffo.Test.Characteristic.ShelfCharacteristic
   alias Diffo.Test.Characteristic.CardCharacteristic
   alias Diffo.Test.Characteristic.DeploymentClass
@@ -62,6 +63,11 @@ defmodule Diffo.Test.Servo do
     resource AccessService do
       define :build_access_service, action: :build
       define :get_access_service_by_id, action: :read, get_by: :id
+    end
+
+    resource TraversalProbe do
+      define :build_traversal_probe, action: :build
+      define :get_traversal_probe_by_id, action: :read, get_by: :id
     end
 
     resource ShelfCharacteristic
