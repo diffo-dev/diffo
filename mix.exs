@@ -77,8 +77,13 @@ defmodule Diffo.MixProject do
         "Diffo.Provider.ServiceState",
         "AshJason.Resource.Transformer"
       ],
+      # The CHANGELOG is a historical record and legitimately names functions removed in
+      # earlier releases (e.g. create_place!/1, create_party!/1). Don't warn about those
+      # undefined references — it's not live API documentation.
+      skip_undefined_reference_warnings_on: ["CHANGELOG.md"],
       extras: [
         "README.md": [title: "Guide"],
+        "CHANGELOG.md": [title: "Changelog"],
         "LICENSES/MIT.md": [title: "License"],
         "diffo.livemd": [title: "Tutorial"],
         "documentation/dsls/DSL-Diffo.Provider.Extension.md": [
@@ -88,6 +93,9 @@ defmodule Diffo.MixProject do
         "documentation/how_to/use_diffo_type.livemd": [title: "Using Diffo.Type"],
         "documentation/how_to/use_diffo_provider_extension.livemd": [
           title: "Using the Diffo Provider Extension"
+        ],
+        "documentation/how_to/use_diffo_place_geo.livemd": [
+          title: "Places: GeographicLocation and GeoJSON"
         ],
         "documentation/how_to/use_diffo_provider_versioning.livemd": [
           title: "Instance Versioning with the Diffo Provider"
@@ -105,7 +113,7 @@ defmodule Diffo.MixProject do
     [
       name: :diffo,
       licenses: ["MIT"],
-      files: ~w(lib .formatter.exs mix.exs README* LICENSE* usage-rules.md),
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE* CHANGELOG* usage-rules.md),
       links: %{
         "GitHub" => @github_url,
         "Author's home page" => "https://www.diffo.dev"

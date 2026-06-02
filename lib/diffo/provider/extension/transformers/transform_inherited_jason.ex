@@ -7,8 +7,8 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedJason do
   Surfaces inherited and reverse-inherited results into the TMF JSON view.
 
   `TransformInheritedRefs` injects the Ash calculations for `inherited_place`,
-  `inherited_party`, `inherited_characteristic`, and
-  `reverse_inherited_characteristic` so they are loadable via `Ash.load/2`. That
+  `inherited_party`, and `inherited_characteristic` so they are loadable via
+  `Ash.load/2`. That
   alone keeps the brought-up values off the consumer-visible TMF surface — the
   calc result never reaches the `place` / `relatedParty` / `serviceCharacteristic`
   / `resourceCharacteristic` arrays on encode.
@@ -20,7 +20,7 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedJason do
       (the `place` array)
     * `inherited_party` → `Diffo.Provider.Instance.Util.surface_inherited_parties/2`
       (the `relatedParty` array)
-    * `inherited_characteristic` / `reverse_inherited_characteristic` →
+    * `inherited_characteristic` →
       `Diffo.Provider.Instance.Util.surface_inherited_characteristics/2`
       (the `serviceCharacteristic` / `resourceCharacteristic` array)
 
@@ -44,7 +44,6 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedJason do
   alias Diffo.Provider.Extension.InheritedPlaceDeclaration
   alias Diffo.Provider.Extension.InheritedPartyDeclaration
   alias Diffo.Provider.Extension.InheritedCharacteristicDeclaration
-  alias Diffo.Provider.Extension.ReverseInheritedCharacteristicDeclaration
   alias Diffo.Provider.Instance.Util
 
   @impl true
@@ -72,10 +71,7 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedJason do
         &Util.surface_inherited_parties/2
       )
       |> maybe_add_step(
-        declared?(characteristics, [
-          InheritedCharacteristicDeclaration,
-          ReverseInheritedCharacteristicDeclaration
-        ]),
+        declared?(characteristics, [InheritedCharacteristicDeclaration]),
         &Util.surface_inherited_characteristics/2
       )
 

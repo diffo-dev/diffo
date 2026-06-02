@@ -1,0 +1,333 @@
+<!--
+SPDX-FileCopyrightText: 2025 diffo contributors <https://github.com/diffo-dev/diffo/graphs.contributors>
+
+SPDX-License-Identifier: MIT
+-->
+
+# Diffo Places — GeographicLocation and GeoJSON
+
+```elixir
+Mix.install(
+  [
+    {:diffo, "~> 0.6.0"}
+  ],
+  config: [
+    diffo: [ash_domains: [Diffo.Provider]]
+  ],
+  consolidate_protocols: false
+)
+```
+
+## Overview
+
+A TMF **Place** says *where* something is. Diffo models Place as an abstract concept with
+three concrete subtypes, all built on the `Diffo.Provider.BasePlace` fragment:
+
+* **`GeographicAddress`** (TMF673) — a postal address (street, postcode, country).
+* **`GeographicSite`** (TMF674) — a named site (an exchange, a data centre).
+* **`GeographicLocation`** (TMF675) — a **geometry-bearing** place: a point or a region in
+  space.
+
+This livebook focuses on **`GeographicLocation`** and how its geometry is carried on the
+wire as **GeoJSON**.
+
+A `GeographicLocation` holds one of two WGS-84 geometries:
+
+* `location` — a **point** (`%Geo.Point{}`), for point-like places.
+* `bounds` — a **polygon** (`%Geo.Polygon{}`), for regions.
+
+Geometry is stored with [`AshGeo.GeoJson`](https://hexdocs.pm/ash_geo/) and the underlying
+[`Geo`](https://hexdocs.pm/geo/) structs, in WGS-84 (`srid: 4326`). On encode it surfaces in
+the TMF675 `geoJson` shape.
+
+> **Coordinate order.** `Geo` and GeoJSON both use **`{lon, lat}`** (X, Y) — longitude
+> first. This is the opposite of the "lat, long" most maps quote, so take care: Sydney CBD
+> is `{151.2093, -33.8688}`, not `{-33.8688, 151.2093}`.
+
+### Installing Neo4j and Configuring Bolty
+
+`GeographicLocation` persists through the [Ash Neo4j DataLayer](https://github.com/diffo-dev/ash_neo4j),
+which requires Neo4j to be installed and running. You can install latest major Neo4j
+versions from the community tab at [Neo4j Deployment Center](https://neo4j.com/deployment-center/?desktop-gdb),
+or use the [5.26.8 direct link](https://neo4j.com/download-thanks/?edition=community&release=5.26.8&flavour=rpm).
+
+Update the configuration below as necessary and evaluate.
+
+```elixir
+config = [
+  uri: "bolt://localhost:7687",
+  auth: [username: "neo4j", password: "password"],
+  user_agent: "diffoLivebook/1",
+  pool_size: 15,
+  max_overflow: 3,
+  prefix: :default,
+  name: Bolt,
+  log: false,
+  log_hex: false
+]
+```
+
+Bolty needs a process in your supervision tree; this starts one if not already running:
+
+```elixir
+AshNeo4j.BoltyHelper.start(config)
+```
+
+Verify Neo4j is reachable:
+
+```elixir
+AshNeo4j.BoltyHelper.is_connected()
+```
+
+## Creating a point GeographicLocation
+
+The preferred consumer API is the `Diffo.Provider` type dispatcher,
+`create_place!/2` — it routes to the right subtype leaf for you. Give it a
+`%Geo.Point{}` as `location`, and optionally a positional `accuracy` in metres:
+
+```elixir
+sydney_cbd =
+  Diffo.Provider.create_place!(:GeographicLocation, %{
+    id: "LOC-SYD-CBD",
+    name: "Sydney CBD",
+    location: %Geo.Point{coordinates: {151.2093, -33.8688}, srid: 4326},
+    accuracy: 10.0
+  })
+```
+
+The `type` is set to `:GeographicLocation` for you, and the point round-trips as a `Geo`
+struct:
+
+```elixir
+{sydney_cbd.type, sydney_cbd.location, sydney_cbd.accuracy}
+```
+
+## Creating a region GeographicLocation
+
+For an area, set `bounds` to a `%Geo.Polygon{}` instead. A polygon is a list of linear
+rings; the first ring is the outer boundary and **must be closed** (the last coordinate
+equals the first):
+
+```elixir
+sydney_region =
+  Diffo.Provider.create_place!(:GeographicLocation, %{
+    id: "LOC-SYD-REGION",
+    name: "Sydney region",
+    bounds: %Geo.Polygon{
+      coordinates: [
+        [
+          {151.0, -33.5},
+          {151.5, -33.5},
+          {151.5, -34.0},
+          {151.0, -34.0},
+          {151.0, -33.5}
+        ]
+      ],
+      srid: 4326
+    }
+  })
+
+{sydney_region.type, sydney_region.bounds}
+```
+
+## The TMF675 GeoJSON wire shape
+
+Diffo encodes the geometry into the TMF675 `geoJson` field on JSON encode. The `@type`
+is rebranded to **`GeoJsonPoint`** or **`GeoJsonPolygon`**, an `@baseType` of
+`GeographicLocation` is added, and the `location` / `bounds` attributes are replaced by a
+nested `geoJson.geometry` in GeoJSON form:
+
+```elixir
+Jason.encode!(sydney_cbd) |> Jason.decode!()
+```
+
+```elixir
+Jason.encode!(sydney_region) |> Jason.decode!()
+```
+
+A point encodes as:
+
+```json
+{
+  "@type": "GeoJsonPoint",
+  "@baseType": "GeographicLocation",
+  "id": "LOC-SYD-CBD",
+  "name": "Sydney CBD",
+  "accuracy": 10.0,
+  "geoJson": { "geometry": { "type": "Point", "coordinates": [151.2093, -33.8688] } }
+}
+```
+
+Note the coordinates are emitted as a `[lon, lat]` array (GeoJSON order), and the
+attribute-side `location` / `bounds` keys are *not* present on the wire.
+
+## Validation rules
+
+`BasePlace` and `BaseGeographicLocation` enforce three geometry rules. Each of these fails:
+
+```elixir
+# At most one of location / bounds may be set
+Diffo.Provider.create_place(:GeographicLocation, %{
+  id: "LOC-BAD-BOTH",
+  name: "Both",
+  location: %Geo.Point{coordinates: {151.0, -33.0}, srid: 4326},
+  bounds: %Geo.Polygon{coordinates: [[{151.0, -33.0}, {151.5, -33.0}, {151.5, -33.5}, {151.0, -33.0}]], srid: 4326}
+})
+```
+
+```elixir
+# Geometry is only allowed when type is :GeographicLocation
+Diffo.Provider.create_place(:GeographicSite, %{
+  id: "LOC-BAD-TYPE",
+  name: "Site with geometry",
+  bounds: %Geo.Polygon{coordinates: [[{151.0, -33.0}, {151.5, -33.0}, {151.5, -33.5}, {151.0, -33.0}]], srid: 4326}
+})
+```
+
+```elixir
+# A GeographicLocation requires at least one of location / bounds
+Diffo.Provider.create_place(:GeographicLocation, %{id: "LOC-BAD-EMPTY", name: "No geometry"})
+```
+
+## Reading back and cross-world projection
+
+`get_place_by_id!/1` reads a Place node and **projects** it back to its concrete subtype
+struct — you get a `GeographicLocation` back, geometry and all:
+
+```elixir
+Diffo.Provider.get_place_by_id!("LOC-SYD-CBD")
+```
+
+Projection is driven by `AshNeo4j.worlds/1`, which resolves a stored node to the concrete
+leaf resource it belongs to:
+
+```elixir
+AshNeo4j.worlds(sydney_cbd)
+```
+
+## A spatial calculation — signal strength from distance
+
+The out-of-the-box `Diffo.Provider.GeographicLocation` is just a leaf composing two
+fragments. Your domain can define its own — adding domain attributes and calculations — by
+composing the same `BasePlace` + `BaseGeographicLocation` fragments.
+
+AshNeo4j ships **graph-native spatial functions** for use directly in `Ash.Expr` —
+`st_distance` / `st_distance_in_meters`, `st_dwithin`, `st_within`, `st_contains`,
+`st_intersects`, `st_closest_point`. In a query filter they **push down to Neo4j's native
+`point.distance` / `point.withinBBox`** (indexed); in a calculation they **evaluate in
+Elixir** against the loaded `%Geo.*{}` structs — and both paths agree, because AshNeo4j
+matches Neo4j's WGS-84 distance model. No SQL, no PostGIS — the distance is computed in the
+graph.
+
+Here a `CellSite` adds a `transmit_power` (EIRP, in watts) and two **expression
+calculations**: the geodesic distance to a given point, and the received signal strength
+(power flux density, W/m²) — `transmit_power / (4·π·d²)` — derived from that distance. The
+target point comes in as a typed `:at` argument.
+
+Your own leaf belongs in your own domain (the built-in
+`Diffo.Provider.GeographicLocation` already fills that role in the `Diffo.Provider`
+domain):
+
+```elixir
+defmodule MyApp.Geo do
+  use Ash.Domain, otp_app: :diffo, validate_config_inclusion?: false
+
+  resources do
+  end
+end
+```
+
+```elixir
+defmodule MyApp.CellSite do
+  use Ash.Resource,
+    fragments: [Diffo.Provider.BasePlace, Diffo.Provider.BaseGeographicLocation],
+    domain: MyApp.Geo
+
+  attributes do
+    attribute :cell_id, :string, public?: true
+    # equivalent isotropically radiated power, in watts
+    attribute :transmit_power, :float, public?: true
+  end
+
+  calculations do
+    # the distance expression between two points — pushes to Neo4j point.distance
+    calculate :distance_m, :float, expr(st_distance_in_meters(location, ^arg(:at))) do
+      argument :at, AshGeo.GeoJson do
+        constraints geo_types: [:point], force_srid: 4326
+        allow_nil? false
+      end
+    end
+
+    # signal strength (power flux density, W/m²) from EIRP and that distance
+    calculate :signal_strength,
+              :float,
+              expr(
+                transmit_power /
+                  (4 * 3.141592653589793 *
+                     st_distance_in_meters(location, ^arg(:at)) *
+                     st_distance_in_meters(location, ^arg(:at)))
+              ) do
+      argument :at, AshGeo.GeoJson do
+        constraints geo_types: [:point], force_srid: 4326
+        allow_nil? false
+      end
+    end
+  end
+
+  actions do
+    create :build do
+      accept [:id, :href, :name, :location, :bounds, :accuracy, :cell_id, :transmit_power]
+      change set_attribute(:type, :GeographicLocation)
+    end
+  end
+end
+```
+
+Build a tower, then ask for the distance and signal strength at a nearby point — the `:at`
+point is supplied as each calculation's argument when you load it:
+
+```elixir
+tower =
+  Ash.create!(
+    MyApp.CellSite,
+    %{
+      id: "CELL-SYD-1",
+      name: "Sydney CBD Tower",
+      location: %Geo.Point{coordinates: {151.2093, -33.8688}, srid: 4326},
+      transmit_power: 40.0,
+      cell_id: "ENB-1001"
+    },
+    action: :build,
+    domain: MyApp.Geo
+  )
+
+# Town Hall, ~500 m south-west
+town_hall = %Geo.Point{coordinates: {151.2073, -33.8731}, srid: 4326}
+
+tower
+|> Ash.load!([distance_m: %{at: town_hall}, signal_strength: %{at: town_hall}], domain: MyApp.Geo)
+|> then(&{&1.distance_m, &1.signal_strength})
+# => {~513.0, ~1.2e-5}   (metres, W/m²)
+```
+
+The same `st_*` functions shine in a **query filter**, where they push down to Neo4j —
+e.g. every cell site within 2 km of the customer:
+
+```elixir
+require Ash.Query
+
+MyApp.CellSite
+|> Ash.Query.filter(st_dwithin(location, ^town_hall, 2_000))
+|> Ash.read!(domain: MyApp.Geo)
+```
+
+`BaseGeographicLocation` carries the `accuracy` attribute, the geometry validation, and the
+TMF675 `geoJson` encoding; the leaf adds only what is specific to it — here `cell_id`,
+`transmit_power`, and the two spatial calculations.
+
+## Where to next
+
+* The `Diffo.Provider.Extension` DSL — [cheat sheet](https://hexdocs.pm/diffo/DSL-Diffo.Provider.Extension.html)
+* Attaching a place to a Service or Resource via `place` / `place_ref`, and inheriting one
+  across the graph with `inherited_place` — see
+  [Using the Diffo Provider Extension](use_diffo_provider_extension.livemd).

@@ -11,11 +11,11 @@ defmodule Diffo.Provider.Extension.CharacteristicVerifierTest do
 
   describe "characteristics verifier" do
     # Regression for #201 — VerifyCharacteristics iterated every entity in the
-    # :characteristics section and read &1.name / &1.value_type. The inherited /
-    # reverse-inherited declarations carry neither (:role / :name + :characteristic),
-    # so the verifier raised `KeyError key :name`/`:value_type` on the declaration
-    # rather than compiling. The filter now skips those declarations.
-    test "inherited and reverse-inherited declarations do not crash the verifier (#201)" do
+    # :characteristics section and read &1.name / &1.value_type. An
+    # inherited_characteristic declaration carries no :value_type, so the verifier
+    # raised `KeyError key :value_type` on the declaration rather than compiling.
+    # The filter now skips those declarations.
+    test "inherited_characteristic declarations do not crash the verifier (#201)" do
       output =
         capture_io(:stderr, fn ->
           defmodule InheritedCharacteristicsCompile do
@@ -24,7 +24,7 @@ defmodule Diffo.Provider.Extension.CharacteristicVerifierTest do
             use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
 
             resource do
-              description "resource declaring inherited and reverse-inherited characteristics"
+              description "resource declaring inherited characteristics"
             end
 
             provider do
@@ -37,7 +37,7 @@ defmodule Diffo.Provider.Extension.CharacteristicVerifierTest do
               characteristics do
                 characteristic :shelf, ShelfCharacteristic
                 inherited_characteristic :uni, via: [:port]
-                reverse_inherited_characteristic :unis, assignment_alias: :port, characteristic: :uni
+                inherited_characteristic :unis, via: [{:forward, assignment: :port}], read: :uni
               end
             end
           end
@@ -45,7 +45,7 @@ defmodule Diffo.Provider.Extension.CharacteristicVerifierTest do
 
       # The #201 signature — the verifier KeyError'ing on a declaration's missing
       # key. The verifier still runs (the DslError tests below prove that); it just
-      # no longer chokes on the inherited / reverse-inherited declarations.
+      # no longer chokes on the inherited_characteristic declarations.
       refute output =~ "key :name not found"
       refute output =~ "key :value_type not found"
     end
@@ -141,6 +141,37 @@ defmodule Diffo.Provider.Extension.CharacteristicVerifierTest do
               characteristics do
                 characteristic :bad, Diffo.Test.Party.Enterprise
                 inherited_characteristic :uni, via: [:port]
+              end
+            end
+          end
+        end
+      )
+    end
+
+    # A malformed `via:` hop is caught at compile time by VerifyCharacteristics
+    # (via Traversal.normalize/2) rather than crashing at runtime.
+    test "malformed via hop warns DslError on compilation" do
+      Util.assert_compile_time_warning(
+        Spark.Error.DslError,
+        "inherited_characteristic :bad: invalid via",
+        fn ->
+          defmodule MalformedViaHop do
+            alias Diffo.Provider.BaseInstance
+            use Ash.Resource, fragments: [BaseInstance], domain: Diffo.Test.Servo
+
+            resource do
+              description "resource with a malformed inherited_characteristic via hop"
+            end
+
+            provider do
+              specification do
+                id "f5e4d3c2-8b7a-4d9e-0f1a-4b3c2d1e0f5a"
+                name "malformedVia"
+                type :resourceSpecification
+              end
+
+              characteristics do
+                inherited_characteristic :bad, via: [{:forward, relationship: []}]
               end
             end
           end
