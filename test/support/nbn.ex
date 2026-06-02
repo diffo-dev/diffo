@@ -18,6 +18,7 @@ defmodule Diffo.Test.Nbn do
   alias Diffo.Test.Party.Carrier
   alias Diffo.Test.Place.GeographicSite
   alias Diffo.Test.Place.ExchangeBuilding
+  alias Diffo.Test.Place.CellSite
 
   domain do
     description "NBN party and place domain"
@@ -49,6 +50,11 @@ defmodule Diffo.Test.Nbn do
     resource ExchangeBuilding do
       define :create_exchange_building, action: :build
       define :get_exchange_building_by_id, action: :read, get_by: :id
+    end
+
+    resource CellSite do
+      define :build_cell_site, action: :build
+      define :get_cell_site_by_id, action: :read, get_by: :id
     end
   end
 end

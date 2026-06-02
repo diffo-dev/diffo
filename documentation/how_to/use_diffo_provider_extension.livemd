@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.3.0"}
+    {:diffo, "~> 0.6.0"}
   ],
   config: [
     diffo: [ash_domains: [Diffo.Provider]]
@@ -559,6 +559,46 @@ provider do
 end
 ```
 
+### Inheriting a characteristic across the graph
+
+`inherited_characteristic` (declared in `characteristics do`) derives a typed characteristic
+by *walking the graph* and surfaces it as an ordinary characteristic — no record is stored
+on the consuming instance. Where `inherited_place` / `inherited_party` only climb assignment
+inward, `inherited_characteristic` takes a `via:` chain of hops that can run in **either
+direction** over **assignment or relationship** edges.
+
+Each hop is `{:forward | :reverse, assignment: alias}` or
+`{:forward | :reverse, relationship: type | [type: t, alias: a]}` — `:forward` follows the
+stored edge (`source → target`), `:reverse` follows it back (`target → source`). A bare atom
+is shorthand for `{:reverse, assignment: alias}`, the common "inherit from my assigner" case.
+
+A Cluster can surface the typed `:gpu` characteristic of the GPU assigned to its
+`:primary_gpu` slot. A cluster has exactly one primary GPU, so `collapse: :first` returns a
+single record rather than a list:
+
+```elixir
+provider do
+  characteristics do
+    # bare alias = {:reverse, assignment: :primary_gpu}; reads :gpu on the assigning GPU
+    inherited_characteristic :primary_gpu_spec,
+      via: [:primary_gpu], read: :gpu, collapse: :first
+  end
+end
+```
+
+```elixir
+cluster = Ash.load!(cluster_1, [:primary_gpu_spec], domain: Compute)
+# cluster.primary_gpu_spec => %GpuCharacteristic{...}   (a raw record, not a list)
+```
+
+- `read:` names the characteristic to read on the reached instance (defaults to the calc
+  name); `as:` renames it on the wire; `collapse: :first | :last` collapses the result to a
+  single record (or `nil`) instead of a list.
+- Mechanism and direction are independent per hop, so chains compose freely — e.g. a forward
+  `relationship: :contains` hop then a `:reverse` assignment hop. See the
+  [DSL cheat sheet](https://hexdocs.pm/diffo/DSL-Diffo.Provider.Extension.html) and
+  `usage-rules.md` for the full forward/reverse × assignment/relationship matrix.
+
 ### Reading fields from the assignment graph
 
 Three calculation modules handle common traversal patterns. All return lists.
@@ -601,6 +641,7 @@ calculate :downstream_name, {:array, :string},
 | Field from the instance that assigned to me | `FieldViaAssignedRelationship` |
 | Field from an instance I have a forward relationship to | `FieldViaRelationship` |
 | Place/party inherited via assignment | `inherited_place` / `inherited_party` |
+| Typed characteristic inherited across the graph | `inherited_characteristic` (`via:` hops) |
 
 ## Party Extension
 
