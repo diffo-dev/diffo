@@ -8,7 +8,6 @@ defmodule Diffo.Provider.Instance.Util do
   alias Diffo.Provider.Extension.InheritedPlaceDeclaration
   alias Diffo.Provider.Extension.InheritedPartyDeclaration
   alias Diffo.Provider.Extension.InheritedCharacteristicDeclaration
-  alias Diffo.Provider.Extension.ReverseInheritedCharacteristicDeclaration
 
   # Each of the three functions below is injected as its own `jason.customize`
   # step by `Diffo.Provider.Extension.Transformers.TransformInheritedJason`, but
@@ -63,8 +62,8 @@ defmodule Diffo.Provider.Instance.Util do
   end
 
   @doc """
-  Surfaces `inherited_characteristic` then `reverse_inherited_characteristic`
-  calc results into the `serviceCharacteristic` / `resourceCharacteristic` array.
+  Surfaces `inherited_characteristic` calc results into the
+  `serviceCharacteristic` / `resourceCharacteristic` array.
   """
   def surface_inherited_characteristics(result, record) do
     characteristics =
@@ -90,19 +89,10 @@ defmodule Diffo.Provider.Instance.Util do
   end
 
   defp inherited_characteristic_names(resource) do
-    characteristics = Info.provider_characteristics(resource)
-
-    inherited =
-      characteristics
-      |> Enum.filter(&is_struct(&1, InheritedCharacteristicDeclaration))
-      |> Enum.map(& &1.role)
-
-    reverse =
-      characteristics
-      |> Enum.filter(&is_struct(&1, ReverseInheritedCharacteristicDeclaration))
-      |> Enum.map(& &1.name)
-
-    inherited ++ reverse
+    resource
+    |> Info.provider_characteristics()
+    |> Enum.filter(&is_struct(&1, InheritedCharacteristicDeclaration))
+    |> Enum.map(& &1.name)
   end
 
   # Appends the surfaced values to the named array, preserving any locals already
