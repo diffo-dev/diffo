@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.GeographicSite do
   @moduledoc """
-  Ash Resource for a TMF675 GeographicSite.
+  Ash Resource for a TMF674 GeographicSite.
 
   Out-of-the-box concrete leaf derived from `BasePlace` + `BaseGeographicSite`.
   Sets `type: :GeographicSite` on the `:build` action; accepts the union of
@@ -27,7 +27,7 @@ defmodule Diffo.Provider.GeographicSite do
     domain: Diffo.Provider
 
   resource do
-    description "An Ash Resource for a TMF675 GeographicSite"
+    description "An Ash Resource for a TMF674 GeographicSite"
     plural_name :geographic_sites
   end
 

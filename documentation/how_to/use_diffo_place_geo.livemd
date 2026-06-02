@@ -205,7 +205,7 @@ leaf resource it belongs to:
 AshNeo4j.worlds(sydney_cbd)
 ```
 
-## A spatial calculation — signal strength from distance
+## A spatial calculation — RF link budget from distance
 
 The out-of-the-box `Diffo.Provider.GeographicLocation` is just a leaf composing two
 fragments. Your domain can define its own — adding domain attributes and calculations — by
@@ -219,10 +219,60 @@ Elixir** against the loaded `%Geo.*{}` structs — and both paths agree, because
 matches Neo4j's WGS-84 distance model. No SQL, no PostGIS — the distance is computed in the
 graph.
 
-Here a `CellSite` adds a `transmit_power` (EIRP, in watts) and two **expression
-calculations**: the geodesic distance to a given point, and the received signal strength
-(power flux density, W/m²) — `transmit_power / (4·π·d²)` — derived from that distance. The
-target point comes in as a typed `:at` argument.
+Here a `CellSite` models a simple **free-space (Friis) RF link budget**, the way an engineer
+reads it — in **dBm**. It carries an `eirp_dbm` (Equivalent Isotropic Radiated Power, which
+folds in the transmit-antenna gain) and a `frequency_mhz`, and exposes three calculations of
+the signal at a given point:
+
+- `distance_m` — geodesic distance (the graph-native `st_distance_in_meters` expression).
+- `path_loss_db` — free-space path loss, `20·log10(d) + 20·log10(f) − 27.55` (d in m, f in MHz).
+- `rssi_dbm` — received signal level for an isotropic receiver: `eirp_dbm − path_loss_db`.
+
+> This is line-of-sight free space — the optimistic **floor**. A real CBD link loses tens of
+> dB more to buildings, clutter and foliage. Using EIRP (Tx) and an isotropic Rx keeps the
+> figure antenna-decoupled.
+
+The dB maths needs `log10`, which `Ash.Expr` doesn't provide, so the link budget is an Elixir
+calculation — while `distance_m` stays a pure graph expression. It reuses
+`AshNeo4j.Geo.haversine_meters/2` so its distance matches the `point.distance` the expression
+path uses:
+
+```elixir
+defmodule MyApp.LinkBudget do
+  @moduledoc "Free-space (Friis) link budget: path loss (dB) and isotropic RSSI (dBm)."
+  use Ash.Resource.Calculation
+
+  @impl true
+  def load(_query, opts, _context) do
+    case opts[:metric] do
+      :rssi_dbm -> [:location, :eirp_dbm, :frequency_mhz]
+      :path_loss_db -> [:location, :frequency_mhz]
+    end
+  end
+
+  @impl true
+  def calculate(records, opts, context) do
+    %Geo.Point{coordinates: at} = context.arguments.at
+    Enum.map(records, &metric(opts[:metric], &1, at))
+  end
+
+  defp metric(:path_loss_db, %{location: %Geo.Point{coordinates: site}, frequency_mhz: f}, at),
+    do: fspl_db(AshNeo4j.Geo.haversine_meters(site, at), f)
+
+  defp metric(
+         :rssi_dbm,
+         %{location: %Geo.Point{coordinates: site}, eirp_dbm: eirp, frequency_mhz: f},
+         at
+       ),
+       do: Float.round(eirp - fspl_db(AshNeo4j.Geo.haversine_meters(site, at), f), 1)
+
+  # Friis free-space path loss; d in metres, f in MHz.
+  defp fspl_db(+0.0, _f), do: 0.0
+
+  defp fspl_db(d_m, f_mhz),
+    do: Float.round(20 * :math.log10(d_m) + 20 * :math.log10(f_mhz) - 27.55, 1)
+end
+```
 
 Your own leaf belongs in your own domain (the built-in
 `Diffo.Provider.GeographicLocation` already fills that role in the `Diffo.Provider`
@@ -230,9 +280,18 @@ domain):
 
 ```elixir
 defmodule MyApp.Geo do
-  use Ash.Domain, otp_app: :diffo, validate_config_inclusion?: false
+  use Ash.Domain,
+    otp_app: :diffo,
+    validate_config_inclusion?: false,
+    # writes the :Provider label on every node in this domain, so provider-side readers
+    # (e.g. Diffo.Provider.get_place_by_id!/1, which MATCHes [:Provider, :Place]) can find
+    # and project your leaf — see Diffo.Provider.DomainFragment
+    fragments: [Diffo.Provider.DomainFragment]
 
   resources do
+    # the domain is defined before the leaf below, so it can't list it explicitly —
+    # allow_unregistered? lets `domain: MyApp.Geo` accept MyApp.CellSite at runtime
+    allow_unregistered? true
   end
 end
 ```
@@ -245,8 +304,9 @@ defmodule MyApp.CellSite do
 
   attributes do
     attribute :cell_id, :string, public?: true
-    # equivalent isotropically radiated power, in watts
-    attribute :transmit_power, :float, public?: true
+    # Equivalent Isotropic Radiated Power, in dBm (folds in the Tx antenna gain)
+    attribute :eirp_dbm, :float, public?: true
+    attribute :frequency_mhz, :float, public?: true, default: 3500.0
   end
 
   calculations do
@@ -258,15 +318,15 @@ defmodule MyApp.CellSite do
       end
     end
 
-    # signal strength (power flux density, W/m²) from EIRP and that distance
-    calculate :signal_strength,
-              :float,
-              expr(
-                transmit_power /
-                  (4 * 3.141592653589793 *
-                     st_distance_in_meters(location, ^arg(:at)) *
-                     st_distance_in_meters(location, ^arg(:at)))
-              ) do
+    # free-space path loss (dB) and isotropic received signal level (dBm)
+    calculate :path_loss_db, :float, {MyApp.LinkBudget, metric: :path_loss_db} do
+      argument :at, AshGeo.GeoJson do
+        constraints geo_types: [:point], force_srid: 4326
+        allow_nil? false
+      end
+    end
+
+    calculate :rssi_dbm, :float, {MyApp.LinkBudget, metric: :rssi_dbm} do
       argument :at, AshGeo.GeoJson do
         constraints geo_types: [:point], force_srid: 4326
         allow_nil? false
@@ -276,14 +336,25 @@ defmodule MyApp.CellSite do
 
   actions do
     create :build do
-      accept [:id, :href, :name, :location, :bounds, :accuracy, :cell_id, :transmit_power]
+      accept [
+        :id,
+        :href,
+        :name,
+        :location,
+        :bounds,
+        :accuracy,
+        :cell_id,
+        :eirp_dbm,
+        :frequency_mhz
+      ]
+
       change set_attribute(:type, :GeographicLocation)
     end
   end
 end
 ```
 
-Build a tower, then ask for the distance and signal strength at a nearby point — the `:at`
+Build a tower, then ask for the distance, path loss and RSSI at a nearby point — the `:at`
 point is supplied as each calculation's argument when you load it:
 
 ```elixir
@@ -294,20 +365,24 @@ tower =
       id: "CELL-SYD-1",
       name: "Sydney CBD Tower",
       location: %Geo.Point{coordinates: {151.2093, -33.8688}, srid: 4326},
-      transmit_power: 40.0,
+      eirp_dbm: 60.0,
+      frequency_mhz: 3500.0,
       cell_id: "ENB-1001"
     },
     action: :build,
     domain: MyApp.Geo
   )
 
-# Town Hall, ~500 m south-west
+# Town Hall, ~513 m south-west
 town_hall = %Geo.Point{coordinates: {151.2073, -33.8731}, srid: 4326}
 
 tower
-|> Ash.load!([distance_m: %{at: town_hall}, signal_strength: %{at: town_hall}], domain: MyApp.Geo)
-|> then(&{&1.distance_m, &1.signal_strength})
-# => {~513.0, ~1.2e-5}   (metres, W/m²)
+|> Ash.load!(
+  [distance_m: %{at: town_hall}, path_loss_db: %{at: town_hall}, rssi_dbm: %{at: town_hall}],
+  domain: MyApp.Geo
+)
+|> then(&{&1.distance_m, &1.path_loss_db, &1.rssi_dbm})
+# => {~513.0, ~97.5, ~-37.5}   (metres, dB, dBm) — free-space at 3.5 GHz
 ```
 
 The same `st_*` functions shine in a **query filter**, where they push down to Neo4j —
@@ -323,7 +398,43 @@ MyApp.CellSite
 
 `BaseGeographicLocation` carries the `accuracy` attribute, the geometry validation, and the
 TMF675 `geoJson` encoding; the leaf adds only what is specific to it — here `cell_id`,
-`transmit_power`, and the two spatial calculations.
+`eirp_dbm` / `frequency_mhz`, and the three calculations.
+
+### Projecting a custom leaf
+
+A custom leaf projects exactly like the built-in subtypes — **provided its domain opts into
+provider polymorphism**. Because `MyApp.Geo` composes `Diffo.Provider.DomainFragment`, every
+node in it also gets the `Provider` label. So the node carries one label per world it belongs
+to: `Geo` (the domain), `CellSite` (the module), `Place` (from `BasePlace`), and `Provider`
+(the domain fragment):
+
+```elixir
+tower.__metadata__.labels
+# => ["Geo", "CellSite", "Place", "Provider"]
+```
+
+Note there's no `GeographicLocation` label — the subtype fragments don't add one; subtype
+identity is the module label plus the `:type` property. The **`Provider` label is the
+load-bearing one**: the provider-side reader `get_place_by_id!/1` MATCHes on
+`[:Provider, :Place]`, so it finds and projects your leaf back to its concrete type even
+though it lives in your own domain:
+
+```elixir
+Diffo.Provider.get_place_by_id!(tower.id)
+# => %MyApp.CellSite{type: :GeographicLocation, location: %Geo.Point{...}, ...}
+```
+
+`AshNeo4j.worlds/1` shows the underlying resolution — the node's labels project to the
+concrete `(domain, resource)`:
+
+```elixir
+AshNeo4j.worlds(tower)
+# => [{MyApp.Geo, MyApp.CellSite}]
+```
+
+Drop `Diffo.Provider.DomainFragment` from `MyApp.Geo` and the `Provider` label disappears —
+`get_place_by_id!` would no longer match the node. That fragment is precisely what opts your
+domain into the provider graph.
 
 ## Where to next
 
