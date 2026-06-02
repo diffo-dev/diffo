@@ -11,6 +11,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.6.0](https://github.com/diffo-dev/diffo/compare/v0.5.1...v0.6.0) (2026-06-02)
+### Breaking Changes:
+
+* unify inherited_characteristic into a general traversal DSL (#213) by Matt Beanland
+
+
+
+### Features:
+
+* add traversal foundation for unified inherited_characteristic (#213) by Matt Beanland
+
+### Bug Fixes:
+
+* ship CHANGELOG in the hex package and silence the git_ops warning by Matt Beanland
+
 ## [v0.5.1](https://github.com/diffo-dev/diffo/compare/v0.5.0...v0.5.1) (2026-06-01)
 
 
