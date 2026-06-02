@@ -15,9 +15,10 @@ defmodule Diffo.Provider.Extension.Traversal do
   - `:reverse` — this instance is the edge `target`; filter `target_id = me`, follow to
     `source_id`.
 
-  Mechanism is `:assignment` (`AssignmentRelationship`) or `:relationship`
-  (`DefinedSimpleRelationship`). The two axes are independent, so any
-  mechanism × direction combination is a legal hop and chains of any length compose.
+  Mechanism is `:assignment` (`AssignmentRelationship`) or `:relationship` (both
+  `DefinedSimpleRelationship` and the general `Relationship` — a `:relationship` hop spans
+  either storage, #222). The two axes are independent, so any mechanism × direction
+  combination is a legal hop and chains of any length compose.
 
   ## User hop forms
 
