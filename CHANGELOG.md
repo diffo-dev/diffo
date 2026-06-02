@@ -11,6 +11,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.7.0](https://github.com/diffo-dev/diffo/compare/v0.6.0...v0.7.0) (2026-06-02)
+
+
+
+
+### Features:
+
+* compile-time guard requiring the :Provider label on provider resources (#219) by Matt Beanland
+
+### Bug Fixes:
+
+* relationship-hop traversal walks the general Relationship, not just DefinedSimpleRelationship (#222) by Matt Beanland
+
 ## [v0.6.0](https://github.com/diffo-dev/diffo/compare/v0.5.1...v0.6.0) (2026-06-02)
 ### Breaking Changes:
 

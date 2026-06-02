@@ -100,10 +100,10 @@ end
 abstract reader that `get_instance_by_id!/1` projects through. A service
 **terminates** or **cancels** — only a Specification retires.
 
-### Place subtype fragments (TMF675 cascade)
+### Place subtype fragments (TMF Place cascade)
 
-`BasePlace` composes with one of three subtype fragments to produce a TMF675
-concrete Place. Diffo ships the three subtype leaves out of the box and the
+`BasePlace` composes with one of three subtype fragments to produce a concrete
+TMF Place (TMF673 GeographicAddress, TMF674 GeographicSite, TMF675 GeographicLocation). Diffo ships the three subtype leaves out of the box and the
 matching consumer leaf is a sibling, not a child:
 
 | Subtype | Subtype fragment | Concrete leaf in diffo |
@@ -828,8 +828,11 @@ is mechanical and matches the stored edge:
   `source`).
 
 Mechanism is `assignment:` (`AssignmentRelationship`, keyed by `alias`) or `relationship:`
-(`DefinedSimpleRelationship`, by `type` and/or `alias`). The two axes are independent, so
-any combination is a legal hop and chains of any length compose:
+(by `type` and/or `alias`). A `relationship:` hop spans **both** relationship resources —
+`DefinedSimpleRelationship` (a single characteristic closed at creation) and the general
+`Relationship` (mutable characteristics) — so an edge created by the standard `:relate`
+action is reachable either way. The two axes are independent, so any combination is a legal
+hop and chains of any length compose:
 
 | direction | `assignment` | `relationship` |
 |---|---|---|
@@ -948,8 +951,9 @@ Options: `field:` (required), `via:` (optional list of alias steps — omit for 
 
 ### `FieldViaRelationship`
 
-Traverses `DefinedSimpleRelationship` in the forward direction (source → target) filtered
-by `alias:` and/or `type:`, and reads a field from each target instance.
+Traverses relationship edges in the forward direction (source → target) filtered by
+`alias:` and/or `type:`, and reads a field from each target instance. Spans both
+`DefinedSimpleRelationship` and the general `Relationship` (#222).
 
 ```elixir
 # Name of the target reached via the :provides alias

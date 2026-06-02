@@ -90,4 +90,23 @@ defmodule Diffo.Provider.Extension.FieldViaRelationshipTest do
       assert shelf.assigned_linked_name == ["target-a"]
     end
   end
+
+  describe "FieldViaRelationship — general Relationship (#222)" do
+    test "reads field from a target reached via a general Relationship, not just DSR" do
+      {:ok, shelf} = Parties.build_shelf_with_installer()
+      {:ok, card} = Servo.build_card(%{name: "rel-target"})
+
+      # general Relationship (mutable), as the standard :relate action creates
+      Diffo.Provider.create_relationship!(%{
+        type: :assignedTo,
+        alias: :link,
+        source_id: shelf.id,
+        target_id: card.id
+      })
+
+      shelf = Ash.load!(shelf, [:linked_target_name], domain: Servo)
+
+      assert shelf.linked_target_name == ["rel-target"]
+    end
+  end
 end

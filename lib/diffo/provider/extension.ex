@@ -721,6 +721,7 @@ defmodule Diffo.Provider.Extension do
       Diffo.Provider.Extension.Verifiers.VerifyPlaces,
       Diffo.Provider.Extension.Verifiers.VerifyInstances,
       Diffo.Provider.Extension.Verifiers.VerifyBehaviour,
-      Diffo.Provider.Extension.Verifiers.VerifyRelationships
+      Diffo.Provider.Extension.Verifiers.VerifyRelationships,
+      Diffo.Provider.Extension.Verifiers.VerifyProviderDomain
     ]
 end
