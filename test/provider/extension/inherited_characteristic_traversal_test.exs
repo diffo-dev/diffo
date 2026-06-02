@@ -40,6 +40,24 @@ defmodule Diffo.Provider.Extension.InheritedCharacteristicTraversalTest do
                Enum.sort([c1.id, c2.id])
     end
 
+    test "contained_cards also follows a general Relationship :contains edge (#222)" do
+      # The standard :relate action stores a mutable Diffo.Provider.Relationship, not a
+      # DefinedSimpleRelationship — a relationship: hop must still reach it.
+      probe = probe!()
+      card = defined_card!("rel-card")
+
+      Diffo.Provider.create_relationship!(%{
+        type: :contains,
+        source_id: probe.id,
+        target_id: card.id
+      })
+
+      probe = Ash.load!(probe, [:contained_cards], domain: Servo)
+
+      assert [%CardCharacteristic{instance_id: instance_id}] = probe.contained_cards
+      assert instance_id == card.id
+    end
+
     test "owned_card collapses the single card owned via :circuit to a raw record" do
       probe = probe!()
       card = defined_card!("owned")
