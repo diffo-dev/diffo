@@ -100,10 +100,10 @@ end
 abstract reader that `get_instance_by_id!/1` projects through. A service
 **terminates** or **cancels** — only a Specification retires.
 
-### Place subtype fragments (TMF675 cascade)
+### Place subtype fragments (TMF Place cascade)
 
-`BasePlace` composes with one of three subtype fragments to produce a TMF675
-concrete Place. Diffo ships the three subtype leaves out of the box and the
+`BasePlace` composes with one of three subtype fragments to produce a concrete
+TMF Place (TMF673 GeographicAddress, TMF674 GeographicSite, TMF675 GeographicLocation). Diffo ships the three subtype leaves out of the box and the
 matching consumer leaf is a sibling, not a child:
 
 | Subtype | Subtype fragment | Concrete leaf in diffo |

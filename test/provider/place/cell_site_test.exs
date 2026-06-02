@@ -4,9 +4,10 @@
 
 defmodule Diffo.Test.Place.CellSiteTest do
   @moduledoc """
-  Proves the graph-native spatial **expression calculations** on a GeographicLocation leaf
-  evaluate against the AshNeo4j sandbox — `distance_m` and `signal_strength`, both built on
-  AshNeo4j's `st_distance_in_meters`. Backs the `use_diffo_place_geo` livebook.
+  Proves the spatial + link-budget calculations on a GeographicLocation leaf evaluate
+  against the AshNeo4j sandbox: `distance_m` (a graph-native `st_distance_in_meters`
+  expression) and the free-space `path_loss_db` / `rssi_dbm` link budget. Backs the
+  `use_diffo_place_geo` livebook.
   """
   use ExUnit.Case, async: true
   @moduletag :domain_extended
@@ -21,6 +22,7 @@ defmodule Diffo.Test.Place.CellSiteTest do
   # Sydney CBD tower; Town Hall is ~513 m south-west.
   @tower_point %Geo.Point{coordinates: {151.2093, -33.8688}, srid: 4326}
   @town_hall %Geo.Point{coordinates: {151.2073, -33.8731}, srid: 4326}
+  @frequency_mhz 3500.0
 
   defp build_tower(attrs \\ %{}) do
     Nbn.build_cell_site!(
@@ -30,7 +32,8 @@ defmodule Diffo.Test.Place.CellSiteTest do
           name: "Sydney CBD Tower",
           location: @tower_point,
           technology: :FixedWireless,
-          transmit_power: 40.0
+          eirp_dbm: 60.0,
+          frequency_mhz: @frequency_mhz
         },
         attrs
       )
@@ -51,36 +54,73 @@ defmodule Diffo.Test.Place.CellSiteTest do
     end
   end
 
-  describe "signal_strength — power flux density from EIRP and distance" do
-    test "computes transmit_power / (4·π·d²) at the :at point" do
-      tower = build_tower() |> Ash.load!([signal_strength: %{at: @town_hall}], domain: Nbn)
+  describe "path_loss_db / rssi_dbm — free-space link budget" do
+    test "free-space path loss matches Friis at the :at point" do
+      tower =
+        build_tower()
+        |> Ash.load!([distance_m: %{at: @town_hall}, path_loss_db: %{at: @town_hall}],
+          domain: Nbn
+        )
 
-      # S = 40 W / (4π · 513²) ≈ 1.21e-5 W/m²
-      expected = 40.0 / (4 * :math.pi() * 513.0 * 513.0)
-      assert_in_delta tower.signal_strength, expected, 1.0e-7
+      expected = 20 * :math.log10(tower.distance_m) + 20 * :math.log10(@frequency_mhz) - 27.55
+      assert_in_delta tower.path_loss_db, expected, 0.2
     end
 
-    test "halving transmit power halves the signal strength at the same point" do
-      full = build_tower() |> Ash.load!([signal_strength: %{at: @town_hall}], domain: Nbn)
+    test "rssi is eirp minus path loss (isotropic Rx)" do
+      tower =
+        build_tower()
+        |> Ash.load!([path_loss_db: %{at: @town_hall}, rssi_dbm: %{at: @town_hall}], domain: Nbn)
 
-      half =
-        build_tower(%{id: "CELL-SYD-2", transmit_power: 20.0})
-        |> Ash.load!([signal_strength: %{at: @town_hall}], domain: Nbn)
+      assert_in_delta tower.rssi_dbm, 60.0 - tower.path_loss_db, 0.2
+    end
 
-      assert_in_delta half.signal_strength, full.signal_strength / 2, 1.0e-9
+    test "+6 dB EIRP lifts RSSI by 6 dB at the same point" do
+      base = build_tower() |> Ash.load!([rssi_dbm: %{at: @town_hall}], domain: Nbn)
+
+      hotter =
+        build_tower(%{id: "CELL-SYD-2", eirp_dbm: 66.0})
+        |> Ash.load!([rssi_dbm: %{at: @town_hall}], domain: Nbn)
+
+      assert_in_delta hotter.rssi_dbm, base.rssi_dbm + 6.0, 0.2
     end
   end
 
-  describe "both calculations loaded together" do
-    test "distance_m and signal_strength load in one pass" do
+  describe "all calculations loaded together" do
+    test "distance_m, path_loss_db and rssi_dbm load in one pass" do
       tower =
         build_tower()
-        |> Ash.load!([distance_m: %{at: @town_hall}, signal_strength: %{at: @town_hall}],
+        |> Ash.load!(
+          [
+            distance_m: %{at: @town_hall},
+            path_loss_db: %{at: @town_hall},
+            rssi_dbm: %{at: @town_hall}
+          ],
           domain: Nbn
         )
 
       assert is_float(tower.distance_m)
-      assert is_float(tower.signal_strength)
+      assert is_float(tower.path_loss_db)
+      assert is_float(tower.rssi_dbm)
+    end
+  end
+
+  describe "cross-world projection" do
+    test "worlds/1 projects the CellSite node back to its concrete leaf" do
+      # Node labels are [Nbn, CellSite, Place, Provider] — no GeographicLocation label
+      # (subtype identity is the module + :type property); the :Provider label comes from
+      # Nbn composing Diffo.Provider.DomainFragment. worlds/1 recovers the concrete
+      # (domain, resource) by label-subset match.
+      tower = build_tower()
+      assert {Nbn, Diffo.Test.Place.CellSite} in AshNeo4j.worlds(tower)
+    end
+
+    test "Diffo.Provider.get_place_by_id! projects across domains via the :Provider label" do
+      # The provider-side reader MATCHes [:Provider, :Place]; the :Provider label (from the
+      # domain fragment) is what lets it find and project a leaf in another domain.
+      tower = build_tower()
+
+      assert %Diffo.Test.Place.CellSite{type: :GeographicLocation} =
+               Diffo.Provider.get_place_by_id!(tower.id)
     end
   end
 end

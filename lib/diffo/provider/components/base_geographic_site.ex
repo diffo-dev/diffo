@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.BaseGeographicSite do
   @moduledoc """
-  Ash Resource Fragment for TMF675 GeographicSite — named-location-style Place
+  Ash Resource Fragment for TMF674 GeographicSite — named-location-style Place
   (exchange, office, branch, data centre, etc.).
 
   Compose with `BasePlace` on a concrete leaf to get the TMF GeographicSite
@@ -55,7 +55,7 @@ defmodule Diffo.Provider.BaseGeographicSite do
   Result is `nil` when `address_id` is unset; a concrete address struct when
   resolved; `%Diffo.Unknown{}` when the id is set but can't be projected.
 
-  ## Wire shape (TMF675)
+  ## Wire shape (TMF674)
 
   `jason.pick` selects base + site fields and renames to TMF camelCase
   (`siteType`, `siteCode`). Inherits BasePlace's `encode_geo_json/2` customize
