@@ -53,11 +53,12 @@ defmodule Diffo.Test.Instance.ShelfInstance do
       characteristic :shelf, ShelfCharacteristic
       characteristic :shelves, {:array, ShelfCharacteristic}
       # Surface the :card typed characteristic of every CardInstance assigned
-      # to one of this shelf's slot-pool assignments. Per-assignee the typed
-      # module is resolved at runtime via AshNeo4j.worlds/1.
-      reverse_inherited_characteristic :assigned_cards,
-        assignment_alias: :slot,
-        characteristic: :card
+      # to one of this shelf's slot-pool assignments — forward assignment along
+      # the :slot alias. Per-assignee the typed module is resolved at runtime via
+      # AshNeo4j.worlds/1.
+      inherited_characteristic :assigned_cards,
+        via: [{:forward, assignment: :slot}],
+        read: :card
     end
 
     pools do

@@ -4,22 +4,22 @@
 
 defmodule Diffo.Provider.Extension.Transformers.TransformInheritedRefs do
   @moduledoc """
-  Injects Ash calculations for `inherited_place`, `inherited_party`,
-  `inherited_characteristic`, and `reverse_inherited_characteristic` declarations.
+  Injects Ash calculations for `inherited_place`, `inherited_party`, and
+  `inherited_characteristic` declarations.
 
   The consumer's resource module (`__MODULE__` of the resource being compiled)
   is passed as the `:world` opt to every injected calc — used for stamping
   `%Diffo.Unknown{}` sentinels at compile time rather than runtime resource
   introspection. See `Diffo.Provider.Calculations.InheritedPlace`,
-  `InheritedParty`, `InheritedCharacteristic`, and `ReverseInheritedCharacteristic`
-  for each calc's local reason vocabulary.
+  `InheritedParty`, and `InheritedCharacteristic` for each calc's local reason
+  vocabulary.
   """
   use Spark.Dsl.Transformer
   alias Spark.Dsl.Transformer
   alias Diffo.Provider.Extension.InheritedPlaceDeclaration
   alias Diffo.Provider.Extension.InheritedPartyDeclaration
   alias Diffo.Provider.Extension.InheritedCharacteristicDeclaration
-  alias Diffo.Provider.Extension.ReverseInheritedCharacteristicDeclaration
+  alias Diffo.Provider.Extension.Traversal
 
   @impl true
   def transform(dsl_state) do
@@ -42,14 +42,6 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedRefs do
       characteristics
       |> Enum.filter(&is_struct(&1, InheritedCharacteristicDeclaration))
       |> Enum.reduce(dsl_state, &inject_inherited_characteristic_calculation(&2, &1, resource))
-
-    dsl_state =
-      characteristics
-      |> Enum.filter(&is_struct(&1, ReverseInheritedCharacteristicDeclaration))
-      |> Enum.reduce(
-        dsl_state,
-        &inject_reverse_inherited_characteristic_calculation(&2, &1, resource)
-      )
 
     {:ok, dsl_state}
   end
@@ -97,40 +89,19 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedRefs do
          %InheritedCharacteristicDeclaration{} = decl,
          resource
        ) do
-    via = decl.via || [decl.role]
+    # `via` was validated by VerifyCharacteristics, so normalize/2 succeeds here.
+    {:ok, hops} = Traversal.normalize(decl.via, decl.name)
+    read = decl.read || decl.name
 
-    calc = %Ash.Resource.Calculation{
-      name: decl.role,
-      type: {:array, :map},
-      calculation:
-        {Diffo.Provider.Calculations.InheritedCharacteristic,
-         [via: via, role: decl.role, world: resource]},
-      description: "Inherited typed characteristic via assignment alias traversal (inward)",
-      arguments: [],
-      public?: true,
-      allow_nil?: true,
-      constraints: []
-    }
+    type = if decl.collapse, do: :map, else: {:array, :map}
 
-    Transformer.add_entity(dsl_state, [:calculations], calc)
-  end
-
-  defp inject_reverse_inherited_characteristic_calculation(
-         dsl_state,
-         %ReverseInheritedCharacteristicDeclaration{} = decl,
-         resource
-       ) do
     calc = %Ash.Resource.Calculation{
       name: decl.name,
-      type: {:array, :map},
+      type: type,
       calculation:
-        {Diffo.Provider.Calculations.ReverseInheritedCharacteristic,
-         [
-           assignment_alias: decl.assignment_alias,
-           characteristic: decl.characteristic,
-           world: resource
-         ]},
-      description: "Inherited typed characteristic via assignment alias traversal (outward)",
+        {Diffo.Provider.Calculations.InheritedCharacteristic,
+         [hops: hops, read: read, as: decl.as, world: resource, collapse: decl.collapse]},
+      description: "Inherited typed characteristic via graph traversal",
       arguments: [],
       public?: true,
       allow_nil?: true,
