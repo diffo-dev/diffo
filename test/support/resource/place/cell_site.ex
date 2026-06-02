@@ -2,17 +2,71 @@
 #
 # SPDX-License-Identifier: MIT
 
+defmodule Diffo.Test.Rf do
+  @moduledoc """
+  Free-space (Friis) link-budget calculation for a Point-located site.
+
+  `metric: :path_loss_db` — free-space path loss to the `:at` point;
+  `metric: :rssi_dbm` — isotropic received power, `eirp_dbm − path_loss_db`.
+
+  Distance uses `AshNeo4j.Geo.haversine_meters/2` so it matches Neo4j's WGS-84
+  `point.distance` model (the same value the `distance_m` expression returns). dB math
+  needs `log10`, which `Ash.Expr` doesn't provide, so this is an Elixir calculation rather
+  than a graph expression.
+  """
+  use Ash.Resource.Calculation
+
+  @impl true
+  def load(_query, opts, _context) do
+    case opts[:metric] do
+      :rssi_dbm -> [:location, :eirp_dbm, :frequency_mhz]
+      :path_loss_db -> [:location, :frequency_mhz]
+    end
+  end
+
+  @impl true
+  def calculate(records, opts, context) do
+    %Geo.Point{coordinates: at} = context.arguments.at
+    Enum.map(records, &compute(opts[:metric], &1, at))
+  end
+
+  defp compute(:path_loss_db, %{location: %Geo.Point{coordinates: site}, frequency_mhz: f}, at)
+       when is_number(f) do
+    fspl_db(AshNeo4j.Geo.haversine_meters(site, at), f)
+  end
+
+  defp compute(
+         :rssi_dbm,
+         %{location: %Geo.Point{coordinates: site}, eirp_dbm: eirp, frequency_mhz: f},
+         at
+       )
+       when is_number(eirp) and is_number(f) do
+    Float.round(eirp - fspl_db(AshNeo4j.Geo.haversine_meters(site, at), f), 1)
+  end
+
+  defp compute(_metric, _record, _at), do: nil
+
+  # Friis free-space path loss; d in metres, f in MHz. Line-of-sight floor.
+  defp fspl_db(+0.0, _f), do: 0.0
+
+  defp fspl_db(d_m, f_mhz) do
+    Float.round(20 * :math.log10(d_m) + 20 * :math.log10(f_mhz) - 27.55, 1)
+  end
+end
+
 defmodule Diffo.Test.Place.CellSite do
   @moduledoc """
   Test fixture for the `use_diffo_place_geo` livebook — a `GeographicLocation` leaf
-  (`BasePlace` + `BaseGeographicLocation`) carrying `transmit_power` and two **expression
-  calculations** built on AshNeo4j's graph-native `st_distance_in_meters`:
+  (`BasePlace` + `BaseGeographicLocation`) carrying an `eirp_dbm` / `frequency_mhz` and
+  three calculations:
 
-    * `distance_m` — geodesic distance to a given `:at` point.
-    * `signal_strength` — power flux density (W/m²) `transmit_power / (4·π·d²)`.
+    * `distance_m` — geodesic distance to a given `:at` point (a graph-native
+      `st_distance_in_meters` expression, pushing to Neo4j `point.distance`).
+    * `path_loss_db` / `rssi_dbm` — free-space link budget (`Diffo.Test.Rf`); dB math is an
+      Elixir calculation because `log10` isn't an `Ash.Expr` function.
 
-  Exercised by `inherited_characteristic`-unrelated `cell_site_test.exs` to prove the
-  spatial expressions evaluate against the AshNeo4j sandbox.
+  Exercised by `cell_site_test.exs` to prove both the spatial expression and the link-budget
+  calcs evaluate against the AshNeo4j sandbox.
   """
   alias Diffo.Provider.BasePlace
   alias Diffo.Provider.BaseGeographicLocation
@@ -23,7 +77,7 @@ defmodule Diffo.Test.Place.CellSite do
     domain: Nbn
 
   resource do
-    description "A test cell site (GeographicLocation) with spatial calculations"
+    description "A test cell site (GeographicLocation) with spatial + link-budget calculations"
     plural_name :cell_sites
   end
 
@@ -38,7 +92,8 @@ defmodule Diffo.Test.Place.CellSite do
         :accuracy,
         :cell_id,
         :technology,
-        :transmit_power
+        :eirp_dbm,
+        :frequency_mhz
       ]
 
       change set_attribute(:type, :GeographicLocation)
@@ -55,8 +110,14 @@ defmodule Diffo.Test.Place.CellSite do
       constraints one_of: [:FixedWireless, :Mobile4G, :Mobile5G]
     end
 
-    # equivalent isotropically radiated power, in watts
-    attribute :transmit_power, :float, public?: true
+    # equivalent isotropically radiated power, in dBm (folds in the Tx antenna gain)
+    attribute :eirp_dbm, :float, public?: true
+
+    attribute :frequency_mhz, :float do
+      description "carrier frequency in MHz (drives free-space path loss)"
+      public? true
+      default 3500.0
+    end
   end
 
   calculations do
@@ -68,15 +129,16 @@ defmodule Diffo.Test.Place.CellSite do
       end
     end
 
-    # signal strength (power flux density, W/m²) from EIRP and that distance
-    calculate :signal_strength,
-              :float,
-              expr(
-                transmit_power /
-                  (4 * 3.141592653589793 *
-                     st_distance_in_meters(location, ^arg(:at)) *
-                     st_distance_in_meters(location, ^arg(:at)))
-              ) do
+    # free-space path loss (dB) to the :at point
+    calculate :path_loss_db, :float, {Diffo.Test.Rf, metric: :path_loss_db} do
+      argument :at, AshGeo.GeoJson do
+        constraints geo_types: [:point], force_srid: 4326
+        allow_nil? false
+      end
+    end
+
+    # received signal level (dBm), isotropic Rx: eirp_dbm − path_loss_db
+    calculate :rssi_dbm, :float, {Diffo.Test.Rf, metric: :rssi_dbm} do
       argument :at, AshGeo.GeoJson do
         constraints geo_types: [:point], force_srid: 4326
         allow_nil? false

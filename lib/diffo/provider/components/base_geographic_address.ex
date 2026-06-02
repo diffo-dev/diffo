@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.BaseGeographicAddress do
   @moduledoc """
-  Ash Resource Fragment for TMF674 GeographicAddress — postal-address-style Place.
+  Ash Resource Fragment for TMF673 GeographicAddress — postal-address-style Place.
 
   Compose with `BasePlace` on a concrete leaf to get the TMF GeographicAddress
   attribute set (`street_name`, `street_nr`, `locality`, `state_or_province`,
@@ -45,7 +45,7 @@ defmodule Diffo.Provider.BaseGeographicAddress do
   - `country` — country (ISO 3166-1 alpha-2 code or full name; not constrained).
   - `postcode` — postcode.
 
-  ## Wire shape (TMF674)
+  ## Wire shape (TMF673)
 
   `jason.pick` selects base + address fields and renames to TMF camelCase
   (`streetName`, `streetNr`, `stateOrProvince`). Inherits BasePlace's

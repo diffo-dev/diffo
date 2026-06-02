@@ -6,13 +6,13 @@ defmodule Diffo.Provider.BasePlace do
   @moduledoc """
   Ash Resource Fragment which is the foundation for TMF Place subtypes.
 
-  `BasePlace` is the foundation for the TMF675 cascade — Place is an abstract
-  TMF concept, and concrete subtype identity lives on the fragments that
-  compose with it:
+  `BasePlace` is the foundation for the TMF Place cascade (TMF673–675) — Place is
+  an abstract TMF concept, and concrete subtype identity lives on the fragments
+  that compose with it:
 
-    * `Diffo.Provider.BaseGeographicAddress` — TMF674 GeographicAddress fields
+    * `Diffo.Provider.BaseGeographicAddress` — TMF673 GeographicAddress fields
       (street_name, postcode, country, …)
-    * `Diffo.Provider.BaseGeographicSite` — TMF675 GeographicSite fields
+    * `Diffo.Provider.BaseGeographicSite` — TMF674 GeographicSite fields
       (site_type, site_code, projected :address ref)
     * `Diffo.Provider.BaseGeographicLocation` — TMF675 GeographicLocation
       fields (accuracy) and tightened geometry validation
