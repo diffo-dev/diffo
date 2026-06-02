@@ -22,6 +22,11 @@ defmodule Diffo.Provider.DomainFragment do
         use Ash.Domain, fragments: [Diffo.Provider.DomainFragment]
         ...
       end
+
+  Forgetting this is a silent footgun (no `:Provider` label → projection and ref
+  resolution quietly fail), so `Diffo.Provider.Extension.Verifiers.VerifyProviderDomain`
+  enforces it at compile time: a provider resource whose domain emits no `:Provider`
+  label fails to compile with a message pointing here.
   """
   use Spark.Dsl.Fragment,
     of: Ash.Domain,
