@@ -4,7 +4,7 @@
 
 defmodule Diffo.Provider.GeographicAddress do
   @moduledoc """
-  Ash Resource for a TMF674 GeographicAddress.
+  Ash Resource for a TMF673 GeographicAddress.
 
   Out-of-the-box concrete leaf derived from `BasePlace` + `BaseGeographicAddress`.
   Sets `type: :GeographicAddress` on the `:create` action; accepts the union of
@@ -28,7 +28,7 @@ defmodule Diffo.Provider.GeographicAddress do
     domain: Diffo.Provider
 
   resource do
-    description "An Ash Resource for a TMF674 GeographicAddress"
+    description "An Ash Resource for a TMF673 GeographicAddress"
     plural_name :geographic_addresses
   end
 

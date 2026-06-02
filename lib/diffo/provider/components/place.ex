@@ -6,7 +6,7 @@ defmodule Diffo.Provider.Place do
   @moduledoc """
   Abstract Place reader — plumbing, not a TMF subtype recommendation.
 
-  TMF675 treats Place as abstract; the concrete subtypes are
+  TMF treats Place as abstract; the concrete subtypes are
   `Diffo.Provider.GeographicAddress`, `Diffo.Provider.GeographicSite`, and
   `Diffo.Provider.GeographicLocation`. Use those (or your own domain leaf
   composed from `BasePlace` + the matching `BaseGeographic*` fragment) for
