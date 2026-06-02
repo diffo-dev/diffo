@@ -334,7 +334,7 @@ mix docs                              # spark.cheat_sheets + ex_doc + spark.repl
 
 - **`.formatter.exs`** carries the `Spark.Formatter` plugin and a `locals_without_parens`
   list of every DSL entity/arity (e.g. `party_ref: 2`, `inherited_characteristic: 2`,
-  `assignment_alias: 1`, `via: 1`). It is **committed** and must stay in sync with the DSL —
+  `via: 1`). It is **committed** and must stay in sync with the DSL —
   if it drifts, `mix format` adds spurious parens to DSL calls. `mix spark.formatter`
   (the alias regenerates the list and re-formats the file) is the source of truth; run it
   whenever you change the extension, and commit the result.
@@ -626,20 +626,29 @@ alongside concrete values and `nil`.
 Whenever you add, rename, or remove a DSL entity or section in `Diffo.Provider.Extension`
 (or any Spark extension in this project), run this checklist in order:
 
-1. **Update `.formatter.exs`** — add new entity names to `spark_locals_without_parens` with
-   each supported arity. Without this, `mix format` will add unwanted parentheses to every
-   DSL call site.
+1. **Run `mix spark.formatter`** — regenerates `spark_locals_without_parens` in
+   `.formatter.exs` from the live extension (and re-formats the file). Prefer this over
+   hand-editing: it **adds new** entity/arities **and removes** ones you renamed or deleted.
+   Hand-adding only catches additions — a removed entity (e.g. retiring
+   `reverse_inherited_characteristic`) or a dropped option (`assignment_alias`) leaves stale
+   locals behind. Without an up-to-date list, `mix format` adds unwanted parentheses to DSL
+   call sites.
 
-2. **Run `mix format`** — apply formatting across the codebase and verify the output looks
-   correct. Run `mix format --check-formatted` to confirm nothing was missed.
+2. **Run `mix format`** — apply formatting across the codebase. Run
+   `mix format --check-formatted` to confirm nothing was missed.
 
 3. **Run `mix spark.cheat_sheets`** — regenerates
    `documentation/dsls/DSL-Diffo.Provider.Extension.md`. This file is Spark-generated;
-   never edit it by hand. Commit the regenerated file alongside the DSL change.
+   never edit it by hand. Commit the regenerated file alongside the DSL change (a no-diff
+   regenerate means it was already current).
 
-4. **Run `mix test`** — confirm no regressions.
+4. **Update `usage-rules.md`** — the consumer-facing DSL reference is hand-written, not
+   generated; update it for new/changed/removed entities and options (and any migration
+   notes for a breaking change).
 
-Do not skip step 1 even for a "small" entity addition — the formatter will silently reformat
+5. **Run `mix test`** — confirm no regressions.
+
+Do not skip step 1 even for a "small" entity change — the formatter will silently reformat
 every call site in CI and produce noisy diffs in future PRs.
 
 ## Raising upstream bugs

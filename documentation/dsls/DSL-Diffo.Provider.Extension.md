@@ -94,7 +94,6 @@ Provider DSL — structure, roles, and behaviour for this resource kind
  * [characteristics](#provider-characteristics)
    * characteristic
    * inherited_characteristic
-   * reverse_inherited_characteristic
  * [features](#provider-features)
    * feature
      * characteristic
@@ -170,7 +169,6 @@ List of Instance Characteristics
 ### Nested DSLs
  * [characteristic](#provider-characteristics-characteristic)
  * [inherited_characteristic](#provider-characteristics-inherited_characteristic)
- * [reverse_inherited_characteristic](#provider-characteristics-reverse_inherited_characteristic)
 
 
 ### Examples
@@ -178,11 +176,11 @@ List of Instance Characteristics
 characteristics do
   characteristic :circuit, Diffo.Access.Circuit
   characteristic :line, Diffo.Access.Line
-  # Inherit a typed characteristic from a source instance reached
-  # by following the :port assignment-graph alias inward
+  # Inherit a typed characteristic from the assigner reached by following
+  # the :port assignment alias (bare atom = reverse assignment shorthand)
   inherited_characteristic :uni, via: [:port]
-  # Surface the typed characteristics of every assignee reached via :port
-  reverse_inherited_characteristic :unis, assignment_alias: :port, characteristic: :uni
+  # Surface the typed characteristic of every assignee reached forward via :port
+  inherited_characteristic :unis, via: [{:forward, assignment: :port}], read: :uni
 end
 
 ```
@@ -217,11 +215,11 @@ Adds a Characteristic
 
 ### provider.characteristics.inherited_characteristic
 ```elixir
-inherited_characteristic role
+inherited_characteristic name
 ```
 
 
-Declares a typed characteristic derived by traversing the assignment graph inward — generates a calculation; per-source the typed module is resolved at runtime via AshNeo4j.worlds/1
+Declares a typed characteristic derived by walking the graph along a `via:` hop chain (assignment and/or relationship edges, in either direction) — generates a calculation; per-reached-instance the typed module is resolved at runtime via AshNeo4j.worlds/1
 
 
 
@@ -231,12 +229,15 @@ Declares a typed characteristic derived by traversing the assignment graph inwar
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`role`](#provider-characteristics-inherited_characteristic-role){: #provider-characteristics-inherited_characteristic-role .spark-required} | `atom` |  | The characteristic role to look up on each source instance — also the default alias step and the generated calc name. |
+| [`name`](#provider-characteristics-inherited_characteristic-name){: #provider-characteristics-inherited_characteristic-name .spark-required} | `atom` |  | The name of the generated calculation (Ash load/field handle), and the default `read` role. |
 ### Options
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`via`](#provider-characteristics-inherited_characteristic-via){: #provider-characteristics-inherited_characteristic-via } | `list(atom)` |  | Sequence of assignment aliases to traverse inward. Defaults to [role] for single-hop. Use a list for multi-level. |
+| [`via`](#provider-characteristics-inherited_characteristic-via){: #provider-characteristics-inherited_characteristic-via } | `list(any)` |  | Ordered hop list. A bare atom is `{:reverse, assignment: alias}` shorthand; tuples are `{:forward \| :reverse, assignment: alias}` or `{:forward \| :reverse, relationship: type \| [type: t, alias: a]}`. Defaults to [name]. |
+| [`read`](#provider-characteristics-inherited_characteristic-read){: #provider-characteristics-inherited_characteristic-read } | `atom` |  | The characteristic role to look up on each reached instance. Defaults to the calc name. |
+| [`as`](#provider-characteristics-inherited_characteristic-as){: #provider-characteristics-inherited_characteristic-as } | `atom` |  | Renames the surfaced characteristic (loaded value and encoded entry). Defaults to the source characteristic's own name (no rename). |
+| [`collapse`](#provider-characteristics-inherited_characteristic-collapse){: #provider-characteristics-inherited_characteristic-collapse } | `:first \| :last` |  | Collapses the result list to one end (`:first`/`:last`). When set, the calc returns a single record or nil rather than a list. |
 
 
 
@@ -245,38 +246,6 @@ Declares a typed characteristic derived by traversing the assignment graph inwar
 ### Introspection
 
 Target: `Diffo.Provider.Extension.InheritedCharacteristicDeclaration`
-
-### provider.characteristics.reverse_inherited_characteristic
-```elixir
-reverse_inherited_characteristic name
-```
-
-
-Declares a typed characteristic derived by traversing the assignment graph outward (assigner's view of assignees) — generates a calculation; per-assignee the typed module is resolved at runtime via AshNeo4j.worlds/1
-
-
-
-
-
-### Arguments
-
-| Name | Type | Default | Docs |
-|------|------|---------|------|
-| [`name`](#provider-characteristics-reverse_inherited_characteristic-name){: #provider-characteristics-reverse_inherited_characteristic-name .spark-required} | `atom` |  | The name of the generated calculation on this resource. |
-### Options
-
-| Name | Type | Default | Docs |
-|------|------|---------|------|
-| [`assignment_alias`](#provider-characteristics-reverse_inherited_characteristic-assignment_alias){: #provider-characteristics-reverse_inherited_characteristic-assignment_alias .spark-required} | `atom` |  | The outgoing AssignmentRelationship alias to follow. Named `assignment_alias` because `alias` is an Elixir special form. |
-| [`characteristic`](#provider-characteristics-reverse_inherited_characteristic-characteristic){: #provider-characteristics-reverse_inherited_characteristic-characteristic .spark-required} | `atom` |  | The characteristic role to look up on each reached assignee — may differ from the calc name on this resource. |
-
-
-
-
-
-### Introspection
-
-Target: `Diffo.Provider.Extension.ReverseInheritedCharacteristicDeclaration`
 
 
 ### provider.features

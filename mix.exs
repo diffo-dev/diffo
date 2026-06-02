@@ -79,6 +79,7 @@ defmodule Diffo.MixProject do
       ],
       extras: [
         "README.md": [title: "Guide"],
+        "CHANGELOG.md": [title: "Changelog"],
         "LICENSES/MIT.md": [title: "License"],
         "diffo.livemd": [title: "Tutorial"],
         "documentation/dsls/DSL-Diffo.Provider.Extension.md": [
@@ -105,7 +106,7 @@ defmodule Diffo.MixProject do
     [
       name: :diffo,
       licenses: ["MIT"],
-      files: ~w(lib .formatter.exs mix.exs README* LICENSE* usage-rules.md),
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE* CHANGELOG* usage-rules.md),
       links: %{
         "GitHub" => @github_url,
         "Author's home page" => "https://www.diffo.dev"
