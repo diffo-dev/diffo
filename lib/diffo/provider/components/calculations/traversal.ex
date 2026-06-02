@@ -11,10 +11,11 @@ defmodule Diffo.Provider.Calculations.Traversal do
   - `:forward` — filter `source_id` in the current ids, collect `target_id`s.
   - `:reverse` — filter `target_id` in the current ids, collect `source_id`s.
 
-  over `AssignmentRelationship` (`:assignment` hops) or `DefinedSimpleRelationship`
-  (`:relationship` hops). A hop may fan out (reach many instances) or fan in (several
-  intermediates reach the same instance); ids are de-duplicated between hops so a node
-  reached by multiple paths is visited once.
+  over `AssignmentRelationship` (`:assignment` hops) or — for `:relationship` hops — **both**
+  `DefinedSimpleRelationship` and the general `Relationship` (#222), since an edge is stored
+  as one or the other and traversal is meaningful over either. A hop may fan out (reach many
+  instances) or fan in (several intermediates reach the same instance); ids are de-duplicated
+  between hops so a node reached by multiple paths is visited once.
 
   Hops are the canonical form produced by `Diffo.Provider.Extension.Traversal.normalize/2`:
   `{:forward | :reverse, :assignment | :relationship, selector}`. Built so
@@ -22,6 +23,7 @@ defmodule Diffo.Provider.Calculations.Traversal do
   """
   alias Diffo.Provider.AssignmentRelationship
   alias Diffo.Provider.DefinedSimpleRelationship
+  alias Diffo.Provider.Relationship
 
   @doc """
   Walks `hops` from `start_id`, returning the de-duplicated list of final instance ids.
@@ -39,8 +41,17 @@ defmodule Diffo.Provider.Calculations.Traversal do
   defp step({direction, :assignment, %{alias: alias}}, id),
     do: edge_ids(AssignmentRelationship, direction, id, alias_filter(alias))
 
-  defp step({direction, :relationship, %{type: type, alias: alias}}, id),
-    do: edge_ids(DefinedSimpleRelationship, direction, id, relationship_filter(type, alias))
+  # A `relationship:` hop spans **both** relationship resources (#222). An edge is one or
+  # the other — `DefinedSimpleRelationship` (a single characteristic closed at creation) or
+  # the general `Relationship` (mutable characteristics) — and "what do I contain / own /
+  # relate to" is equally meaningful over either, so the consumer needn't know which storage
+  # the `:relate` action chose. Ids are de-duplicated by `walk/2`.
+  defp step({direction, :relationship, %{type: type, alias: alias}}, id) do
+    filter = relationship_filter(type, alias)
+
+    edge_ids(DefinedSimpleRelationship, direction, id, filter) ++
+      edge_ids(Relationship, direction, id, filter)
+  end
 
   defp edge_ids(resource, :forward, id, filter) do
     resource

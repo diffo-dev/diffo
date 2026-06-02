@@ -118,6 +118,45 @@ defmodule Diffo.Provider.Extension.TraversalTest do
       assert Walk.walk(card.id, [{:reverse, :relationship, %{type: :contains, alias: nil}}]) ==
                [shelf.id]
     end
+
+    test "a relationship hop also walks the general Relationship, not just DSR (#222)" do
+      {:ok, group} = Diffo.Test.Parties.build_shelf_with_installer()
+      {:ok, nni} = Servo.build_card(%{})
+
+      # general Relationship (mutable) — what the standard :relate action creates
+      Diffo.Provider.create_relationship!(%{
+        type: :contains,
+        source_id: group.id,
+        target_id: nni.id
+      })
+
+      assert Walk.walk(group.id, [{:forward, :relationship, %{type: :contains, alias: nil}}]) ==
+               [nni.id]
+
+      assert Walk.walk(nni.id, [{:reverse, :relationship, %{type: :contains, alias: nil}}]) ==
+               [group.id]
+    end
+
+    test "a relationship hop unions DefinedSimpleRelationship and Relationship edges (#222)" do
+      {:ok, group} = Diffo.Test.Parties.build_shelf_with_installer()
+      {:ok, dsr_card} = Servo.build_card(%{})
+      {:ok, rel_card} = Servo.build_card(%{})
+
+      Diffo.Provider.create_defined_simple_relationship!(%{
+        type: :contains,
+        source_id: group.id,
+        target_id: dsr_card.id
+      })
+
+      Diffo.Provider.create_relationship!(%{
+        type: :contains,
+        source_id: group.id,
+        target_id: rel_card.id
+      })
+
+      assert Walk.walk(group.id, [{:forward, :relationship, %{type: :contains, alias: nil}}])
+             |> Enum.sort() == Enum.sort([dsr_card.id, rel_card.id])
+    end
   end
 
   defp shelf_with_two_assigned_cards do
