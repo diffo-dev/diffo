@@ -8,7 +8,7 @@ defmodule Diffo.Provider.Extension.Verifiers.VerifyProviderDomain do
   `Diffo.Provider.Extension`) carries the `:Provider` Neo4j label.
 
   `:Provider` is what makes provider polymorphism work: cross-world projection
-  (`Diffo.Provider.get_*_by_id!/1`, `AshNeo4j.worlds/1`) and `PlaceRef` / `PartyRef` /
+  (`Diffo.Provider.get_place_by_id!/1` and friends, `AshNeo4j.worlds/1`) and `PlaceRef` / `PartyRef` /
   `belongs_to` resolution all MATCH on `[:Provider, <base-type>]`. A node gets `:Provider`
   either because its domain *is* `Diffo.Provider` (the built-in leaves — `:Provider` is
   their `domain_label`) or because its domain composes `Diffo.Provider.DomainFragment`
