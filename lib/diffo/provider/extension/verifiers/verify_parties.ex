@@ -9,6 +9,8 @@ defmodule Diffo.Provider.Extension.Verifiers.VerifyParties do
   alias Spark.Dsl.Verifier
   alias Spark.Error.DslError
   alias Diffo.Provider.Extension.Info
+  alias Diffo.Provider.Extension.InheritedPartyDeclaration
+  alias Diffo.Provider.Extension.Traversal
 
   @impl true
   def verify(dsl_state) do
@@ -60,9 +62,32 @@ defmodule Diffo.Provider.Extension.Verifiers.VerifyParties do
         end
       end)
 
-    case duplicate_errors ++ type_errors do
+    via_errors = via_errors(parties, resource)
+
+    case duplicate_errors ++ type_errors ++ via_errors do
       [] -> :ok
       errors -> {:error, errors}
     end
+  end
+
+  defp via_errors(parties, resource) do
+    parties
+    |> Enum.filter(&is_struct(&1, InheritedPartyDeclaration))
+    |> Enum.reduce([], fn decl, acc ->
+      case Traversal.normalize(decl.via, decl.role) do
+        {:ok, _hops} ->
+          acc
+
+        {:error, reason} ->
+          [
+            DslError.exception(
+              module: resource,
+              path: [:provider, :parties, decl.role],
+              message: "inherited_party #{inspect(decl.role)}: invalid via — #{inspect(reason)}"
+            )
+            | acc
+          ]
+      end
+    end)
   end
 end

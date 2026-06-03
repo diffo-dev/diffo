@@ -6,85 +6,85 @@ defmodule Diffo.Provider.Calculations.InheritedPlace do
   @moduledoc """
   Backing calculation for `inherited_place` DSL declarations.
 
-  Traverses `AssignmentRelationship` by alias to reach source instances, then reads
-  their `PlaceRef` records for the declared `source_role`. Injected automatically by
-  `TransformInheritedRefs` — do not reference this module directly; use the
+  Walks the instance graph along the `via:` hop chain (the shared
+  `Diffo.Provider.Calculations.Traversal` — `:forward`/`:reverse` over `assignment` /
+  `relationship` edges), then reads each reached instance's `PlaceRef` records at the
+  declared `source_role`, optionally collapsing the result to one end. Injected
+  automatically by `TransformInheritedRefs` — do not reference this module directly; use the
   `inherited_place` DSL entity instead.
+
+  `via:` reaches the *instance* that holds the ref; the `source_role` deref is a fixed
+  terminal step, **not** a `via:` hop. Routing *through* a place — the ref graph — is a
+  calculation concern, not a `via:` capability (see #227).
 
   See `Diffo.Provider.Extension.InheritedPlaceDeclaration` for the DSL options.
 
   ## Result shape
 
-  A list per input record. Each entry corresponds to one source instance reached
-  by the traversal:
-
-  - One or more `Diffo.Provider.Place` values when the source has matching
-    `PlaceRef` records at `source_role`.
-  - `%Diffo.Unknown{}` when the source is reached but carries no `PlaceRef`
-    at `source_role`.
-
-  When no sources are reached at all (e.g. no assignment), the result is `[]`.
-  Unknown is reserved for "we got here but the role isn't declared" — the
-  X-state from the AGENTS.md `Diffo.Unknown` discipline.
+  Without `collapse`, a list per input record — one or more `Diffo.Provider.Place` values
+  per reached instance that carries a `PlaceRef` at `source_role`, or `%Diffo.Unknown{}`
+  when an instance is reached but has no `PlaceRef` there. With `collapse: :first | :last`,
+  a single value (or `nil`). When no instance is reached at all, `[]` (or `nil` when
+  collapsing).
 
   ## Reason vocabulary
 
-  Only one reason is possible here — `PlaceRef` is a universal indirection so
-  no cross-world dispatch is needed (which is why this calc is cleaner than the
-  characteristic equivalents):
+  `PlaceRef` is a universal indirection (no cross-world dispatch), so only one reason:
 
-  - `:role_not_declared` — source instance reached but its `PlaceRef` records
-    carry no entry at `source_role`. `:context` is `%{source_id: id, role: source_role}`.
+  - `:role_not_declared` — instance reached but its `PlaceRef` records carry no entry at
+    `source_role`. `:context` is `%{source_id: id, role: source_role}`.
 
   ## `:world` stamping
 
-  `TransformInheritedRefs` passes the consumer's resource as `:world` at compile
-  time. Each emitted `%Diffo.Unknown{}` stamps it.
+  `TransformInheritedRefs` passes the consumer's resource as `:world` at compile time; each
+  emitted `%Diffo.Unknown{}` stamps it.
   """
   use Ash.Resource.Calculation
+
+  alias Diffo.Provider.Calculations.Traversal
 
   @impl true
   def load(_query, _opts, _context), do: []
 
   @impl true
   def calculate(records, opts, _context) do
-    via = opts[:via]
+    hops = opts[:hops]
     source_role = opts[:source_role]
     world = opts[:world]
+    collapse = opts[:collapse]
 
     Enum.map(records, fn record ->
-      final_ids =
-        Enum.reduce(via, [record.id], fn alias_step, ids ->
-          Enum.flat_map(ids, fn id ->
-            Diffo.Provider.AssignmentRelationship
-            |> Ash.Query.filter_input(target_id: id, alias: alias_step)
-            |> Ash.read!(domain: Diffo.Provider)
-            |> Enum.map(& &1.source_id)
-          end)
-        end)
-
-      Enum.flat_map(final_ids, fn id ->
-        places =
-          Diffo.Provider.PlaceRef
-          |> Ash.Query.filter_input(instance_id: id, role: source_role)
-          |> Ash.Query.load(:place)
-          |> Ash.read!(domain: Diffo.Provider)
-          |> Enum.map(& &1.place)
-
-        case places do
-          [] ->
-            [
-              %Diffo.Unknown{
-                world: world,
-                reason: :role_not_declared,
-                context: %{source_id: id, role: source_role}
-              }
-            ]
-
-          _ ->
-            places
-        end
-      end)
+      record.id
+      |> Traversal.walk(hops)
+      |> Enum.flat_map(&resolve_places(&1, source_role, world))
+      |> collapse(collapse)
     end)
   end
+
+  defp resolve_places(id, source_role, world) do
+    places =
+      Diffo.Provider.PlaceRef
+      |> Ash.Query.filter_input(instance_id: id, role: source_role)
+      |> Ash.Query.load(:place)
+      |> Ash.read!(domain: Diffo.Provider)
+      |> Enum.map(& &1.place)
+
+    case places do
+      [] ->
+        [
+          %Diffo.Unknown{
+            world: world,
+            reason: :role_not_declared,
+            context: %{source_id: id, role: source_role}
+          }
+        ]
+
+      _ ->
+        places
+    end
+  end
+
+  defp collapse(entries, nil), do: entries
+  defp collapse(entries, :first), do: List.first(entries)
+  defp collapse(entries, :last), do: List.last(entries)
 end
