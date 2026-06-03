@@ -47,41 +47,55 @@ defmodule Diffo.Provider.Extension.Transformers.TransformInheritedRefs do
   end
 
   defp inject_place_calculation(dsl_state, %InheritedPlaceDeclaration{} = decl, resource) do
-    via = decl.via || [decl.role]
+    case Traversal.normalize(decl.via, decl.role) do
+      {:ok, hops} ->
+        type = if decl.collapse, do: :map, else: {:array, :map}
 
-    calc = %Ash.Resource.Calculation{
-      name: decl.role,
-      type: {:array, :map},
-      calculation:
-        {Diffo.Provider.Calculations.InheritedPlace,
-         [via: via, source_role: decl.source_role, world: resource]},
-      description: "Inherited place via assignment alias traversal",
-      arguments: [],
-      public?: true,
-      allow_nil?: true,
-      constraints: []
-    }
+        calc = %Ash.Resource.Calculation{
+          name: decl.role,
+          type: type,
+          calculation:
+            {Diffo.Provider.Calculations.InheritedPlace,
+             [hops: hops, source_role: decl.source_role, world: resource, collapse: decl.collapse]},
+          description: "Inherited place via instance-graph traversal",
+          arguments: [],
+          public?: true,
+          allow_nil?: true,
+          constraints: []
+        }
 
-    Transformer.add_entity(dsl_state, [:calculations], calc)
+        Transformer.add_entity(dsl_state, [:calculations], calc)
+
+      # Malformed via — leave it for VerifyPlaces to report as a clean DslError.
+      {:error, _reason} ->
+        dsl_state
+    end
   end
 
   defp inject_party_calculation(dsl_state, %InheritedPartyDeclaration{} = decl, resource) do
-    via = decl.via || [decl.role]
+    case Traversal.normalize(decl.via, decl.role) do
+      {:ok, hops} ->
+        type = if decl.collapse, do: :map, else: {:array, :map}
 
-    calc = %Ash.Resource.Calculation{
-      name: decl.role,
-      type: {:array, :map},
-      calculation:
-        {Diffo.Provider.Calculations.InheritedParty,
-         [via: via, source_role: decl.source_role, world: resource]},
-      description: "Inherited party via assignment alias traversal",
-      arguments: [],
-      public?: true,
-      allow_nil?: true,
-      constraints: []
-    }
+        calc = %Ash.Resource.Calculation{
+          name: decl.role,
+          type: type,
+          calculation:
+            {Diffo.Provider.Calculations.InheritedParty,
+             [hops: hops, source_role: decl.source_role, world: resource, collapse: decl.collapse]},
+          description: "Inherited party via instance-graph traversal",
+          arguments: [],
+          public?: true,
+          allow_nil?: true,
+          constraints: []
+        }
 
-    Transformer.add_entity(dsl_state, [:calculations], calc)
+        Transformer.add_entity(dsl_state, [:calculations], calc)
+
+      # Malformed via — leave it for VerifyParties to report as a clean DslError.
+      {:error, _reason} ->
+        dsl_state
+    end
   end
 
   defp inject_inherited_characteristic_calculation(
