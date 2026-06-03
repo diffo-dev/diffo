@@ -11,6 +11,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.8.0](https://github.com/diffo-dev/diffo/compare/v0.7.0...v0.8.0) (2026-06-03)
+
+
+
+
+### Features:
+
+* extend via: traversal to inherited_place/inherited_party with collapse; verifiers, migration guide, livebook fixes, 0.8.0 pin bumps (#226) by Matt Beanland
+
 ## [v0.7.0](https://github.com/diffo-dev/diffo/compare/v0.6.0...v0.7.0) (2026-06-02)
 
 
