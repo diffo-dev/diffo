@@ -342,24 +342,30 @@ defmodule Diffo.Provider.Extension do
   @inherited_party_entity %Spark.Dsl.Entity{
     name: :inherited_party,
     describe:
-      "Declares a party derived by traversing the assignment graph — generates a calculation, no PartyRef node created",
+      "Declares a party derived by walking the instance graph along a via: hop chain then reading a PartyRef at source_role — generates a calculation, no PartyRef node created",
     target: InheritedPartyDeclaration,
     args: [:role],
     schema: [
       role: [
         type: :atom,
-        doc: "The role name — also the default alias to follow on AssignmentRelationship.",
+        doc: "The generated calc name and surfaced PartyRef role; default single hop alias.",
         required: true
       ],
       via: [
-        type: {:list, :atom},
+        type: {:list, :any},
         doc:
-          "Sequence of assignment aliases to traverse. Defaults to [role] for single-hop. Use a list for multi-level."
+          "Hop chain to the instance holding the ref (unified #213 grammar). Bare atom = {:reverse, assignment: alias}; tuples are {:forward|:reverse, assignment: alias} or {:forward|:reverse, relationship: type|[type:, alias:]}. Defaults to [role]."
       ],
       source_role: [
         type: :atom,
-        doc: "The PartyRef role to pick up on the arrived-at instance.",
+        doc:
+          "The PartyRef role to read on the reached instance (terminal deref, not a via: hop).",
         required: true
+      ],
+      collapse: [
+        type: {:one_of, [:first, :last]},
+        doc:
+          "Collapses the result list (refs at source_role across reached instances) to that end; the calc then returns a single party or nil."
       ]
     ]
   }
@@ -450,24 +456,30 @@ defmodule Diffo.Provider.Extension do
   @inherited_place_entity %Spark.Dsl.Entity{
     name: :inherited_place,
     describe:
-      "Declares a place derived by traversing the assignment graph — generates a calculation, no PlaceRef node created",
+      "Declares a place derived by walking the instance graph along a via: hop chain then reading a PlaceRef at source_role — generates a calculation, no PlaceRef node created",
     target: InheritedPlaceDeclaration,
     args: [:role],
     schema: [
       role: [
         type: :atom,
-        doc: "The role name — also the default alias to follow on AssignmentRelationship.",
+        doc: "The generated calc name and surfaced PlaceRef role; default single hop alias.",
         required: true
       ],
       via: [
-        type: {:list, :atom},
+        type: {:list, :any},
         doc:
-          "Sequence of assignment aliases to traverse. Defaults to [role] for single-hop. Use a list for multi-level."
+          "Hop chain to the instance holding the ref (unified #213 grammar). Bare atom = {:reverse, assignment: alias}; tuples are {:forward|:reverse, assignment: alias} or {:forward|:reverse, relationship: type|[type:, alias:]}. Defaults to [role]."
       ],
       source_role: [
         type: :atom,
-        doc: "The PlaceRef role to pick up on the arrived-at instance.",
+        doc:
+          "The PlaceRef role to read on the reached instance (terminal deref, not a via: hop).",
         required: true
+      ],
+      collapse: [
+        type: {:one_of, [:first, :last]},
+        doc:
+          "Collapses the result list (refs at source_role across reached instances) to that end; the calc then returns a single place or nil."
       ]
     ]
   }

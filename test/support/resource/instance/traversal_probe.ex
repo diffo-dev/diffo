@@ -83,6 +83,35 @@ defmodule Diffo.Test.Instance.TraversalProbe do
         read: :card
     end
 
+    # #226 — inherited_place / inherited_party adopt the same via: grammar (forward
+    # relationship hop) + collapse; source_role is the terminal deref on the reached card.
+    places do
+      inherited_place :contained_locations,
+        via: [{:forward, relationship: :contains}],
+        source_role: :location
+
+      inherited_place :first_location,
+        via: [{:forward, relationship: :contains}],
+        source_role: :location,
+        collapse: :first
+
+      inherited_place :last_location,
+        via: [{:forward, relationship: :contains}],
+        source_role: :location,
+        collapse: :last
+    end
+
+    parties do
+      inherited_party :contained_providers,
+        via: [{:forward, relationship: :contains}],
+        source_role: :provider
+
+      inherited_party :first_provider,
+        via: [{:forward, relationship: :contains}],
+        source_role: :provider,
+        collapse: :first
+    end
+
     behaviour do
       actions do
         create :build
