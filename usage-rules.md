@@ -741,41 +741,79 @@ Servo.assign_port(cvc, %{
 ## `inherited_place` and `inherited_party` DSL
 
 Declare `inherited_place` or `inherited_party` inside `places do` / `parties do` on an
-Instance resource to generate an Ash calculation that traverses the assignment graph and
-inherits a place or party from the source instance.
+Instance resource to generate an Ash calculation that **walks the instance graph** to a
+reached instance and reads its `PlaceRef` / `PartyRef` at `source_role`.
 
-No `PlaceRef` or `PartyRef` edge is created on the consuming instance — the calculation
-IS the reference. The result is a list (consistent with all traversal calculations).
+No `PlaceRef` or `PartyRef` edge is created on the consuming instance — the calculation IS
+the reference. The result is a list, or (with `collapse`) a single value or `nil`.
+
+Since the #226 alignment, `via:` uses the **same hop grammar as `inherited_characteristic`**
+(`:forward`/`:reverse` × `assignment`/`relationship`, over the shared `Traversal.walk`), and
+both gain `collapse: :first | :last`.
 
 ```elixir
 provider do
   places do
-    # Single-hop: traverses AssignmentRelationship where alias = :installation_site,
-    # reads PlaceRef with role :location from the source instance
+    # bare-atom shorthand = {:reverse, assignment: :installation_site}
     inherited_place :installation_site, source_role: :location
 
-    # Explicit alias (same as above written long-form)
-    inherited_place :exchange, via: [:exchange], source_role: :location
-
-    # Multi-hop: :primary slot on this instance → :uplink slot on that instance →
-    # reads :location PlaceRef from the final source
+    # multi-hop, all reverse-assignment (each bare atom)
     inherited_place :exchange, via: [:primary, :uplink], source_role: :location
+
+    # forward relationship hop + collapse to the single reached place
+    inherited_place :poi,
+      via: [{:forward, relationship: [alias: :circuit]}, {:reverse, assignment: :cvlan}],
+      source_role: :locates,
+      collapse: :first
   end
 
   parties do
     inherited_party :provider, source_role: :provider
+
+    inherited_party :circuit_owner,
+      via: [{:forward, relationship: [alias: :circuit]}],
+      source_role: :owner,
+      collapse: :first
   end
 end
 ```
 
 Options:
-- `source_role:` *(required)* — the `PlaceRef`/`PartyRef` role to read from the resolved
-  source instance.
-- `via:` *(optional)* — explicit list of alias atoms for multi-hop traversal. When
-  omitted, the role name itself is used as the single alias step.
+- `source_role:` *(required)* — the `PlaceRef`/`PartyRef` role to read on the reached
+  instance.
+- `via:` *(optional)* — the hop chain (unified #213 grammar; see the
+  `inherited_characteristic` DSL section). A bare atom is `{:reverse, assignment: alias}`;
+  tuples are `{:forward | :reverse, assignment: alias}` or
+  `{:forward | :reverse, relationship: type | [type: t, alias: a]}`. Defaults to `[role]`.
+- `collapse:` *(optional)* — `:first` or `:last`; collapses the consumer-ordered result
+  (refs at `source_role` across reached instances) to that end. The calc then returns a
+  single value or `nil` instead of a list — e.g. picking one of several maintainers.
 
-The DSL entity must be declared in the correct section (`places do` for `inherited_place`,
-`parties do` for `inherited_party`). The generated calculation name matches the declared role.
+The DSL entity must be in the correct section (`places do` / `parties do`); the generated
+calc name matches `role`, and that role is also the role the surfaced `PlaceRef`/`PartyRef`
+carries.
+
+### What `via:` reaches (and what it doesn't)
+
+`via:` traverses the **instance graph** — instance↔instance via assignment/relationship
+edges — to the instance that *holds* the ref. The `source_role` deref (instance → its
+place/party) is a **fixed terminal step, not a `via:` hop**: a `Place`/`Party` is a
+different node kind reached over a `PlaceRef`/`PartyRef` edge, which the grammar doesn't
+traverse. So you **cannot** chain `via:` *through* a place or party — e.g. instance → place →
+keyholder party, or place → place (LOC↔LOP, CSA↔POI) — that ref-graph routing is a
+calculation concern, tracked in #227. Workaround today: also attach such a place/party to an
+instance, so a `via:` traversal that reaches that instance can inherit it.
+
+### Migration from the alias-list `via:`
+
+Backward compatible — existing declarations are unchanged:
+
+| before | after |
+|---|---|
+| `inherited_place :x, source_role: :y` | unchanged |
+| `inherited_place :x, via: [:a, :b], source_role: :y` | unchanged (each bare atom = reverse assignment) |
+| *(not expressible)* | `inherited_place :x, via: [{:forward, relationship: :contains}], source_role: :y` |
+| *(not expressible)* | `inherited_party :x, via: […], source_role: :y, collapse: :first` |
 
 ### JSON surfacing
 

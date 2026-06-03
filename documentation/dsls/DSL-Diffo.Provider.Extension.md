@@ -534,7 +534,7 @@ inherited_party role
 ```
 
 
-Declares a party derived by traversing the assignment graph — generates a calculation, no PartyRef node created
+Declares a party derived by walking the instance graph along a via: hop chain then reading a PartyRef at source_role — generates a calculation, no PartyRef node created
 
 
 
@@ -544,13 +544,14 @@ Declares a party derived by traversing the assignment graph — generates a calc
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`role`](#provider-parties-inherited_party-role){: #provider-parties-inherited_party-role .spark-required} | `atom` |  | The role name — also the default alias to follow on AssignmentRelationship. |
+| [`role`](#provider-parties-inherited_party-role){: #provider-parties-inherited_party-role .spark-required} | `atom` |  | The generated calc name and surfaced PartyRef role; default single hop alias. |
 ### Options
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`source_role`](#provider-parties-inherited_party-source_role){: #provider-parties-inherited_party-source_role .spark-required} | `atom` |  | The PartyRef role to pick up on the arrived-at instance. |
-| [`via`](#provider-parties-inherited_party-via){: #provider-parties-inherited_party-via } | `list(atom)` |  | Sequence of assignment aliases to traverse. Defaults to [role] for single-hop. Use a list for multi-level. |
+| [`source_role`](#provider-parties-inherited_party-source_role){: #provider-parties-inherited_party-source_role .spark-required} | `atom` |  | The PartyRef role to read on the reached instance (terminal deref, not a via: hop). |
+| [`via`](#provider-parties-inherited_party-via){: #provider-parties-inherited_party-via } | `list(any)` |  | Hop chain to the instance holding the ref (unified #213 grammar). Bare atom = {:reverse, assignment: alias}; tuples are {:forward\|:reverse, assignment: alias} or {:forward\|:reverse, relationship: type\|[type:, alias:]}. Defaults to [role]. |
+| [`collapse`](#provider-parties-inherited_party-collapse){: #provider-parties-inherited_party-collapse } | `:first \| :last` |  | Collapses the result list (refs at source_role across reached instances) to that end; the calc then returns a single party or nil. |
 
 
 
@@ -723,7 +724,7 @@ inherited_place role
 ```
 
 
-Declares a place derived by traversing the assignment graph — generates a calculation, no PlaceRef node created
+Declares a place derived by walking the instance graph along a via: hop chain then reading a PlaceRef at source_role — generates a calculation, no PlaceRef node created
 
 
 
@@ -733,13 +734,14 @@ Declares a place derived by traversing the assignment graph — generates a calc
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`role`](#provider-places-inherited_place-role){: #provider-places-inherited_place-role .spark-required} | `atom` |  | The role name — also the default alias to follow on AssignmentRelationship. |
+| [`role`](#provider-places-inherited_place-role){: #provider-places-inherited_place-role .spark-required} | `atom` |  | The generated calc name and surfaced PlaceRef role; default single hop alias. |
 ### Options
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
-| [`source_role`](#provider-places-inherited_place-source_role){: #provider-places-inherited_place-source_role .spark-required} | `atom` |  | The PlaceRef role to pick up on the arrived-at instance. |
-| [`via`](#provider-places-inherited_place-via){: #provider-places-inherited_place-via } | `list(atom)` |  | Sequence of assignment aliases to traverse. Defaults to [role] for single-hop. Use a list for multi-level. |
+| [`source_role`](#provider-places-inherited_place-source_role){: #provider-places-inherited_place-source_role .spark-required} | `atom` |  | The PlaceRef role to read on the reached instance (terminal deref, not a via: hop). |
+| [`via`](#provider-places-inherited_place-via){: #provider-places-inherited_place-via } | `list(any)` |  | Hop chain to the instance holding the ref (unified #213 grammar). Bare atom = {:reverse, assignment: alias}; tuples are {:forward\|:reverse, assignment: alias} or {:forward\|:reverse, relationship: type\|[type:, alias:]}. Defaults to [role]. |
+| [`collapse`](#provider-places-inherited_place-collapse){: #provider-places-inherited_place-collapse } | `:first \| :last` |  | Collapses the result list (refs at source_role across reached instances) to that end; the calc then returns a single place or nil. |
 
 
 
