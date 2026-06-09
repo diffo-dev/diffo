@@ -4,7 +4,6 @@
 
 defmodule Diffo.Provider.Instance.Feature do
   @moduledoc false
-  require Logger
 
   alias Diffo.Provider
   alias Diffo.Type.Value

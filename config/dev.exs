@@ -4,8 +4,9 @@
 
 import Config
 
+# Neo4j 2026.05 over BOLT 6.0 / Cypher 25 — docker neo4j-ash-bolt6 (host port 7689).
 config :bolty, Bolt,
-  uri: "bolt://localhost:7687",
+  uri: "bolt://localhost:7689",
   auth: [username: "neo4j", password: "password"],
   user_agent: "DiffoDev/1",
   pool_size: 15,
