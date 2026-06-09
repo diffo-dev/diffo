@@ -4,7 +4,6 @@
 
 defmodule Diffo.Provider.Extension.Feature do
   @moduledoc false
-  require Logger
 
   alias Diffo.Provider
   alias Diffo.Provider.Instance
