@@ -38,6 +38,14 @@ config :spark,
 
 config :ash, :custom_expressions, [Diffo.Unwrap.AshCustomExpression]
 
+# AshNeo4j 0.10.0 advertises atomic update/destroy support (Cypher `SET`/bulk queries),
+# so Ash now enforces `require_atomic?` by default. Diffo is a graph domain where almost
+# every mutating action manages edges (`manage_relationship` → before_action hooks) or runs
+# `present`/state-machine validations that have no atomic form, so atomic-by-default is the
+# wrong default here. Disable it globally to restore the pre-0.10.0 read-modify-write path;
+# hot-path simple-attribute actions can opt back into atomic individually if it ever pays.
+config :ash, :require_atomic_by_default?, false
+
 config :diffo, ash_domains: [Diffo.Provider]
 
 # git_ops drives releases: `mix git_ops.release` reads Conventional Commits since the
