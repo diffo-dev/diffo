@@ -160,12 +160,46 @@ defmodule Diffo.Type.Dynamic do
   end
 
   @impl true
+  def cast_from_embedded(nil, _constraints), do: {:ok, nil}
+
+  def cast_from_embedded(%{"type" => type_string, "value" => value}, _constraints) do
+    type = String.to_existing_atom(type_string)
+    constraints = dynamic_constraints(type_string)
+
+    case Ash.Type.cast_from_embedded(
+           type,
+           value,
+           constraints[:fields][:value][:constraints] || []
+         ) do
+      {:ok, cast_value} -> {:ok, %__MODULE__{type: type, value: cast_value}}
+      error -> error
+    end
+  end
+
+  @impl true
   def dump_to_native(nil, _constraints), do: {:ok, nil}
 
   def dump_to_native(%__MODULE__{type: type, value: value}, _constraints) do
     constraints = dynamic_constraints(type)
 
     case Ash.Type.dump_to_native(type, value, constraints[:fields][:value][:constraints] || []) do
+      {:ok, dumped} -> {:ok, %{"type" => to_string(type), "value" => dumped}}
+      error -> error
+    end
+  end
+
+  # Ash 3.28+ dumps union/composite members via the embedded path (`dump_to_embedded`
+  # / `cast_from_embedded`) so the stored map is JSON-safe — see Ash's "use proper
+  # embedded casting for fields in composite types". `Diffo.Type.Dynamic` is a member
+  # of `Diffo.Type.Value`, so it must support that path. These mirror the native
+  # callbacks but round the inner value through the embedded encoder/decoder.
+  @impl true
+  def dump_to_embedded(nil, _constraints), do: {:ok, nil}
+
+  def dump_to_embedded(%__MODULE__{type: type, value: value}, _constraints) do
+    constraints = dynamic_constraints(type)
+
+    case Ash.Type.dump_to_embedded(type, value, constraints[:fields][:value][:constraints] || []) do
       {:ok, dumped} -> {:ok, %{"type" => to_string(type), "value" => dumped}}
       error -> error
     end
