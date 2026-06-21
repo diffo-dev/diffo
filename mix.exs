@@ -6,7 +6,7 @@ defmodule Diffo.MixProject do
   @moduledoc false
   use Mix.Project
 
-  @version "0.8.0"
+  @version "0.9.0"
   @name "Diffo"
   @description "TMF Service and Resource Manager with a difference"
   @github_url "https://github.com/diffo-dev/diffo"
@@ -146,7 +146,7 @@ defmodule Diffo.MixProject do
       {:ash_outstanding, "~> 0.2.3"},
       {:ash_jason, "~> 3.0"},
       {:ash_state_machine, "~> 0.2.12"},
-      {:ash_neo4j, ash_neo4j_version("~> 0.8.1")},
+      {:ash_neo4j, ash_neo4j_version("~> 0.10.1")},
       {:ash_geo, "~> 0.3"},
       {:geo, "~> 3.6"},
       {:ash, ash_version("~> 3.0 and >= 3.24.2")},

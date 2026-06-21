@@ -11,6 +11,28 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.9.0](https://github.com/diffo-dev/diffo/compare/v0.8.0...v0.9.0) (2026-06-22)
+
+### Features:
+
+* **Target Neo4j 2026.05 / Cypher 25 / BOLT 6.0** (#236) — moves the data layer onto the
+  date-versioned Neo4j line via `ash_neo4j` 0.9.0. Queries now run under an explicit
+  `CYPHER 25` language selector over BOLT 6.0 — negotiated through `bolty` ≥ 0.2.0 — rather
+  than relying on a server default heading for the CYPHER 5 sunset.
+
+### Dependencies:
+
+* **Bump `ash_neo4j` to `0.10.1`** (#238) — picks up graph-traversal Ash expressions
+  (`traverse/2`) and read-time `ProjectedTraversal`, atomic & bulk writes, typed
+  (never-raised) data-layer errors, and identity/primary-key uniqueness constraints; plus
+  the upstream fix for the 0.10.0 atomic-upsert label regression
+  ([ash_neo4j#392](https://github.com/diffo-dev/ash_neo4j/issues/392)) that dropped the
+  `:Place`/`:Party` fragment label on upserted nodes. Two behaviour shifts are handled
+  diffo-side: atomic-by-default is disabled for this edge-managing graph domain
+  (`require_atomic_by_default? false`, since nearly every action manages edges or runs
+  non-atomic validations), and `Diffo.Type.Dynamic` gains `dump_to_embedded/2` +
+  `cast_from_embedded/2` for ash 3.28's composite embedded casting (#239). Tracks `ash` 3.29.
+
 ## [v0.8.0](https://github.com/diffo-dev/diffo/compare/v0.7.0...v0.8.0) (2026-06-03)
 
 
