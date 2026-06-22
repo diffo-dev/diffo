@@ -47,12 +47,25 @@ Alternatively, add `diffo` to your list of dependencies in `mix.exs` manually:
 ```elixir
 def deps do
   [
-    {:diffo, "~> 0.8.0"}
+    {:diffo, "~> 0.9.0"}
   ]
 end
 ```
 
-You will need [Neo4j](https://github.com/neo4j/neo4j) available. We recommend the Neo4j Community 5 latest, available at [Neo4j Deploymnent Centre](https://neo4j.com/deployment-center/) which can be installed locally. You can also configure connection to a cloud based database service such as [Neo4j AuraDB](https://neo4j.com/product/auradb/).
+If you add `diffo` manually (rather than via the installer above), also disable Ash's
+atomic-by-default updates — diffo is an edge-managing graph domain, so almost every action
+manages relationships or runs non-atomic validations and cannot be rendered atomically:
+
+```elixir
+# config/config.exs
+config :ash, :require_atomic_by_default?, false
+```
+
+You will need [Neo4j](https://github.com/neo4j/neo4j) available. Diffo targets **Neo4j 2026.05**
+— Cypher 25 over BOLT 6.0, via `ash_neo4j` 0.10 — available at the
+[Neo4j Deployment Center](https://neo4j.com/deployment-center/) and installable locally. You
+can also configure a connection to a cloud database service such as
+[Neo4j AuraDB](https://neo4j.com/product/auradb/).
 
 ## Tutorial
 
