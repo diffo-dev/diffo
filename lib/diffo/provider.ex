@@ -13,6 +13,41 @@ defmodule Diffo.Provider do
     description "Extensible Ash Resources and API related to Providing TMF Services and Resources"
   end
 
+  @typedoc """
+  A record produced by an Instance creator (`create_instance!/1`, `create_instance/1`) —
+  the generic Service or Resource leaf the dispatcher constructs.
+  """
+  @type instance_record :: %Diffo.Provider.Instance{} | %Diffo.Provider.ResourceInstance{}
+
+  @typedoc """
+  A record produced by a Place creator (`create_place!/2`, `create_place/2`) — one of the
+  blessed TMF place leaves the dispatcher constructs (`:PlaceRef` yields the abstract
+  `Provider.Place`).
+  """
+  @type place_record ::
+          %Diffo.Provider.Place{}
+          | %Diffo.Provider.GeographicAddress{}
+          | %Diffo.Provider.GeographicSite{}
+          | %Diffo.Provider.GeographicLocation{}
+
+  @typedoc """
+  A record produced by a Party creator (`create_party!/2`, `create_party/2`) — one of the
+  blessed TMF party leaves the dispatcher constructs (`:PartyRef`/`:Entity` yield the
+  abstract `Provider.Party`).
+  """
+  @type party_record ::
+          %Diffo.Provider.Party{}
+          | %Diffo.Provider.Organization{}
+          | %Diffo.Provider.Individual{}
+
+  @typedoc """
+  An open-world resource record. Reads project to the outermost concrete world via
+  `AshNeo4j.worlds/1` — which may be a consumer-domain leaf unknown at compile time —
+  and update/delete dispatch on whatever record they are handed. The set is therefore
+  genuinely unbounded: a deliberate `struct()`, not a missing type.
+  """
+  @type projected_record :: struct()
+
   resources do
     resource Diffo.Provider.Specification do
       define :create_specification, action: :create
@@ -254,7 +289,7 @@ defmodule Diffo.Provider do
   Symmetric with `create_place!/2` and `create_party!/2`; dispatch is on the spec
   type rather than a passed atom, since the spec already names the kind.
   """
-  @spec create_instance!(map()) :: Ash.Resource.record()
+  @spec create_instance!(map()) :: instance_record()
   def create_instance!(attrs) when is_map(attrs) do
     {leaf, type} =
       attrs |> Map.fetch!(:specified_by) |> get_specification_by_id!() |> instance_leaf_for()
@@ -263,7 +298,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Same as `create_instance!/1` but returns `{:ok, record}` or `{:error, error}`."
-  @spec create_instance(map()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  @spec create_instance(map()) :: {:ok, instance_record()} | {:error, term()}
   def create_instance(attrs) when is_map(attrs) do
     case get_specification_by_id(Map.get(attrs, :specified_by)) do
       {:ok, spec} ->
@@ -285,7 +320,7 @@ defmodule Diffo.Provider do
 
   Accepts a `:load` opt applied to the projected leaf (e.g. `load: [:event]`).
   """
-  @spec get_instance_by_id!(String.t(), keyword()) :: Ash.Resource.record()
+  @spec get_instance_by_id!(String.t(), keyword()) :: projected_record()
   def get_instance_by_id!(id, opts \\ []) when is_binary(id) do
     Diffo.Provider.Instance
     |> Ash.get!(id, domain: __MODULE__)
@@ -295,7 +330,7 @@ defmodule Diffo.Provider do
 
   @doc "Same as `get_instance_by_id!/2` but returns `{:ok, record}` or `{:error, error}`."
   @spec get_instance_by_id(String.t(), keyword()) ::
-          {:ok, Ash.Resource.record()} | {:error, term()}
+          {:ok, projected_record()} | {:error, term()}
   def get_instance_by_id(id, opts \\ []) when is_binary(id) do
     case Ash.get(Diffo.Provider.Instance, id, domain: __MODULE__) do
       {:ok, abstract} -> {:ok, abstract |> project_instance() |> load_projection(opts)}
@@ -311,7 +346,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Lists all instances, each projected to its concrete Service/Resource leaf."
-  @spec list_instances!() :: [Ash.Resource.record()]
+  @spec list_instances!() :: [projected_record()]
   def list_instances! do
     Diffo.Provider.Instance
     |> Ash.read!(action: :list, domain: __MODULE__)
@@ -319,7 +354,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Finds instances whose name contains the query, each projected to its concrete leaf."
-  @spec find_instances_by_name!(String.t()) :: [Ash.Resource.record()]
+  @spec find_instances_by_name!(String.t()) :: [projected_record()]
   def find_instances_by_name!(query) do
     Diffo.Provider.Instance
     |> Ash.Query.for_read(:find_by_name, %{query: query})
@@ -328,7 +363,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Finds instances by specification id, each projected to its concrete leaf."
-  @spec find_instances_by_specification_id!(String.t()) :: [Ash.Resource.record()]
+  @spec find_instances_by_specification_id!(String.t()) :: [projected_record()]
   def find_instances_by_specification_id!(query) do
     Diffo.Provider.Instance
     |> Ash.Query.for_read(:find_by_specification_id, %{query: query})
@@ -492,7 +527,7 @@ defmodule Diffo.Provider do
   Raises `ArgumentError` for unknown types — consumer-specific shapes go
   through consumer domains.
   """
-  @spec create_place!(place_type(), map()) :: Ash.Resource.record()
+  @spec create_place!(place_type(), map()) :: place_record()
   def create_place!(:PlaceRef, attrs) when is_map(attrs) do
     Ash.create!(Diffo.Provider.Place, attrs, action: :create, domain: __MODULE__)
   end
@@ -513,7 +548,7 @@ defmodule Diffo.Provider do
   Same as `create_place!/2` but returns `{:ok, record}` or `{:error, error}`.
   """
   @spec create_place(place_type(), map()) ::
-          {:ok, Ash.Resource.record()} | {:error, term()}
+          {:ok, place_record()} | {:error, term()}
   def create_place(:PlaceRef, attrs) when is_map(attrs) do
     Ash.create(Diffo.Provider.Place, attrs, action: :create, domain: __MODULE__)
   end
@@ -535,7 +570,7 @@ defmodule Diffo.Provider do
   their `:define` action; the abstract `Provider.Place` updates via its
   inherited `:update` action.
   """
-  @spec update_place!(Ash.Resource.record(), map()) :: Ash.Resource.record()
+  @spec update_place!(projected_record(), map()) :: projected_record()
   def update_place!(%Diffo.Provider.GeographicAddress{} = record, attrs),
     do: Ash.update!(record, attrs, action: :define, domain: __MODULE__)
 
@@ -549,8 +584,8 @@ defmodule Diffo.Provider do
     do: Ash.update!(record, attrs, action: :update, domain: __MODULE__)
 
   @doc "Same as `update_place!/2` but returns `{:ok, record}` or `{:error, error}`."
-  @spec update_place(Ash.Resource.record(), map()) ::
-          {:ok, Ash.Resource.record()} | {:error, term()}
+  @spec update_place(projected_record(), map()) ::
+          {:ok, projected_record()} | {:error, term()}
   def update_place(%Diffo.Provider.GeographicAddress{} = record, attrs),
     do: Ash.update(record, attrs, action: :define, domain: __MODULE__)
 
@@ -566,7 +601,7 @@ defmodule Diffo.Provider do
   @doc """
   Deletes a Place record (any subtype, dispatched on its struct module).
   """
-  @spec delete_place!(Ash.Resource.record()) :: :ok
+  @spec delete_place!(projected_record()) :: :ok
   def delete_place!(record) when is_struct(record) do
     Ash.destroy!(record, domain: __MODULE__)
     :ok
@@ -578,7 +613,7 @@ defmodule Diffo.Provider do
   Accepts either a single record or a list of records (returns
   `%Ash.BulkResult{}` for lists).
   """
-  @spec delete_place(Ash.Resource.record() | [Ash.Resource.record()]) ::
+  @spec delete_place(projected_record() | [projected_record()]) ::
           :ok | {:error, term()} | Ash.BulkResult.t()
   def delete_place(record) when is_struct(record) do
     Ash.destroy(record, domain: __MODULE__)
@@ -595,7 +630,7 @@ defmodule Diffo.Provider do
   `MyApp.SydneyExchange`, etc.) or the abstract `Provider.Place` if no
   concrete world resolves.
   """
-  @spec get_place_by_id!(String.t()) :: Ash.Resource.record()
+  @spec get_place_by_id!(String.t()) :: projected_record()
   def get_place_by_id!(id) when is_binary(id) do
     Diffo.Provider.Place
     |> Ash.get!(id, domain: __MODULE__)
@@ -603,7 +638,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Same as `get_place_by_id!/1` but returns `{:ok, record}` or `{:error, error}`."
-  @spec get_place_by_id(String.t()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  @spec get_place_by_id(String.t()) :: {:ok, projected_record()} | {:error, term()}
   def get_place_by_id(id) when is_binary(id) do
     case Ash.get(Diffo.Provider.Place, id, domain: __MODULE__) do
       {:ok, abstract} -> {:ok, project_place(abstract)}
@@ -614,7 +649,7 @@ defmodule Diffo.Provider do
   @doc """
   Lists all Places, each projected to its outermost concrete world.
   """
-  @spec list_places!() :: [Ash.Resource.record()]
+  @spec list_places!() :: [projected_record()]
   def list_places! do
     Diffo.Provider.Place
     |> Ash.read!(action: :list, domain: __MODULE__)
@@ -622,7 +657,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Same as `list_places!/0` but returns `{:ok, list}` or `{:error, error}`."
-  @spec list_places() :: {:ok, [Ash.Resource.record()]} | {:error, term()}
+  @spec list_places() :: {:ok, [projected_record()]} | {:error, term()}
   def list_places do
     case Ash.read(Diffo.Provider.Place, action: :list, domain: __MODULE__) do
       {:ok, places} -> {:ok, Enum.map(places, &project_place/1)}
@@ -633,7 +668,7 @@ defmodule Diffo.Provider do
   @doc """
   Finds Places whose id contains the query, each projected to its concrete world.
   """
-  @spec find_places_by_id!(String.t()) :: [Ash.Resource.record()]
+  @spec find_places_by_id!(String.t()) :: [projected_record()]
   def find_places_by_id!(query) do
     Diffo.Provider.Place
     |> Ash.Query.for_read(:find_by_id, %{query: query})
@@ -644,7 +679,7 @@ defmodule Diffo.Provider do
   @doc """
   Finds Places whose name contains the query, each projected to its concrete world.
   """
-  @spec find_places_by_name!(String.t()) :: [Ash.Resource.record()]
+  @spec find_places_by_name!(String.t()) :: [projected_record()]
   def find_places_by_name!(query) do
     Diffo.Provider.Place
     |> Ash.Query.for_read(:find_by_name, %{query: query})
@@ -696,7 +731,7 @@ defmodule Diffo.Provider do
   Raises `ArgumentError` for unknown types — consumer-specific shapes go
   through consumer domains.
   """
-  @spec create_party!(party_type(), map()) :: Ash.Resource.record()
+  @spec create_party!(party_type(), map()) :: party_record()
   def create_party!(:PartyRef, attrs) when is_map(attrs) do
     Ash.create!(Diffo.Provider.Party, attrs, action: :create, domain: __MODULE__)
   end
@@ -724,7 +759,7 @@ defmodule Diffo.Provider do
 
   @doc "Same as `create_party!/2` but returns `{:ok, record}` or `{:error, error}`."
   @spec create_party(party_type(), map()) ::
-          {:ok, Ash.Resource.record()} | {:error, term()}
+          {:ok, party_record()} | {:error, term()}
   def create_party(:PartyRef, attrs) when is_map(attrs) do
     Ash.create(Diffo.Provider.Party, attrs, action: :create, domain: __MODULE__)
   end
@@ -755,7 +790,7 @@ defmodule Diffo.Provider do
   `:define` action; the abstract `Provider.Party` updates via its inherited
   `:update` action.
   """
-  @spec update_party!(Ash.Resource.record(), map()) :: Ash.Resource.record()
+  @spec update_party!(projected_record(), map()) :: projected_record()
   def update_party!(%Diffo.Provider.Organization{} = record, attrs),
     do: Ash.update!(record, attrs, action: :define, domain: __MODULE__)
 
@@ -766,8 +801,8 @@ defmodule Diffo.Provider do
     do: Ash.update!(record, attrs, action: :update, domain: __MODULE__)
 
   @doc "Same as `update_party!/2` but returns `{:ok, record}` or `{:error, error}`."
-  @spec update_party(Ash.Resource.record(), map()) ::
-          {:ok, Ash.Resource.record()} | {:error, term()}
+  @spec update_party(projected_record(), map()) ::
+          {:ok, projected_record()} | {:error, term()}
   def update_party(%Diffo.Provider.Organization{} = record, attrs),
     do: Ash.update(record, attrs, action: :define, domain: __MODULE__)
 
@@ -778,7 +813,7 @@ defmodule Diffo.Provider do
     do: Ash.update(record, attrs, action: :update, domain: __MODULE__)
 
   @doc "Deletes a Party record (any subtype, dispatched on its struct module)."
-  @spec delete_party!(Ash.Resource.record()) :: :ok
+  @spec delete_party!(projected_record()) :: :ok
   def delete_party!(record) when is_struct(record) do
     Ash.destroy!(record, domain: __MODULE__)
     :ok
@@ -790,7 +825,7 @@ defmodule Diffo.Provider do
   Accepts either a single record or a list of records (returns
   `%Ash.BulkResult{}` for lists).
   """
-  @spec delete_party(Ash.Resource.record() | [Ash.Resource.record()]) ::
+  @spec delete_party(projected_record() | [projected_record()]) ::
           :ok | {:error, term()} | Ash.BulkResult.t()
   def delete_party(record) when is_struct(record) do
     Ash.destroy(record, domain: __MODULE__)
@@ -807,7 +842,7 @@ defmodule Diffo.Provider do
   `Provider.Individual`, `MyApp.Carrier`, etc.) or the abstract
   `Provider.Party` if no concrete world resolves.
   """
-  @spec get_party_by_id!(String.t()) :: Ash.Resource.record()
+  @spec get_party_by_id!(String.t()) :: projected_record()
   def get_party_by_id!(id) when is_binary(id) do
     Diffo.Provider.Party
     |> Ash.get!(id, domain: __MODULE__)
@@ -815,7 +850,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Same as `get_party_by_id!/1` but returns `{:ok, record}` or `{:error, error}`."
-  @spec get_party_by_id(String.t()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  @spec get_party_by_id(String.t()) :: {:ok, projected_record()} | {:error, term()}
   def get_party_by_id(id) when is_binary(id) do
     case Ash.get(Diffo.Provider.Party, id, domain: __MODULE__) do
       {:ok, abstract} -> {:ok, project_party(abstract)}
@@ -824,7 +859,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Lists all Parties, each projected to its outermost concrete world."
-  @spec list_parties!() :: [Ash.Resource.record()]
+  @spec list_parties!() :: [projected_record()]
   def list_parties! do
     Diffo.Provider.Party
     |> Ash.read!(action: :list, domain: __MODULE__)
@@ -832,7 +867,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Same as `list_parties!/0` but returns `{:ok, list}` or `{:error, error}`."
-  @spec list_parties() :: {:ok, [Ash.Resource.record()]} | {:error, term()}
+  @spec list_parties() :: {:ok, [projected_record()]} | {:error, term()}
   def list_parties do
     case Ash.read(Diffo.Provider.Party, action: :list, domain: __MODULE__) do
       {:ok, parties} -> {:ok, Enum.map(parties, &project_party/1)}
@@ -841,7 +876,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Finds Parties whose id contains the query, each projected to its concrete world."
-  @spec find_parties_by_id!(String.t()) :: [Ash.Resource.record()]
+  @spec find_parties_by_id!(String.t()) :: [projected_record()]
   def find_parties_by_id!(query) do
     Diffo.Provider.Party
     |> Ash.Query.for_read(:find_by_id, %{query: query})
@@ -850,7 +885,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Finds Parties whose name contains the query, each projected to its concrete world."
-  @spec find_parties_by_name!(String.t()) :: [Ash.Resource.record()]
+  @spec find_parties_by_name!(String.t()) :: [projected_record()]
   def find_parties_by_name!(query) do
     Diffo.Provider.Party
     |> Ash.Query.for_read(:find_by_name, %{query: query})
@@ -898,7 +933,7 @@ defmodule Diffo.Provider do
       target: "LOC-001"
       target: some_place_struct
   """
-  @spec create_place_ref!(map()) :: Ash.Resource.record()
+  @spec create_place_ref!(map()) :: %Diffo.Provider.PlaceRef{}
   def create_place_ref!(%{role: _, source: source, target: target} = attrs) do
     attrs
     |> Map.delete(:source)
@@ -909,7 +944,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Same as `create_place_ref!/1` but returns `{:ok, record}` or `{:error, error}`."
-  @spec create_place_ref(map()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  @spec create_place_ref(map()) :: {:ok, %Diffo.Provider.PlaceRef{}} | {:error, term()}
   def create_place_ref(%{role: _, source: source, target: target} = attrs) do
     attrs
     |> Map.delete(:source)
@@ -922,8 +957,8 @@ defmodule Diffo.Provider do
   @doc """
   Lists PlaceRefs whose source matches the given Instance/Party/Place.
   """
-  @spec list_place_refs_from(tagged_source() | Ash.Resource.record()) ::
-          [Ash.Resource.record()]
+  @spec list_place_refs_from(tagged_source() | projected_record()) ::
+          [%Diffo.Provider.PlaceRef{}]
   def list_place_refs_from({:instance, id}),
     do: list_place_refs_by_instance_id!(id)
 
@@ -940,8 +975,8 @@ defmodule Diffo.Provider do
   @doc """
   Lists PlaceRefs targeting the given Place.
   """
-  @spec list_place_refs_targeting(String.t() | Ash.Resource.record()) ::
-          [Ash.Resource.record()]
+  @spec list_place_refs_targeting(String.t() | projected_record()) ::
+          [%Diffo.Provider.PlaceRef{}]
   def list_place_refs_targeting(target) do
     list_place_refs_by_place_id!(normalize_target_id(target))
   end
@@ -958,7 +993,7 @@ defmodule Diffo.Provider do
       source: some_place_struct
       source: some_party_struct
   """
-  @spec create_party_ref!(map()) :: Ash.Resource.record()
+  @spec create_party_ref!(map()) :: %Diffo.Provider.PartyRef{}
   def create_party_ref!(%{role: _, source: source, target: target} = attrs) do
     attrs
     |> Map.delete(:source)
@@ -969,7 +1004,7 @@ defmodule Diffo.Provider do
   end
 
   @doc "Same as `create_party_ref!/1` but returns `{:ok, record}` or `{:error, error}`."
-  @spec create_party_ref(map()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  @spec create_party_ref(map()) :: {:ok, %Diffo.Provider.PartyRef{}} | {:error, term()}
   def create_party_ref(%{role: _, source: source, target: target} = attrs) do
     attrs
     |> Map.delete(:source)
@@ -980,8 +1015,8 @@ defmodule Diffo.Provider do
   end
 
   @doc "Lists PartyRefs whose source matches the given Instance/Place/Party."
-  @spec list_party_refs_from(tagged_source() | Ash.Resource.record()) ::
-          [Ash.Resource.record()]
+  @spec list_party_refs_from(tagged_source() | projected_record()) ::
+          [%Diffo.Provider.PartyRef{}]
   def list_party_refs_from({:instance, id}),
     do: list_party_refs_by_instance_id!(id)
 
@@ -996,8 +1031,8 @@ defmodule Diffo.Provider do
   end
 
   @doc "Lists PartyRefs targeting the given Party."
-  @spec list_party_refs_targeting(String.t() | Ash.Resource.record()) ::
-          [Ash.Resource.record()]
+  @spec list_party_refs_targeting(String.t() | projected_record()) ::
+          [%Diffo.Provider.PartyRef{}]
   def list_party_refs_targeting(target) do
     list_party_refs_by_party_id!(normalize_target_id(target))
   end
