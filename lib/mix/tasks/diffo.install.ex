@@ -32,7 +32,7 @@ if Code.ensure_loaded?(Igniter) do
     def info(_argv, _composing_task) do
       %Igniter.Mix.Task.Info{
         group: :ash,
-        installs: [{:ash_neo4j, "~> 0.5"}],
+        installs: [{:ash_neo4j, "~> 0.10"}],
         example: __MODULE__.Docs.example()
       }
     end
@@ -56,6 +56,16 @@ if Code.ensure_loaded?(Igniter) do
             quote(do: Diffo.Unwrap.AshCustomExpression)
           )
         end
+      )
+      # Diffo is an edge-managing graph domain — nearly every action manages
+      # relationships (before_action hooks) or runs non-atomic validations, so
+      # atomic-by-default updates (enforced once ash_neo4j 0.10 advertised atomic
+      # support) don't apply. Disable it so diffo's resources compile and run.
+      |> Igniter.Project.Config.configure(
+        "config.exs",
+        :ash,
+        [:require_atomic_by_default?],
+        false
       )
     end
   end

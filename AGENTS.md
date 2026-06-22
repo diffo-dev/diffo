@@ -36,6 +36,12 @@ type prefix (`fix:`, `feat:`, `deps:`, `chore:`, `refactor:`, `test:`, `docs:`).
 
 To cut a release from `dev`:
 
+0. **Pre-flight, before bumping anything:** `mix test` green, `mix format --check-formatted`
+   clean, **`mix docs` emits zero warnings**, and the consumer-facing docs are current —
+   `{:diffo, "~> X.Y"}` pins in `README.md` and every livebook match the version being cut,
+   the livebook `Mix.install` setup still works, and any new consumer requirement (e.g. a
+   needed `config :ash, …`) is documented in the README, the installer, and the changelog.
+   These are exactly the things that surface late (at `mix hex.publish`) if skipped.
 1. `mix git_ops.release --dry-run` — preview the computed version and changelog without
    writing anything. The bump follows semver from the commit types since the last `v*` tag
    (`fix:` → patch, `feat:` → minor).
@@ -346,6 +352,14 @@ mix docs                              # spark.cheat_sheets + ex_doc + spark.repl
 - **`mix docs`** output lands in `doc/`, which is **gitignored** — generated HTML and the
   livebooks copied there are not tracked. The source livebooks live in `documentation/how_to/`
   and the root `diffo.livemd`; edit those, not `doc/`.
+- **`mix docs` must emit zero warnings — treat them as build failures.** ExDoc warns when a
+  `@spec` or doc references a type that is undefined or private (e.g. a phantom
+  `Ash.Resource.record()` — Ash has no such type; use `struct()` or a real local `@type`).
+  These warnings compile fine and accumulate silently, then dump *en masse* at
+  `mix hex.publish` — the worst place to discover them. Run `mix docs` (or
+  `mix docs --warnings-as-errors`) and clear **every** warning as part of any change that
+  touches public `@spec`s/`@doc`s, and again before a release. Do not suppress with
+  `skip_*` config — fix the reference.
 
 ## Module naming and Neo4j labels
 
@@ -724,3 +738,11 @@ not. Add any useful hypotheses as a follow-up comment on the issue, then leave i
   typically has many forward `DefinedSimpleRelationship` records pointing to unrelated things.
   Without at least one filter the result is a noisy mix. Always supply `alias:`, `type:`, or
   both.
+- Adding `require_atomic? true` to an update action — atomic-by-default is **off** domain-wide
+  (`config :ash, :require_atomic_by_default?, false` in `config/config.exs`) because nearly
+  every action manages relationships (`manage_relationship` → `before_action` hooks) or runs
+  `present`/state-machine validations, none of which are atomic. Even genuinely pure-attribute
+  actions can't go atomic yet: ash_neo4j's renderer can't express the `update_timestamp`
+  (`now()`/`is_distinct_from`) or constrained-`increment` atomics Ash generates (ash_neo4j#396,
+  blocking #240). Consumers (and the livebooks/`mix diffo.install`) must set the same config —
+  diffo's resources recompile under the consumer's config.

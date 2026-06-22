@@ -245,6 +245,45 @@ defmodule Diffo.Provider.InstanceTest do
                )
     end
 
+    test "create_instance! dispatches a serviceSpecification to the generic Service" do
+      spec = Diffo.Provider.create_specification!(%{name: "broadband"})
+
+      instance = Diffo.Provider.create_instance!(%{name: "broadband_0001", specified_by: spec.id})
+
+      assert %Diffo.Provider.Instance{} = instance
+      assert instance.type == :service
+    end
+
+    test "create_instance! dispatches a resourceSpecification to the generic Resource" do
+      spec =
+        Diffo.Provider.create_specification!(%{
+          name: "copperPath",
+          type: :resourceSpecification,
+          description: "Copper Path Resource"
+        })
+
+      instance =
+        Diffo.Provider.create_instance!(%{name: "copperPath_0001", specified_by: spec.id})
+
+      assert %Diffo.Provider.ResourceInstance{} = instance
+      assert instance.type == :resource
+    end
+
+    test "create_instance/1 returns {:ok, instance} for a valid spec" do
+      spec = Diffo.Provider.create_specification!(%{name: "evcAccess"})
+
+      assert {:ok, %Diffo.Provider.Instance{type: :service}} =
+               Diffo.Provider.create_instance(%{name: "evcAccess_0001", specified_by: spec.id})
+    end
+
+    test "create_instance/1 returns {:error, _} when the specification is missing" do
+      assert {:error, _} =
+               Diffo.Provider.create_instance(%{
+                 name: "ghost",
+                 specified_by: "00000000-0000-0000-0000-000000000000"
+               })
+    end
+
     test "create instance with characteristics - success" do
       specification = Diffo.Provider.create_specification!(%{name: "evc"})
 

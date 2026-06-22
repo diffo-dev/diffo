@@ -14,8 +14,9 @@ defmodule Diffo.Provider.Instance do
   Service/Resource leaf) via `AshNeo4j.worlds/1` before returning.
 
   An instance is **exactly one** of Service or Resource. Concrete Resource
-  instances compose `[BaseInstance, Resource]` on their own leaf (e.g.
-  `Diffo.Test.Instance.ResourceInstance`); they carry no service lifecycle.
+  instances compose `[BaseInstance, Resource]` on their own leaf — the generic
+  `Diffo.Provider.ResourceInstance`, or a consumer leaf like `MyApp.Card`; they
+  carry no service lifecycle.
 
   See `Diffo.Provider.BaseInstance` for the shared base, `Diffo.Provider.Service`
   and `Diffo.Provider.Resource` for the subtype fragments.
