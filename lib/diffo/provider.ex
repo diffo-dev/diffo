@@ -35,6 +35,10 @@ defmodule Diffo.Provider do
     # hand-written dispatcher function on `Diffo.Provider` that dispatches on the
     # record's own resource.
     resource Diffo.Provider.Instance
+    # The generic Resource leaf (`BaseInstance` + `Resource`), counterpart to the
+    # generic Service `Diffo.Provider.Instance`. `create_instance!/1` dispatches a
+    # `:resourceSpecification` here; reads still go through the abstract reader.
+    resource Diffo.Provider.ResourceInstance
 
     resource Diffo.Provider.Relationship do
       define :create_relationship, action: :create
@@ -236,6 +240,45 @@ defmodule Diffo.Provider do
   # on the record's own resource — the lifecycle actions live on the `Service`
   # fragment, so any service leaf carries them.
   # ============================================================================
+
+  @doc """
+  Creates a generic Service or Resource instance, dispatching on the referenced
+  specification's type.
+
+  Reads the specification named by `:specified_by`: a `:serviceSpecification`
+  creates a `Diffo.Provider.Instance` (the generic Service), a
+  `:resourceSpecification` creates a `Diffo.Provider.ResourceInstance` (the generic
+  Resource). This is the provider-only entry point — consumer instance kinds declare
+  their own `:build` action and are created through their own domain, not here.
+
+  Symmetric with `create_place!/2` and `create_party!/2`; dispatch is on the spec
+  type rather than a passed atom, since the spec already names the kind.
+  """
+  @spec create_instance!(map()) :: Ash.Resource.record()
+  def create_instance!(attrs) when is_map(attrs) do
+    {leaf, type} =
+      attrs |> Map.fetch!(:specified_by) |> get_specification_by_id!() |> instance_leaf_for()
+
+    Ash.create!(leaf, Map.put(attrs, :type, type), action: :create, domain: __MODULE__)
+  end
+
+  @doc "Same as `create_instance!/1` but returns `{:ok, record}` or `{:error, error}`."
+  @spec create_instance(map()) :: {:ok, Ash.Resource.record()} | {:error, term()}
+  def create_instance(attrs) when is_map(attrs) do
+    case get_specification_by_id(Map.get(attrs, :specified_by)) do
+      {:ok, spec} ->
+        {leaf, type} = instance_leaf_for(spec)
+        Ash.create(leaf, Map.put(attrs, :type, type), action: :create, domain: __MODULE__)
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
+  defp instance_leaf_for(%{type: :serviceSpecification}), do: {Diffo.Provider.Instance, :service}
+
+  defp instance_leaf_for(%{type: :resourceSpecification}),
+    do: {Diffo.Provider.ResourceInstance, :resource}
 
   @doc """
   Loads an instance by id and projects it to its concrete Service/Resource leaf.
