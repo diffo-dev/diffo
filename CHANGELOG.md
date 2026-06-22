@@ -33,6 +33,11 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
   non-atomic validations), and `Diffo.Type.Dynamic` gains `dump_to_embedded/2` +
   `cast_from_embedded/2` for ash 3.28's composite embedded casting (#239). Tracks `ash` 3.29.
 
+  > **Upgrading from 0.8.x:** consumers must add `config :ash, :require_atomic_by_default?, false`
+  > to their own config — diffo's resources recompile under the consumer's config, and without
+  > it the edge-managing actions raise `must be performed atomically`. `mix diffo.install` and
+  > the livebooks now set this for you. Target Neo4j is now **2026.05** (Cypher 25 / BOLT 6.0).
+
 ## [v0.8.0](https://github.com/diffo-dev/diffo/compare/v0.7.0...v0.8.0) (2026-06-03)
 
 

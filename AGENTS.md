@@ -724,3 +724,11 @@ not. Add any useful hypotheses as a follow-up comment on the issue, then leave i
   typically has many forward `DefinedSimpleRelationship` records pointing to unrelated things.
   Without at least one filter the result is a noisy mix. Always supply `alias:`, `type:`, or
   both.
+- Adding `require_atomic? true` to an update action — atomic-by-default is **off** domain-wide
+  (`config :ash, :require_atomic_by_default?, false` in `config/config.exs`) because nearly
+  every action manages relationships (`manage_relationship` → `before_action` hooks) or runs
+  `present`/state-machine validations, none of which are atomic. Even genuinely pure-attribute
+  actions can't go atomic yet: ash_neo4j's renderer can't express the `update_timestamp`
+  (`now()`/`is_distinct_from`) or constrained-`increment` atomics Ash generates (ash_neo4j#396,
+  blocking #240). Consumers (and the livebooks/`mix diffo.install`) must set the same config —
+  diffo's resources recompile under the consumer's config.

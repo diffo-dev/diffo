@@ -9,7 +9,10 @@ SPDX-License-Identifier: MIT
 ```elixir
 Mix.install(
   [
-    {:diffo, "~> 0.8.0"}
+    {:diffo, "~> 0.9.0"}
+  ],
+  config: [
+    ash: [require_atomic_by_default?: false]
   ],
   consolidate_protocols: false
 )
@@ -39,7 +42,7 @@ Diffo uses the [Ash Neo4j DataLayer](https://github.com/diffo-dev/ash_neo4j), wh
 
 While [Neo4j community edition](https://github.com/neo4j/neo4j) is open source and you can build from source it is likely that you'll use an installation.
 
-[AshNeo4j](https://github.com/diffo-dev/ash_neo4j) uses [neo4j](https://github.com/neo4j/neo4j) which must be installed and running. You can install latest major Neo4j versions from the community tab at [Neo4j Deployment Center](https://neo4j.com/deployment-center/?desktop-gdb), or use the [5.26.8 direct link](https://neo4j.com/download-thanks/?edition=community&release=5.26.8&flavour=rpm)
+[AshNeo4j](https://github.com/diffo-dev/ash_neo4j) uses [neo4j](https://github.com/neo4j/neo4j) which must be installed and running. Diffo targets **Neo4j 2026.05** — Cypher 25 over BOLT 6.0 (via `ash_neo4j` 0.10). Install it from the community tab at the [Neo4j Deployment Center](https://neo4j.com/deployment-center/?desktop-gdb).
 
 When you install neo4j you'll typically have a default username and password. Take note of this and any other non-standard config.
 
