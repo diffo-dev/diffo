@@ -33,6 +33,6 @@ defmodule Diffo.Test do
     end
   end
 
-  defp leaf_for(:serviceSpecification), do: {Diffo.Provider.Instance, :service}
+  defp leaf_for(:serviceSpecification), do: {Diffo.Provider.ServiceInstance, :service}
   defp leaf_for(:resourceSpecification), do: {ResourceInstance, :resource}
 end

@@ -17,7 +17,8 @@ defmodule Diffo.Provider do
   A record produced by an Instance creator (`create_instance!/1`, `create_instance/1`) —
   the generic Service or Resource leaf the dispatcher constructs.
   """
-  @type instance_record :: %Diffo.Provider.Instance{} | %Diffo.Provider.ResourceInstance{}
+  @type instance_record ::
+          %Diffo.Provider.ServiceInstance{} | %Diffo.Provider.ResourceInstance{}
 
   @typedoc """
   A record produced by a Place creator (`create_place!/2`, `create_place/2`) — one of the
@@ -70,9 +71,10 @@ defmodule Diffo.Provider do
     # hand-written dispatcher function on `Diffo.Provider` that dispatches on the
     # record's own resource.
     resource Diffo.Provider.Instance
-    # The generic Resource leaf (`BaseInstance` + `Resource`), counterpart to the
-    # generic Service `Diffo.Provider.Instance`. `create_instance!/1` dispatches a
-    # `:resourceSpecification` here; reads still go through the abstract reader.
+    # Concrete instance leaves, projected to from the abstract reader above.
+    # `create_instance!/1` dispatches `:serviceSpecification` -> ServiceInstance and
+    # `:resourceSpecification` -> ResourceInstance; reads go through the reader.
+    resource Diffo.Provider.ServiceInstance
     resource Diffo.Provider.ResourceInstance
 
     resource Diffo.Provider.Relationship do
@@ -310,7 +312,8 @@ defmodule Diffo.Provider do
     end
   end
 
-  defp instance_leaf_for(%{type: :serviceSpecification}), do: {Diffo.Provider.Instance, :service}
+  defp instance_leaf_for(%{type: :serviceSpecification}),
+    do: {Diffo.Provider.ServiceInstance, :service}
 
   defp instance_leaf_for(%{type: :resourceSpecification}),
     do: {Diffo.Provider.ResourceInstance, :resource}
