@@ -20,6 +20,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
   `CYPHER 25` language selector over BOLT 6.0 — negotiated through `bolty` ≥ 0.2.0 — rather
   than relying on a server default heading for the CYPHER 5 sunset.
 
+### Fixes:
+
+* **Public `Diffo.Provider.create_instance/1` + `create_instance!/1`** (#244) — restores the
+  generic instance creator to the dispatcher API, symmetric with `create_place!/2` and
+  `create_party!/2`; it dispatches on the referenced specification's type
+  (`:serviceSpecification` → the generic Service, `:resourceSpecification` → the new generic
+  `Diffo.Provider.ResourceInstance` leaf). Without it, provider-only consumers and the
+  tutorial livebook had no public way to create a generic instance. Also types the dispatcher
+  `@spec`s precisely (closed-union creators, an open `projected_record` for projecting reads)
+  and clears the `mix docs` warnings from the phantom `Ash.Resource.record()` type.
+
 ### Dependencies:
 
 * **Bump `ash_neo4j` to `0.10.1`** (#238) — picks up graph-traversal Ash expressions
